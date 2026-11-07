@@ -2060,6 +2060,10 @@ msgstr "यह चैट लोड नहीं हो सकी."
 msgid "Could not load this file."
 msgstr "यह फ़ाइल लोड नहीं हो सकी।"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not load versions"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not load voice settings"
 msgstr "आवाज़ सेटिंग्स लोड नहीं हो सकीं"
@@ -2152,6 +2156,10 @@ msgstr "चार्ट रेंडर नहीं हो सका"
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "पासवर्ड रीसेट नहीं किया जा सका"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not restore that version"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not revoke connection"
@@ -2419,6 +2427,10 @@ msgstr "Cron"
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron expression"
 msgstr "Cron एक्सप्रेशन"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Current"
+msgstr ""
 
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3231,6 +3243,10 @@ msgstr ""
 #: src/components/call/VoiceChatCard.tsx
 msgid "Hide transcript"
 msgstr "ट्रांसक्रिप्ट छिपाएँ"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Hide versions"
+msgstr ""
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -4166,6 +4182,10 @@ msgstr ""
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "No earlier versions"
 msgstr ""
 
 #: src/pages/shell/bot-files-panel.tsx
@@ -5118,6 +5138,7 @@ msgid "Restart to update"
 msgstr ""
 
 #: src/components/InstructionSettings.tsx
+#: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "बहाल करें"
@@ -6528,6 +6549,10 @@ msgstr "पुष्टि की जा रही है…"
 
 #: src/pages/Artifacts.tsx
 msgid "Version"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Versions"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx

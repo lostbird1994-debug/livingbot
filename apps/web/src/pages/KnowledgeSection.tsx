@@ -20,6 +20,9 @@ import { useSpaceQueries } from "../lib/query";
 import { useSpaceRpc } from "../lib/space-rpc";
 
 const NO_DOCS: MemoryDocument[] = [];
+
+/** One stored version of a memory document; restoring one writes it again as the newest. */
+type MemoryRevisionRow = { revision: number; chars: number; createdAt: string };
 const NO_SKILLS: AgentSkillCatalogEntry[] = [];
 
 const fieldClass = "mt-2 w-full font-mono text-[13px] leading-relaxed";
@@ -94,6 +97,8 @@ function MemoryDocumentList({
   const [actionError, setError] = useState<string | null>(null);
   const error = actionError ?? (listQuery.isError ? t`Could not load` : null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [history, setHistory] = useState<MemoryRevisionRow[] | null>(null);
+  const [historyBusy, setHistoryBusy] = useState(false);
 
   function setDocs(update: (current: MemoryDocument[]) => MemoryDocument[]) {
     return writeSaved(queryClient, list.queryKey, (current) => update(current ?? []));
@@ -106,12 +111,51 @@ function MemoryDocumentList({
     setDraft(doc.content);
     setError(null);
     setConfirmingDelete(false);
+    setHistory(null);
   }
 
   function closeDoc() {
     setOpenId(null);
     setConflicted(false);
     setConfirmingDelete(false);
+  }
+
+  async function loadHistory(doc: MemoryDocument) {
+    if (historyBusy) return;
+    if (history) {
+      setHistory(null);
+      return;
+    }
+    setHistoryBusy(true);
+    setError(null);
+    try {
+      setHistory(await rpc.memory.revisions({ documentId: doc.id }));
+    } catch {
+      setError(t`Could not load versions`);
+    } finally {
+      setHistoryBusy(false);
+    }
+  }
+
+  async function restore(doc: MemoryDocument, revision: number) {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const restored = await rpc.memory.restore({ documentId: doc.id, revision });
+      await setDocs((current) =>
+        current.map((entry) => (entry.id === restored.id ? restored : entry)),
+      );
+      // Show the restored text, not the draft it replaced.
+      setDraft(restored.content);
+      setLoadedRevision(restored.revision);
+      setConflicted(false);
+      setHistory(await rpc.memory.revisions({ documentId: doc.id }));
+    } catch {
+      setError(t`Could not restore that version`);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function remove(doc: MemoryDocument) {
@@ -273,6 +317,15 @@ function MemoryDocumentList({
                     >
                       <Trans>Cancel</Trans>
                     </Button>
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      disabled={busy || historyBusy}
+                      onClick={() => void loadHistory(doc)}
+                      size="sm"
+                    >
+                      {history ? <Trans>Hide versions</Trans> : <Trans>Versions</Trans>}
+                    </Button>
                     {isDeletableMemoryDocument(doc.path) ? (
                       <Button
                         variant="ghost"
@@ -286,6 +339,45 @@ function MemoryDocumentList({
                       </Button>
                     ) : null}
                   </div>
+                  {history ? (
+                    <div className="mt-2 rounded-lg border border-border">
+                      {history.length === 0 ? (
+                        <div className="px-3 py-2 text-[12px] text-muted-foreground">
+                          <Trans>No earlier versions</Trans>
+                        </div>
+                      ) : (
+                        history.map((row) => (
+                          <div
+                            key={row.revision}
+                            className="flex items-center gap-2 border-b border-border px-3 py-1.5 last:border-0"
+                          >
+                            <span className="font-mono text-[12px] text-muted-foreground">
+                              v{row.revision}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-[12px] text-muted-foreground">
+                              {row.chars.toLocaleString()} chars ·{" "}
+                              {new Date(row.createdAt).toLocaleString()}
+                            </span>
+                            {row.revision === doc.revision ? (
+                              <span className="text-[12px] text-muted-foreground">
+                                <Trans>Current</Trans>
+                              </span>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                type="button"
+                                disabled={busy}
+                                onClick={() => void restore(doc, row.revision)}
+                              >
+                                <Trans>Restore</Trans>
+                              </Button>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>

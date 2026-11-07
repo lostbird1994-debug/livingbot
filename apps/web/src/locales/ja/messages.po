@@ -2060,6 +2060,10 @@ msgstr "このチャットを読み込めませんでした。"
 msgid "Could not load this file."
 msgstr "このファイルを読み込めませんでした。"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not load versions"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not load voice settings"
 msgstr "音声設定を読み込めませんでした"
@@ -2152,6 +2156,10 @@ msgstr "チャートを表示できませんでした"
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "パスワードをリセットできませんでした"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not restore that version"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not revoke connection"
@@ -2419,6 +2427,10 @@ msgstr "Cron"
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron expression"
 msgstr "Cron式"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Current"
+msgstr ""
 
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3231,6 +3243,10 @@ msgstr "パスワードを非表示"
 #: src/components/call/VoiceChatCard.tsx
 msgid "Hide transcript"
 msgstr "文字起こしを非表示"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Hide versions"
+msgstr ""
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -4167,6 +4183,10 @@ msgstr ""
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr "一致するボットはありません"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "No earlier versions"
+msgstr ""
 
 #: src/pages/shell/bot-files-panel.tsx
 msgid "No files yet."
@@ -5118,6 +5138,7 @@ msgid "Restart to update"
 msgstr "再起動してアップデート"
 
 #: src/components/InstructionSettings.tsx
+#: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "復元"
@@ -6529,6 +6550,10 @@ msgstr "確認中…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "バージョン"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Versions"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"

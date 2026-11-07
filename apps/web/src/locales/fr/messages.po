@@ -2060,6 +2060,10 @@ msgstr "Impossible de charger cette conversation."
 msgid "Could not load this file."
 msgstr "Impossible de charger ce fichier."
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not load versions"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not load voice settings"
 msgstr "Impossible de charger les paramètres vocaux"
@@ -2152,6 +2156,10 @@ msgstr "Impossible d'afficher le graphique"
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "Impossible de réinitialiser le mot de passe"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not restore that version"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not revoke connection"
@@ -2419,6 +2427,10 @@ msgstr "Cron"
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron expression"
 msgstr "Expression Cron"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Current"
+msgstr ""
 
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3231,6 +3243,10 @@ msgstr "Masquer le mot de passe"
 #: src/components/call/VoiceChatCard.tsx
 msgid "Hide transcript"
 msgstr "Masquer la transcription"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Hide versions"
+msgstr ""
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -4167,6 +4183,10 @@ msgstr ""
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr "Aucun bot ne correspond"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "No earlier versions"
+msgstr ""
 
 #: src/pages/shell/bot-files-panel.tsx
 msgid "No files yet."
@@ -5118,6 +5138,7 @@ msgid "Restart to update"
 msgstr "Redémarrez pour mettre à jour"
 
 #: src/components/InstructionSettings.tsx
+#: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Restaurer"
@@ -6529,6 +6550,10 @@ msgstr "Vérification en cours…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Versions"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"

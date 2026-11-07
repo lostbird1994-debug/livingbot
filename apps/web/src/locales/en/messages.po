@@ -2060,6 +2060,10 @@ msgstr "Could not load this chat."
 msgid "Could not load this file."
 msgstr "Could not load this file."
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not load versions"
+msgstr "Could not load versions"
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not load voice settings"
 msgstr "Could not load voice settings"
@@ -2152,6 +2156,10 @@ msgstr "Could not render chart"
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "Could not reset password"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not restore that version"
+msgstr "Could not restore that version"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not revoke connection"
@@ -2419,6 +2427,10 @@ msgstr "Cron"
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron expression"
 msgstr "Cron expression"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Current"
+msgstr "Current"
 
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3231,6 +3243,10 @@ msgstr "Hide password"
 #: src/components/call/VoiceChatCard.tsx
 msgid "Hide transcript"
 msgstr "Hide transcript"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Hide versions"
+msgstr "Hide versions"
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -4167,6 +4183,10 @@ msgstr "No bots"
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr "No bots match"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "No earlier versions"
+msgstr "No earlier versions"
 
 #: src/pages/shell/bot-files-panel.tsx
 msgid "No files yet."
@@ -5118,6 +5138,7 @@ msgid "Restart to update"
 msgstr "Restart to update"
 
 #: src/components/InstructionSettings.tsx
+#: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Restore"
@@ -6529,6 +6550,10 @@ msgstr "Verifying…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Versions"
+msgstr "Versions"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"

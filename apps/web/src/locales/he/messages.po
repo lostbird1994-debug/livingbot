@@ -2060,6 +2060,10 @@ msgstr "לא ניתן לטעון את הצ׳אט הזה."
 msgid "Could not load this file."
 msgstr "לא ניתן לטעון את הקובץ הזה."
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not load versions"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not load voice settings"
 msgstr "לא ניתן לטעון את הגדרות הקול"
@@ -2152,6 +2156,10 @@ msgstr "לא ניתן להציג את התרשים"
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "לא ניתן לאפס את הסיסמה"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not restore that version"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not revoke connection"
@@ -2419,6 +2427,10 @@ msgstr "Cron"
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron expression"
 msgstr "ביטוי Cron"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Current"
+msgstr ""
 
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3231,6 +3243,10 @@ msgstr "הסתרת הסיסמה"
 #: src/components/call/VoiceChatCard.tsx
 msgid "Hide transcript"
 msgstr "הסתרת התמליל"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Hide versions"
+msgstr ""
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -4167,6 +4183,10 @@ msgstr ""
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr "אין בוטים תואמים"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "No earlier versions"
+msgstr ""
 
 #: src/pages/shell/bot-files-panel.tsx
 msgid "No files yet."
@@ -5118,6 +5138,7 @@ msgid "Restart to update"
 msgstr "הפעלה מחדש לעדכון"
 
 #: src/components/InstructionSettings.tsx
+#: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "שחזור"
@@ -6529,6 +6550,10 @@ msgstr "מאמת…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "גרסה"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Versions"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"

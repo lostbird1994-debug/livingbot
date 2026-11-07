@@ -13,6 +13,8 @@ const memoryApi = vi.hoisted(() => ({
   list: vi.fn(async () => []),
   remove: vi.fn(),
   update: vi.fn(),
+  revisions: vi.fn(async () => []),
+  restore: vi.fn(),
 }));
 // One space, so no "Available in" choice appears.
 vi.mock("../components/integrations/space-availability", () => ({
@@ -433,6 +435,51 @@ it("opens skills from the composer's cached list and saves back into it", async 
     ]);
   } finally {
     await act(async () => root.unmount());
+    vi.unstubAllGlobals();
+  }
+});
+
+it("lists earlier versions and restores one as a new revision", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const saved = {
+    id: "memory-doc",
+    scope: "bot" as const,
+    botId: "bot-fixture",
+    path: "MEMORY.md",
+    content: "current text",
+    revision: 3,
+    updatedAt: "",
+  };
+  memoryApi.list.mockReset();
+  memoryApi.list.mockResolvedValue([saved] as never);
+  memoryApi.revisions.mockResolvedValue([
+    { revision: 3, chars: 12, createdAt: "2026-11-07T10:00:00.000Z" },
+    { revision: 2, chars: 9, createdAt: "2026-11-06T10:00:00.000Z" },
+  ] as never);
+  memoryApi.restore.mockResolvedValue({ ...saved, content: "older text", revision: 4 } as never);
+
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const button = (text: string) =>
+    [...container.querySelectorAll("button")].find((entry) => entry.textContent?.includes(text)) as
+      | HTMLButtonElement
+      | undefined;
+  try {
+    await show(root, <KnowledgeSection botId="bot-fixture" />);
+    await act(async () => button("MEMORY.md")!.click());
+    await act(async () => button("Versions")!.click());
+
+    // The stored versions come from the server, not from the list payload.
+    expect(memoryApi.revisions).toHaveBeenCalledWith({ documentId: "memory-doc" });
+    expect(container.textContent).toContain("v2");
+    expect(container.textContent).toContain("Current");
+
+    await act(async () => button("Restore")!.click());
+    expect(memoryApi.restore).toHaveBeenCalledWith({ documentId: "memory-doc", revision: 2 });
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
     vi.unstubAllGlobals();
   }
 });

@@ -2061,6 +2061,10 @@ msgstr "無法載入此對話。"
 msgid "Could not load this file."
 msgstr "無法載入此檔案。"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not load versions"
+msgstr "讀取版本失敗"
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not load voice settings"
 msgstr "無法載入語音設定"
@@ -2153,6 +2157,10 @@ msgstr "無法渲染圖表"
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "無法重設密碼"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not restore that version"
+msgstr "無法還原該版本"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not revoke connection"
@@ -2420,6 +2428,10 @@ msgstr "Cron"
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron expression"
 msgstr "Cron 表示式"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Current"
+msgstr "目前版本"
 
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3232,6 +3244,10 @@ msgstr "隱藏密碼"
 #: src/components/call/VoiceChatCard.tsx
 msgid "Hide transcript"
 msgstr "隱藏文字紀錄"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Hide versions"
+msgstr "收起版本"
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -4168,6 +4184,10 @@ msgstr ""
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr "沒有符合的機器人"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "No earlier versions"
+msgstr "沒有更早的版本"
 
 #: src/pages/shell/bot-files-panel.tsx
 msgid "No files yet."
@@ -5119,6 +5139,7 @@ msgid "Restart to update"
 msgstr "重新啟動以更新"
 
 #: src/components/InstructionSettings.tsx
+#: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "還原"
@@ -6529,6 +6550,10 @@ msgstr "正在驗證…"
 
 #: src/pages/Artifacts.tsx
 msgid "Version"
+msgstr "版本"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Versions"
 msgstr "版本"
 
 #: src/pages/PluginsOverlay.tsx
