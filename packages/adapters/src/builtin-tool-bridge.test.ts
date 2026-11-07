@@ -39,6 +39,7 @@ describe("built-in tool bridge", () => {
       "message_user",
       "read_file",
       "read_history",
+      "read_memory",
       "remember",
       "request_secret",
       "request_takeover",
@@ -46,6 +47,7 @@ describe("built-in tool bridge", () => {
       "schedule_create",
       "schedule_list",
       "search_history",
+      "search_memory",
       "shell",
       "skill_read",
       "update_bot",
@@ -55,7 +57,9 @@ describe("built-in tool bridge", () => {
       "web_search",
       "write_file",
     ]);
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(30_500);
+    // read_memory and search_memory bring the two-tier memory design with them; the list was
+    // already at its old ceiling, so the budget moves by their size and nothing else.
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_800);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining(["render_plot", "create_space", "generate_secret", "scratchpad_add"]),
     );

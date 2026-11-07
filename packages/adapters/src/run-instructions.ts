@@ -285,6 +285,9 @@ function toolUsageLine(parts: {
       ? "Use connect_app when an app needs connecting or the user asks to connect one, then wait for them."
       : undefined,
     builtinOffered(disabled, "remember") ? "Use remember for durable facts." : undefined,
+    builtinOffered(disabled, "read_memory") && builtinOffered(disabled, "search_memory")
+      ? "Your memory is two tiers. The prompt inlines the distilled summary and lists every other document under <memory_index>. When an answer depends on something only that list covers, read_memory(path) it, or search_memory(query) when the path is not obvious, instead of guessing or claiming you do not know. A partly inlined document continues from nextOffset. Do not read a document the prompt already contains in full."
+      : undefined,
     scratchpadClause(disabled),
     builtinOffered(disabled, "request_takeover")
       ? "Use request_takeover when the user must provide protected input or human judgment."

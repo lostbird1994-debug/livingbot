@@ -219,6 +219,9 @@ it("deletes a bot memory document after confirmation but never MEMORY.md", async
   };
   try {
     await show(root, <KnowledgeSection botId="bot-fixture" />);
+    // The list states which tier each document lives in, so a summary the bot no longer sees
+    // in full is not mistaken for missing memory.
+    expect(container.textContent).toContain("MEMORY.md loads on every run");
     await act(async () => button("MEMORY.md").click());
     expect(container.textContent).not.toContain("Delete");
     await act(async () => button("projects/retired.md").click());

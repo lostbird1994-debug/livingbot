@@ -198,6 +198,14 @@ function MemoryDocumentList({
           </div>
         ) : null}
         {loading ? <Skeleton className="h-10 w-full" /> : null}
+        {compact && !loading && docs.length > 0 ? (
+          <div className="pb-2 text-[12px] leading-relaxed text-muted-foreground">
+            <Trans>
+              MEMORY.md loads on every run. Other documents are listed in the prompt and read only
+              when the bot needs them.
+            </Trans>
+          </div>
+        ) : null}
         {!compact && !loading && docs.length === 0 && !error ? (
           <div className="py-1 text-[13px] text-muted-foreground">
             <Trans>Nothing remembered yet</Trans>

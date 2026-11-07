@@ -716,6 +716,33 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "read_memory",
+    description:
+      "Read one stored memory document. Documents listed under <memory_index> are not inlined, so read one before answering from its detail. Continue with nextOffset.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Path as listed, for example MEMORY.md." },
+        offset: { type: "number", description: "Start offset; use nextOffset from a prior read." },
+        max_chars: { type: "number", description: "Characters to return. Defaults to 20000." },
+      },
+      required: ["path"],
+    },
+  },
+  {
+    name: "search_memory",
+    description:
+      "Find a term across all stored memory documents when the path is not obvious. Returns paths and snippets; follow with read_memory.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Text to look for." },
+        limit: { type: "number", description: "Maximum matches. Defaults to 8." },
+      },
+      required: ["query"],
+    },
+  },
+  {
     name: "save_shared_memory",
     description:
       "Save a Space shared memory document every bot reads. Replaces the full content, so include everything it should keep.",

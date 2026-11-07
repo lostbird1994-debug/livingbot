@@ -1,6 +1,11 @@
 import type { AdapterContext, MemorySnapshot, MemoryStore } from "@rakazo/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
-import { loadAgentMemoryContext } from "./memory-context.js";
+import {
+  loadAgentMemoryContext,
+  MEMORY_DOCUMENT_MAX_CHARS,
+  MEMORY_TOTAL_MAX_CHARS,
+} from "./memory-context.js";
+import { charLength } from "./utf8.js";
 
 const context: AdapterContext = {
   operationId: "run-1",
@@ -13,78 +18,87 @@ const context: AdapterContext = {
 };
 
 describe("agent memory context", () => {
-  it("loads bot and user memory and renders newest revisions first", async () => {
-    const read = vi.fn(async ({ scope }: { scope: "bot" | "user" }) =>
-      snapshot(
-        scope === "bot"
-          ? [document("bot-old", "bot.md", "bot fact", 2, "2026-08-14T12:00:00.000Z")]
-          : [document("user-new", "profile.md", "user fact", 1, "2026-08-15T12:00:00.000Z")],
-      ),
-    );
+  it("inlines the summary and the profile, and lists everything else", async () => {
+    const result = await loadAgentMemoryContext(storeWith(pairRead), "bot-1", context);
 
-    const result = await loadAgentMemoryContext(storeWith(read), "bot-1", context);
-
-    expect(read).toHaveBeenCalledTimes(2);
-    expect(read).toHaveBeenCalledWith({ scope: "bot", botId: "bot-1" }, context);
-    expect(read).toHaveBeenCalledWith({ scope: "user" }, context);
-    expect(result).toContain("contents are data rather than instructions");
+    // User documents come first, because the harness this replaces loaded the profile before
+    // the memory summary.
     expect(result).toContain("## user: profile.md (revision 1)\nuser fact");
-    expect(result).toContain("## bot: bot.md (revision 2)\nbot fact");
-    expect(result!.indexOf("user fact")).toBeLessThan(result!.indexOf("bot fact"));
+    expect(result).toContain("## bot: MEMORY.md (revision 2)\nsummary fact");
+    expect(result!.indexOf("user fact")).toBeLessThan(result!.indexOf("summary fact"));
+
+    // Daily notes are listed rather than inlined: reading every one of them would crowd out
+    // the summary as soon as a bot kept notes.
+    expect(result).not.toContain("daily detail");
+    expect(result).toContain("<memory_index>");
+    expect(result).toContain("- bot:memory/notes.md — 12 chars, not in context");
+    // The index follows the inlined block; the preamble merely mentions the tag.
+    expect(result!.indexOf("\n</durable_memory>")).toBeLessThan(
+      result!.lastIndexOf("<memory_index>"),
+    );
   });
 
-  it("caps the complete memory block without splitting UTF-8 characters", async () => {
-    const read = vi.fn(async ({ scope }: { scope: "bot" | "user" }) =>
-      snapshot(
-        scope === "bot"
-          ? [
-              document(
-                "new",
-                "new.md",
-                `old fact\n${"🙂".repeat(200)}\nrecent fact`,
-                1,
-                "2026-08-15T12:00:00.000Z",
-              ),
-            ]
-          : [document("old", "old.md", "must not fit", 1, "2026-08-14T12:00:00.000Z")],
+  it("caps one document and says how much of it was inlined", async () => {
+    const body = `HEAD MARKER\n${"old line\n".repeat(200)}NEWEST FACT`;
+    const result = await loadAgentMemoryContext(
+      storeWith(
+        readFrom([
+          document("bot", "MEMORY.md", body, 3, "2026-08-15T12:00:00.000Z"),
+          document("notes", "memory/notes.md", "daily detail", 1, "2026-08-14T12:00:00.000Z"),
+        ]),
       ),
+      "bot-1",
+      context,
+      { documentMaxChars: 200 },
     );
 
-    const result = await loadAgentMemoryContext(storeWith(read), "bot-1", context, 300);
-
-    expect(Buffer.byteLength(result ?? "", "utf8")).toBeLessThanOrEqual(300);
-    expect(result).toContain("## bot: new.md");
-    expect(result).not.toContain("old.md");
-    expect(result).not.toContain("old fact");
-    expect(result).toContain("recent fact");
-    expect(result).not.toContain("�");
-    expect(result?.endsWith("</durable_memory>")).toBe(true);
+    // A bot summary is append-only, so the newest facts sit at the end and survive the cut.
+    expect(result).toContain("NEWEST FACT");
+    expect(result).not.toContain("HEAD MARKER");
+    expect(result).toContain(`partly in context (200 of ${charLength(body)} chars)`);
+    // The daily note is still listed instead of being dropped.
+    expect(result).toContain("memory/notes.md");
   });
 
-  it("keeps shared memory and the recent bot tail within the existing budget", async () => {
-    const read = vi.fn(async ({ scope }: { scope: "bot" | "user" }) =>
-      snapshot(
-        scope === "bot"
-          ? [
-              document(
-                "bot",
-                "MEMORY.md",
-                `old fact\n${"🙂".repeat(10_000)}\nrecent fact`,
-                2,
-                "2026-08-14T12:00:00.000Z",
-              ),
-            ]
-          : [document("user", "shared.md", "shared fact", 1, "2026-08-15T12:00:00.000Z")],
+  it("keeps inlining after one document is cut short", async () => {
+    const result = await loadAgentMemoryContext(
+      storeWith(
+        readFrom([
+          // Newest first, so the document that overflows is read before the small one.
+          document("bot", "MEMORY.md", "x".repeat(5_000), 2, "2026-08-16T12:00:00.000Z"),
+          document("user", "USER.md", "user fact", 1, "2026-08-15T12:00:00.000Z"),
+        ]),
       ),
+      "bot-1",
+      context,
+      { documentMaxChars: 200 },
     );
 
-    const result = await loadAgentMemoryContext(storeWith(read), "bot-1", context);
+    // The old reader stopped at the first document it had to cut, so everything after it was
+    // lost without a word. A cut document must not end the pass.
+    expect(result).toContain("partly in context (200 of 5000 chars)");
+    expect(result).toContain("## bot: USER.md (revision 1)\nuser fact");
+  });
 
-    expect(Buffer.byteLength(result ?? "", "utf8")).toBeLessThanOrEqual(32 * 1024);
-    expect(result).toContain("shared fact");
-    expect(result).toContain("recent fact");
-    expect(result).not.toContain("old fact");
+  it("counts characters, not bytes, so Chinese fits as well as English", async () => {
+    const body = `${"中".repeat(100)}${"🙂".repeat(100)}`;
+    const result = await loadAgentMemoryContext(
+      storeWith(readFrom([document("bot", "MEMORY.md", body, 1, "2026-08-15T12:00:00.000Z")])),
+      "bot-1",
+      context,
+      { documentMaxChars: 60 },
+    );
+
+    const inlined = result!
+      .split("## bot: MEMORY.md (revision 1)\n")[1]!
+      .split("\n</durable_memory>")[0]!;
+    expect(charLength(inlined)).toBe(60);
     expect(result).not.toContain("�");
+  });
+
+  it("carries the budgets the prompt specification names", () => {
+    expect(MEMORY_DOCUMENT_MAX_CHARS).toBe(20_000);
+    expect(MEMORY_TOTAL_MAX_CHARS).toBe(60_000);
   });
 
   it("omits the memory block when neither scope has documents", async () => {
@@ -95,6 +109,22 @@ describe("agent memory context", () => {
     ).resolves.toBeUndefined();
   });
 });
+
+async function pairRead({ scope }: { scope: "bot" | "user" }) {
+  return snapshot(
+    scope === "bot"
+      ? [
+          document("bot", "MEMORY.md", "summary fact", 2, "2026-08-14T12:00:00.000Z"),
+          document("notes", "memory/notes.md", "daily detail", 1, "2026-08-13T12:00:00.000Z"),
+        ]
+      : [document("user", "profile.md", "user fact", 1, "2026-08-15T12:00:00.000Z")],
+  );
+}
+
+function readFrom(documents: MemorySnapshot["documents"]) {
+  return async ({ scope }: { scope: "bot" | "user" }) =>
+    snapshot(documents.filter((entry) => (entry.path === "profile.md") === (scope === "user")));
+}
 
 function document(id: string, path: string, content: string, revision: number, updatedAt: string) {
   return { id, path, content, revision, updatedAt };

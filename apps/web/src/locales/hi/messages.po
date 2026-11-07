@@ -3802,6 +3802,10 @@ msgstr "{title} के लिए मेमोरी"
 msgid "Memory scope"
 msgstr "मेमोरी स्कोप"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "MEMORY.md loads on every run. Other documents are listed in the prompt and read only when the bot needs them."
+msgstr ""
+
 #: src/pages/shell/composer.tsx
 msgid "Mentions"
 msgstr ""

@@ -3802,6 +3802,10 @@ msgstr "{title}의 기억"
 msgid "Memory scope"
 msgstr "기억 사용 범위"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "MEMORY.md loads on every run. Other documents are listed in the prompt and read only when the bot needs them."
+msgstr ""
+
 #: src/pages/shell/composer.tsx
 msgid "Mentions"
 msgstr "멘션"

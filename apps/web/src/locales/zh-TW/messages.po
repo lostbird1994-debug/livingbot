@@ -3803,6 +3803,10 @@ msgstr "{title} 的記憶"
 msgid "Memory scope"
 msgstr "記憶範圍"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "MEMORY.md loads on every run. Other documents are listed in the prompt and read only when the bot needs them."
+msgstr "MEMORY.md 每次執行都會載入；其他文件只列在提示詞裡，Bot 需要時才讀。"
+
 #: src/pages/shell/composer.tsx
 msgid "Mentions"
 msgstr "提及"
