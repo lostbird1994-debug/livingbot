@@ -146,7 +146,7 @@
   --bubble-card: #e9e8b9;
   --bubble-quote: #e4c6d0;
   --bubble-lead: #c7e1fa;
-  --bubble-lead-bar: #28517f;
+  --bubble-lead-bar: transparent;
   --radius: 0.75rem;
 }
 

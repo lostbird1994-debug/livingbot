@@ -298,7 +298,7 @@ export const webPorcelainTokens: WebThemeColorTokens = {
   bubbleCard: "#E9E8B9",
   bubbleQuote: "#E4C6D0",
   bubbleLead: "#C7E1FA",
-  bubbleLeadBar: "#28517F",
+  bubbleLeadBar: "transparent",
 };
 
 /**
