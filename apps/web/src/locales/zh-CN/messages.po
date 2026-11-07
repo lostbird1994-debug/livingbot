@@ -2402,6 +2402,26 @@ msgid "Sand"
 msgstr "沙丘"
 
 #: src/pages/AccountSettingsOverlay.tsx
+msgid "Ember"
+msgstr "橙夜"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Indigo"
+msgstr "靛蓝"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Patina"
+msgstr "铜绿"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Malachite"
+msgstr "马尔斯"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Dai"
+msgstr "黛蓝"
+
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Data"
 msgstr "数据"

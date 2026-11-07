@@ -1,8 +1,26 @@
-export const APPEARANCE_PREFERENCES = ["system", "light", "dark", "sand"] as const;
+export const APPEARANCE_PREFERENCES = [
+  "system",
+  "light",
+  "dark",
+  "sand",
+  "lazurite",
+  "indigo",
+  "patina",
+  "malachite",
+  "dai",
+] as const;
 
 export type AppearancePreference = (typeof APPEARANCE_PREFERENCES)[number];
 
-export type ResolvedAppearance = "light" | "dark" | "sand";
+export type ResolvedAppearance =
+  | "light"
+  | "dark"
+  | "sand"
+  | "lazurite"
+  | "indigo"
+  | "patina"
+  | "malachite"
+  | "dai";
 
 export const UI_APPEARANCE_STORAGE_KEY = "rakazo.uiAppearance";
 
@@ -277,8 +295,8 @@ export const webSandOverrides = {
   chatUser: "#21232A",
   chatUserForeground: "#F6F1EA",
   muted: "#EBDFCF",
-  mutedForeground: "#21232AAD",
-  faintForeground: "#21232A8F",
+  mutedForeground: "#21232AB9",
+  faintForeground: "#21232AA2",
   accent: "#21232A0F",
   accentForeground: "#21232A",
   destructive: "#B04B2F",
@@ -304,6 +322,236 @@ export const webSandOverrides = {
 } as const satisfies Partial<WebColorTokens>;
 
 export const webSandTokens: WebColorTokens = { ...lightTokens, ...webSandOverrides };
+
+export const webLazuriteTokens: WebColorTokens = {
+  background: "#000026",
+  dialog: "#17173A",
+  foreground: "#F4F1EC",
+  card: "#121235",
+  cardForeground: "#F4F1EC",
+  popover: "#17173A",
+  popoverForeground: "#F4F1EC",
+  glassFill: "#17173A",
+  glassStroke: "#F4F1EC16",
+  primary: "#FF770F",
+  primaryHover: "#FF8529",
+  primaryDisabled: "#F4F1EC26",
+  primaryForeground: "#0B0B12",
+  secondary: "#F4F1EC0F",
+  secondaryForeground: "#F4F1EC",
+  chatUser: "#212142",
+  chatUserForeground: "#F4F1EC",
+  muted: "#121235",
+  mutedForeground: "#F4F1EC92",
+  faintForeground: "#F4F1EC7C",
+  accent: "#F4F1EC0F",
+  accentForeground: "#F4F1EC",
+  destructive: "#CB4C3A",
+  destructiveFill: "#C0392B",
+  destructiveForeground: "#FFFFFF",
+  border: "#F4F1EC1F",
+  input: "#F4F1EC3D",
+  ring: "#FF770F",
+  sidebar: "#0A0A2F",
+  sidebarForeground: "#F4F1EC",
+  sidebarBorder: "#F4F1EC1F",
+  sidebarAccent: "#FF770F1F",
+  sidebarAccentForeground: "#F4F1EC",
+  link: "#FF770F",
+  faviconPlate: "#FFFFFF",
+  success: "#458555",
+  warning: "#9F6D0D",
+  statusWorking: "#FF770F",
+  unread: "#FF770F",
+  workingDot: "#3F7A4E",
+  overlay: "#000000B3",
+  scrollbar: "#F4F1EC3D",
+  scrollbarHover: "#F4F1EC85",
+};
+
+export const webIndigoTokens: WebColorTokens = {
+  background: "#F1C7B2",
+  dialog: "#F8E4D9",
+  foreground: "#05232E",
+  card: "#E9A684",
+  cardForeground: "#05232E",
+  popover: "#F8E4D9",
+  popoverForeground: "#05232E",
+  glassFill: "#F8E4D9",
+  glassStroke: "#05232E16",
+  primary: "#0C5670",
+  primaryHover: "#0A4459",
+  primaryDisabled: "#05232E26",
+  primaryForeground: "#FFFFFF",
+  secondary: "#05232E0F",
+  secondaryForeground: "#05232E",
+  chatUser: "#05232E",
+  chatUserForeground: "#F1C7B2",
+  muted: "#E9A684",
+  mutedForeground: "#05232EC4",
+  faintForeground: "#05232EA9",
+  accent: "#05232E0F",
+  accentForeground: "#05232E",
+  destructive: "#9C3829",
+  destructiveFill: "#C0392B",
+  destructiveForeground: "#FFFFFF",
+  border: "#05232E1F",
+  input: "#05232E3D",
+  ring: "#0C5670",
+  sidebar: "#EFBEA6",
+  sidebarForeground: "#05232E",
+  sidebarBorder: "#05232E1F",
+  sidebarAccent: "#0C56701F",
+  sidebarAccentForeground: "#05232E",
+  link: "#0C5670",
+  faviconPlate: "#FFFFFF",
+  success: "#33633F",
+  warning: "#775209",
+  statusWorking: "#0C5670",
+  unread: "#0C5670",
+  workingDot: "#3F7A4E",
+  overlay: "#00000080",
+  scrollbar: "#05232E3D",
+  scrollbarHover: "#05232E85",
+};
+
+export const webPatinaTokens: WebColorTokens = {
+  background: "#F6EFD2",
+  dialog: "#FBF7E9",
+  foreground: "#213A35",
+  card: "#F0E1AD",
+  cardForeground: "#213A35",
+  popover: "#FBF7E9",
+  popoverForeground: "#213A35",
+  glassFill: "#FBF7E9",
+  glassStroke: "#213A3516",
+  primary: "#42756A",
+  primaryHover: "#39655B",
+  primaryDisabled: "#213A3526",
+  primaryForeground: "#FFFFFF",
+  secondary: "#213A350F",
+  secondaryForeground: "#213A35",
+  chatUser: "#213A35",
+  chatUserForeground: "#F6EFD2",
+  muted: "#F0E1AD",
+  mutedForeground: "#213A35CD",
+  faintForeground: "#213A35B3",
+  accent: "#213A350F",
+  accentForeground: "#213A35",
+  destructive: "#B3402F",
+  destructiveFill: "#C0392B",
+  destructiveForeground: "#FFFFFF",
+  border: "#213A351F",
+  input: "#213A353D",
+  ring: "#42756A",
+  sidebar: "#F5ECCB",
+  sidebarForeground: "#213A35",
+  sidebarBorder: "#213A351F",
+  sidebarAccent: "#42756A1F",
+  sidebarAccentForeground: "#213A35",
+  link: "#42756A",
+  faviconPlate: "#FFFFFF",
+  success: "#3E774C",
+  warning: "#8A5F0B",
+  statusWorking: "#42756A",
+  unread: "#42756A",
+  workingDot: "#3F7A4E",
+  overlay: "#00000080",
+  scrollbar: "#213A353D",
+  scrollbarHover: "#213A3585",
+};
+
+export const webMalachiteTokens: WebColorTokens = {
+  background: "#FADCEA",
+  dialog: "#FDEEF5",
+  foreground: "#003533",
+  card: "#F6B9D5",
+  cardForeground: "#003533",
+  popover: "#FDEEF5",
+  popoverForeground: "#003533",
+  glassFill: "#FDEEF5",
+  glassStroke: "#00353316",
+  primary: "#01726D",
+  primaryHover: "#015955",
+  primaryDisabled: "#00353326",
+  primaryForeground: "#FFFFFF",
+  secondary: "#0035330F",
+  secondaryForeground: "#003533",
+  chatUser: "#003533",
+  chatUserForeground: "#FADCEA",
+  muted: "#F6B9D5",
+  mutedForeground: "#003533C8",
+  faintForeground: "#003533AE",
+  accent: "#0035330F",
+  accentForeground: "#003533",
+  destructive: "#B13F2F",
+  destructiveFill: "#C0392B",
+  destructiveForeground: "#FFFFFF",
+  border: "#0035331F",
+  input: "#0035333D",
+  ring: "#01726D",
+  sidebar: "#FAD6E7",
+  sidebarForeground: "#003533",
+  sidebarBorder: "#0035331F",
+  sidebarAccent: "#01726D1F",
+  sidebarAccentForeground: "#003533",
+  link: "#01726D",
+  faviconPlate: "#FFFFFF",
+  success: "#3A7148",
+  warning: "#885E0B",
+  statusWorking: "#01726D",
+  unread: "#01726D",
+  workingDot: "#3F7A4E",
+  overlay: "#00000080",
+  scrollbar: "#0035333D",
+  scrollbarHover: "#00353385",
+};
+
+export const webDaiTokens: WebColorTokens = {
+  background: "#EAD3DA",
+  dialog: "#F5E9ED",
+  foreground: "#202732",
+  card: "#DBB3C0",
+  cardForeground: "#202732",
+  popover: "#F5E9ED",
+  popoverForeground: "#202732",
+  glassFill: "#F5E9ED",
+  glassStroke: "#20273216",
+  primary: "#425066",
+  primaryHover: "#384457",
+  primaryDisabled: "#20273226",
+  primaryForeground: "#FFFFFF",
+  secondary: "#2027320F",
+  secondaryForeground: "#202732",
+  chatUser: "#202732",
+  chatUserForeground: "#EAD3DA",
+  muted: "#DBB3C0",
+  mutedForeground: "#202732C9",
+  faintForeground: "#202732AE",
+  accent: "#2027320F",
+  accentForeground: "#202732",
+  destructive: "#A63B2C",
+  destructiveFill: "#C0392B",
+  destructiveForeground: "#FFFFFF",
+  border: "#2027321F",
+  input: "#2027323D",
+  ring: "#425066",
+  sidebar: "#E7CCD5",
+  sidebarForeground: "#202732",
+  sidebarBorder: "#2027321F",
+  sidebarAccent: "#4250661F",
+  sidebarAccentForeground: "#202732",
+  link: "#425066",
+  faviconPlate: "#FFFFFF",
+  success: "#366943",
+  warning: "#7F570A",
+  statusWorking: "#425066",
+  unread: "#425066",
+  workingDot: "#3F7A4E",
+  overlay: "#00000080",
+  scrollbar: "#2027323D",
+  scrollbarHover: "#20273285",
+};
 
 /** Dark palette. Prefer `tokensForAppearance` when theme-aware. */
 export const tokens = darkTokens;
@@ -401,14 +649,32 @@ export function resolveAppearance(
 }
 
 export function tokensForAppearance(appearance: ResolvedAppearance): ColorTokens {
-  // Mobile has no sand palette of its own; it borrows the light one.
-  return appearance === "dark" ? darkTokens : lightTokens;
+  // Mobile has no palette of its own beyond light and dark; it borrows light.
+  return appearance === "dark" || appearance === "lazurite" ? darkTokens : lightTokens;
 }
 
 /** The web and Electron palette; `tokensForAppearance` is the mobile one. */
+/** Themes that paint dark surfaces. Every other theme reads as a light theme. */
+export const DARK_APPEARANCES: readonly ResolvedAppearance[] = ["dark", "lazurite"];
+
+/** Native widgets and scrollbars only accept light or dark. */
+export function appearanceColorScheme(appearance: ResolvedAppearance): "light" | "dark" {
+  return DARK_APPEARANCES.includes(appearance) ? "dark" : "light";
+}
+
+export const webTokensByAppearance: Record<ResolvedAppearance, WebColorTokens> = {
+  light: webLightTokens,
+  dark: webDarkTokens,
+  sand: webSandTokens,
+  lazurite: webLazuriteTokens,
+  indigo: webIndigoTokens,
+  patina: webPatinaTokens,
+  malachite: webMalachiteTokens,
+  dai: webDaiTokens,
+};
+
 export function webTokensForAppearance(appearance: ResolvedAppearance): WebColorTokens {
-  if (appearance === "dark") return webDarkTokens;
-  return appearance === "sand" ? webSandTokens : webLightTokens;
+  return webTokensByAppearance[appearance] ?? webLightTokens;
 }
 
 function readStoredAppearance(storage: Pick<Storage, "getItem"> | null | undefined): string | null {
@@ -434,11 +700,18 @@ function renderBlock(selector: string, colorScheme: ResolvedAppearance, palette:
 
 /** The CSS in `tokens.css` (web and Electron). Generated from the web palettes so both stay in sync. */
 export function renderTokensCss(): string {
+  const blocks = (Object.keys(webTokensByAppearance) as ResolvedAppearance[])
+    .filter((appearance) => appearance !== "dark")
+    .map((appearance) =>
+      renderBlock(
+        `[data-theme="${appearance}"]`,
+        appearanceColorScheme(appearance),
+        webTokensByAppearance[appearance],
+      ),
+    );
   return `${[
     "/* Generated by `pnpm --filter @rakazo/ui-tokens generate`. Edit src/index.ts instead. */",
     renderBlock(':root,\n[data-theme="dark"]', "dark", webDarkTokens),
-    renderBlock('[data-theme="light"]', "light", webLightTokens),
-    // Sand is a light theme for native widgets and scrollbars.
-    renderBlock('[data-theme="sand"]', "light", webSandTokens),
+    ...blocks,
   ].join("\n\n")}\n`;
 }

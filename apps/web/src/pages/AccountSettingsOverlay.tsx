@@ -7,6 +7,16 @@ import {
   MIN_PASSWORD_LENGTH,
 } from "@rakazo/core";
 import {
+  webDaiTokens,
+  webDarkTokens,
+  webIndigoTokens,
+  webLazuriteTokens,
+  webLightTokens,
+  webMalachiteTokens,
+  webPatinaTokens,
+  webSandTokens,
+} from "@rakazo/ui-tokens";
+import {
   Button,
   Field,
   FieldLabel,
@@ -760,35 +770,47 @@ function AppearancePicker({
   onChange: (next: AppearancePreference) => void;
 }) {
   const { t } = useLingui();
-  const options: { value: AppearancePreference; label: string }[] = [
-    { value: "system", label: t`System` },
-    { value: "light", label: t`Light` },
-    { value: "dark", label: t`Dark` },
-    { value: "sand", label: t`Sand` },
+  // The swatch is each theme's action colour, so the chip reads as that palette
+  // before you switch to it. System is split, since it follows the OS.
+  const options: { value: AppearancePreference; label: string; swatch: string }[] = [
+    {
+      value: "system",
+      label: t`System`,
+      swatch: "linear-gradient(90deg, #FFFFFF 0 50%, #161616 50% 100%)",
+    },
+    { value: "light", label: t`Light`, swatch: webLightTokens.primary },
+    { value: "dark", label: t`Dark`, swatch: webDarkTokens.primary },
+    { value: "sand", label: t`Sand`, swatch: webSandTokens.primary },
+    { value: "lazurite", label: t`Ember`, swatch: webLazuriteTokens.primary },
+    { value: "indigo", label: t`Indigo`, swatch: webIndigoTokens.primary },
+    { value: "patina", label: t`Patina`, swatch: webPatinaTokens.primary },
+    { value: "malachite", label: t`Malachite`, swatch: webMalachiteTokens.primary },
+    { value: "dai", label: t`Dai`, swatch: webDaiTokens.primary },
   ];
 
   return (
-    <ToggleGroup
-      aria-label={t`Appearance`}
+    <div
       data-testid="ui-appearance-select"
-      value={[value]}
-      onValueChange={([next]) => {
-        if (next) onChange(next as AppearancePreference);
-      }}
-      spacing={1}
-      className="grid min-w-0 grid-cols-4 rounded-lg bg-muted p-1"
+      className="flex max-w-[330px] flex-wrap justify-end gap-1.5"
     >
       {options.map((option) => (
-        <ToggleGroupItem
+        <button
           key={option.value}
-          value={option.value}
+          type="button"
           data-testid={`ui-appearance-${option.value}`}
-          className="text-[13px] aria-pressed:bg-background aria-pressed:shadow-sm"
+          aria-pressed={option.value === value}
+          onClick={() => onChange(option.value)}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[12px] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground aria-pressed:border-primary aria-pressed:text-foreground"
         >
+          <span
+            aria-hidden="true"
+            className="size-3 shrink-0 rounded-full border border-border"
+            style={{ background: option.swatch }}
+          />
           {option.label}
-        </ToggleGroupItem>
+        </button>
       ))}
-    </ToggleGroup>
+    </div>
   );
 }
 
