@@ -76,6 +76,75 @@ export function memoryRoutes(ctx: RouterContext) {
           updatedAt: new Date().toISOString(),
         };
       }),
+      revisions: authed.memory.revisions.handler(async ({ context, input }) => {
+        const doc = await deps.prisma.memoryDocument.findFirst({
+          where: {
+            id: input.documentId,
+            spaceId: context.actor.spaceId,
+            userId: context.actor.userId,
+          },
+          select: { id: true },
+        });
+        if (!doc) throw new IsolationError();
+        const rows = await deps.prisma.memoryRevision.findMany({
+          where: { documentId: doc.id },
+          orderBy: { revision: "desc" },
+          select: { revision: true, content: true, createdAt: true },
+        });
+        return rows.map((row) => ({
+          revision: row.revision,
+          chars: row.content.length,
+          createdAt: row.createdAt.toISOString(),
+        }));
+      }),
+      restore: authed.memory.restore.handler(async ({ context, input }) => {
+        const doc = await deps.prisma.memoryDocument.findFirst({
+          where: {
+            id: input.documentId,
+            spaceId: context.actor.spaceId,
+            userId: context.actor.userId,
+          },
+        });
+        if (!doc) throw new IsolationError();
+        const target = await deps.prisma.memoryRevision.findFirst({
+          where: { documentId: doc.id, revision: input.revision },
+        });
+        if (!target) throw new ORPCError("NOT_FOUND", { message: "That revision is gone." });
+        // Restoring is itself a write: the old text becomes the newest revision, so the
+        // history stays append-only and an undo can be undone.
+        const restored = await deps.memory
+          .commit(
+            {
+              scope: doc.scope as "bot" | "user",
+              botId: doc.botId ?? undefined,
+              path: doc.path,
+              content: target.content,
+              expectedRevision: doc.revision,
+            },
+            {
+              operationId: "mem",
+              traceId: "mem",
+              spaceId: context.actor.spaceId,
+              userId: context.actor.userId,
+              signal: new AbortController().signal,
+            },
+          )
+          .catch((error: unknown) => {
+            if (error instanceof Error && error.message === MEMORY_REVISION_CONFLICT_ERROR) {
+              throw new ORPCError("CONFLICT", { message: error.message });
+            }
+            throw error;
+          });
+        return {
+          id: restored.id,
+          scope: doc.scope as "bot" | "user",
+          botId: doc.botId,
+          path: restored.path,
+          content: restored.content,
+          revision: restored.revision,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
       remove: authed.memory.remove.handler(async ({ context, input }) => {
         const doc = await deps.prisma.memoryDocument.findFirst({
           where: {

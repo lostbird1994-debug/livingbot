@@ -56,10 +56,11 @@ describe("built-in tool bridge", () => {
       "web_fetch",
       "web_search",
       "write_file",
+      "write_memory",
     ]);
     // read_memory and search_memory bring the two-tier memory design with them; the list was
     // already at its old ceiling, so the budget moves by their size and nothing else.
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_800);
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(32_600);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining(["render_plot", "create_space", "generate_secret", "scratchpad_add"]),
     );

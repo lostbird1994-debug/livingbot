@@ -740,6 +740,20 @@ export const appContract = {
         }),
       )
       .output(MemoryDocumentSchema),
+    /** Every write keeps the previous text, so a bad edit can be read back and undone. */
+    revisions: oc.input(z.object({ documentId: Id })).output(
+      z.array(
+        z.object({
+          revision: z.number().int(),
+          chars: z.number().int(),
+          createdAt: z.string(),
+        }),
+      ),
+    ),
+    /** Restores as a new revision: history is append-only, nothing is rewritten in place. */
+    restore: oc
+      .input(z.object({ documentId: Id, revision: z.number().int().positive() }))
+      .output(MemoryDocumentSchema),
     remove: oc.input(z.object({ documentId: Id })).output(z.object({ ok: z.literal(true) })),
     exportMarkdown: oc.input(z.object({ botId: Id.optional() })).output(z.string()),
     providerConfig: oc.output(SpaceMemoryConfigSchema.nullable()),

@@ -14,6 +14,8 @@ import { charLength } from "./utf8.js";
 /** One read returns at most the per-document prompt budget; the tool reports where to resume. */
 const MEMORY_READ_MAX_CHARS = MEMORY_DOCUMENT_MAX_CHARS;
 const MEMORY_SEARCH_MAX_RESULTS = 20;
+/** One document may be rewritten up to this size; the prompt only ever inlines the first 20,000. */
+const MEMORY_WRITE_MAX_CHARS = 200_000;
 
 /** Cross-chat history requires a surviving direct human request in this app thread. */
 export function historyMyChatsAllowed(
@@ -127,6 +129,62 @@ export const memoryTools: ToolHandlers = {
         snippet: redactSecrets(hit.snippet, ctx.secrets),
       }));
     return call.finish({ query, matches: results.length, results });
+  },
+  async write_memory(ctx, call) {
+    const { deps, runId, bot, thread, context } = ctx;
+    const { args } = call;
+    const path = String(args.path ?? "").trim();
+    const content = String(args.content ?? "");
+    if (!path) return call.finish({ error: "path is required, for example MEMORY.md." });
+    if (!content.trim()) {
+      return call.finish({
+        error:
+          "An empty document would erase what the next run reads. Write nothing instead, or say what should be removed.",
+      });
+    }
+    if (charLength(content) > MEMORY_WRITE_MAX_CHARS) {
+      return call.finish({
+        error: `That is ${charLength(content)} characters; one document may hold ${MEMORY_WRITE_MAX_CHARS}.`,
+      });
+    }
+    const snapshot = await deps.memory.read({ scope: "bot", botId: bot.id, path }, context);
+    const existing = snapshot.documents[0];
+    const expectedRevision = Number(args.expected_revision ?? existing?.revision ?? 0);
+    if (existing && expectedRevision !== existing.revision) {
+      return call.finish({
+        error: `That document changed since you read it. Read it again; it is at revision ${existing.revision}.`,
+        revision: existing.revision,
+      });
+    }
+    const saved = await deps.memory
+      .commit(
+        {
+          scope: "bot",
+          botId: bot.id,
+          path,
+          content,
+          expectedRevision,
+          sourceRunId: runId,
+          sourceThreadId: thread.id,
+        },
+        context,
+      )
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : "";
+        if (message === MEMORY_REVISION_CONFLICT_ERROR) return null;
+        throw error;
+      });
+    if (!saved) {
+      return call.finish({
+        error: "Another write landed first. Read the document again before rewriting it.",
+      });
+    }
+    return call.finish({
+      ok: true,
+      path: saved.path,
+      revision: saved.revision,
+      chars: charLength(content),
+    });
   },
   async remember(ctx, call) {
     const { deps, runId, bot, thread, context } = ctx;

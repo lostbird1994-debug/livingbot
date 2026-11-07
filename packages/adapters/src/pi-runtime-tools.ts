@@ -206,6 +206,7 @@ export function describeToolActivity(toolName: string, args: unknown): string {
   if (toolName === "create_child_routine") return `Scheduling routine: ${detail(record.name)}`;
   if (toolName === "remember") return "Saving a note to memory";
   if (toolName === "read_memory") return `Reading memory: ${detail(record.path)}`;
+  if (toolName === "write_memory") return `Rewriting memory: ${detail(record.path)}`;
   if (toolName === "search_memory") return `Searching memory: ${detail(record.query)}`;
   if (toolName === "save_shared_memory") return `Saving shared memory: ${detail(record.path)}`;
   if (toolName === "web_search") return `Searching the web: ${detail(record.query)}`;

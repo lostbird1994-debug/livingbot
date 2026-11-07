@@ -743,6 +743,23 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "write_memory",
+    description:
+      "Replace one of your own memory documents, or create a new one. Read it first and pass the revision you saw. Use this to consolidate: move detail into memory/<topic>.md and keep MEMORY.md a short summary.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Document path, for example MEMORY.md." },
+        content: { type: "string", description: "The document's complete new content." },
+        expected_revision: {
+          type: "number",
+          description: "The revision you read. Omit when creating a document.",
+        },
+      },
+      required: ["path", "content"],
+    },
+  },
+  {
     name: "save_shared_memory",
     description:
       "Save a Space shared memory document every bot reads. Replaces the full content, so include everything it should keep.",

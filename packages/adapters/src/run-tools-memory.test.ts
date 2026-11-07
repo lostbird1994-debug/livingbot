@@ -43,9 +43,26 @@ function setup(secrets: string[] = []) {
       ? [{ path: "memory/notes.md", snippet: "beta detail", score: 1 }]
       : [{ path: "profile.md", snippet: "gamma profile", score: 0.5 }],
   );
+  const commit = vi.fn(
+    async ({
+      path,
+      content,
+      expectedRevision,
+    }: {
+      path: string;
+      content: string;
+      expectedRevision: number;
+    }) => ({
+      id: "doc",
+      path,
+      content,
+      revision: expectedRevision + 1,
+    }),
+  );
   const context = {
-    deps: { memory: { read, search } },
+    deps: { memory: { read, search, commit } },
     bot: { id: "bot-1" },
+    thread: { id: "thread-1" },
     runId: "run-1",
     context: {},
     secrets,
@@ -56,7 +73,7 @@ function setup(secrets: string[] = []) {
       args,
       finish: async (result: unknown) => result,
     }) as unknown as ToolCall;
-  return { context, call, read, search };
+  return { context, call, read, search, commit };
 }
 
 describe("read_memory", () => {
@@ -140,6 +157,74 @@ describe("read_memory", () => {
 
     expect(result.content).toContain("[redacted]");
     expect(result.content).not.toContain("alpha");
+  });
+});
+
+describe("write_memory", () => {
+  it("rewrites a document at the revision that was read", async () => {
+    const { context, call, commit } = setup();
+
+    const result = (await memoryTools.write_memory!(
+      context,
+      call("write_memory", {
+        path: "MEMORY.md",
+        content: "condensed",
+        expected_revision: 3,
+      }),
+    )) as Record<string, unknown>;
+
+    expect(result).toMatchObject({ ok: true, path: "MEMORY.md", revision: 4, chars: 9 });
+    expect(commit).toHaveBeenCalledWith(
+      expect.objectContaining({ path: "MEMORY.md", content: "condensed", expectedRevision: 3 }),
+      expect.anything(),
+    );
+  });
+
+  it("refuses to overwrite a document that moved on", async () => {
+    const { context, call, commit } = setup();
+
+    const result = (await memoryTools.write_memory!(
+      context,
+      call("write_memory", {
+        path: "MEMORY.md",
+        content: "stale rewrite",
+        expected_revision: 2,
+      }),
+    )) as Record<string, unknown>;
+
+    expect(result).toMatchObject({ revision: 3 });
+    expect(String(result.error)).toContain("changed since you read it");
+    expect(commit).not.toHaveBeenCalled();
+  });
+
+  it("refuses to blank a document", async () => {
+    const { context, call, commit } = setup();
+
+    const result = (await memoryTools.write_memory!(
+      context,
+      call("write_memory", {
+        path: "MEMORY.md",
+        content: "   ",
+        expected_revision: 3,
+      }),
+    )) as Record<string, unknown>;
+
+    expect(String(result.error)).toContain("erase");
+    expect(commit).not.toHaveBeenCalled();
+  });
+
+  it("creates a document that does not exist yet", async () => {
+    const { context, call } = setup();
+
+    const result = (await memoryTools.write_memory!(
+      context,
+      call("write_memory", {
+        path: "memory/2026-11.md",
+        content: "November notes",
+      }),
+    )) as Record<string, unknown>;
+
+    expect(result).toMatchObject({ ok: true, path: "memory/2026-11.md", revision: 1 });
   });
 });
 
