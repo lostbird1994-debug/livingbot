@@ -10,11 +10,8 @@ import {
   webDaiTokens,
   webDarkTokens,
   webIndigoTokens,
-  webLazuriteTokens,
   webLightTokens,
   webMalachiteTokens,
-  webPatinaTokens,
-  webSandTokens,
 } from "@rakazo/ui-tokens";
 import {
   Button,
@@ -780,10 +777,7 @@ function AppearancePicker({
     },
     { value: "light", label: t`Light`, swatch: webLightTokens.primary },
     { value: "dark", label: t`Dark`, swatch: webDarkTokens.primary },
-    { value: "sand", label: t`Sand`, swatch: webSandTokens.primary },
-    { value: "lazurite", label: t`Ember`, swatch: webLazuriteTokens.primary },
     { value: "indigo", label: t`Indigo`, swatch: webIndigoTokens.primary },
-    { value: "patina", label: t`Patina`, swatch: webPatinaTokens.primary },
     { value: "malachite", label: t`Malachite`, swatch: webMalachiteTokens.primary },
     { value: "dai", label: t`Dai`, swatch: webDaiTokens.primary },
   ];

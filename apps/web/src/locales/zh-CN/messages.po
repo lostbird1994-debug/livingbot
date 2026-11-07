@@ -2398,20 +2398,8 @@ msgid "Dark"
 msgstr "深色"
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Sand"
-msgstr "沙丘"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Ember"
-msgstr "橙夜"
-
-#: src/pages/AccountSettingsOverlay.tsx
 msgid "Indigo"
 msgstr "靛蓝"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Patina"
-msgstr "铜绿"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Malachite"

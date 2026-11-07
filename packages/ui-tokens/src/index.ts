@@ -2,25 +2,14 @@ export const APPEARANCE_PREFERENCES = [
   "system",
   "light",
   "dark",
-  "sand",
-  "lazurite",
   "indigo",
-  "patina",
   "malachite",
   "dai",
 ] as const;
 
 export type AppearancePreference = (typeof APPEARANCE_PREFERENCES)[number];
 
-export type ResolvedAppearance =
-  | "light"
-  | "dark"
-  | "sand"
-  | "lazurite"
-  | "indigo"
-  | "patina"
-  | "malachite"
-  | "dai";
+export type ResolvedAppearance = "light" | "dark" | "indigo" | "malachite" | "dai";
 
 export const UI_APPEARANCE_STORAGE_KEY = "rakazo.uiAppearance";
 
@@ -276,98 +265,6 @@ export const webLightTokens: WebColorTokens = { ...lightTokens, ...webLightOverr
  * #B04B2F (4.80:1), wheat #8A5F0B (5.02:1). The palette has no green, so
  * success is a derived olive at 4.5:1.
  */
-export const webSandOverrides = {
-  background: "#F7F3EC",
-  dialog: "#FBF7F1",
-  foreground: "#21232A",
-  card: "#EBDFCF",
-  cardForeground: "#21232A",
-  popover: "#FBF7F1",
-  popoverForeground: "#21232A",
-  glassFill: "#FBF7F1",
-  glassStroke: "#21232A16",
-  primary: "#1F6D93",
-  primaryHover: "#1A5C7C",
-  primaryDisabled: "#21232A26",
-  primaryForeground: "#FFFFFF",
-  secondary: "#21232A0F",
-  secondaryForeground: "#21232A",
-  chatUser: "#21232A",
-  chatUserForeground: "#F6F1EA",
-  muted: "#EBDFCF",
-  mutedForeground: "#21232AB9",
-  faintForeground: "#21232AA2",
-  accent: "#21232A0F",
-  accentForeground: "#21232A",
-  destructive: "#B04B2F",
-  destructiveFill: "#CD6143",
-  destructiveForeground: "#FFFFFF",
-  border: "#21232A1F",
-  input: "#21232A3D",
-  ring: "#2B82AC",
-  sidebar: "#EFE4D6",
-  sidebarForeground: "#21232A",
-  sidebarBorder: "#21232A1F",
-  sidebarAccent: "#2B82AC1F",
-  sidebarAccentForeground: "#21232A",
-  link: "#1F6D93",
-  success: "#43704A",
-  warning: "#8A5F0B",
-  statusWorking: "#1F6D93",
-  unread: "#1F6D93",
-  workingDot: "#4E7A52",
-  overlay: "#21232A80",
-  scrollbar: "#21232A3D",
-  scrollbarHover: "#21232A85",
-} as const satisfies Partial<WebColorTokens>;
-
-export const webSandTokens: WebColorTokens = { ...lightTokens, ...webSandOverrides };
-
-export const webLazuriteTokens: WebColorTokens = {
-  background: "#CF7D3F",
-  dialog: "#B26B3C",
-  foreground: "#12181C",
-  card: "#BC723D",
-  cardForeground: "#12181C",
-  popover: "#B26B3C",
-  popoverForeground: "#12181C",
-  glassFill: "#B26B3C",
-  glassStroke: "#12181C16",
-  primary: "#000026",
-  primaryHover: "#242444",
-  primaryDisabled: "#00002655",
-  primaryForeground: "#FFFFFF",
-  secondary: "#12181C0F",
-  secondaryForeground: "#12181C",
-  chatUser: "#AB673B",
-  chatUserForeground: "#12181C",
-  muted: "#BC723D",
-  mutedForeground: "#12181CE8",
-  faintForeground: "#12181CD4",
-  accent: "#12181C0F",
-  accentForeground: "#12181C",
-  destructive: "#481C18",
-  destructiveFill: "#772E29",
-  destructiveForeground: "#FFFFFF",
-  border: "#12181C1F",
-  input: "#12181C3D",
-  ring: "#000026",
-  sidebar: "#C5773E",
-  sidebarForeground: "#12181C",
-  sidebarBorder: "#12181C1F",
-  sidebarAccent: "#0000262E",
-  sidebarAccentForeground: "#12181C",
-  link: "#000026",
-  faviconPlate: "#FFFFFF",
-  success: "#132F26",
-  warning: "#362810",
-  statusWorking: "#000026",
-  unread: "#000026",
-  workingDot: "#1E4D3E",
-  overlay: "#000000B3",
-  scrollbar: "#12181C3D",
-  scrollbarHover: "#12181C85",
-};
 
 export const webIndigoTokens: WebColorTokens = {
   background: "#0C5670",
@@ -413,51 +310,6 @@ export const webIndigoTokens: WebColorTokens = {
   overlay: "#000000B3",
   scrollbar: "#F2ECE63D",
   scrollbarHover: "#F2ECE685",
-};
-export const webPatinaTokens: WebColorTokens = {
-  background: "#618980",
-  dialog: "#76978A",
-  foreground: "#000000",
-  card: "#6E9286",
-  cardForeground: "#000000",
-  popover: "#76978A",
-  popoverForeground: "#000000",
-  glassFill: "#76978A",
-  glassStroke: "#00000016",
-  primary: "#F4EAC5",
-  primaryHover: "#D2C9A9",
-  primaryDisabled: "#F4EAC555",
-  primaryForeground: "#000000",
-  secondary: "#0000000F",
-  secondaryForeground: "#000000",
-  chatUser: "#7B9A8C",
-  chatUserForeground: "#000000",
-  muted: "#6E9286",
-  mutedForeground: "#000000DB",
-  faintForeground: "#000000CC",
-  accent: "#0000000F",
-  accentForeground: "#000000",
-  destructive: "#2B110F",
-  destructiveFill: "#5F2521",
-  destructiveForeground: "#FFFFFF",
-  border: "#0000001F",
-  input: "#0000003D",
-  ring: "#F4EAC5",
-  sidebar: "#688E83",
-  sidebarForeground: "#000000",
-  sidebarBorder: "#0000001F",
-  sidebarAccent: "#F4EAC52E",
-  sidebarAccentForeground: "#000000",
-  link: "#181714",
-  faviconPlate: "#FFFFFF",
-  success: "#0B1C17",
-  warning: "#201809",
-  statusWorking: "#F4EAC5",
-  unread: "#F4EAC5",
-  workingDot: "#193F32",
-  overlay: "#000000B3",
-  scrollbar: "#0000003D",
-  scrollbarHover: "#00000085",
 };
 
 export const webMalachiteTokens: WebColorTokens = {
@@ -669,10 +521,7 @@ export function appearanceColorScheme(appearance: ResolvedAppearance): "light" |
 export const webTokensByAppearance: Record<ResolvedAppearance, WebColorTokens> = {
   light: webLightTokens,
   dark: webDarkTokens,
-  sand: webSandTokens,
-  lazurite: webLazuriteTokens,
   indigo: webIndigoTokens,
-  patina: webPatinaTokens,
   malachite: webMalachiteTokens,
   dai: webDaiTokens,
 };
