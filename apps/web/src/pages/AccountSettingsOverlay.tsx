@@ -12,6 +12,7 @@ import {
   webIndigoTokens,
   webLightTokens,
   webMalachiteTokens,
+  webPorcelainTokens,
 } from "@rakazo/ui-tokens";
 import {
   Button,
@@ -783,6 +784,7 @@ function AppearancePicker({
     },
     { value: "light", label: t`Light`, swatch: webLightTokens.primary },
     { value: "dark", label: t`Dark`, swatch: webDarkTokens.primary },
+    { value: "porcelain", label: t`Porcelain`, swatch: webPorcelainTokens.primary },
     { value: "indigo", label: t`Indigo`, swatch: webIndigoTokens.primary },
     { value: "malachite", label: t`Malachite`, swatch: webMalachiteTokens.primary },
     { value: "dai", label: t`Dai`, swatch: webDaiTokens.primary },

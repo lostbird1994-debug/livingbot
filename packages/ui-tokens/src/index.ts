@@ -2,6 +2,7 @@ export const APPEARANCE_PREFERENCES = [
   "system",
   "light",
   "dark",
+  "porcelain",
   "indigo",
   "malachite",
   "dai",
@@ -9,7 +10,7 @@ export const APPEARANCE_PREFERENCES = [
 
 export type AppearancePreference = (typeof APPEARANCE_PREFERENCES)[number];
 
-export type ResolvedAppearance = "light" | "dark" | "indigo" | "malachite" | "dai";
+export type ResolvedAppearance = "light" | "dark" | "porcelain" | "indigo" | "malachite" | "dai";
 
 export const UI_APPEARANCE_STORAGE_KEY = "rakazo.uiAppearance";
 
@@ -159,6 +160,15 @@ export const lightTokens = {
   scrollbarHover: "#A8A8A4",
 } as const satisfies ColorTokens;
 
+/**
+ * Surfaces that only some themes tint apart from `muted`: a theme can give each kind of
+ * bubble its own colour, and a theme that does not is silent here — the component falls back
+ * to `--muted`, so nothing changes for it.
+ */
+export const BUBBLE_TOKENS = ["bubbleBot", "bubbleCard", "bubbleQuote"] as const;
+export type BubbleToken = (typeof BUBBLE_TOKENS)[number];
+export type WebThemeColorTokens = WebColorTokens & Partial<Record<BubbleToken, string>>;
+
 /** Web and Electron only: the primary fill's hover and disabled states. Mobile has no hover. */
 export type WebColorTokens = ColorTokens & {
   primaryHover: string;
@@ -254,6 +264,34 @@ export const webLightOverrides = {
 
 export const webDarkTokens: WebColorTokens = { ...darkTokens, ...webDarkOverrides };
 export const webLightTokens: WebColorTokens = { ...lightTokens, ...webLightOverrides };
+
+/**
+ * Porcelain: the light theme's paper, with colour moved onto the parts that carry it.
+ *
+ * Page, cards, sidebar and all text stay exactly as the light theme. The fills come from the
+ * nine-swatch reference, where every group pairs a deep colour with a pale one. Deep colours go
+ * wherever text must read (button, link, focus ring, unread); pale ones only ever paint a
+ * surface — measured on white they are 1.26-1.58:1, so they can never carry text themselves.
+ * Each kind of bubble gets its own pale colour, which is why this theme defines the bubble
+ * slots that other themes leave out.
+ */
+export const webPorcelainTokens: WebThemeColorTokens = {
+  ...webLightTokens,
+  primary: "#28517F",
+  primaryHover: "#1F4167",
+  primaryDisabled: "#28517F33",
+  primaryForeground: "#FFFFFF",
+  chatUser: "#C7E1FA",
+  chatUserForeground: "#1C1C1C",
+  link: "#28517F",
+  ring: "#28517F",
+  unread: "#28517F",
+  statusWorking: "#28517F",
+  sidebarAccent: "#28517F1A",
+  bubbleBot: "#A4E2C6",
+  bubbleCard: "#E9E8B9",
+  bubbleQuote: "#E4C6D0",
+};
 
 /**
  * Sand: a warm paper theme built from a five-colour reference
@@ -518,15 +556,16 @@ export function appearanceColorScheme(appearance: ResolvedAppearance): "light" |
   return DARK_APPEARANCES.includes(appearance) ? "dark" : "light";
 }
 
-export const webTokensByAppearance: Record<ResolvedAppearance, WebColorTokens> = {
+export const webTokensByAppearance: Record<ResolvedAppearance, WebThemeColorTokens> = {
   light: webLightTokens,
   dark: webDarkTokens,
+  porcelain: webPorcelainTokens,
   indigo: webIndigoTokens,
   malachite: webMalachiteTokens,
   dai: webDaiTokens,
 };
 
-export function webTokensForAppearance(appearance: ResolvedAppearance): WebColorTokens {
+export function webTokensForAppearance(appearance: ResolvedAppearance): WebThemeColorTokens {
   return webTokensByAppearance[appearance] ?? webLightTokens;
 }
 
@@ -540,14 +579,18 @@ function readStoredAppearance(storage: Pick<Storage, "getItem"> | null | undefin
 }
 
 /** `cardForeground` -> `--card-foreground` */
-export function cssVariableName(token: keyof WebColorTokens): string {
+export function cssVariableName(token: keyof WebThemeColorTokens): string {
   return `--${token.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
 }
 
-function renderBlock(selector: string, colorScheme: ResolvedAppearance, palette: WebColorTokens) {
-  const lines = (Object.keys(palette) as (keyof WebColorTokens)[]).map(
-    (token) => `  ${cssVariableName(token)}: ${palette[token].toLowerCase()};`,
-  );
+function renderBlock(
+  selector: string,
+  colorScheme: ResolvedAppearance,
+  palette: WebThemeColorTokens,
+) {
+  const lines = (Object.keys(palette) as (keyof WebThemeColorTokens)[])
+    .filter((token) => palette[token] !== undefined)
+    .map((token) => `  ${cssVariableName(token)}: ${palette[token]?.toLowerCase()};`);
   return `${selector} {\n  color-scheme: ${colorScheme};\n${lines.join("\n")}\n  --radius: ${RADIUS};\n}`;
 }
 

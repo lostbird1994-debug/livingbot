@@ -97,3 +97,18 @@ body,
     opacity: 0.3;
   }
 }
+
+/* Themes that tint each kind of bubble apart from `muted` define these variables; every other
+   theme leaves them unset, so the class falls back to the shared muted surface and nothing
+   changes for it. */
+.rk-bubble-bot {
+  background: var(--bubble-bot, var(--muted));
+}
+
+.rk-bubble-card {
+  background: var(--bubble-card, var(--muted));
+}
+
+.rk-bubble-quote {
+  background: var(--bubble-quote, var(--muted));
+}
