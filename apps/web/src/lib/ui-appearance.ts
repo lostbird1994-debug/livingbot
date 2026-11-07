@@ -24,7 +24,8 @@ export function applyResolvedAppearance(
 ): void {
   if (!root) return;
   root.dataset.theme = appearance;
-  root.style.colorScheme = appearance;
+  // `color-scheme` only accepts light or dark; sand is a light theme.
+  root.style.colorScheme = appearance === "dark" ? "dark" : "light";
   if (typeof document === "undefined") return;
   const meta = document.querySelector(THEME_COLOR_META);
   if (meta) {

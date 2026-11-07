@@ -96,3 +96,51 @@
   --primary-disabled: #1c1c1c26;
   --radius: 0.75rem;
 }
+
+[data-theme="sand"] {
+  color-scheme: light;
+  --background: #f7f3ec;
+  --dialog: #fbf7f1;
+  --foreground: #21232a;
+  --card: #ebdfcf;
+  --card-foreground: #21232a;
+  --popover: #fbf7f1;
+  --popover-foreground: #21232a;
+  --glass-fill: #fbf7f1;
+  --glass-stroke: #21232a16;
+  --primary: #1f6d93;
+  --primary-foreground: #ffffff;
+  --secondary: #21232a0f;
+  --secondary-foreground: #21232a;
+  --chat-user: #21232a;
+  --chat-user-foreground: #f6f1ea;
+  --muted: #ebdfcf;
+  --muted-foreground: #21232aad;
+  --faint-foreground: #21232a8f;
+  --accent: #21232a0f;
+  --accent-foreground: #21232a;
+  --destructive: #b04b2f;
+  --destructive-fill: #cd6143;
+  --destructive-foreground: #ffffff;
+  --border: #21232a1f;
+  --input: #21232a3d;
+  --ring: #2b82ac;
+  --sidebar: #efe4d6;
+  --sidebar-foreground: #21232a;
+  --sidebar-border: #21232a1f;
+  --sidebar-accent: #2b82ac1f;
+  --sidebar-accent-foreground: #21232a;
+  --link: #1f6d93;
+  --favicon-plate: #ffffff;
+  --success: #43704a;
+  --warning: #8a5f0b;
+  --status-working: #1f6d93;
+  --unread: #1f6d93;
+  --working-dot: #4e7a52;
+  --overlay: #21232a80;
+  --scrollbar: #21232a3d;
+  --scrollbar-hover: #21232a85;
+  --primary-hover: #1a5c7c;
+  --primary-disabled: #21232a26;
+  --radius: 0.75rem;
+}
