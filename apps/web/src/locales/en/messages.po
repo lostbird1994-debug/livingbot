@@ -1107,6 +1107,10 @@ msgstr "Browse"
 msgid "Browse MCP servers"
 msgstr "Browse MCP servers"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Bubbles"
+msgstr "Bubbles"
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Built-in"

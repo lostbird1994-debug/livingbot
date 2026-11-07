@@ -56,6 +56,16 @@ export function ChatBackgroundLayer({ botId }: { botId: string | null }) {
     () => DEFAULT_CHAT_BACKGROUND_SETTINGS,
   );
 
+  // Bubbles read this variable, so their translucency follows this bot's slider
+  // even when the chat has no picture yet.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--rk-bubble-alpha", String(settings.bubble));
+    return () => {
+      root.style.removeProperty("--rk-bubble-alpha");
+    };
+  }, [settings.bubble]);
+
   if (!url) return null;
 
   return (

@@ -212,6 +212,15 @@ export function ChatBackgroundSection({ botId, botName }: { botId: string; botNa
             display={`${Math.round(settings.scrim * 100)}%`}
             onChange={(scrim) => patch({ scrim })}
           />
+          <BackdropSlider
+            label={t`Bubbles`}
+            value={settings.bubble}
+            min={CHAT_BACKGROUND_LIMITS.bubble.min}
+            max={CHAT_BACKGROUND_LIMITS.bubble.max}
+            step={CHAT_BACKGROUND_LIMITS.bubble.step}
+            display={`${Math.round(settings.bubble * 100)}%`}
+            onChange={(bubble) => patch({ bubble })}
+          />
         </div>
 
         <div className="flex items-center justify-between gap-3 pt-1">

@@ -30,7 +30,7 @@ export function ChatHeader({
 }) {
   const { t } = useLingui();
   return (
-    <div className="app-drag relative z-10 grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-2 border-b border-border bg-background px-3 py-2 md:px-[22px]">
+    <div className="app-drag relative z-10 grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-2 border-b border-border/60 bg-transparent px-3 py-2 md:px-[22px]">
       <div className="flex items-center">
         <Button
           variant="floating"

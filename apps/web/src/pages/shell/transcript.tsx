@@ -35,7 +35,6 @@ import {
   useState,
 } from "react";
 import { ActiveBotGlyph } from "../../components/ai/CollaborationMarker";
-import { ChatBackgroundLayer } from "../../components/ChatBackgroundLayer";
 import { VoiceChatCard } from "../../components/call/VoiceChatCard";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { quoteDraftForSelection } from "../../lib/quote-selection";
@@ -69,7 +68,6 @@ export const Transcript = memo(function Transcript({
   dismissableAskIds,
   running,
   workingBots,
-  backgroundBotId,
   userBubble,
   onCallBack,
   onLoadOlder,
@@ -109,8 +107,6 @@ export const Transcript = memo(function Transcript({
   dismissableAskIds: Set<string>;
   running: boolean;
   workingBots: GroupAvatarMember[];
-  /** The bot whose private chat this is; its own backdrop paints behind the messages. */
-  backgroundBotId?: string | null;
   /** Your bubbles take the bot's color in its own chat. */
   userBubble?: { background: string; foreground: string };
   /** Calls the bot back from a missed call in the transcript. */
@@ -429,7 +425,6 @@ export const Transcript = memo(function Transcript({
 
   return (
     <div className="relative flex min-h-0 flex-1">
-      <ChatBackgroundLayer botId={backgroundBotId ?? null} />
       <div
         ref={scrollRef}
         data-testid="transcript"

@@ -35,6 +35,7 @@ import {
 } from "react";
 import { useParams } from "react-router-dom";
 import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
+import { ChatBackgroundLayer } from "../components/ChatBackgroundLayer";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
 import { PageLoading } from "../components/PageLoading";
@@ -967,8 +968,10 @@ function SpaceShell() {
         data-space-switch="main"
         aria-hidden={mobileSidebarOpen || undefined}
         inert={mobileSidebarOpen}
-        className="isolate flex min-w-0 flex-1 flex-col bg-background"
+        className="isolate relative flex min-w-0 flex-1 flex-col bg-background"
       >
+        {/* The picture spans the whole chat column, header and composer included. */}
+        <ChatBackgroundLayer botId={inGroup ? null : (active?.id ?? null)} />
         {/* Inside main so the composer and its menus stay above it. */}
         {!mobileSidebarOpen ? (
           <div
@@ -1031,7 +1034,6 @@ function SpaceShell() {
               dismissableAskIds={dismissableAskIds}
               running={transcriptRunning}
               workingBots={workingBots}
-              backgroundBotId={inGroup ? null : (active?.id ?? null)}
               userBubble={userBubble}
               onCallBack={
                 bootstrapMe?.phoneCallsEnabled && !inGroup && active

@@ -100,15 +100,40 @@ body,
 
 /* Themes that tint each kind of bubble apart from `muted` define these variables; every other
    theme leaves them unset, so the class falls back to the shared muted surface and nothing
-   changes for it. */
+   changes for it.
+
+   `--rk-bubble-alpha` comes from the chat's backdrop settings, so bubbles fade in step with the
+   picture behind them instead of covering it with a solid slab. It defaults to 1 (opaque), which
+   keeps every existing theme pixel-identical. */
 .rk-bubble-bot {
-  background: var(--bubble-bot, var(--muted));
+  background: color-mix(
+    in srgb,
+    var(--bubble-bot, var(--muted)) calc(var(--rk-bubble-alpha, 1) * 100%),
+    transparent
+  );
 }
 
 .rk-bubble-card {
-  background: var(--bubble-card, var(--muted));
+  background: color-mix(
+    in srgb,
+    var(--bubble-card, var(--muted)) calc(var(--rk-bubble-alpha, 1) * 100%),
+    transparent
+  );
 }
 
 .rk-bubble-quote {
-  background: var(--bubble-quote, var(--muted));
+  background: color-mix(
+    in srgb,
+    var(--bubble-quote, var(--muted)) calc(var(--rk-bubble-alpha, 1) * 100%),
+    transparent
+  );
+}
+
+/* Your own messages: the tint follows the bot colour set on the thread. */
+.rk-bubble-user {
+  background: color-mix(
+    in srgb,
+    var(--chat-user) calc(var(--rk-bubble-alpha, 1) * 100%),
+    transparent
+  );
 }

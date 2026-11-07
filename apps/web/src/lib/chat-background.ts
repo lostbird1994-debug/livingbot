@@ -26,18 +26,22 @@ export type ChatBackgroundSettings = {
   blur: number;
   /** Darkness of the scrim laid over the picture. */
   scrim: number;
+  /** How opaque message bubbles stay, so the picture can show between them. */
+  bubble: number;
 };
 
 export const CHAT_BACKGROUND_LIMITS = {
   opacity: { min: 0.15, max: 1, step: 0.05 },
   blur: { min: 0, max: 40, step: 1 },
   scrim: { min: 0, max: 0.85, step: 0.05 },
+  bubble: { min: 0.15, max: 1, step: 0.05 },
 } as const;
 
 export const DEFAULT_CHAT_BACKGROUND_SETTINGS: ChatBackgroundSettings = {
   opacity: 1,
   blur: 0,
   scrim: 0.15,
+  bubble: 1,
 };
 
 const listeners = new Set<() => void>();
@@ -69,7 +73,7 @@ function clamp(value: number, min: number, max: number, fallback: number): numbe
 export function normalizeChatBackgroundSettings(
   raw: Partial<ChatBackgroundSettings> | null | undefined,
 ): ChatBackgroundSettings {
-  const { opacity, blur, scrim } = CHAT_BACKGROUND_LIMITS;
+  const { opacity, blur, scrim, bubble } = CHAT_BACKGROUND_LIMITS;
   return {
     opacity: clamp(
       Number(raw?.opacity),
@@ -79,6 +83,12 @@ export function normalizeChatBackgroundSettings(
     ),
     blur: clamp(Number(raw?.blur), blur.min, blur.max, DEFAULT_CHAT_BACKGROUND_SETTINGS.blur),
     scrim: clamp(Number(raw?.scrim), scrim.min, scrim.max, DEFAULT_CHAT_BACKGROUND_SETTINGS.scrim),
+    bubble: clamp(
+      Number(raw?.bubble),
+      bubble.min,
+      bubble.max,
+      DEFAULT_CHAT_BACKGROUND_SETTINGS.bubble,
+    ),
   };
 }
 
