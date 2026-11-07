@@ -101,6 +101,51 @@ describe("agent memory context", () => {
     expect(MEMORY_TOTAL_MAX_CHARS).toBe(60_000);
   });
 
+  it("folds the documents past the recent list into one line per folder", async () => {
+    const many = [
+      document("summary", "MEMORY.md", "summary fact", 1, "2026-11-07T00:00:00.000Z"),
+      ...Array.from({ length: 25 }, (_, index) =>
+        document(
+          `note-${index}`,
+          `memory/note-${index}.md`,
+          `fact ${index}`,
+          index + 1,
+          `2026-10-${String(25 - index).padStart(2, "0")}T00:00:00.000Z`,
+        ),
+      ),
+    ];
+
+    const result = await loadAgentMemoryContext(storeWith(readFrom(many)), "bot-1", context);
+    const lines = result!.split("\n").filter((line) => line.startsWith("- "));
+
+    // 20 named lines plus one folder roll-up: a fixed count would hide the archive forever.
+    expect(lines).toHaveLength(21);
+    expect(lines[0]).toContain("note-0.md");
+    expect(lines[19]).toContain("note-19.md");
+    expect(lines[20]).toBe("- memory/ — 5 files, latest 2026-10-05");
+  });
+
+  it("keeps the folder roll-up when the index budget is too tight for every name", async () => {
+    const many = Array.from({ length: 23 }, (_, index) =>
+      document(
+        `note-${index}`,
+        index % 2 === 0 ? `memory/note-${index}.md` : `feishu/note-${index}.md`,
+        `fact ${index}`,
+        index + 1,
+        `2026-10-${String(23 - index).padStart(2, "0")}T00:00:00.000Z`,
+      ),
+    );
+
+    const result = await loadAgentMemoryContext(storeWith(readFrom(many)), "bot-1", context, {
+      indexMaxChars: 200,
+    });
+    const lines = result!.split("\n").filter((line) => line.startsWith("- "));
+
+    // Whole areas survive the trim; only individual names at the tail are dropped.
+    expect(result).toContain("— 2 files, latest");
+    expect(lines.length).toBeLessThan(20);
+  });
+
   it("omits the memory block when neither scope has documents", async () => {
     const read = vi.fn(async () => snapshot([]));
 

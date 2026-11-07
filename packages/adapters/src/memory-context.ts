@@ -11,7 +11,9 @@ export const MEMORY_DOCUMENT_MAX_CHARS = 20_000;
 export const MEMORY_TOTAL_MAX_CHARS = 60_000;
 /** The index of documents kept out of the prompt for on-demand reads. */
 export const MEMORY_INDEX_MAX_CHARS = 4_000;
-export const MEMORY_INDEX_MAX_ENTRIES = 40;
+/** Named one by one before the rest folds into per-folder counts. */
+export const MEMORY_INDEX_RECENT = 20;
+export const MEMORY_INDEX_MAX_FOLDERS = 8;
 /** Ceiling on what shared (user-scope) documents may take from the block. */
 export const MEMORY_PROFILE_MAX_CHARS = 10_000;
 
@@ -92,14 +94,47 @@ export async function loadAgentMemoryContext(
   }
 
   // Everything not fully inlined is listed, including a summary whose head or tail was cut:
-  // otherwise the model would think it had read the whole document.
-  const listed = documents.filter(
-    (document) => (inlinedChars.get(keyOf(document)) ?? 0) < charLength(document.content),
-  );
-  const lines: string[] = [];
-  let indexChars = 0;
-  for (const document of listed) {
-    if (lines.length >= MEMORY_INDEX_MAX_ENTRIES) break;
+  // otherwise the model would think it had read the whole document. Newest first, so the list
+  // shows what the bot has been working on.
+  const listed = documents
+    .filter((document) => (inlinedChars.get(keyOf(document)) ?? 0) < charLength(document.content))
+    .sort(
+      (left, right) =>
+        memoryTimestamp(right.updatedAt) - memoryTimestamp(left.updatedAt) ||
+        left.path.localeCompare(right.path),
+    );
+  const recent = listed.slice(0, MEMORY_INDEX_RECENT);
+  const older = listed.slice(MEMORY_INDEX_RECENT);
+
+  // A fixed number of name lines can never cover an archive that keeps growing, so everything
+  // past the recent list is folded into one line per folder: the model still learns that the
+  // material exists, how much of it there is, and how fresh it is, and can search or read on.
+  const folders = new Map<string, { count: number; latest: number }>();
+  for (const document of older) {
+    const folder = folderOf(document.path);
+    const entry = folders.get(folder) ?? { count: 0, latest: 0 };
+    entry.count += 1;
+    entry.latest = Math.max(entry.latest, memoryTimestamp(document.updatedAt));
+    folders.set(folder, entry);
+  }
+  const folderLines = [...folders.entries()]
+    .sort((left, right) => right[1].latest - left[1].latest || left[0].localeCompare(right[0]))
+    .slice(0, MEMORY_INDEX_MAX_FOLDERS)
+    .map(
+      ([folder, entry]) =>
+        `- ${folder} — ${entry.count} files, latest ${dayOfTimestamp(entry.latest)}`,
+    );
+  if (folders.size > MEMORY_INDEX_MAX_FOLDERS) {
+    folderLines.push(`- …and ${folders.size - MEMORY_INDEX_MAX_FOLDERS} other folders`);
+  }
+
+  const detailLines: string[] = [];
+  let detailChars = 0;
+  // Folders are reserved first: trimming them would hide whole areas, while trimming the tail
+  // of the recent list only hides a few individual documents.
+  const folderChars = folderLines.reduce((sum, line) => sum + charLength(line) + 1, 0);
+  const detailBudget = Math.max(0, indexMaxChars - folderChars);
+  for (const document of recent) {
     const total = charLength(document.content);
     const shown = inlinedChars.get(keyOf(document)) ?? 0;
     const state =
@@ -107,11 +142,12 @@ export async function loadAgentMemoryContext(
         ? `partly in context (${shown} of ${total} chars)`
         : `${total} chars, not in context`;
     const line = `- ${document.scope}:${document.path} — ${state}, updated ${dayOf(document.updatedAt)}`;
-    if (indexChars + charLength(line) + 1 > indexMaxChars) break;
-    lines.push(line);
-    indexChars += charLength(line) + 1;
+    if (detailChars + charLength(line) + 1 > detailBudget) break;
+    detailLines.push(line);
+    detailChars += charLength(line) + 1;
   }
 
+  const lines = [...detailLines, ...folderLines];
   const memoryBlock = sections.length ? `${preamble}${opening}${sections.join("")}${closing}` : "";
   const indexBlock = lines.length
     ? `\n\n<memory_index>\nMore memory is stored than is inlined above. Read one with read_memory(path); find a term across all of them with search_memory(query).\n${lines.join("\n")}\n</memory_index>`
@@ -146,8 +182,18 @@ function keyOf(document: ScopedMemoryDocument): string {
 }
 
 function dayOf(updatedAt: string | undefined): string {
-  const timestamp = memoryTimestamp(updatedAt);
+  return dayOfTimestamp(memoryTimestamp(updatedAt));
+}
+
+function dayOfTimestamp(timestamp: number): string {
   return timestamp ? new Date(timestamp).toISOString().slice(0, 10) : "unknown";
+}
+
+/** `memory/2026-11.md` -> `memory/`; a document at the root has no folder of its own. */
+function folderOf(path: string): string {
+  const clean = path.trim().replace(/^\.?\//, "");
+  const slash = clean.lastIndexOf("/");
+  return slash === -1 ? "(root)" : `${clean.slice(0, slash)}/`;
 }
 
 function memoryTimestamp(updatedAt: string | undefined): number {
