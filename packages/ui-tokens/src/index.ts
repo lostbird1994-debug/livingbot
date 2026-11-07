@@ -370,51 +370,50 @@ export const webLazuriteTokens: WebColorTokens = {
 };
 
 export const webIndigoTokens: WebColorTokens = {
-  background: "#F1C7B2",
-  dialog: "#F8E4D9",
-  foreground: "#05232E",
-  card: "#E9A684",
-  cardForeground: "#05232E",
-  popover: "#F8E4D9",
-  popoverForeground: "#05232E",
-  glassFill: "#F8E4D9",
-  glassStroke: "#05232E16",
-  primary: "#0C5670",
-  primaryHover: "#0A4459",
-  primaryDisabled: "#05232E26",
-  primaryForeground: "#FFFFFF",
-  secondary: "#05232E0F",
-  secondaryForeground: "#05232E",
-  chatUser: "#05232E",
-  chatUserForeground: "#F1C7B2",
-  muted: "#E9A684",
-  mutedForeground: "#05232EC4",
-  faintForeground: "#05232EA9",
-  accent: "#05232E0F",
-  accentForeground: "#05232E",
-  destructive: "#9C3829",
-  destructiveFill: "#C0392B",
+  background: "#0C5670",
+  dialog: "#2C6476",
+  foreground: "#F2ECE6",
+  card: "#205F74",
+  cardForeground: "#F2ECE6",
+  popover: "#2C6476",
+  popoverForeground: "#F2ECE6",
+  glassFill: "#2C6476",
+  glassStroke: "#F2ECE616",
+  primary: "#EDB79C",
+  primaryHover: "#F0C1AA",
+  primaryDisabled: "#EDB79C55",
+  primaryForeground: "#0C2A36",
+  secondary: "#F2ECE60F",
+  secondaryForeground: "#F2ECE6",
+  chatUser: "#346778",
+  chatUserForeground: "#F2ECE6",
+  muted: "#205F74",
+  mutedForeground: "#F2ECE6E7",
+  faintForeground: "#F2ECE6BB",
+  accent: "#F2ECE60F",
+  accentForeground: "#F2ECE6",
+  destructive: "#F0B2AC",
+  destructiveFill: "#D9544A",
   destructiveForeground: "#FFFFFF",
-  border: "#05232E1F",
-  input: "#05232E3D",
-  ring: "#0C5670",
-  sidebar: "#EFBEA6",
-  sidebarForeground: "#05232E",
-  sidebarBorder: "#05232E1F",
-  sidebarAccent: "#0C56701F",
-  sidebarAccentForeground: "#05232E",
-  link: "#0C5670",
+  border: "#F2ECE61F",
+  input: "#F2ECE63D",
+  ring: "#EDB79C",
+  sidebar: "#175B72",
+  sidebarForeground: "#F2ECE6",
+  sidebarBorder: "#F2ECE61F",
+  sidebarAccent: "#EDB79C2E",
+  sidebarAccentForeground: "#F2ECE6",
+  link: "#EDB79C",
   faviconPlate: "#FFFFFF",
-  success: "#33633F",
-  warning: "#775209",
-  statusWorking: "#0C5670",
-  unread: "#0C5670",
-  workingDot: "#3F7A4E",
-  overlay: "#00000080",
-  scrollbar: "#05232E3D",
-  scrollbarHover: "#05232E85",
+  success: "#9ACCB8",
+  warning: "#E3BB74",
+  statusWorking: "#EDB79C",
+  unread: "#EDB79C",
+  workingDot: "#61AC8C",
+  overlay: "#000000B3",
+  scrollbar: "#F2ECE63D",
+  scrollbarHover: "#F2ECE685",
 };
-
 export const webPatinaTokens: WebColorTokens = {
   background: "#F6EFD2",
   dialog: "#FBF7E9",
@@ -649,13 +648,13 @@ export function resolveAppearance(
 }
 
 export function tokensForAppearance(appearance: ResolvedAppearance): ColorTokens {
-  // Mobile has no palette of its own beyond light and dark; it borrows light.
-  return appearance === "dark" || appearance === "lazurite" ? darkTokens : lightTokens;
+  // Mobile has no palette of its own beyond light and dark; it follows which one the theme reads as.
+  return appearanceColorScheme(appearance) === "dark" ? darkTokens : lightTokens;
 }
 
 /** The web and Electron palette; `tokensForAppearance` is the mobile one. */
 /** Themes that paint dark surfaces. Every other theme reads as a light theme. */
-export const DARK_APPEARANCES: readonly ResolvedAppearance[] = ["dark", "lazurite"];
+export const DARK_APPEARANCES: readonly ResolvedAppearance[] = ["dark", "lazurite", "indigo"];
 
 /** Native widgets and scrollbars only accept light or dark. */
 export function appearanceColorScheme(appearance: ResolvedAppearance): "light" | "dark" {
