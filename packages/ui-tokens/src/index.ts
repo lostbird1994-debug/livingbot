@@ -165,13 +165,7 @@ export const lightTokens = {
  * bubble its own colour, and a theme that does not is silent here — the component falls back
  * to `--muted`, so nothing changes for it.
  */
-export const BUBBLE_TOKENS = [
-  "bubbleBot",
-  "bubbleCard",
-  "bubbleQuote",
-  "bubbleLead",
-  "bubbleLeadBar",
-] as const;
+export const BUBBLE_TOKENS = ["bubbleBot", "bubbleCard", "bubbleQuote", "bubbleLead"] as const;
 export type BubbleToken = (typeof BUBBLE_TOKENS)[number];
 export type WebThemeColorTokens = WebColorTokens & Partial<Record<BubbleToken, string>>;
 
@@ -298,7 +292,6 @@ export const webPorcelainTokens: WebThemeColorTokens = {
   bubbleCard: "#E9E8B9",
   bubbleQuote: "#E4C6D0",
   bubbleLead: "#C7E1FA",
-  bubbleLeadBar: "transparent",
 };
 
 /**
