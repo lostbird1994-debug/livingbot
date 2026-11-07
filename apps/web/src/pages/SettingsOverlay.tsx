@@ -34,7 +34,6 @@ export function SettingsOverlay({
   onDeleteSpace,
   email,
   name,
-  chatBackgroundBot = null,
   usage,
   onUsageOpen,
   section: requestedSection,
@@ -62,8 +61,6 @@ export function SettingsOverlay({
   onDeleteSpace?: (spaceId: string) => Promise<void>;
   email?: string | null;
   name: string;
-  /** The bot whose private chat is open, so its backdrop can be set from here. */
-  chatBackgroundBot?: { id: string; name: string } | null;
   usage?: UsageSummary | null;
   onUsageOpen: () => void;
   section: SettingsSection;
@@ -348,7 +345,6 @@ export function SettingsOverlay({
                       <GeneralSettingsPanels
                         email={email}
                         name={name}
-                        chatBackgroundBot={chatBackgroundBot}
                         onNameSaved={onNameSaved}
                         timezone={timezone}
                         onTimezoneChange={onTimezoneChange}

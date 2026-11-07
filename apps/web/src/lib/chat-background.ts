@@ -1,15 +1,11 @@
 /**
  * Chat backdrop, kept entirely on this device.
  *
- * The picture itself lives in IndexedDB (a Blob per target) because photos blow
- * past the localStorage quota; the three rendering knobs live in localStorage.
- * A "target" is either a bot id (that bot's private chat) or
- * {@link GLOBAL_BACKGROUND_TARGET}, which every chat without its own picture
- * falls back to. Nothing here talks to the server.
+ * The picture lives in IndexedDB (a Blob per bot) because photos blow past the
+ * localStorage quota; the three rendering knobs live in localStorage keyed by
+ * the same bot id, so tuning one chat never disturbs another. Nothing here
+ * talks to the server.
  */
-
-/** Target key that holds the default picture for chats without their own. */
-export const GLOBAL_BACKGROUND_TARGET = "global";
 
 export const CHAT_BACKGROUND_SETTINGS_KEY = "rakazo.chatBackground.settings";
 
@@ -53,7 +49,7 @@ function notify() {
   for (const listener of listeners) listener();
 }
 
-/** Subscribe to picture or knob changes, from either the settings panel or another tab. */
+/** Subscribe to picture or knob changes, from the Bot panel or another tab. */
 export function subscribeChatBackground(listener: () => void) {
   listeners.add(listener);
   return () => {
@@ -86,7 +82,7 @@ export function normalizeChatBackgroundSettings(
   };
 }
 
-function getLocalStorage(): Pick<Storage, "getItem" | "setItem" | "removeItem"> | null {
+function getLocalStorage(): Pick<Storage, "getItem" | "setItem"> | null {
   try {
     return typeof localStorage !== "undefined" ? localStorage : null;
   } catch {
@@ -94,59 +90,77 @@ function getLocalStorage(): Pick<Storage, "getItem" | "setItem" | "removeItem"> 
   }
 }
 
-let memorySettings: ChatBackgroundSettings | null = null;
-
 /**
- * The snapshot hooks hand to `useSyncExternalStore`, so it must keep a stable
- * identity between changes; a freshly parsed object each call would loop.
+ * Parsed settings for every bot, cached against the raw stored string so the
+ * snapshot `useSyncExternalStore` reads keeps a stable identity between edits.
  */
-export function getChatBackgroundSettings(): ChatBackgroundSettings {
-  if (memorySettings) return memorySettings;
+let cache: { raw: string | null; value: Record<string, ChatBackgroundSettings> } | null = null;
+
+function readAllSettings(): Record<string, ChatBackgroundSettings> {
   const storage = getLocalStorage();
-  if (!storage) {
-    memorySettings = DEFAULT_CHAT_BACKGROUND_SETTINGS;
-    return memorySettings;
-  }
+  let raw: string | null = null;
   try {
-    const stored = storage.getItem(CHAT_BACKGROUND_SETTINGS_KEY);
-    memorySettings = stored
-      ? normalizeChatBackgroundSettings(JSON.parse(stored) as Partial<ChatBackgroundSettings>)
-      : DEFAULT_CHAT_BACKGROUND_SETTINGS;
+    raw = storage?.getItem(CHAT_BACKGROUND_SETTINGS_KEY) ?? null;
   } catch {
-    memorySettings = DEFAULT_CHAT_BACKGROUND_SETTINGS;
+    raw = null;
   }
-  return memorySettings;
+  if (cache && cache.raw === raw) return cache.value;
+
+  const value: Record<string, ChatBackgroundSettings> = {};
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      for (const [key, entry] of Object.entries(parsed ?? {})) {
+        if (entry && typeof entry === "object") {
+          value[key] = normalizeChatBackgroundSettings(entry as Partial<ChatBackgroundSettings>);
+        }
+      }
+    } catch {
+      // Unreadable settings fall back to defaults rather than blocking the panel.
+    }
+  }
+  cache = { raw, value };
+  return value;
 }
 
-export function setChatBackgroundSettings(
-  patch: Partial<ChatBackgroundSettings>,
-): ChatBackgroundSettings {
-  const next = normalizeChatBackgroundSettings({ ...getChatBackgroundSettings(), ...patch });
-  memorySettings = next;
+function writeAllSettings(next: Record<string, ChatBackgroundSettings>) {
+  const raw = JSON.stringify(next);
   const storage = getLocalStorage();
   if (storage) {
     try {
-      storage.setItem(CHAT_BACKGROUND_SETTINGS_KEY, JSON.stringify(next));
+      storage.setItem(CHAT_BACKGROUND_SETTINGS_KEY, raw);
     } catch {
-      // Quota or private mode: the in-memory value still applies for this session.
+      // Quota or private mode: the in-memory cache still drives this session.
     }
   }
+  cache = { raw: storage ? raw : cache?.raw ?? null, value: next };
+}
+
+export function getChatBackgroundSettings(botId: string): ChatBackgroundSettings {
+  return readAllSettings()[botId] ?? DEFAULT_CHAT_BACKGROUND_SETTINGS;
+}
+
+export function setChatBackgroundSettings(
+  botId: string,
+  patch: Partial<ChatBackgroundSettings>,
+): ChatBackgroundSettings {
+  const all = { ...readAllSettings() };
+  const next = normalizeChatBackgroundSettings({
+    ...(all[botId] ?? DEFAULT_CHAT_BACKGROUND_SETTINGS),
+    ...patch,
+  });
+  all[botId] = next;
+  writeAllSettings(all);
   notify();
   return next;
 }
 
-export function resetChatBackgroundSettings(): ChatBackgroundSettings {
-  memorySettings = { ...DEFAULT_CHAT_BACKGROUND_SETTINGS };
-  const storage = getLocalStorage();
-  if (storage) {
-    try {
-      storage.removeItem(CHAT_BACKGROUND_SETTINGS_KEY);
-    } catch {
-      // Ignore: the default is already in memory.
-    }
-  }
+export function resetChatBackgroundSettings(botId: string): ChatBackgroundSettings {
+  const all = { ...readAllSettings() };
+  delete all[botId];
+  writeAllSettings(all);
   notify();
-  return memorySettings;
+  return DEFAULT_CHAT_BACKGROUND_SETTINGS;
 }
 
 function openDatabase(): Promise<IDBDatabase | null> {
@@ -200,44 +214,22 @@ function withStore<T>(
   );
 }
 
-/** Read the stored picture for one target, or null when it has none. */
-export function readChatBackgroundImage(target: string): Promise<Blob | null> {
-  return withStore<Blob | undefined>("readonly", (store) => store.get(target)).then(
+/** Read one bot's stored picture, or null when it has none. */
+export function readChatBackgroundImage(botId: string): Promise<Blob | null> {
+  return withStore<Blob | undefined>("readonly", (store) => store.get(botId)).then(
     (value) => value ?? null,
   );
 }
 
-export async function saveChatBackgroundImage(target: string, blob: Blob): Promise<boolean> {
-  const written = await withStore<IDBValidKey>("readwrite", (store) => store.put(blob, target));
+export async function saveChatBackgroundImage(botId: string, blob: Blob): Promise<boolean> {
+  const written = await withStore<IDBValidKey>("readwrite", (store) => store.put(blob, botId));
   notify();
   return written !== null;
 }
 
-export async function removeChatBackgroundImage(target: string): Promise<void> {
-  await withStore<undefined>("readwrite", (store) => store.delete(target));
+export async function removeChatBackgroundImage(botId: string): Promise<void> {
+  await withStore<undefined>("readwrite", (store) => store.delete(botId));
   notify();
-}
-
-/** Targets that currently own a picture, useful for the settings panel's badges. */
-export function listChatBackgroundTargets(): Promise<string[]> {
-  return withStore<IDBValidKey[]>("readonly", (store) => store.getAllKeys()).then((keys) =>
-    (keys ?? []).map(String),
-  );
-}
-
-/**
- * Resolve which picture a chat should paint: its own first, then the global
- * default. Returns null when neither exists.
- */
-export async function resolveChatBackgroundImage(
-  botId: string | null,
-): Promise<{ target: string; blob: Blob } | null> {
-  if (botId) {
-    const own = await readChatBackgroundImage(botId);
-    if (own) return { target: botId, blob: own };
-  }
-  const shared = await readChatBackgroundImage(GLOBAL_BACKGROUND_TARGET);
-  return shared ? { target: GLOBAL_BACKGROUND_TARGET, blob: shared } : null;
 }
 
 /**

@@ -40,7 +40,6 @@ import { useId, useRef, useState, useSyncExternalStore } from "react";
 import { AccountAccess, LinkSsoRow } from "../components/AccountAccess";
 import { AccountDataSettings } from "../components/AccountDataSettings";
 import { SuccessPop } from "../components/ai/primitives";
-import { ChatBackgroundSettingsPanel } from "../components/ChatBackgroundSettings";
 import { ComputerDeviceSettings } from "../components/ComputerDeviceSettings";
 import { ComputersUnavailableHint } from "../components/ComputersUnavailableHint";
 import { DesktopUpdateSection } from "../components/DesktopUpdates";
@@ -83,8 +82,6 @@ import { authErrorText } from "../lib/user-error";
 export type SettingsGeneralProps = {
   email?: string | null;
   name: string;
-  /** The bot whose private chat is open, so its own backdrop can be edited here. */
-  chatBackgroundBot?: { id: string; name: string } | null;
   onNameSaved?: () => Promise<void>;
   /** The user's saved IANA timezone, or null before one is set. */
   timezone?: string | null;
@@ -96,7 +93,6 @@ export type SettingsGeneralProps = {
 export function GeneralSettingsPanels({
   email,
   name,
-  chatBackgroundBot = null,
   onNameSaved,
   timezone = null,
   onTimezoneChange,
@@ -388,8 +384,6 @@ export function GeneralSettingsPanels({
           </div>
         ) : null}
       </SettingsGroup>
-
-      <ChatBackgroundSettingsPanel bot={chatBackgroundBot} />
 
       <SettingsGroup title={<Trans>Chat</Trans>}>
         <SettingsRow

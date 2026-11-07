@@ -662,10 +662,6 @@ msgstr "La totalité des {credit} sert à l’utilisation des modèles."
 msgid "All bots"
 msgstr "Tous les bots"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "All chats"
-msgstr ""
-
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
 msgstr ""
@@ -823,10 +819,6 @@ msgstr "Apparence"
 
 #: src/pages/Shell.tsx
 msgid "Appearance: {label}"
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Applies to"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -1001,11 +993,7 @@ msgid "Back to sign in"
 msgstr "Retour à la connexion"
 
 #: src/components/ChatBackgroundSettings.tsx
-msgid "Background image"
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Background preview"
+msgid "Background preview for {botName}"
 msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
@@ -2682,10 +2670,6 @@ msgstr "Ignoré"
 msgid "Dismissed. Reconnect anytime from MCP settings."
 msgstr "Fermé. Reconnectez-vous à tout moment depuis les paramètres MCP."
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Display"
-msgstr ""
-
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker"
 msgstr "Docker"
@@ -4167,14 +4151,6 @@ msgstr "Aucun modèle listé."
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "Aucun fichier OpenClaw, Hermes ou document d'agent trouvé."
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "No picture for this chat, so it uses the one shared by all chats."
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "No picture yet."
-msgstr ""
-
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "Aucun serveur MCP distant trouvé"
@@ -4335,9 +4311,8 @@ msgstr "Ponctuel"
 msgid "One-time purchase. Credits do not expire."
 msgstr ""
 
-#. placeholder {0}: bot?.name ?? ""
 #: src/components/ChatBackgroundSettings.tsx
-msgid "Only {0} sees this picture."
+msgid "Only this bot's chat shows the picture. It stays on this device."
 msgstr ""
 
 #: src/components/ChatBackgroundSettings.tsx
@@ -4365,10 +4340,6 @@ msgstr "Ouvrir {name}"
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Open <0>{0}</0> and enter this code:"
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Open a bot's chat, then come back here to give that chat its own picture."
 msgstr ""
 
 #: src/pages/shell/chat-header.tsx
@@ -4587,10 +4558,6 @@ msgstr "Choisissez un modèle dans la liste ou saisissez un identifiant de modè
 msgid "Pick a tool to check"
 msgstr "Choisissez un outil à vérifier"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Pictures stay in this browser. Clearing site data removes them."
-msgstr ""
-
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "Épingler"
@@ -4622,6 +4589,10 @@ msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Plugins"
+msgstr ""
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Porcelain"
 msgstr ""
 
 #: src/pages/RoutineEditor.tsx
@@ -5080,10 +5051,6 @@ msgstr "Redémarrez pour mettre à jour"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Restaurer"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Restore defaults"
-msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5977,6 +5944,10 @@ msgstr "Ces fichiers ou ces choix ne correspondent plus. Choisissez à nouveau l
 msgid "These saved settings can't be read. Remove it and add it again."
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "These settings and the picture stay on this device."
+msgstr ""
+
 #: src/components/call/CallCard.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/RoutineEditor.tsx
@@ -6026,10 +5997,6 @@ msgstr "Cette action est irréversible."
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "Cette action est irréversible."
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "This chat"
-msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -6423,10 +6390,6 @@ msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Used by every chat that has no picture of its own."
 msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx

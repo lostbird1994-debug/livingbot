@@ -663,10 +663,6 @@ msgstr "全部 {credit} 都用於模型用量。"
 msgid "All bots"
 msgstr "所有機器人"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "All chats"
-msgstr ""
-
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
 msgstr ""
@@ -824,10 +820,6 @@ msgstr "外觀"
 
 #: src/pages/Shell.tsx
 msgid "Appearance: {label}"
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Applies to"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -1002,11 +994,7 @@ msgid "Back to sign in"
 msgstr "返回登入"
 
 #: src/components/ChatBackgroundSettings.tsx
-msgid "Background image"
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Background preview"
+msgid "Background preview for {botName}"
 msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
@@ -2447,10 +2435,6 @@ msgid "Dark"
 msgstr "深色"
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Porcelain"
-msgstr "白瓷"
-
-#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Data"
 msgstr ""
@@ -2686,10 +2670,6 @@ msgstr "已忽略"
 #: src/pages/shell/message-cards.tsx
 msgid "Dismissed. Reconnect anytime from MCP settings."
 msgstr "已關閉，可隨時在 MCP 設定中重新連線。"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Display"
-msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker"
@@ -4172,14 +4152,6 @@ msgstr "未列出模型。"
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "找不到 OpenClaw、Hermes 或代理程式文件。"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "No picture for this chat, so it uses the one shared by all chats."
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "No picture yet."
-msgstr ""
-
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "找不到遠端 MCP 伺服器"
@@ -4340,9 +4312,8 @@ msgstr "一次性"
 msgid "One-time purchase. Credits do not expire."
 msgstr "單次購買，額度不會到期。"
 
-#. placeholder {0}: bot?.name ?? ""
 #: src/components/ChatBackgroundSettings.tsx
-msgid "Only {0} sees this picture."
+msgid "Only this bot's chat shows the picture. It stays on this device."
 msgstr ""
 
 #: src/components/ChatBackgroundSettings.tsx
@@ -4371,10 +4342,6 @@ msgstr "開啟 {name}"
 #: src/pages/Onboarding.tsx
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "開啟 <0>{0}</0> 並輸入以下代碼："
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Open a bot's chat, then come back here to give that chat its own picture."
-msgstr ""
 
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
@@ -4592,10 +4559,6 @@ msgstr "請從清單中選擇模型，或輸入此端點提供的模型 ID。"
 msgid "Pick a tool to check"
 msgstr "選擇要檢查的工具"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Pictures stay in this browser. Clearing site data removes them."
-msgstr ""
-
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "置頂"
@@ -4628,6 +4591,10 @@ msgstr ""
 #: src/components/integrations/skills-dialog.tsx
 msgid "Plugins"
 msgstr ""
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Porcelain"
+msgstr "白瓷"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
@@ -5085,10 +5052,6 @@ msgstr "重新啟動以更新"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "還原"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Restore defaults"
-msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5982,6 +5945,10 @@ msgstr "這些檔案或選項已不再相符。請重新選擇檔案。"
 msgid "These saved settings can't be read. Remove it and add it again."
 msgstr "無法讀取已儲存的設定，請移除後重新新增。"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "These settings and the picture stay on this device."
+msgstr ""
+
 #: src/components/call/CallCard.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/RoutineEditor.tsx
@@ -6031,10 +5998,6 @@ msgstr "此操作無法復原。"
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "此操作無法復原。"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "This chat"
-msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -6429,10 +6392,6 @@ msgstr "使用空間預設模型"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "最多可使用 512 個英文字母、數字、_ 或 -。"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Used by every chat that has no picture of its own."
-msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"

@@ -662,10 +662,6 @@ msgstr "De volledige {credit} gaat naar modelgebruik."
 msgid "All bots"
 msgstr "Alle bots"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "All chats"
-msgstr ""
-
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
 msgstr ""
@@ -823,10 +819,6 @@ msgstr "Weergave"
 
 #: src/pages/Shell.tsx
 msgid "Appearance: {label}"
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Applies to"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -1001,11 +993,7 @@ msgid "Back to sign in"
 msgstr "Terug naar aanmelden"
 
 #: src/components/ChatBackgroundSettings.tsx
-msgid "Background image"
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Background preview"
+msgid "Background preview for {botName}"
 msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
@@ -2682,10 +2670,6 @@ msgstr "Gesloten"
 msgid "Dismissed. Reconnect anytime from MCP settings."
 msgstr "Gesloten. Je kunt altijd opnieuw verbinden via de MCP-instellingen."
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Display"
-msgstr ""
-
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker"
 msgstr "Docker"
@@ -4167,14 +4151,6 @@ msgstr "Geen modellen vermeld."
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "Geen OpenClaw-, Hermes- of agentdocument gevonden."
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "No picture for this chat, so it uses the one shared by all chats."
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "No picture yet."
-msgstr ""
-
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "Geen externe MCP-servers gevonden"
@@ -4335,9 +4311,8 @@ msgstr "Eenmalig"
 msgid "One-time purchase. Credits do not expire."
 msgstr ""
 
-#. placeholder {0}: bot?.name ?? ""
 #: src/components/ChatBackgroundSettings.tsx
-msgid "Only {0} sees this picture."
+msgid "Only this bot's chat shows the picture. It stays on this device."
 msgstr ""
 
 #: src/components/ChatBackgroundSettings.tsx
@@ -4366,10 +4341,6 @@ msgstr "{name} openen"
 #: src/pages/Onboarding.tsx
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "Open <0>{0}</0> en voer deze code in:"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Open a bot's chat, then come back here to give that chat its own picture."
-msgstr ""
 
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
@@ -4587,10 +4558,6 @@ msgstr "Kies een model uit de lijst of voer een model-id in dat dit eindpunt aan
 msgid "Pick a tool to check"
 msgstr "Kies een tool om te controleren"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Pictures stay in this browser. Clearing site data removes them."
-msgstr ""
-
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "Vastzetten"
@@ -4622,6 +4589,10 @@ msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Plugins"
+msgstr ""
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Porcelain"
 msgstr ""
 
 #: src/pages/RoutineEditor.tsx
@@ -5080,10 +5051,6 @@ msgstr "Herstarten om bij te werken"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Herstellen"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Restore defaults"
-msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5977,6 +5944,10 @@ msgstr "Deze bestanden of keuzes kloppen niet meer. Kies de bestanden opnieuw."
 msgid "These saved settings can't be read. Remove it and add it again."
 msgstr "Deze opgeslagen instellingen kunnen niet worden gelezen. Verwijder ze en voeg ze opnieuw toe."
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "These settings and the picture stay on this device."
+msgstr ""
+
 #: src/components/call/CallCard.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/RoutineEditor.tsx
@@ -6026,10 +5997,6 @@ msgstr "Dit kan niet ongedaan worden gemaakt."
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "Dit kan niet ongedaan worden gemaakt."
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "This chat"
-msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -6424,10 +6391,6 @@ msgstr ""
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Gebruik maximaal 512 letters, cijfers, _ of -."
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Used by every chat that has no picture of its own."
-msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"

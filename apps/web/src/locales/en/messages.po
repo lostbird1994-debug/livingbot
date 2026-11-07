@@ -662,10 +662,6 @@ msgstr "All {credit} goes to model usage."
 msgid "All bots"
 msgstr "All bots"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "All chats"
-msgstr "All chats"
-
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
 msgstr "All spaces"
@@ -824,10 +820,6 @@ msgstr "Appearance"
 #: src/pages/Shell.tsx
 msgid "Appearance: {label}"
 msgstr "Appearance: {label}"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Applies to"
-msgstr "Applies to"
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -1001,12 +993,8 @@ msgid "Back to sign in"
 msgstr "Back to sign in"
 
 #: src/components/ChatBackgroundSettings.tsx
-msgid "Background image"
-msgstr "Background image"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Background preview"
-msgstr "Background preview"
+msgid "Background preview for {botName}"
+msgstr "Background preview for {botName}"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
@@ -2682,10 +2670,6 @@ msgstr "Dismissed"
 msgid "Dismissed. Reconnect anytime from MCP settings."
 msgstr "Dismissed. Reconnect anytime from MCP settings."
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Display"
-msgstr "Display"
-
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker"
 msgstr "Docker"
@@ -4167,14 +4151,6 @@ msgstr "No models listed."
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "No OpenClaw, Hermes or agent document found."
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "No picture for this chat, so it uses the one shared by all chats."
-msgstr "No picture for this chat, so it uses the one shared by all chats."
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "No picture yet."
-msgstr "No picture yet."
-
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "No remote MCP servers found"
@@ -4335,10 +4311,9 @@ msgstr "One-time"
 msgid "One-time purchase. Credits do not expire."
 msgstr "One-time purchase. Credits do not expire."
 
-#. placeholder {0}: bot?.name ?? ""
 #: src/components/ChatBackgroundSettings.tsx
-msgid "Only {0} sees this picture."
-msgstr "Only {0} sees this picture."
+msgid "Only this bot's chat shows the picture. It stays on this device."
+msgstr "Only this bot's chat shows the picture. It stays on this device."
 
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Opacity"
@@ -4366,10 +4341,6 @@ msgstr "Open {name}"
 #: src/pages/Onboarding.tsx
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "Open <0>{0}</0> and enter this code:"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Open a bot's chat, then come back here to give that chat its own picture."
-msgstr "Open a bot's chat, then come back here to give that chat its own picture."
 
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
@@ -4587,10 +4558,6 @@ msgstr "Pick a model from the list or enter a model id served by this endpoint."
 msgid "Pick a tool to check"
 msgstr "Pick a tool to check"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Pictures stay in this browser. Clearing site data removes them."
-msgstr "Pictures stay in this browser. Clearing site data removes them."
-
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "Pin"
@@ -4623,6 +4590,10 @@ msgstr "Plugin submissions"
 #: src/components/integrations/skills-dialog.tsx
 msgid "Plugins"
 msgstr "Plugins"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Porcelain"
+msgstr "Porcelain"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
@@ -5080,10 +5051,6 @@ msgstr "Restart to update"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Restore"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Restore defaults"
-msgstr "Restore defaults"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5977,6 +5944,10 @@ msgstr "These files or choices no longer match. Choose the files again."
 msgid "These saved settings can't be read. Remove it and add it again."
 msgstr "These saved settings can't be read. Remove it and add it again."
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "These settings and the picture stay on this device."
+msgstr "These settings and the picture stay on this device."
+
 #: src/components/call/CallCard.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/RoutineEditor.tsx
@@ -6026,10 +5997,6 @@ msgstr "This can't be undone."
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "This chat"
-msgstr "This chat"
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -6424,10 +6391,6 @@ msgstr "Use space default"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Use up to 512 letters, digits, _ or -."
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Used by every chat that has no picture of its own."
-msgstr "Used by every chat that has no picture of its own."
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"

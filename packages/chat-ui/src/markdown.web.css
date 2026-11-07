@@ -370,8 +370,9 @@ a.rk-chat-link:hover .rk-chat-link-label {
   margin: 0 0 1.05em;
   padding: 0.75em 0.9em;
   border-radius: 0.75em;
-  background: color-mix(in srgb, var(--foreground) 7%, transparent);
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--foreground) 32%, transparent);
+  background: var(--bubble-lead, color-mix(in srgb, var(--foreground) 7%, transparent));
+  box-shadow: inset 3px 0 0
+    var(--bubble-lead-bar, color-mix(in srgb, var(--foreground) 32%, transparent));
   line-height: 1.6;
 }
 

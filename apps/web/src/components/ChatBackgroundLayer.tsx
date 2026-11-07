@@ -1,36 +1,32 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
-  type ChatBackgroundSettings,
   DEFAULT_CHAT_BACKGROUND_SETTINGS,
   getChatBackgroundRevision,
   getChatBackgroundSettings,
-  resolveChatBackgroundImage,
+  readChatBackgroundImage,
   subscribeChatBackground,
 } from "../lib/chat-background";
 
-/** The picture resolved for one chat, plus the object URL that shows it. */
-function useChatBackdrop(botId: string | null): { url: string | null; target: string | null } {
+/** The object URL for this bot's picture, or null when it has none. */
+function useChatBackdrop(botId: string | null): string | null {
   const revision = useSyncExternalStore(
     subscribeChatBackground,
     getChatBackgroundRevision,
     () => 0,
   );
-  const [backdrop, setBackdrop] = useState<{ url: string | null; target: string | null }>({
-    url: null,
-    target: null,
-  });
+  const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!botId) {
+      setUrl(null);
+      return;
+    }
     let cancelled = false;
     let objectUrl: string | null = null;
-    void resolveChatBackgroundImage(botId).then((found) => {
-      if (cancelled) return;
-      if (!found) {
-        setBackdrop({ url: null, target: null });
-        return;
-      }
-      objectUrl = URL.createObjectURL(found.blob);
-      setBackdrop({ url: objectUrl, target: found.target });
+    void readChatBackgroundImage(botId).then((blob) => {
+      if (cancelled || !blob) return;
+      objectUrl = URL.createObjectURL(blob);
+      setUrl(objectUrl);
     });
     return () => {
       cancelled = true;
@@ -38,32 +34,40 @@ function useChatBackdrop(botId: string | null): { url: string | null; target: st
     };
   }, [botId, revision]);
 
-  return backdrop;
+  return url;
 }
 
 /**
- * Paints the chat's backdrop behind the transcript.
+ * Paints this bot's backdrop behind the transcript.
  *
  * Sits in the transcript's relative wrapper rather than inside the scroll
- * container, so the picture stays put while messages scroll, and never
+ * container, so the picture stays put while messages scroll and never
  * intercepts clicks.
  */
 export function ChatBackgroundLayer({ botId }: { botId: string | null }) {
-  const backdrop = useChatBackdrop(botId);
-  const settings: ChatBackgroundSettings = useSyncExternalStore(
+  const url = useChatBackdrop(botId);
+  const readSettings = useCallback(
+    () => (botId ? getChatBackgroundSettings(botId) : DEFAULT_CHAT_BACKGROUND_SETTINGS),
+    [botId],
+  );
+  const settings = useSyncExternalStore(
     subscribeChatBackground,
-    getChatBackgroundSettings,
+    readSettings,
     () => DEFAULT_CHAT_BACKGROUND_SETTINGS,
   );
 
-  if (!backdrop.url) return null;
+  if (!url) return null;
 
   return (
-    <div aria-hidden="true" data-testid="chat-background" className="pointer-events-none absolute inset-0 overflow-hidden">
+    <div
+      aria-hidden="true"
+      data-testid="chat-background"
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+    >
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url("${backdrop.url}")`,
+          backgroundImage: `url("${url}")`,
           opacity: settings.opacity,
           filter: settings.blur > 0 ? `blur(${settings.blur}px)` : undefined,
           // Blur samples past the edges; scaling up hides the pale fringe it leaves behind.

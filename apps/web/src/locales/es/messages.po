@@ -662,10 +662,6 @@ msgstr "Los {credit} completos se destinan al uso de modelos."
 msgid "All bots"
 msgstr "Todos los bots"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "All chats"
-msgstr ""
-
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
 msgstr "Todos los espacios"
@@ -824,10 +820,6 @@ msgstr "Apariencia"
 #: src/pages/Shell.tsx
 msgid "Appearance: {label}"
 msgstr "Apariencia: {label}"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Applies to"
-msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -1001,11 +993,7 @@ msgid "Back to sign in"
 msgstr "Volver a iniciar sesión"
 
 #: src/components/ChatBackgroundSettings.tsx
-msgid "Background image"
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Background preview"
+msgid "Background preview for {botName}"
 msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
@@ -2682,10 +2670,6 @@ msgstr "Descartado"
 msgid "Dismissed. Reconnect anytime from MCP settings."
 msgstr "Descartado: puedes volver a conectar cuando quieras desde la configuración de MCP."
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Display"
-msgstr ""
-
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker"
 msgstr "Docker"
@@ -4167,14 +4151,6 @@ msgstr "No hay modelos en la lista."
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "No se encontraron archivos de OpenClaw, Hermes ni un documento de agente."
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "No picture for this chat, so it uses the one shared by all chats."
-msgstr ""
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "No picture yet."
-msgstr ""
-
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "No se encontraron servidores MCP remotos"
@@ -4335,9 +4311,8 @@ msgstr "Una vez"
 msgid "One-time purchase. Credits do not expire."
 msgstr "Compra única. Los créditos no vencen."
 
-#. placeholder {0}: bot?.name ?? ""
 #: src/components/ChatBackgroundSettings.tsx
-msgid "Only {0} sees this picture."
+msgid "Only this bot's chat shows the picture. It stays on this device."
 msgstr ""
 
 #: src/components/ChatBackgroundSettings.tsx
@@ -4366,10 +4341,6 @@ msgstr "Abrir {name}"
 #: src/pages/Onboarding.tsx
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "Abre <0>{0}</0> e introduce este código:"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Open a bot's chat, then come back here to give that chat its own picture."
-msgstr ""
 
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
@@ -4587,10 +4558,6 @@ msgstr "Elige un modelo de la lista o introduce un id de modelo que sirva este e
 msgid "Pick a tool to check"
 msgstr "Elige una herramienta para comprobar"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Pictures stay in this browser. Clearing site data removes them."
-msgstr ""
-
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "Fijar"
@@ -4623,6 +4590,10 @@ msgstr "Envíos de plugins"
 #: src/components/integrations/skills-dialog.tsx
 msgid "Plugins"
 msgstr "Plugins"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Porcelain"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
@@ -5080,10 +5051,6 @@ msgstr "Reiniciar para actualizar"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Restaurar"
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Restore defaults"
-msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5977,6 +5944,10 @@ msgstr "Estos archivos o la selección ya no coinciden. Vuelve a elegir los arch
 msgid "These saved settings can't be read. Remove it and add it again."
 msgstr "No se puede leer esta configuración guardada. Quítala y vuelve a agregarla."
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "These settings and the picture stay on this device."
+msgstr ""
+
 #: src/components/call/CallCard.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/RoutineEditor.tsx
@@ -6026,10 +5997,6 @@ msgstr "Esta acción no se puede deshacer."
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "Esto no se puede deshacer."
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "This chat"
-msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -6424,10 +6391,6 @@ msgstr "Usar el predeterminado del espacio"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Usa hasta 512 letras, dígitos, _ o -."
-
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Used by every chat that has no picture of its own."
-msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
