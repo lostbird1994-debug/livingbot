@@ -486,7 +486,9 @@ export const botColors = [
 export function isAppearancePreference(
   value: string | null | undefined,
 ): value is AppearancePreference {
-  return value === "system" || value === "light" || value === "dark";
+  // Read the list, never a copy of it: a theme added to APPEARANCE_PREFERENCES used to be
+  // rejected here, so it applied once and was forgotten on the next load.
+  return typeof value === "string" && (APPEARANCE_PREFERENCES as readonly string[]).includes(value);
 }
 
 export function normalizeAppearancePreference(

@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import type { ColorTokens } from "./index.js";
 import {
+  APPEARANCE_PREFERENCES,
   botColors,
   cssVariableName,
   darkTokens,
@@ -46,6 +47,22 @@ describe("appearance preference", () => {
     persistAppearancePreference("light", storage);
     expect(store.get(UI_APPEARANCE_STORAGE_KEY)).toBe("light");
     expect(resolveAppearancePreference({ storage })).toBe("light");
+  });
+
+  // Every option the picker offers must survive a reload. A hardcoded whitelist of the
+  // original three used to reject the themes, so they applied once and then fell back.
+  it("remembers every appearance the picker offers", () => {
+    for (const preference of APPEARANCE_PREFERENCES) {
+      const store = new Map<string, string>();
+      const storage = {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          store.set(key, value);
+        },
+      };
+      persistAppearancePreference(preference, storage);
+      expect(resolveAppearancePreference({ storage })).toBe(preference);
+    }
   });
 
   it("returns distinct light and dark token sets", () => {

@@ -7,6 +7,7 @@ import {
   webTokensForAppearance,
 } from "@rakazo/ui-tokens";
 
+export { APPEARANCE_PREFERENCES } from "@rakazo/ui-tokens";
 export type { AppearancePreference, ResolvedAppearance };
 
 const THEME_COLOR_META = 'meta[name="theme-color"]';

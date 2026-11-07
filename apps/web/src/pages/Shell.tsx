@@ -22,7 +22,7 @@ import type { GroupAvatarMember } from "@rakazo/ui-web";
 import { Button } from "@rakazo/ui-web";
 import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
-import { Lock, Monitor, Moon, Plug, Plus, ScrollText, Sun, Users } from "lucide-react";
+import { Lock, Monitor, Moon, Palette, Plug, Plus, ScrollText, Sun, Users } from "lucide-react";
 import {
   Suspense,
   useCallback,
@@ -34,8 +34,8 @@ import {
   useSyncExternalStore,
 } from "react";
 import { useParams } from "react-router-dom";
-import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
 import { ChatBackgroundLayer } from "../components/ChatBackgroundLayer";
+import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
 import { PageLoading } from "../components/PageLoading";
@@ -66,7 +66,11 @@ import { markShellReady, useSpaceEpoch } from "../lib/space-switch";
 import { activeThreadRuns } from "../lib/thread-events";
 import { getToolActivityEnabled, subscribeToolActivity } from "../lib/tool-activity-preference";
 import type { AppearancePreference } from "../lib/ui-appearance";
-import { getUiAppearancePreference, setUiAppearance } from "../lib/ui-appearance";
+import {
+  APPEARANCE_PREFERENCES,
+  getUiAppearancePreference,
+  setUiAppearance,
+} from "../lib/ui-appearance";
 import { useDesktopBadge } from "../lib/use-desktop-badge";
 import { HostComputerPrompt } from "./HostComputerPrompt";
 import { RoutineList } from "./RoutineEditor";
@@ -758,6 +762,27 @@ function SpaceShell() {
     billing: bootstrapMe?.billingEnabled === true,
     updates: Boolean(desktopBridge()?.update),
   });
+  // Every appearance the settings pane offers, so the shortcut menu always shows which one
+  // is on. A theme missing here used to leave the whole group unchecked.
+  const appearanceLabel: Record<AppearancePreference, string> = {
+    system: t`System`,
+    light: t`Light`,
+    dark: t`Dark`,
+    porcelain: t`Porcelain`,
+    indigo: t`Indigo`,
+    malachite: t`Malachite`,
+    dai: t`Dai`,
+  };
+  const appearanceIcon: Record<AppearancePreference, typeof Sun> = {
+    system: Monitor,
+    light: Sun,
+    dark: Moon,
+    porcelain: Palette,
+    indigo: Palette,
+    malachite: Palette,
+    dai: Palette,
+  };
+
   const paletteActions: CommandPaletteAction[] = [
     {
       id: "new-bot",
@@ -795,16 +820,10 @@ function SpaceShell() {
       icon,
       onSelect: () => openSettings(id),
     })),
-    ...(
-      [
-        { value: "system", label: t`System`, icon: Monitor },
-        { value: "light", label: t`Light`, icon: Sun },
-        { value: "dark", label: t`Dark`, icon: Moon },
-      ] satisfies { value: AppearancePreference; label: string; icon: typeof Sun }[]
-    ).map(({ value, label, icon }) => ({
+    ...APPEARANCE_PREFERENCES.map((value) => ({
       id: `appearance-${value}`,
-      label: t`Appearance: ${label}`,
-      icon,
+      label: t`Appearance: ${appearanceLabel[value]}`,
+      icon: appearanceIcon[value],
       checked: getUiAppearancePreference() === value,
       onSelect: () => setUiAppearance(value),
     })),
