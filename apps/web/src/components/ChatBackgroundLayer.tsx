@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import {
   DEFAULT_CHAT_BACKGROUND_SETTINGS,
   getChatBackgroundRevision,
@@ -6,6 +7,19 @@ import {
   readChatBackgroundImage,
   subscribeChatBackground,
 } from "../lib/chat-background";
+
+/** CSS variables the surface rules read; cleared when this chat unmounts. */
+const SURFACE_VARIABLES = [
+  "--rk-bubble-alpha",
+  "--rk-alpha-panel",
+  "--rk-alpha-sidebar",
+  "--rk-alpha-dialog",
+  "--rk-alpha-menu",
+  "--rk-alpha-input",
+  "--rk-alpha-code",
+  "--rk-alpha-emphasis",
+  "--rk-glass-blur",
+] as const;
 
 /** The object URL for this bot's picture, or null when it has none. */
 function useChatBackdrop(botId: string | null): string | null {
@@ -24,7 +38,12 @@ function useChatBackdrop(botId: string | null): string | null {
     let cancelled = false;
     let objectUrl: string | null = null;
     void readChatBackgroundImage(botId).then((blob) => {
-      if (cancelled || !blob) return;
+      if (cancelled) return;
+      if (!blob) {
+        // Removing the picture must clear it in place, not wait for a reload.
+        setUrl(null);
+        return;
+      }
       objectUrl = URL.createObjectURL(blob);
       setUrl(objectUrl);
     });
@@ -38,11 +57,12 @@ function useChatBackdrop(botId: string | null): string | null {
 }
 
 /**
- * Paints this bot's backdrop behind the transcript.
+ * Paints the backdrop behind the whole window and publishes this bot's surface
+ * opacities as CSS variables.
  *
- * Sits in the transcript's relative wrapper rather than inside the scroll
- * container, so the picture stays put while messages scroll and never
- * intercepts clicks.
+ * The picture is fixed rather than scrolled, so every translucent surface the
+ * shell paints sits on the same image. Surfaces stay opaque at the default
+ * values, which is what someone who never opens these settings keeps seeing.
  */
 export function ChatBackgroundLayer({ botId }: { botId: string | null }) {
   const url = useChatBackdrop(botId);
@@ -56,23 +76,43 @@ export function ChatBackgroundLayer({ botId }: { botId: string | null }) {
     () => DEFAULT_CHAT_BACKGROUND_SETTINGS,
   );
 
-  // Bubbles read this variable, so their translucency follows this bot's slider
-  // even when the chat has no picture yet.
+  // Published even without a picture, so the dialogs a chat opens keep the
+  // opacities the user dialled in.
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--rk-bubble-alpha", String(settings.bubble));
+    root.style.setProperty("--rk-alpha-panel", String(settings.panel));
+    root.style.setProperty("--rk-alpha-sidebar", String(settings.sidebar));
+    root.style.setProperty("--rk-alpha-dialog", String(settings.dialog));
+    root.style.setProperty("--rk-alpha-menu", String(settings.menu));
+    root.style.setProperty("--rk-alpha-input", String(settings.input));
+    root.style.setProperty("--rk-alpha-code", String(settings.code));
+    root.style.setProperty("--rk-alpha-emphasis", String(settings.emphasis));
+    root.style.setProperty("--rk-glass-blur", `${settings.glass}px`);
     return () => {
-      root.style.removeProperty("--rk-bubble-alpha");
+      for (const name of SURFACE_VARIABLES) root.style.removeProperty(name);
     };
-  }, [settings.bubble]);
+  }, [settings]);
+
+  // Only an actual picture turns the translucent surfaces on.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (url) root.dataset.rkBackdrop = "on";
+    else delete root.dataset.rkBackdrop;
+    return () => {
+      delete root.dataset.rkBackdrop;
+    };
+  }, [url]);
 
   if (!url) return null;
 
-  return (
+  // Portalled to the body: the picture has to sit under the sidebar too, and
+  // every stacking context between here and the window would trap it.
+  return createPortal(
     <div
       aria-hidden="true"
       data-testid="chat-background"
-      className="pointer-events-none absolute inset-0 overflow-hidden"
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
     >
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -92,6 +132,7 @@ export function ChatBackgroundLayer({ botId }: { botId: string | null }) {
           style={{ backgroundColor: "var(--background)", opacity: settings.scrim }}
         />
       ) : null}
-    </div>
+    </div>,
+    document.body,
   );
 }

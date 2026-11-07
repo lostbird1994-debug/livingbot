@@ -1108,6 +1108,10 @@ msgid "Browse MCP servers"
 msgstr "浏览 MCP 服务器"
 
 #: src/components/ChatBackgroundSettings.tsx
+msgid "Bubble opacity"
+msgstr "气泡不透明度"
+
+#: src/components/ChatBackgroundSettings.tsx
 msgid "Bubbles"
 msgstr "气泡"
 
@@ -1461,6 +1465,10 @@ msgstr "代码"
 msgctxt "email sign-in"
 msgid "Code"
 msgstr "验证码"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Code opacity"
+msgstr "代码块不透明度"
 
 #. placeholder {0}: headerName(group)
 #: src/pages/shell/sidebar-roster.tsx
@@ -2595,6 +2603,10 @@ msgstr "详情"
 msgid "Developer"
 msgstr "开发"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Dialogs opacity"
+msgstr "设置与弹窗不透明度"
+
 #: src/lib/dictation.ts
 msgid "Dictation ended unexpectedly."
 msgstr ""
@@ -3114,6 +3126,10 @@ msgstr "正在准备"
 msgid "Git event"
 msgstr "Git 事件"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Glass blur"
+msgstr "毛玻璃强度"
+
 #: src/pages/NotFound.tsx
 msgid "Go home"
 msgstr "返回首页"
@@ -3336,6 +3352,10 @@ msgstr "沿用默认"
 msgid "Input"
 msgstr "输入"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Input opacity"
+msgstr "输入框不透明度"
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
 msgstr "输入"
@@ -3386,6 +3406,10 @@ msgstr "集成域名"
 #: src/pages/PluginsOverlay.tsx
 msgid "Integrations"
 msgstr "集成"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Interface"
+msgstr "界面"
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -3773,6 +3797,10 @@ msgstr "提到了 OpenClaw 功能"
 #: src/pages/shell/agent-import.tsx
 msgid "Mentions: {mentions}"
 msgstr "提到：{mentions}"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Menus opacity"
+msgstr "菜单与浮层不透明度"
 
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
@@ -4319,10 +4347,6 @@ msgstr "单次购买，额度不会过期。"
 msgid "Only this bot's chat shows the picture. It stays on this device."
 msgstr "只有这个 Bot 的对话会显示这张图，图片只保存在本机。"
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Opacity"
-msgstr "不透明度"
-
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -4451,6 +4475,10 @@ msgstr "找不到页面"
 msgid "PagerDuty incident"
 msgstr "PagerDuty 事件"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Panel opacity"
+msgstr "面板不透明度"
+
 #: src/components/PasskeySettings.tsx
 msgid "Passkey"
 msgstr "通行密钥"
@@ -4561,6 +4589,14 @@ msgstr "请从列表中选择模型，或输入此端点提供的模型 ID。"
 #: src/pages/RoutineEditor.tsx
 msgid "Pick a tool to check"
 msgstr "选择要检查的工具"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Picture"
+msgstr "图片"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Picture opacity"
+msgstr "图片不透明度"
 
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
@@ -5339,6 +5375,10 @@ msgstr "搜索：{0}"
 msgid "Searching…"
 msgstr "正在搜索…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Secondary text"
+msgstr "次要文字浓度"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Security"
 msgstr "安全"
@@ -5514,6 +5554,10 @@ msgstr "显示文字记录"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Sidebar density"
 msgstr "侧栏密度"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Sidebar opacity"
+msgstr "侧边栏不透明度"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/lib/localized-provider-hint.ts

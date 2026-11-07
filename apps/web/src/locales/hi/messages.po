@@ -1108,6 +1108,10 @@ msgid "Browse MCP servers"
 msgstr ""
 
 #: src/components/ChatBackgroundSettings.tsx
+msgid "Bubble opacity"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
 msgid "Bubbles"
 msgstr ""
 
@@ -1461,6 +1465,10 @@ msgstr "कोड"
 msgctxt "email sign-in"
 msgid "Code"
 msgstr "कोड"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Code opacity"
+msgstr ""
 
 #. placeholder {0}: headerName(group)
 #: src/pages/shell/sidebar-roster.tsx
@@ -2595,6 +2603,10 @@ msgstr "विवरण"
 msgid "Developer"
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Dialogs opacity"
+msgstr ""
+
 #: src/lib/dictation.ts
 msgid "Dictation ended unexpectedly."
 msgstr ""
@@ -3114,6 +3126,10 @@ msgstr ""
 msgid "Git event"
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Glass blur"
+msgstr ""
+
 #: src/pages/NotFound.tsx
 msgid "Go home"
 msgstr "होम पर जाएँ"
@@ -3336,6 +3352,10 @@ msgstr "डिफ़ॉल्ट का पालन करें"
 msgid "Input"
 msgstr "इनपुट"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Input opacity"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
 msgstr "इनपुट"
@@ -3386,6 +3406,10 @@ msgstr ""
 #: src/pages/PluginsOverlay.tsx
 msgid "Integrations"
 msgstr "इंटीग्रेशन"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Interface"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -3773,6 +3797,10 @@ msgstr "OpenClaw की सुविधाओं का ज़िक्र ह�
 #: src/pages/shell/agent-import.tsx
 msgid "Mentions: {mentions}"
 msgstr "ज़िक्र: {mentions}"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Menus opacity"
+msgstr ""
 
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
@@ -4319,10 +4347,6 @@ msgstr ""
 msgid "Only this bot's chat shows the picture. It stays on this device."
 msgstr ""
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Opacity"
-msgstr ""
-
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -4451,6 +4475,10 @@ msgstr "पेज नहीं मिला"
 msgid "PagerDuty incident"
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Panel opacity"
+msgstr ""
+
 #: src/components/PasskeySettings.tsx
 msgid "Passkey"
 msgstr "पासकी"
@@ -4561,6 +4589,14 @@ msgstr "सूची से एक मॉडल चुनें या इस �
 #: src/pages/RoutineEditor.tsx
 msgid "Pick a tool to check"
 msgstr "जाँचने के लिए टूल चुनें"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Picture"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Picture opacity"
+msgstr ""
 
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
@@ -5339,6 +5375,10 @@ msgstr ""
 msgid "Searching…"
 msgstr "खोजा जा रहा है…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Secondary text"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Security"
 msgstr "सुरक्षा"
@@ -5513,6 +5553,10 @@ msgstr "ट्रांसक्रिप्ट दिखाएँ"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Sidebar density"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Sidebar opacity"
 msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx

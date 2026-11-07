@@ -25,7 +25,12 @@ function useBackdropPreview(target: string, revision: number): string | null {
     let cancelled = false;
     let objectUrl: string | null = null;
     void readChatBackgroundImage(target).then((blob) => {
-      if (cancelled || !blob) return;
+      if (cancelled) return;
+      if (!blob) {
+        // Removing the picture must clear the preview in place, not on the next visit.
+        setUrl(null);
+        return;
+      }
       objectUrl = URL.createObjectURL(blob);
       setUrl(objectUrl);
     });
@@ -75,6 +80,17 @@ function BackdropSlider({
         onChange={(event) => onChange(Number(event.currentTarget.value))}
         className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-border accent-primary"
       />
+    </div>
+  );
+}
+
+function SliderGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-3 border-t border-border/60 pt-3 first:border-0 first:pt-0">
+      <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+        {title}
+      </p>
+      {children}
     </div>
   );
 }
@@ -133,12 +149,28 @@ export function ChatBackgroundSection({ botId, botName }: { botId: string; botNa
     }
   }
 
+  /** One 0–100% surface slider, wired to its own field. */
+  function percentSlider(field: keyof typeof CHAT_BACKGROUND_LIMITS, label: string) {
+    const range = CHAT_BACKGROUND_LIMITS[field];
+    return (
+      <BackdropSlider
+        label={label}
+        value={settings[field]}
+        min={range.min}
+        max={range.max}
+        step={range.step}
+        display={`${Math.round(settings[field] * 100)}%`}
+        onChange={(next) => patch({ [field]: next })}
+      />
+    );
+  }
+
   return (
     <section className="mt-6" data-testid="bot-chat-background">
       <SectionHeading variant="label" className="mb-2">
         <Trans>Chat background</Trans>
       </SectionHeading>
-      <div className="space-y-3 rounded-xl bg-muted/50 p-4">
+      <div className="space-y-4 rounded-xl bg-muted/50 p-4">
         <div className="flex items-center gap-2">
           <Button
             type="button"
@@ -184,16 +216,8 @@ export function ChatBackgroundSection({ botId, botName }: { botId: string; botNa
         )}
         {error ? <p className="text-xs text-destructive">{error}</p> : null}
 
-        <div className="space-y-3 pt-1">
-          <BackdropSlider
-            label={t`Opacity`}
-            value={settings.opacity}
-            min={CHAT_BACKGROUND_LIMITS.opacity.min}
-            max={CHAT_BACKGROUND_LIMITS.opacity.max}
-            step={CHAT_BACKGROUND_LIMITS.opacity.step}
-            display={`${Math.round(settings.opacity * 100)}%`}
-            onChange={(opacity) => patch({ opacity })}
-          />
+        <SliderGroup title={t`Picture`}>
+          {percentSlider("opacity", t`Picture opacity`)}
           <BackdropSlider
             label={t`Blur`}
             value={settings.blur}
@@ -203,27 +227,33 @@ export function ChatBackgroundSection({ botId, botName }: { botId: string; botNa
             display={`${Math.round(settings.blur)}px`}
             onChange={(blur) => patch({ blur })}
           />
-          <BackdropSlider
-            label={t`Dim`}
-            value={settings.scrim}
-            min={CHAT_BACKGROUND_LIMITS.scrim.min}
-            max={CHAT_BACKGROUND_LIMITS.scrim.max}
-            step={CHAT_BACKGROUND_LIMITS.scrim.step}
-            display={`${Math.round(settings.scrim * 100)}%`}
-            onChange={(scrim) => patch({ scrim })}
-          />
-          <BackdropSlider
-            label={t`Bubbles`}
-            value={settings.bubble}
-            min={CHAT_BACKGROUND_LIMITS.bubble.min}
-            max={CHAT_BACKGROUND_LIMITS.bubble.max}
-            step={CHAT_BACKGROUND_LIMITS.bubble.step}
-            display={`${Math.round(settings.bubble * 100)}%`}
-            onChange={(bubble) => patch({ bubble })}
-          />
-        </div>
+          {percentSlider("scrim", t`Dim`)}
+        </SliderGroup>
 
-        <div className="flex items-center justify-between gap-3 pt-1">
+        <SliderGroup title={t`Interface`}>
+          {percentSlider("panel", t`Panel opacity`)}
+          {percentSlider("sidebar", t`Sidebar opacity`)}
+          {percentSlider("dialog", t`Dialogs opacity`)}
+          {percentSlider("menu", t`Menus opacity`)}
+          {percentSlider("input", t`Input opacity`)}
+          {percentSlider("code", t`Code opacity`)}
+          {percentSlider("emphasis", t`Secondary text`)}
+          <BackdropSlider
+            label={t`Glass blur`}
+            value={settings.glass}
+            min={CHAT_BACKGROUND_LIMITS.glass.min}
+            max={CHAT_BACKGROUND_LIMITS.glass.max}
+            step={CHAT_BACKGROUND_LIMITS.glass.step}
+            display={`${Math.round(settings.glass)}px`}
+            onChange={(glass) => patch({ glass })}
+          />
+        </SliderGroup>
+
+        <SliderGroup title={t`Bubbles`}>
+          {percentSlider("bubble", t`Bubble opacity`)}
+        </SliderGroup>
+
+        <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
           <p className="text-[11px] leading-relaxed text-muted-foreground">
             <Trans>These settings and the picture stay on this device.</Trans>
           </p>

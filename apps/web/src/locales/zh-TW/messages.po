@@ -1109,6 +1109,10 @@ msgid "Browse MCP servers"
 msgstr "瀏覽 MCP 伺服器"
 
 #: src/components/ChatBackgroundSettings.tsx
+msgid "Bubble opacity"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
 msgid "Bubbles"
 msgstr ""
 
@@ -1462,6 +1466,10 @@ msgstr "程式碼"
 msgctxt "email sign-in"
 msgid "Code"
 msgstr "驗證碼"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Code opacity"
+msgstr ""
 
 #. placeholder {0}: headerName(group)
 #: src/pages/shell/sidebar-roster.tsx
@@ -2596,6 +2604,10 @@ msgstr "詳細資訊"
 msgid "Developer"
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Dialogs opacity"
+msgstr ""
+
 #: src/lib/dictation.ts
 msgid "Dictation ended unexpectedly."
 msgstr ""
@@ -3115,6 +3127,10 @@ msgstr "正在準備"
 msgid "Git event"
 msgstr "Git 事件"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Glass blur"
+msgstr ""
+
 #: src/pages/NotFound.tsx
 msgid "Go home"
 msgstr "返回首頁"
@@ -3337,6 +3353,10 @@ msgstr "沿用預設"
 msgid "Input"
 msgstr "輸入"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Input opacity"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
 msgstr "輸入"
@@ -3387,6 +3407,10 @@ msgstr "整合服務網域"
 #: src/pages/PluginsOverlay.tsx
 msgid "Integrations"
 msgstr "整合"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Interface"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -3774,6 +3798,10 @@ msgstr "提及 OpenClaw 功能"
 #: src/pages/shell/agent-import.tsx
 msgid "Mentions: {mentions}"
 msgstr "提及：{mentions}"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Menus opacity"
+msgstr ""
 
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
@@ -4320,10 +4348,6 @@ msgstr "單次購買，額度不會到期。"
 msgid "Only this bot's chat shows the picture. It stays on this device."
 msgstr ""
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Opacity"
-msgstr ""
-
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -4452,6 +4476,10 @@ msgstr "找不到頁面"
 msgid "PagerDuty incident"
 msgstr "PagerDuty 事件"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Panel opacity"
+msgstr ""
+
 #: src/components/PasskeySettings.tsx
 msgid "Passkey"
 msgstr "通行金鑰"
@@ -4562,6 +4590,14 @@ msgstr "請從清單中選擇模型，或輸入此端點提供的模型 ID。"
 #: src/pages/RoutineEditor.tsx
 msgid "Pick a tool to check"
 msgstr "選擇要檢查的工具"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Picture"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Picture opacity"
+msgstr ""
 
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
@@ -5340,6 +5376,10 @@ msgstr "搜尋：{0}"
 msgid "Searching…"
 msgstr "正在搜尋…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Secondary text"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Security"
 msgstr "安全"
@@ -5515,6 +5555,10 @@ msgstr "顯示文字紀錄"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Sidebar density"
 msgstr "側邊欄密度"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Sidebar opacity"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/lib/localized-provider-hint.ts

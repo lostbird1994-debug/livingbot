@@ -137,3 +137,98 @@ body,
     transparent
   );
 }
+
+/* ---- Chat backdrop surfaces -------------------------------------------------
+   `data-rk-backdrop` is only set while a picture is loaded, so every rule below
+   is inert for anyone who never sets one. Each surface mixes its own token with
+   transparency by a variable the backdrop layer publishes, which is how the
+   sidebar, dialogs and menus can fade independently. Specificity beats the
+   Tailwind utility each one overrides (`html[...] .bg-x` = 0,2,1). */
+
+html[data-rk-backdrop] body,
+html[data-rk-backdrop] #root {
+  background: transparent;
+}
+
+/* The shell paints the page colour; the picture needs that seat instead. */
+html[data-rk-backdrop] [data-testid="shell-root"] {
+  background-color: transparent;
+}
+
+/* Main column. */
+html[data-rk-backdrop] [data-space-switch="main"] {
+  background-color: color-mix(
+    in srgb,
+    var(--background) calc(var(--rk-alpha-panel, 1) * 100%),
+    transparent
+  );
+}
+
+/* The right-hand panel shares the main column's opacity. */
+html[data-rk-backdrop] [data-panel] {
+  background-color: color-mix(
+    in srgb,
+    var(--background) calc(var(--rk-alpha-panel, 1) * 100%),
+    transparent
+  );
+  backdrop-filter: blur(var(--rk-glass-blur, 0px));
+}
+
+/* Left bot list, both the desktop column and the mobile sheet. */
+html[data-rk-backdrop] .bg-sidebar {
+  background-color: color-mix(
+    in srgb,
+    var(--sidebar) calc(var(--rk-alpha-sidebar, 1) * 100%),
+    transparent
+  );
+  backdrop-filter: blur(var(--rk-glass-blur, 0px));
+}
+
+/* Settings dialogs, alert dialogs and their shells. */
+html[data-rk-backdrop] .bg-dialog {
+  background-color: color-mix(
+    in srgb,
+    var(--dialog) calc(var(--rk-alpha-dialog, 1) * 100%),
+    transparent
+  );
+  backdrop-filter: blur(var(--rk-glass-blur, 0px));
+}
+
+/* Dropdowns, popovers, context menus and the command palette. */
+html[data-rk-backdrop] .bg-popover {
+  background-color: color-mix(
+    in srgb,
+    var(--popover) calc(var(--rk-alpha-menu, 1) * 100%),
+    transparent
+  );
+  backdrop-filter: blur(var(--rk-glass-blur, 0px));
+}
+
+/* The composer card. Keeps a floor of blur so typing stays legible on busy photos. */
+html[data-rk-backdrop] [data-testid="composer-bar"] {
+  background-color: color-mix(
+    in srgb,
+    var(--background) calc(var(--rk-alpha-input, 1) * 100%),
+    transparent
+  );
+  backdrop-filter: blur(max(var(--rk-glass-blur, 0px), 12px));
+}
+
+/* Fenced code inside replies. */
+html[data-rk-backdrop] .rk-chat-markdown pre,
+html[data-rk-backdrop] .rk-code-block {
+  background-color: color-mix(
+    in srgb,
+    var(--muted) calc(var(--rk-alpha-code, 1) * 100%),
+    transparent
+  );
+}
+
+/* Captions and secondary text recede so the picture reads through them. */
+html[data-rk-backdrop] .text-muted-foreground {
+  color: color-mix(
+    in srgb,
+    var(--muted-foreground) calc(var(--rk-alpha-emphasis, 1) * 100%),
+    transparent
+  );
+}

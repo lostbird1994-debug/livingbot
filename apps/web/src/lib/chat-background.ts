@@ -28,6 +28,22 @@ export type ChatBackgroundSettings = {
   scrim: number;
   /** How opaque message bubbles stay, so the picture can show between them. */
   bubble: number;
+  /** Main column surface, behind the transcript. */
+  panel: number;
+  /** Left bot list. */
+  sidebar: number;
+  /** Settings dialogs and other modals. */
+  dialog: number;
+  /** Dropdowns, popovers and command menus. */
+  menu: number;
+  /** The composer card you type into. */
+  input: number;
+  /** Fenced code inside a reply. */
+  code: number;
+  /** Secondary text weight, so captions recede into the picture. */
+  emphasis: number;
+  /** Backdrop blur applied to every translucent surface, in px. */
+  glass: number;
 };
 
 export const CHAT_BACKGROUND_LIMITS = {
@@ -35,6 +51,14 @@ export const CHAT_BACKGROUND_LIMITS = {
   blur: { min: 0, max: 40, step: 1 },
   scrim: { min: 0, max: 0.85, step: 0.05 },
   bubble: { min: 0.15, max: 1, step: 0.05 },
+  panel: { min: 0, max: 1, step: 0.05 },
+  sidebar: { min: 0, max: 1, step: 0.05 },
+  dialog: { min: 0.2, max: 1, step: 0.05 },
+  menu: { min: 0.2, max: 1, step: 0.05 },
+  input: { min: 0, max: 1, step: 0.05 },
+  code: { min: 0, max: 1, step: 0.05 },
+  emphasis: { min: 0.2, max: 1, step: 0.05 },
+  glass: { min: 0, max: 32, step: 1 },
 } as const;
 
 export const DEFAULT_CHAT_BACKGROUND_SETTINGS: ChatBackgroundSettings = {
@@ -42,6 +66,14 @@ export const DEFAULT_CHAT_BACKGROUND_SETTINGS: ChatBackgroundSettings = {
   blur: 0,
   scrim: 0.15,
   bubble: 1,
+  panel: 1,
+  sidebar: 1,
+  dialog: 1,
+  menu: 1,
+  input: 1,
+  code: 1,
+  emphasis: 1,
+  glass: 0,
 };
 
 const listeners = new Set<() => void>();
@@ -73,22 +105,25 @@ function clamp(value: number, min: number, max: number, fallback: number): numbe
 export function normalizeChatBackgroundSettings(
   raw: Partial<ChatBackgroundSettings> | null | undefined,
 ): ChatBackgroundSettings {
-  const { opacity, blur, scrim, bubble } = CHAT_BACKGROUND_LIMITS;
+  const limit = (
+    key: keyof typeof CHAT_BACKGROUND_LIMITS,
+  ): number => {
+    const range = CHAT_BACKGROUND_LIMITS[key];
+    return clamp(Number(raw?.[key]), range.min, range.max, DEFAULT_CHAT_BACKGROUND_SETTINGS[key]);
+  };
   return {
-    opacity: clamp(
-      Number(raw?.opacity),
-      opacity.min,
-      opacity.max,
-      DEFAULT_CHAT_BACKGROUND_SETTINGS.opacity,
-    ),
-    blur: clamp(Number(raw?.blur), blur.min, blur.max, DEFAULT_CHAT_BACKGROUND_SETTINGS.blur),
-    scrim: clamp(Number(raw?.scrim), scrim.min, scrim.max, DEFAULT_CHAT_BACKGROUND_SETTINGS.scrim),
-    bubble: clamp(
-      Number(raw?.bubble),
-      bubble.min,
-      bubble.max,
-      DEFAULT_CHAT_BACKGROUND_SETTINGS.bubble,
-    ),
+    opacity: limit("opacity"),
+    blur: limit("blur"),
+    scrim: limit("scrim"),
+    bubble: limit("bubble"),
+    panel: limit("panel"),
+    sidebar: limit("sidebar"),
+    dialog: limit("dialog"),
+    menu: limit("menu"),
+    input: limit("input"),
+    code: limit("code"),
+    emphasis: limit("emphasis"),
+    glass: limit("glass"),
   };
 }
 

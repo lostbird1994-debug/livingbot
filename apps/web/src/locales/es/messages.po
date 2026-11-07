@@ -1108,6 +1108,10 @@ msgid "Browse MCP servers"
 msgstr "Explorar servidores MCP"
 
 #: src/components/ChatBackgroundSettings.tsx
+msgid "Bubble opacity"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
 msgid "Bubbles"
 msgstr ""
 
@@ -1461,6 +1465,10 @@ msgstr "Código"
 msgctxt "email sign-in"
 msgid "Code"
 msgstr "Código"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Code opacity"
+msgstr ""
 
 #. placeholder {0}: headerName(group)
 #: src/pages/shell/sidebar-roster.tsx
@@ -2595,6 +2603,10 @@ msgstr "Detalles"
 msgid "Developer"
 msgstr "Desarrollo"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Dialogs opacity"
+msgstr ""
+
 #: src/lib/dictation.ts
 msgid "Dictation ended unexpectedly."
 msgstr "El dictado se detuvo de forma inesperada."
@@ -3114,6 +3126,10 @@ msgstr "Preparando"
 msgid "Git event"
 msgstr "Evento de Git"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Glass blur"
+msgstr ""
+
 #: src/pages/NotFound.tsx
 msgid "Go home"
 msgstr "Ir al inicio"
@@ -3336,6 +3352,10 @@ msgstr "Heredar predeterminado"
 msgid "Input"
 msgstr "Entrada"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Input opacity"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
 msgstr "Entradas"
@@ -3386,6 +3406,10 @@ msgstr "Dominio de la integración"
 #: src/pages/PluginsOverlay.tsx
 msgid "Integrations"
 msgstr "Integraciones"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Interface"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -3773,6 +3797,10 @@ msgstr "Menciona funciones de OpenClaw"
 #: src/pages/shell/agent-import.tsx
 msgid "Mentions: {mentions}"
 msgstr "Menciona: {mentions}"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Menus opacity"
+msgstr ""
 
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
@@ -4319,10 +4347,6 @@ msgstr "Compra única. Los créditos no vencen."
 msgid "Only this bot's chat shows the picture. It stays on this device."
 msgstr ""
 
-#: src/components/ChatBackgroundSettings.tsx
-msgid "Opacity"
-msgstr ""
-
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -4451,6 +4475,10 @@ msgstr "Página no encontrada"
 msgid "PagerDuty incident"
 msgstr "Incidente de PagerDuty"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Panel opacity"
+msgstr ""
+
 #: src/components/PasskeySettings.tsx
 msgid "Passkey"
 msgstr "Llave de acceso"
@@ -4561,6 +4589,14 @@ msgstr "Elige un modelo de la lista o introduce un id de modelo que sirva este e
 #: src/pages/RoutineEditor.tsx
 msgid "Pick a tool to check"
 msgstr "Elige una herramienta para comprobar"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Picture"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Picture opacity"
+msgstr ""
 
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
@@ -5339,6 +5375,10 @@ msgstr "Búsqueda: {0}"
 msgid "Searching…"
 msgstr "Buscando…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Secondary text"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Security"
 msgstr "Seguridad"
@@ -5514,6 +5554,10 @@ msgstr "Mostrar la transcripción"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Sidebar density"
 msgstr "Densidad de la barra lateral"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Sidebar opacity"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/lib/localized-provider-hint.ts
