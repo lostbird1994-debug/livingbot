@@ -124,5 +124,7 @@ export function SuccessPop({ label }: { label: string }) {
 
 /** Card shell for every card in the chat. */
 export function BuiCard({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
-  return <div {...props} className={cn("rounded-[20px] bg-card", className)} />;
+  // `rk-card` lets the chat backdrop fade these shells without touching the
+  // `bg-card` utilities used outside the transcript (dialogs, update banners).
+  return <div {...props} className={cn("rk-card rounded-[20px] bg-card", className)} />;
 }

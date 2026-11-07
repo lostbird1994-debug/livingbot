@@ -138,6 +138,16 @@ body,
   );
 }
 
+/* Cards inside the transcript (ask cards, artifacts, tool results) follow the
+   bubble slider: they are message content, so they should recede together. */
+.rk-card {
+  background: color-mix(
+    in srgb,
+    var(--card) calc(var(--rk-bubble-alpha, 1) * 100%),
+    transparent
+  );
+}
+
 /* ---- Chat backdrop surfaces -------------------------------------------------
    `data-rk-backdrop` is only set while a picture is loaded, so every rule below
    is inert for anyone who never sets one. Each surface mixes its own token with
