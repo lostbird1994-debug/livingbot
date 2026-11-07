@@ -662,6 +662,10 @@ msgstr "Все {credit} идут на использование моделей.
 msgid "All bots"
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "All chats"
+msgstr ""
+
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
 msgstr ""
@@ -819,6 +823,10 @@ msgstr "Внешний вид"
 
 #: src/pages/Shell.tsx
 msgid "Appearance: {label}"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Applies to"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -992,6 +1000,14 @@ msgstr "Назад"
 msgid "Back to sign in"
 msgstr "Вернуться ко входу"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Background image"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Background preview"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "Базовый URL"
@@ -1020,6 +1036,10 @@ msgstr "Блокировать"
 
 #: src/lib/ticket-status.ts
 msgid "Blocked"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Blur"
 msgstr ""
 
 #: src/components/SidebarFooter.tsx
@@ -1162,6 +1182,10 @@ msgstr "Не может читать изображения"
 msgid "Cancel"
 msgstr "Отмена"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Cancel dictation"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new bot"
 msgstr "Отменить создание бота"
@@ -1217,6 +1241,10 @@ msgstr "Не удалось отобразить диаграмму: {error}."
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Chat"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Chat background"
 msgstr ""
 
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -1324,6 +1352,10 @@ msgstr "Выбрать папку"
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
 msgid "Choose how to use Rakazo"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Choose image"
 msgstr ""
 
 #: src/lib/localized-provider-hint.ts
@@ -2199,6 +2231,10 @@ msgstr "Не удалось показать учётные данные"
 msgid "Could not sign in"
 msgstr ""
 
+#: src/components/composer/DictationInput.tsx
+msgid "Could not start dictation. Check microphone permissions."
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not start OAuth"
 msgstr "Не удалось запустить OAuth"
@@ -2277,6 +2313,14 @@ msgstr ""
 
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't load your wallet"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Couldn't read this image"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Couldn't save this image on this device"
 msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
@@ -2391,6 +2435,10 @@ msgstr "Настроить: {label}"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "Настроить аватар бота"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Dai"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -2567,6 +2615,10 @@ msgstr ""
 msgid "Dictation failed."
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Dim"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
 msgstr "Отключить инструмент"
@@ -2629,6 +2681,10 @@ msgstr "Отклонено"
 #: src/pages/shell/message-cards.tsx
 msgid "Dismissed. Reconnect anytime from MCP settings."
 msgstr "Закрыто. Подключиться снова можно в любое время в настройках MCP."
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Display"
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker"
@@ -2976,6 +3032,10 @@ msgstr "Найти модели"
 msgid "Finding…"
 msgstr "Поиск…"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Finish dictation"
+msgstr ""
+
 #: src/pages/shell/import-setup-card.tsx
 msgid "Finish setting up"
 msgstr "Завершите настройку"
@@ -3276,6 +3336,10 @@ msgstr "Включить ключи API"
 msgid "Incoming call"
 msgstr "Входящий звонок"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Indigo"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
 msgstr "Наследовать значение по умолчанию"
@@ -3474,6 +3538,10 @@ msgstr "Прослушивание"
 msgid "Listening…"
 msgstr "Слушаю…"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Listening… Click the microphone to finish."
+msgstr ""
+
 #: src/pages/shell/transcript.tsx
 msgid "Load earlier messages"
 msgstr "Загрузить более ранние сообщения"
@@ -3568,6 +3636,10 @@ msgstr ""
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "Основная модель"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Malachite"
+msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -4095,6 +4167,14 @@ msgstr "Модели не перечислены."
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "Не найдено файлов OpenClaw, Hermes или документа агента."
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "No picture for this chat, so it uses the one shared by all chats."
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "No picture yet."
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "Удаленные MCP-серверы не найдены"
@@ -4255,6 +4335,15 @@ msgstr "Один раз"
 msgid "One-time purchase. Credits do not expire."
 msgstr ""
 
+#. placeholder {0}: bot?.name ?? ""
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Only {0} sees this picture."
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Opacity"
+msgstr ""
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -4278,6 +4367,10 @@ msgstr "Открыть {name}"
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Open a bot's chat, then come back here to give that chat its own picture."
+msgstr ""
+
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
 msgstr "Открыть звонок"
@@ -4291,9 +4384,18 @@ msgstr "Открыть чат с {0}"
 msgid "Open computer settings"
 msgstr ""
 
+#: src/components/LocalMessageFileLink.tsx
+msgid "Open containing folder"
+msgstr ""
+
 #: src/components/markdown-link-prompt.tsx
 msgid "Open external link?"
 msgstr "Открыть внешнюю ссылку?"
+
+#: src/components/ArtifactFileCard.tsx
+#: src/components/LocalMessageFileLink.tsx
+msgid "Open folder"
+msgstr ""
 
 #: src/pages/shell/computer-panel.tsx
 msgid "Open in full window"
@@ -4484,6 +4586,10 @@ msgstr "Выберите модель из списка или введите id
 #: src/pages/RoutineEditor.tsx
 msgid "Pick a tool to check"
 msgstr "Выберите инструмент для проверки"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Pictures stay in this browser. Clearing site data removes them."
+msgstr ""
 
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
@@ -4782,6 +4888,7 @@ msgid "Reload"
 msgstr "Перезагрузить"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/ChatBackgroundSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/LoginFields.tsx
 #: src/components/TrustedLinkSitesSettings.tsx
@@ -4880,6 +4987,10 @@ msgstr ""
 msgid "Reopen"
 msgstr "Открыть заново"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Replace"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
 msgstr "Заменить ключ API"
@@ -4919,6 +5030,7 @@ msgstr ""
 msgid "Research & writing"
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -4968,6 +5080,10 @@ msgstr "Перезапустить для обновления"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Восстановить"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Restore defaults"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5794,6 +5910,10 @@ msgstr ""
 msgid "Testing…"
 msgstr "Проверка…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "That image is too large"
+msgstr ""
+
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "Бот сможет использовать файл, но не увидит изображение."
@@ -5906,6 +6026,10 @@ msgstr "Это действие нельзя отменить."
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "Это невозможно отменить."
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "This chat"
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -6072,6 +6196,7 @@ msgstr "Название инструмента"
 msgid "Tools"
 msgstr "Инструменты"
 
+#: src/components/composer/DictationInput.tsx
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
 msgstr "Распознаю…"
@@ -6300,6 +6425,10 @@ msgstr ""
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Used by every chat that has no picture of its own."
+msgstr ""
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
 msgstr ""
@@ -6366,6 +6495,10 @@ msgstr ""
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "Голос"
+
+#: src/components/composer/DictationInput.tsx
+msgid "Voice input"
+msgstr ""
 
 #: src/lib/tts.ts
 msgid "Voice request timed out."

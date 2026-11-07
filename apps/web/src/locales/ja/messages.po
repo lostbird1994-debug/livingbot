@@ -662,6 +662,10 @@ msgstr "{credit} はすべてモデルの利用に充てられます。"
 msgid "All bots"
 msgstr "すべてのボット"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "All chats"
+msgstr ""
+
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
 msgstr ""
@@ -819,6 +823,10 @@ msgstr "外観"
 
 #: src/pages/Shell.tsx
 msgid "Appearance: {label}"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Applies to"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -992,6 +1000,14 @@ msgstr "戻る"
 msgid "Back to sign in"
 msgstr "ログインに戻る"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Background image"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Background preview"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "ベースURL"
@@ -1021,6 +1037,10 @@ msgstr "ブロック"
 #: src/lib/ticket-status.ts
 msgid "Blocked"
 msgstr "ブロック中"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Blur"
+msgstr ""
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/Board.tsx
@@ -1162,6 +1182,10 @@ msgstr "画像を読み取れません"
 msgid "Cancel"
 msgstr "キャンセル"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Cancel dictation"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new bot"
 msgstr "新しいボットをキャンセル"
@@ -1217,6 +1241,10 @@ msgstr "チャートを表示できませんでした: {error}"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Chat"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Chat background"
 msgstr ""
 
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -1325,6 +1353,10 @@ msgstr "フォルダを選択"
 #: src/components/SubscriptionGate.tsx
 msgid "Choose how to use Rakazo"
 msgstr "Rakazoの使い方を選択"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Choose image"
+msgstr ""
 
 #: src/lib/localized-provider-hint.ts
 msgid "Claude subscription"
@@ -2199,6 +2231,10 @@ msgstr "認証情報を表示できませんでした"
 msgid "Could not sign in"
 msgstr ""
 
+#: src/components/composer/DictationInput.tsx
+msgid "Could not start dictation. Check microphone permissions."
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not start OAuth"
 msgstr "OAuthを開始できませんでした"
@@ -2277,6 +2313,14 @@ msgstr ""
 
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't load your wallet"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Couldn't read this image"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Couldn't save this image on this device"
 msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
@@ -2391,6 +2435,10 @@ msgstr "{label}をカスタマイズ"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "ボットのアバターをカスタマイズ"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Dai"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -2567,6 +2615,10 @@ msgstr ""
 msgid "Dictation failed."
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Dim"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
 msgstr "ツールを無効にする"
@@ -2629,6 +2681,10 @@ msgstr "閉じました"
 #: src/pages/shell/message-cards.tsx
 msgid "Dismissed. Reconnect anytime from MCP settings."
 msgstr "閉じました。MCP設定からいつでも再接続できます。"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Display"
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker"
@@ -2976,6 +3032,10 @@ msgstr "モデルを検索"
 msgid "Finding…"
 msgstr "検索中…"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Finish dictation"
+msgstr ""
+
 #: src/pages/shell/import-setup-card.tsx
 msgid "Finish setting up"
 msgstr "セットアップを完了"
@@ -3276,6 +3336,10 @@ msgstr "APIキーを含める"
 msgid "Incoming call"
 msgstr "着信"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Indigo"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
 msgstr "デフォルトを継承"
@@ -3474,6 +3538,10 @@ msgstr "聞いています"
 msgid "Listening…"
 msgstr "聞いています…"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Listening… Click the microphone to finish."
+msgstr ""
+
 #: src/pages/shell/transcript.tsx
 msgid "Load earlier messages"
 msgstr "以前のメッセージを読み込む"
@@ -3568,6 +3636,10 @@ msgstr "小文字、数字、ハイフン、アンダースコアのみ使用で
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "メインモデル"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Malachite"
+msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -4095,6 +4167,14 @@ msgstr "モデルが一覧にありません。"
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "OpenClaw、Hermes、またはエージェントのドキュメントが見つかりません。"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "No picture for this chat, so it uses the one shared by all chats."
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "No picture yet."
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "リモートMCPサーバーが見つかりません"
@@ -4255,6 +4335,15 @@ msgstr "1回のみ"
 msgid "One-time purchase. Credits do not expire."
 msgstr "1回限りの購入です。クレジットは失効しません。"
 
+#. placeholder {0}: bot?.name ?? ""
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Only {0} sees this picture."
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Opacity"
+msgstr ""
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -4278,6 +4367,10 @@ msgstr "{name}を開く"
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "<0>{0}</0>を開いて、このコードを入力してください:"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Open a bot's chat, then come back here to give that chat its own picture."
+msgstr ""
+
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
 msgstr "通話を開く"
@@ -4291,9 +4384,18 @@ msgstr "{0}とのチャットを開く"
 msgid "Open computer settings"
 msgstr "コンピューター設定を開く"
 
+#: src/components/LocalMessageFileLink.tsx
+msgid "Open containing folder"
+msgstr ""
+
 #: src/components/markdown-link-prompt.tsx
 msgid "Open external link?"
 msgstr "外部リンクを開きますか？"
+
+#: src/components/ArtifactFileCard.tsx
+#: src/components/LocalMessageFileLink.tsx
+msgid "Open folder"
+msgstr ""
 
 #: src/pages/shell/computer-panel.tsx
 msgid "Open in full window"
@@ -4484,6 +4586,10 @@ msgstr "一覧からモデルを選択するか、このエンドポイントで
 #: src/pages/RoutineEditor.tsx
 msgid "Pick a tool to check"
 msgstr "確認するツールを選択"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Pictures stay in this browser. Clearing site data removes them."
+msgstr ""
 
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
@@ -4782,6 +4888,7 @@ msgid "Reload"
 msgstr "再読み込み"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/ChatBackgroundSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/LoginFields.tsx
 #: src/components/TrustedLinkSitesSettings.tsx
@@ -4880,6 +4987,10 @@ msgstr "{day}に更新"
 msgid "Reopen"
 msgstr "再度開く"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Replace"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
 msgstr "APIキーを置き換え"
@@ -4919,6 +5030,7 @@ msgstr ""
 msgid "Research & writing"
 msgstr "リサーチと執筆"
 
+#: src/components/ChatBackgroundSettings.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -4968,6 +5080,10 @@ msgstr "再起動してアップデート"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "復元"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Restore defaults"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5794,6 +5910,10 @@ msgstr ""
 msgid "Testing…"
 msgstr "テスト中…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "That image is too large"
+msgstr ""
+
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "ボットはファイルを利用できますが、画像の内容は見えません。"
@@ -5906,6 +6026,10 @@ msgstr "この操作は元に戻せません。"
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "この操作は元に戻せません。"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "This chat"
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -6072,6 +6196,7 @@ msgstr "ツール名"
 msgid "Tools"
 msgstr "ツール"
 
+#: src/components/composer/DictationInput.tsx
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
 msgstr "文字起こし中…"
@@ -6300,6 +6425,10 @@ msgstr "スペースのデフォルトを使用"
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "英数字、_、-のみで512文字以内で入力してください。"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Used by every chat that has no picture of its own."
+msgstr ""
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
 msgstr "ユーザーピア"
@@ -6366,6 +6495,10 @@ msgstr ""
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "音声"
+
+#: src/components/composer/DictationInput.tsx
+msgid "Voice input"
+msgstr ""
 
 #: src/lib/tts.ts
 msgid "Voice request timed out."

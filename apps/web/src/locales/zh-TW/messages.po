@@ -663,6 +663,10 @@ msgstr "全部 {credit} 都用於模型用量。"
 msgid "All bots"
 msgstr "所有機器人"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "All chats"
+msgstr ""
+
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
 msgstr ""
@@ -820,6 +824,10 @@ msgstr "外觀"
 
 #: src/pages/Shell.tsx
 msgid "Appearance: {label}"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Applies to"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -993,6 +1001,14 @@ msgstr "返回"
 msgid "Back to sign in"
 msgstr "返回登入"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Background image"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Background preview"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "基底網址"
@@ -1022,6 +1038,10 @@ msgstr "封鎖"
 #: src/lib/ticket-status.ts
 msgid "Blocked"
 msgstr "受阻"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Blur"
+msgstr ""
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/Board.tsx
@@ -1163,6 +1183,10 @@ msgstr "無法讀取影像"
 msgid "Cancel"
 msgstr "取消"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Cancel dictation"
+msgstr "Cancel dictation"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new bot"
 msgstr "取消新增機器人"
@@ -1218,6 +1242,10 @@ msgstr "圖表渲染失敗：{error}"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Chat"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Chat background"
 msgstr ""
 
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -1326,6 +1354,10 @@ msgstr "選擇資料夾"
 #: src/components/SubscriptionGate.tsx
 msgid "Choose how to use Rakazo"
 msgstr "選擇 Rakazo 的使用方式"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Choose image"
+msgstr ""
 
 #: src/lib/localized-provider-hint.ts
 msgid "Claude subscription"
@@ -2200,6 +2232,10 @@ msgstr "無法顯示憑證"
 msgid "Could not sign in"
 msgstr ""
 
+#: src/components/composer/DictationInput.tsx
+msgid "Could not start dictation. Check microphone permissions."
+msgstr "Could not start dictation. Check microphone permissions."
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not start OAuth"
 msgstr "無法開始 OAuth"
@@ -2278,6 +2314,14 @@ msgstr ""
 
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't load your wallet"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Couldn't read this image"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Couldn't save this image on this device"
 msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
@@ -2392,6 +2436,10 @@ msgstr "自訂{label}"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "自訂機器人頭像"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Dai"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -2568,6 +2616,10 @@ msgstr ""
 msgid "Dictation failed."
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Dim"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
 msgstr "停用工具"
@@ -2630,6 +2682,10 @@ msgstr "已忽略"
 #: src/pages/shell/message-cards.tsx
 msgid "Dismissed. Reconnect anytime from MCP settings."
 msgstr "已關閉，可隨時在 MCP 設定中重新連線。"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Display"
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker"
@@ -2977,6 +3033,10 @@ msgstr "查詢模型"
 msgid "Finding…"
 msgstr "正在查詢…"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Finish dictation"
+msgstr "Finish dictation"
+
 #: src/pages/shell/import-setup-card.tsx
 msgid "Finish setting up"
 msgstr "完成設定"
@@ -3277,6 +3337,10 @@ msgstr "包含 API 金鑰"
 msgid "Incoming call"
 msgstr "來電"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Indigo"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
 msgstr "沿用預設"
@@ -3475,6 +3539,10 @@ msgstr "聆聽中"
 msgid "Listening…"
 msgstr "聆聽中…"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Listening… Click the microphone to finish."
+msgstr "Listening… Click the microphone to finish."
+
 #: src/pages/shell/transcript.tsx
 msgid "Load earlier messages"
 msgstr "載入更早的訊息"
@@ -3569,6 +3637,10 @@ msgstr "使用小寫英文字母、數字、連字號與底線，並以字母開
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "主模型"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Malachite"
+msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -4096,6 +4168,14 @@ msgstr "未列出模型。"
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "找不到 OpenClaw、Hermes 或代理程式文件。"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "No picture for this chat, so it uses the one shared by all chats."
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "No picture yet."
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "找不到遠端 MCP 伺服器"
@@ -4256,6 +4336,15 @@ msgstr "一次性"
 msgid "One-time purchase. Credits do not expire."
 msgstr "單次購買，額度不會到期。"
 
+#. placeholder {0}: bot?.name ?? ""
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Only {0} sees this picture."
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Opacity"
+msgstr ""
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -4279,6 +4368,10 @@ msgstr "開啟 {name}"
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "開啟 <0>{0}</0> 並輸入以下代碼："
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Open a bot's chat, then come back here to give that chat its own picture."
+msgstr ""
+
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
 msgstr "開啟通話"
@@ -4292,9 +4385,18 @@ msgstr "開啟與 {0} 的對話"
 msgid "Open computer settings"
 msgstr "開啟電腦設定"
 
+#: src/components/LocalMessageFileLink.tsx
+msgid "Open containing folder"
+msgstr "開啟所在資料夾"
+
 #: src/components/markdown-link-prompt.tsx
 msgid "Open external link?"
 msgstr "開啟外部連結？"
+
+#: src/components/ArtifactFileCard.tsx
+#: src/components/LocalMessageFileLink.tsx
+msgid "Open folder"
+msgstr "開啟資料夾"
 
 #: src/pages/shell/computer-panel.tsx
 msgid "Open in full window"
@@ -4485,6 +4587,10 @@ msgstr "請從清單中選擇模型，或輸入此端點提供的模型 ID。"
 #: src/pages/RoutineEditor.tsx
 msgid "Pick a tool to check"
 msgstr "選擇要檢查的工具"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Pictures stay in this browser. Clearing site data removes them."
+msgstr ""
 
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
@@ -4783,6 +4889,7 @@ msgid "Reload"
 msgstr "重新載入"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/ChatBackgroundSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/LoginFields.tsx
 #: src/components/TrustedLinkSitesSettings.tsx
@@ -4881,6 +4988,10 @@ msgstr "於 {day} 續訂"
 msgid "Reopen"
 msgstr "重新開啟"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Replace"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
 msgstr "替換 API 金鑰"
@@ -4920,6 +5031,7 @@ msgstr "請求"
 msgid "Research & writing"
 msgstr "調研和寫作"
 
+#: src/components/ChatBackgroundSettings.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -4969,6 +5081,10 @@ msgstr "重新啟動以更新"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "還原"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Restore defaults"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5795,6 +5911,10 @@ msgstr ""
 msgid "Testing…"
 msgstr "正在測試…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "That image is too large"
+msgstr ""
+
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "機器人可以使用這個檔案，但看不到圖片內容。"
@@ -5907,6 +6027,10 @@ msgstr "此操作無法復原。"
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "此操作無法復原。"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "This chat"
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -6073,6 +6197,7 @@ msgstr "工具名稱"
 msgid "Tools"
 msgstr "工具"
 
+#: src/components/composer/DictationInput.tsx
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
 msgstr "轉錄中…"
@@ -6301,6 +6426,10 @@ msgstr "使用空間預設模型"
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "最多可使用 512 個英文字母、數字、_ 或 -。"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Used by every chat that has no picture of its own."
+msgstr ""
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
 msgstr "使用者對端"
@@ -6367,6 +6496,10 @@ msgstr ""
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "語音"
+
+#: src/components/composer/DictationInput.tsx
+msgid "Voice input"
+msgstr "Voice input"
 
 #: src/lib/tts.ts
 msgid "Voice request timed out."
@@ -6605,26 +6738,3 @@ msgstr "你的語音供應商額度已用完。"
 #: src/lib/user-error.ts
 msgid "Your voice provider key was rejected."
 msgstr "你的語音供應商拒絕了該金鑰。"
-
-msgid "Voice input"
-msgstr "Voice input"
-
-msgid "Finish dictation"
-msgstr "Finish dictation"
-
-msgid "Cancel dictation"
-msgstr "Cancel dictation"
-
-msgid "Listening… Click the microphone to finish."
-msgstr "Listening… Click the microphone to finish."
-
-msgid "Could not start dictation. Check microphone permissions."
-msgstr "Could not start dictation. Check microphone permissions."
-
-#: src/components/LocalMessageFileLink.tsx
-msgid "Open folder"
-msgstr "開啟資料夾"
-
-#: src/components/LocalMessageFileLink.tsx
-msgid "Open containing folder"
-msgstr "開啟所在資料夾"

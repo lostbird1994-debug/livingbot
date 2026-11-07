@@ -148,6 +148,7 @@ export function SettingsOverlays({
           }}
           onOpenSpace={(spaceId) => setOverlay({ ...overlay, section: "space", spaceId })}
           name={user?.name ?? ""}
+          chatBackgroundBot={active ? { id: active.id, name: active.name } : null}
           onNameSaved={async () => {
             await refetchSession();
           }}

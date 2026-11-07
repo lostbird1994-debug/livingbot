@@ -662,6 +662,10 @@ msgstr "כל {credit} הולכים לשימוש במודלים."
 msgid "All bots"
 msgstr "כל הבוטים"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "All chats"
+msgstr ""
+
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
 msgstr ""
@@ -819,6 +823,10 @@ msgstr "מראה"
 
 #: src/pages/Shell.tsx
 msgid "Appearance: {label}"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Applies to"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -992,6 +1000,14 @@ msgstr "חזרה"
 msgid "Back to sign in"
 msgstr "חזרה להתחברות"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Background image"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Background preview"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "Base URL"
@@ -1021,6 +1037,10 @@ msgstr "לחסום"
 #: src/lib/ticket-status.ts
 msgid "Blocked"
 msgstr "חסום"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Blur"
+msgstr ""
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/Board.tsx
@@ -1162,6 +1182,10 @@ msgstr "לא ניתן לקרוא תמונות"
 msgid "Cancel"
 msgstr "ביטול"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Cancel dictation"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new bot"
 msgstr "ביטול בוט חדש"
@@ -1217,6 +1241,10 @@ msgstr "לא ניתן להציג את התרשים: {error}"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Chat"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Chat background"
 msgstr ""
 
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -1324,6 +1352,10 @@ msgstr "בחירת תיקייה"
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
 msgid "Choose how to use Rakazo"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Choose image"
 msgstr ""
 
 #: src/lib/localized-provider-hint.ts
@@ -2199,6 +2231,10 @@ msgstr "לא ניתן היה להציג את פרטי הגישה"
 msgid "Could not sign in"
 msgstr ""
 
+#: src/components/composer/DictationInput.tsx
+msgid "Could not start dictation. Check microphone permissions."
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not start OAuth"
 msgstr "לא ניתן להתחיל OAuth"
@@ -2277,6 +2313,14 @@ msgstr ""
 
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't load your wallet"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Couldn't read this image"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Couldn't save this image on this device"
 msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
@@ -2391,6 +2435,10 @@ msgstr "התאמה אישית של {label}"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "התאמת תמונת הבוט"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Dai"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -2567,6 +2615,10 @@ msgstr ""
 msgid "Dictation failed."
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Dim"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
 msgstr "השבתת כלי"
@@ -2629,6 +2681,10 @@ msgstr "נסגר"
 #: src/pages/shell/message-cards.tsx
 msgid "Dismissed. Reconnect anytime from MCP settings."
 msgstr "נסגר. אפשר להתחבר מחדש בכל עת מהגדרות MCP."
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Display"
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker"
@@ -2976,6 +3032,10 @@ msgstr "חיפוש מודלים"
 msgid "Finding…"
 msgstr "מחפש…"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Finish dictation"
+msgstr ""
+
 #: src/pages/shell/import-setup-card.tsx
 msgid "Finish setting up"
 msgstr "סיום ההגדרה"
@@ -3276,6 +3336,10 @@ msgstr "לכלול מפתחות API"
 msgid "Incoming call"
 msgstr ""
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Indigo"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
 msgstr "ירושה מברירת המחדל"
@@ -3474,6 +3538,10 @@ msgstr "מאזין"
 msgid "Listening…"
 msgstr ""
 
+#: src/components/composer/DictationInput.tsx
+msgid "Listening… Click the microphone to finish."
+msgstr ""
+
 #: src/pages/shell/transcript.tsx
 msgid "Load earlier messages"
 msgstr "טעינת הודעות קודמות"
@@ -3568,6 +3636,10 @@ msgstr "אותיות לטיניות קטנות, ספרות, מקפים וקוו�
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "מודל ראשי"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Malachite"
+msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -4095,6 +4167,14 @@ msgstr "לא נמצאו מודלים ברשימה."
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "לא נמצאו קבצי OpenClaw, Hermes או מסמך סוכן."
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "No picture for this chat, so it uses the one shared by all chats."
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "No picture yet."
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "לא נמצאו שרתי MCP מרוחקים"
@@ -4255,6 +4335,15 @@ msgstr "חד-פעמי"
 msgid "One-time purchase. Credits do not expire."
 msgstr ""
 
+#. placeholder {0}: bot?.name ?? ""
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Only {0} sees this picture."
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Opacity"
+msgstr ""
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -4278,6 +4367,10 @@ msgstr "פתיחת {name}"
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "יש לפתוח את <0>{0}</0> ולהזין את הקוד הזה:"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Open a bot's chat, then come back here to give that chat its own picture."
+msgstr ""
+
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
 msgstr ""
@@ -4291,9 +4384,18 @@ msgstr ""
 msgid "Open computer settings"
 msgstr "פתיחת הגדרות המחשב"
 
+#: src/components/LocalMessageFileLink.tsx
+msgid "Open containing folder"
+msgstr ""
+
 #: src/components/markdown-link-prompt.tsx
 msgid "Open external link?"
 msgstr "לפתוח קישור חיצוני?"
+
+#: src/components/ArtifactFileCard.tsx
+#: src/components/LocalMessageFileLink.tsx
+msgid "Open folder"
+msgstr ""
 
 #: src/pages/shell/computer-panel.tsx
 msgid "Open in full window"
@@ -4483,6 +4585,10 @@ msgstr "יש לבחור מודל מהרשימה או להזין מזהה מוד�
 
 #: src/pages/RoutineEditor.tsx
 msgid "Pick a tool to check"
+msgstr ""
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Pictures stay in this browser. Clearing site data removes them."
 msgstr ""
 
 #: src/pages/BotContextMenu.tsx
@@ -4782,6 +4888,7 @@ msgid "Reload"
 msgstr "טעינה מחדש"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/ChatBackgroundSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/LoginFields.tsx
 #: src/components/TrustedLinkSitesSettings.tsx
@@ -4880,6 +4987,10 @@ msgstr "מתחדש ב-{day}"
 msgid "Reopen"
 msgstr "פתיחה מחדש"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Replace"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
 msgstr "החלפת מפתח API"
@@ -4919,6 +5030,7 @@ msgstr ""
 msgid "Research & writing"
 msgstr "מחקר וכתיבה"
 
+#: src/components/ChatBackgroundSettings.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -4968,6 +5080,10 @@ msgstr "הפעלה מחדש לעדכון"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "שחזור"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Restore defaults"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5794,6 +5910,10 @@ msgstr ""
 msgid "Testing…"
 msgstr "בודק…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "That image is too large"
+msgstr ""
+
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "הבוט יוכל להשתמש בקובץ, אבל לא יראה את התמונה."
@@ -5906,6 +6026,10 @@ msgstr "לא ניתן לבטל פעולה זו."
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "לא ניתן לבטל פעולה זו."
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "This chat"
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -6072,6 +6196,7 @@ msgstr "שם הכלי"
 msgid "Tools"
 msgstr "כלים"
 
+#: src/components/composer/DictationInput.tsx
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
 msgstr ""
@@ -6300,6 +6425,10 @@ msgstr ""
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr ""
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Used by every chat that has no picture of its own."
+msgstr ""
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
 msgstr ""
@@ -6366,6 +6495,10 @@ msgstr ""
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "קול"
+
+#: src/components/composer/DictationInput.tsx
+msgid "Voice input"
+msgstr ""
 
 #: src/lib/tts.ts
 msgid "Voice request timed out."

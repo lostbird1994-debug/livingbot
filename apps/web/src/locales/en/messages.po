@@ -662,6 +662,10 @@ msgstr "All {credit} goes to model usage."
 msgid "All bots"
 msgstr "All bots"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "All chats"
+msgstr "All chats"
+
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
 msgstr "All spaces"
@@ -820,6 +824,10 @@ msgstr "Appearance"
 #: src/pages/Shell.tsx
 msgid "Appearance: {label}"
 msgstr "Appearance: {label}"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Applies to"
+msgstr "Applies to"
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -992,6 +1000,14 @@ msgstr "Back"
 msgid "Back to sign in"
 msgstr "Back to sign in"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Background image"
+msgstr "Background image"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Background preview"
+msgstr "Background preview"
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "Base URL"
@@ -1021,6 +1037,10 @@ msgstr "Block"
 #: src/lib/ticket-status.ts
 msgid "Blocked"
 msgstr "Blocked"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Blur"
+msgstr "Blur"
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/Board.tsx
@@ -1162,6 +1182,10 @@ msgstr "Can't read images"
 msgid "Cancel"
 msgstr "Cancel"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Cancel dictation"
+msgstr "Cancel dictation"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new bot"
 msgstr "Cancel new bot"
@@ -1218,6 +1242,10 @@ msgstr "Chart failed to render: {error}"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Chat"
 msgstr "Chat"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Chat background"
+msgstr "Chat background"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Chat Completions"
@@ -1325,6 +1353,10 @@ msgstr "Choose folder"
 #: src/components/SubscriptionGate.tsx
 msgid "Choose how to use Rakazo"
 msgstr "Choose how to use Rakazo"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Choose image"
+msgstr "Choose image"
 
 #: src/lib/localized-provider-hint.ts
 msgid "Claude subscription"
@@ -2199,6 +2231,10 @@ msgstr "Could not show the credential"
 msgid "Could not sign in"
 msgstr "Could not sign in"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Could not start dictation. Check microphone permissions."
+msgstr "Could not start dictation. Check microphone permissions."
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not start OAuth"
 msgstr "Could not start OAuth"
@@ -2278,6 +2314,14 @@ msgstr "Couldn't load submissions"
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't load your wallet"
 msgstr "Couldn't load your wallet"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Couldn't read this image"
+msgstr "Couldn't read this image"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Couldn't save this image on this device"
+msgstr "Couldn't save this image on this device"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Couldn't update messaging settings"
@@ -2391,6 +2435,10 @@ msgstr "Customize {label}"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "Customize bot avatar"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Dai"
+msgstr "Dai"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -2567,6 +2615,10 @@ msgstr "Dictation failed: {code}"
 msgid "Dictation failed."
 msgstr "Dictation failed."
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Dim"
+msgstr "Dim"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
 msgstr "Disable a tool"
@@ -2629,6 +2681,10 @@ msgstr "Dismissed"
 #: src/pages/shell/message-cards.tsx
 msgid "Dismissed. Reconnect anytime from MCP settings."
 msgstr "Dismissed. Reconnect anytime from MCP settings."
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Display"
+msgstr "Display"
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker"
@@ -2976,6 +3032,10 @@ msgstr "Find models"
 msgid "Finding…"
 msgstr "Finding…"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Finish dictation"
+msgstr "Finish dictation"
+
 #: src/pages/shell/import-setup-card.tsx
 msgid "Finish setting up"
 msgstr "Finish setting up"
@@ -3276,6 +3336,10 @@ msgstr "Include API keys"
 msgid "Incoming call"
 msgstr "Incoming call"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Indigo"
+msgstr "Indigo"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
 msgstr "Inherit default"
@@ -3474,6 +3538,10 @@ msgstr "Listening"
 msgid "Listening…"
 msgstr "Listening…"
 
+#: src/components/composer/DictationInput.tsx
+msgid "Listening… Click the microphone to finish."
+msgstr "Listening… Click the microphone to finish."
+
 #: src/pages/shell/transcript.tsx
 msgid "Load earlier messages"
 msgstr "Load earlier messages"
@@ -3568,6 +3636,10 @@ msgstr "Lowercase letters, numbers, hyphens and underscores, starting with a let
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "Main model"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Malachite"
+msgstr "Malachite"
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -4095,6 +4167,14 @@ msgstr "No models listed."
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "No OpenClaw, Hermes or agent document found."
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "No picture for this chat, so it uses the one shared by all chats."
+msgstr "No picture for this chat, so it uses the one shared by all chats."
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "No picture yet."
+msgstr "No picture yet."
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "No remote MCP servers found"
@@ -4255,6 +4335,15 @@ msgstr "One-time"
 msgid "One-time purchase. Credits do not expire."
 msgstr "One-time purchase. Credits do not expire."
 
+#. placeholder {0}: bot?.name ?? ""
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Only {0} sees this picture."
+msgstr "Only {0} sees this picture."
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Opacity"
+msgstr "Opacity"
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -4278,6 +4367,10 @@ msgstr "Open {name}"
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "Open <0>{0}</0> and enter this code:"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Open a bot's chat, then come back here to give that chat its own picture."
+msgstr "Open a bot's chat, then come back here to give that chat its own picture."
+
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
 msgstr "Open call"
@@ -4291,9 +4384,18 @@ msgstr "Open chat with {0}"
 msgid "Open computer settings"
 msgstr "Open computer settings"
 
+#: src/components/LocalMessageFileLink.tsx
+msgid "Open containing folder"
+msgstr "Open containing folder"
+
 #: src/components/markdown-link-prompt.tsx
 msgid "Open external link?"
 msgstr "Open external link?"
+
+#: src/components/ArtifactFileCard.tsx
+#: src/components/LocalMessageFileLink.tsx
+msgid "Open folder"
+msgstr "Open folder"
 
 #: src/pages/shell/computer-panel.tsx
 msgid "Open in full window"
@@ -4484,6 +4586,10 @@ msgstr "Pick a model from the list or enter a model id served by this endpoint."
 #: src/pages/RoutineEditor.tsx
 msgid "Pick a tool to check"
 msgstr "Pick a tool to check"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Pictures stay in this browser. Clearing site data removes them."
+msgstr "Pictures stay in this browser. Clearing site data removes them."
 
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
@@ -4782,6 +4888,7 @@ msgid "Reload"
 msgstr "Reload"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/ChatBackgroundSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/LoginFields.tsx
 #: src/components/TrustedLinkSitesSettings.tsx
@@ -4880,6 +4987,10 @@ msgstr "Renews {day}"
 msgid "Reopen"
 msgstr "Reopen"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Replace"
+msgstr "Replace"
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
 msgstr "Replace API key"
@@ -4919,6 +5030,7 @@ msgstr "Requests"
 msgid "Research & writing"
 msgstr "Research & writing"
 
+#: src/components/ChatBackgroundSettings.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -4968,6 +5080,10 @@ msgstr "Restart to update"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Restore"
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Restore defaults"
+msgstr "Restore defaults"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5794,6 +5910,10 @@ msgstr "Testing"
 msgid "Testing…"
 msgstr "Testing…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "That image is too large"
+msgstr "That image is too large"
+
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "The bot can use the file but won't see the picture."
@@ -5906,6 +6026,10 @@ msgstr "This can't be undone."
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
+
+#: src/components/ChatBackgroundSettings.tsx
+msgid "This chat"
+msgstr "This chat"
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -6072,6 +6196,7 @@ msgstr "Tool name"
 msgid "Tools"
 msgstr "Tools"
 
+#: src/components/composer/DictationInput.tsx
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
 msgstr "Transcribing…"
@@ -6300,6 +6425,10 @@ msgstr "Use space default"
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Use up to 512 letters, digits, _ or -."
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Used by every chat that has no picture of its own."
+msgstr "Used by every chat that has no picture of its own."
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
 msgstr "User peer"
@@ -6366,6 +6495,10 @@ msgstr "View source"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "Voice"
+
+#: src/components/composer/DictationInput.tsx
+msgid "Voice input"
+msgstr "Voice input"
 
 #: src/lib/tts.ts
 msgid "Voice request timed out."
@@ -6604,26 +6737,3 @@ msgstr "Your voice provider is out of credit."
 #: src/lib/user-error.ts
 msgid "Your voice provider key was rejected."
 msgstr "Your voice provider key was rejected."
-
-msgid "Voice input"
-msgstr "Voice input"
-
-msgid "Finish dictation"
-msgstr "Finish dictation"
-
-msgid "Cancel dictation"
-msgstr "Cancel dictation"
-
-msgid "Listening… Click the microphone to finish."
-msgstr "Listening… Click the microphone to finish."
-
-msgid "Could not start dictation. Check microphone permissions."
-msgstr "Could not start dictation. Check microphone permissions."
-
-#: src/components/LocalMessageFileLink.tsx
-msgid "Open folder"
-msgstr "Open folder"
-
-#: src/components/LocalMessageFileLink.tsx
-msgid "Open containing folder"
-msgstr "Open containing folder"
