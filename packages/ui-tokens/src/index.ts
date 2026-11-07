@@ -294,7 +294,7 @@ export const webPorcelainTokens: WebThemeColorTokens = {
   unread: "#28517F",
   statusWorking: "#28517F",
   sidebarAccent: "#28517F1A",
-  bubbleBot: "#A4E2C6",
+  bubbleBot: "#F4F6F3",
   bubbleCard: "#E9E8B9",
   bubbleQuote: "#E4C6D0",
   bubbleLead: "#C7E1FA",
