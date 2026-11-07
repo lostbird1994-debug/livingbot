@@ -817,9 +817,14 @@ msgstr "Clés API"
 msgid "Appearance"
 msgstr "Apparence"
 
+#. placeholder {0}: appearanceLabel[value]
 #: src/pages/Shell.tsx
-msgid "Appearance: {label}"
+msgid "Appearance: {0}"
 msgstr ""
+
+#: src/pages/Shell.tsx
+#~ msgid "Appearance: {label}"
+#~ msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -1058,6 +1063,10 @@ msgstr "Bot"
 #: src/lib/browser-notifications.ts
 msgid "Bot"
 msgstr "Bot"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Bot folder"
+msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
@@ -2437,6 +2446,7 @@ msgid "Customize bot avatar"
 msgstr "Personnaliser l'avatar du bot"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Dai"
 msgstr ""
 
@@ -2997,6 +3007,10 @@ msgstr "Champs à comparer, par ex. id, modifiedTime (facultatif)"
 msgid "File"
 msgstr "Fichier"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Files"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Files or folders on the computer"
 msgstr "Fichiers ou dossiers de l’ordinateur"
@@ -3341,6 +3355,7 @@ msgid "Incoming call"
 msgstr "Appel entrant"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Indigo"
 msgstr ""
 
@@ -3574,6 +3589,10 @@ msgstr "Charger automatiquement les images web"
 msgid "Loading activity…"
 msgstr "Chargement de l'activité…"
 
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Loading files…"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading integrations…"
 msgstr "Chargement des intégrations…"
@@ -3650,6 +3669,7 @@ msgid "Main model"
 msgstr "Modèle principal"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Malachite"
 msgstr ""
 
@@ -4144,6 +4164,10 @@ msgstr ""
 msgid "No bots match"
 msgstr "Aucun bot ne correspond"
 
+#: src/pages/shell/bot-files-panel.tsx
+msgid "No files yet."
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "No longer active"
 msgstr "Plus actif"
@@ -4632,6 +4656,7 @@ msgid "Plugins"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Porcelain"
 msgstr ""
 
@@ -4854,6 +4879,7 @@ msgstr "URI de redirection"
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
+#: src/pages/shell/bot-files-panel.tsx
 msgid "Refresh"
 msgstr "Actualiser"
 
@@ -5524,6 +5550,10 @@ msgstr ""
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "Afficher les bots"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Show in Finder"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -6306,6 +6336,10 @@ msgstr "Désépingler"
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "Type de fichier non pris en charge : {0}"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Up"
+msgstr ""
 
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"

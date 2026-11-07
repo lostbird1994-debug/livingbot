@@ -818,9 +818,14 @@ msgstr "API 金鑰"
 msgid "Appearance"
 msgstr "外觀"
 
+#. placeholder {0}: appearanceLabel[value]
 #: src/pages/Shell.tsx
-msgid "Appearance: {label}"
+msgid "Appearance: {0}"
 msgstr ""
+
+#: src/pages/Shell.tsx
+#~ msgid "Appearance: {label}"
+#~ msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -1059,6 +1064,10 @@ msgstr "機器人"
 #: src/lib/browser-notifications.ts
 msgid "Bot"
 msgstr "機器人"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Bot folder"
+msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
@@ -2438,6 +2447,7 @@ msgid "Customize bot avatar"
 msgstr "自訂機器人頭像"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Dai"
 msgstr ""
 
@@ -2998,6 +3008,10 @@ msgstr "要比較的欄位，例如 id, modifiedTime（選填）"
 msgid "File"
 msgstr "檔案"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Files"
+msgstr "檔案"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Files or folders on the computer"
 msgstr "電腦上的檔案或資料夾"
@@ -3342,6 +3356,7 @@ msgid "Incoming call"
 msgstr "來電"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Indigo"
 msgstr ""
 
@@ -3575,6 +3590,10 @@ msgstr "自動載入網路圖片"
 msgid "Loading activity…"
 msgstr "正在載入動態…"
 
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Loading files…"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading integrations…"
 msgstr "正在載入整合…"
@@ -3651,6 +3670,7 @@ msgid "Main model"
 msgstr "主模型"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Malachite"
 msgstr ""
 
@@ -4145,6 +4165,10 @@ msgstr ""
 msgid "No bots match"
 msgstr "沒有符合的機器人"
 
+#: src/pages/shell/bot-files-panel.tsx
+msgid "No files yet."
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "No longer active"
 msgstr "已停用"
@@ -4633,6 +4657,7 @@ msgid "Plugins"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Porcelain"
 msgstr "白瓷"
 
@@ -4855,6 +4880,7 @@ msgstr "重新導向 URI"
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
+#: src/pages/shell/bot-files-panel.tsx
 msgid "Refresh"
 msgstr "重新整理"
 
@@ -5525,6 +5551,10 @@ msgstr "顯示全部"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "顯示機器人"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Show in Finder"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -6307,6 +6337,10 @@ msgstr "取消置頂"
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "不支援的檔案類型：{0}"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Up"
+msgstr ""
 
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"

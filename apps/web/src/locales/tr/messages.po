@@ -817,9 +817,14 @@ msgstr "API anahtarları"
 msgid "Appearance"
 msgstr "Görünüm"
 
+#. placeholder {0}: appearanceLabel[value]
 #: src/pages/Shell.tsx
-msgid "Appearance: {label}"
+msgid "Appearance: {0}"
 msgstr ""
+
+#: src/pages/Shell.tsx
+#~ msgid "Appearance: {label}"
+#~ msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -1058,6 +1063,10 @@ msgstr "Bot"
 #: src/lib/browser-notifications.ts
 msgid "Bot"
 msgstr "Bot"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Bot folder"
+msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
@@ -2437,6 +2446,7 @@ msgid "Customize bot avatar"
 msgstr "Bot avatarını özelleştir"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Dai"
 msgstr ""
 
@@ -2997,6 +3007,10 @@ msgstr "Karşılaştırılacak alanlar, ör. id, modifiedTime (isteğe bağlı)"
 msgid "File"
 msgstr "Dosya"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Files"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Files or folders on the computer"
 msgstr "Bilgisayardaki dosya veya klasörler"
@@ -3341,6 +3355,7 @@ msgid "Incoming call"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Indigo"
 msgstr ""
 
@@ -3574,6 +3589,10 @@ msgstr "Web görsellerini otomatik yükle"
 msgid "Loading activity…"
 msgstr "Etkinlik yükleniyor…"
 
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Loading files…"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading integrations…"
 msgstr "Entegrasyonlar yükleniyor…"
@@ -3650,6 +3669,7 @@ msgid "Main model"
 msgstr "Ana model"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Malachite"
 msgstr ""
 
@@ -4144,6 +4164,10 @@ msgstr ""
 msgid "No bots match"
 msgstr ""
 
+#: src/pages/shell/bot-files-panel.tsx
+msgid "No files yet."
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "No longer active"
 msgstr "Artık etkin değil"
@@ -4632,6 +4656,7 @@ msgid "Plugins"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Porcelain"
 msgstr ""
 
@@ -4854,6 +4879,7 @@ msgstr "Yönlendirme URI'si"
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
+#: src/pages/shell/bot-files-panel.tsx
 msgid "Refresh"
 msgstr "Yenile"
 
@@ -5523,6 +5549,10 @@ msgstr ""
 
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
+msgstr ""
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Show in Finder"
 msgstr ""
 
 #: src/pages/Artifacts.tsx
@@ -6306,6 +6336,10 @@ msgstr "Sabitlemeyi kaldır"
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "Desteklenmeyen dosya türü: {0}"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Up"
+msgstr ""
 
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"

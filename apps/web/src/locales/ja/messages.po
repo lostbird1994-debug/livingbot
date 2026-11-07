@@ -817,9 +817,14 @@ msgstr "APIキー"
 msgid "Appearance"
 msgstr "外観"
 
+#. placeholder {0}: appearanceLabel[value]
 #: src/pages/Shell.tsx
-msgid "Appearance: {label}"
+msgid "Appearance: {0}"
 msgstr ""
+
+#: src/pages/Shell.tsx
+#~ msgid "Appearance: {label}"
+#~ msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -1058,6 +1063,10 @@ msgstr "ボット"
 #: src/lib/browser-notifications.ts
 msgid "Bot"
 msgstr "ボット"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Bot folder"
+msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
@@ -2437,6 +2446,7 @@ msgid "Customize bot avatar"
 msgstr "ボットのアバターをカスタマイズ"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Dai"
 msgstr ""
 
@@ -2997,6 +3007,10 @@ msgstr "比較するフィールド（例: id, modifiedTime）（任意）"
 msgid "File"
 msgstr "ファイル"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Files"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Files or folders on the computer"
 msgstr "コンピューター上のファイルまたはフォルダ"
@@ -3341,6 +3355,7 @@ msgid "Incoming call"
 msgstr "着信"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Indigo"
 msgstr ""
 
@@ -3574,6 +3589,10 @@ msgstr "Web画像を自動で読み込む"
 msgid "Loading activity…"
 msgstr "アクティビティを読み込み中…"
 
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Loading files…"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading integrations…"
 msgstr "連携を読み込み中…"
@@ -3650,6 +3669,7 @@ msgid "Main model"
 msgstr "メインモデル"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Malachite"
 msgstr ""
 
@@ -4144,6 +4164,10 @@ msgstr ""
 msgid "No bots match"
 msgstr "一致するボットはありません"
 
+#: src/pages/shell/bot-files-panel.tsx
+msgid "No files yet."
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "No longer active"
 msgstr "現在は無効"
@@ -4632,6 +4656,7 @@ msgid "Plugins"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Porcelain"
 msgstr ""
 
@@ -4854,6 +4879,7 @@ msgstr "リダイレクトURI"
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
+#: src/pages/shell/bot-files-panel.tsx
 msgid "Refresh"
 msgstr "更新"
 
@@ -5524,6 +5550,10 @@ msgstr "すべて表示"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "ボットを表示"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Show in Finder"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -6306,6 +6336,10 @@ msgstr "ピン留めを解除"
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "サポートされていないファイル形式です: {0}"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Up"
+msgstr ""
 
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"

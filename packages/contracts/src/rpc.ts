@@ -695,6 +695,16 @@ export const appContract = {
       .output(
         z.array(z.object({ path: z.string(), kind: z.enum(["file", "dir"]), size: z.number() })),
       ),
+    /** Opens a workspace file in its own app, or shows it in Finder. Local Mac only. */
+    fileAction: oc
+      .input(
+        z.object({
+          botId: Id,
+          path: z.string().min(1),
+          action: z.enum(["open", "reveal"]),
+        }),
+      )
+      .output(z.object({ ok: z.literal(true) })),
     readFile: oc
       .input(z.object({ botId: Id, path: z.string() }))
       .output(z.object({ path: z.string(), content: z.string() })),

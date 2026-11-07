@@ -1,0 +1,187 @@
+import { useLingui } from "@lingui/react/macro";
+import { Button, Spinner } from "@rakazo/ui-web";
+import { ChevronRight, Folder, FolderOpen, RotateCw } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { rpc } from "../../lib/rpc";
+import { errorText } from "../../lib/user-error";
+
+type Entry = { path: string; kind: "file" | "dir"; size: number };
+
+/**
+ * The API treats "/" as the team root, so a bot's own folder is addressed as `bots/<id>`.
+ * Everything below is shown relative to that, which is why the prefix is stripped for display
+ * and put back for every request.
+ */
+function rootOf(botId: string): string {
+  return `bots/${botId}`;
+}
+
+function parentOf(root: string, path: string): string | null {
+  if (path === root) return null;
+  const parts = path
+    .slice(root.length + 1)
+    .split("/")
+    .filter(Boolean);
+  parts.pop();
+  return parts.length ? `${root}/${parts.join("/")}` : root;
+}
+
+/** "bots/<id>/deliverables/x.md" -> "deliverables/x.md" */
+function relativeTo(root: string, path: string): string {
+  return path === root ? "" : path.slice(root.length + 1);
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/** Folders first, then by name, so the list reads the same way every time. */
+function sorted(entries: Entry[]): Entry[] {
+  return [...entries].sort((a, b) => {
+    if (a.kind !== b.kind) return a.kind === "dir" ? -1 : 1;
+    return a.path.localeCompare(b.path, undefined, { numeric: true });
+  });
+}
+
+/**
+ * The bot's own folder on this Mac: `data/homes/<home>/bots/<id>`. Shell and files both run
+ * here, so this is where its deliverables, notes and scratch work end up. Names open in the
+ * app that owns them rather than in a preview, which is what the folder is for.
+ */
+export function BotFilesPanel({ botId }: { botId: string }) {
+  const { t } = useLingui();
+  const root = rootOf(botId);
+  const [path, setPath] = useState(root);
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState("");
+
+  const load = useCallback(
+    async (next: string) => {
+      setState("loading");
+      setError("");
+      try {
+        const rows = await rpc.computer.files({ botId, path: next });
+        setEntries(sorted(rows));
+        setPath(next);
+        setState("ready");
+      } catch (cause) {
+        setState("error");
+        setError(errorText(cause));
+      }
+    },
+    [botId],
+  );
+
+  useEffect(() => {
+    void load(rootOf(botId));
+  }, [botId, load]);
+
+  async function act(entry: Entry, action: "open" | "reveal") {
+    if (busy) return;
+    setBusy(entry.path);
+    setError("");
+    try {
+      await rpc.computer.fileAction({ botId, path: entry.path, action });
+    } catch (cause) {
+      setError(errorText(cause));
+    } finally {
+      setBusy("");
+    }
+  }
+
+  const parent = parentOf(root, path);
+  const current = relativeTo(root, path);
+
+  return (
+    <div className="flex min-h-0 flex-col gap-2">
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          disabled={!parent}
+          onClick={() => void load(parent ?? root)}
+        >
+          {t`Up`}
+        </Button>
+        <span className="min-w-0 flex-1 truncate text-label text-muted-foreground">
+          {current || t`Bot folder`}
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          aria-label={t`Refresh`}
+          onClick={() => void load(path)}
+        >
+          <RotateCw className="size-3.5" />
+        </Button>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-border">
+        {state === "loading" ? (
+          <div className="grid h-24 place-items-center">
+            <Spinner aria-label={t`Loading files…`} />
+          </div>
+        ) : state === "error" ? (
+          <p className="px-3 py-4 text-xs text-destructive">{error}</p>
+        ) : entries.length === 0 ? (
+          <p className="px-3 py-4 text-xs text-muted-foreground">{t`No files yet.`}</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {entries.map((entry) => (
+              <li key={entry.path} className="flex min-w-0 items-center gap-1 px-2 py-1.5">
+                {entry.kind === "dir" ? (
+                  <button
+                    type="button"
+                    onClick={() => void load(entry.path)}
+                    className="flex min-w-0 flex-1 items-center gap-2 rounded-md text-left hover:bg-accent"
+                  >
+                    <Folder className="size-4 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-foreground">
+                      {entry.path.split("/").at(-1)}
+                    </span>
+                    <ChevronRight className="size-3.5 shrink-0 text-faint-foreground" />
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled={busy === entry.path}
+                      title={entry.path}
+                      onClick={() => void act(entry, "open")}
+                      className="min-w-0 flex-1 truncate rounded-md text-left text-[13px] break-all text-link underline underline-offset-2 hover:no-underline disabled:opacity-60"
+                    >
+                      {entry.path.split("/").at(-1)}
+                    </button>
+                    <span className="shrink-0 text-[11px] tabular-nums text-faint-foreground">
+                      {formatSize(entry.size)}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="xs"
+                      data-testid="bot-file-reveal"
+                      aria-label={t`Show in Finder`}
+                      title={t`Show in Finder`}
+                      disabled={busy === entry.path}
+                      onClick={() => void act(entry, "reveal")}
+                    >
+                      <FolderOpen className="size-3.5" />
+                    </Button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {state === "ready" && error ? <p className="text-xs text-destructive">{error}</p> : null}
+    </div>
+  );
+}

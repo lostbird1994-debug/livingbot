@@ -61,6 +61,7 @@ import {
   resolveBusyBotName,
   toComputerStatus,
 } from "../computer-status.js";
+import { botWorkspaceRoot, openBotWorkspaceFile } from "../local-bot-workspace-file.js";
 import type { RouterDeps } from "../router.js";
 import type { RouterContext } from "./context.js";
 import { computerContext, isRecordNotFound } from "./shared.js";
@@ -558,6 +559,18 @@ export function computerRoutes(ctx: RouterContext) {
           ...entry,
           path: displayBotWorkspacePath(computerMode, bot.id, input.path, entry.path),
         }));
+      }),
+      fileAction: authed.computer.fileAction.handler(async ({ context, input }) => {
+        const bot = await repos.getBot(context.actor, input.botId);
+        if (!bot.computer) throw new IsolationError();
+        const mode = parseComputerMode(bot.computer.scope);
+        return openBotWorkspaceFile(
+          {
+            root: botWorkspaceRoot(deps.home, bot.computer.homeKey),
+            localHost: deps.env.sandboxProvider === "desktop",
+          },
+          { storedPath: resolveBotWorkspacePath(mode, bot.id, input.path), action: input.action },
+        );
       }),
       readFile: authed.computer.readFile.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);

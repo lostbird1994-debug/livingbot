@@ -6,7 +6,8 @@ import { Maximize2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ComputersUnavailableHint } from "../../components/ComputersUnavailableHint";
 import { screenIframeSandbox } from "../../lib/computer-screen";
-import { computerLabel, computerPlaceholder, DesktopKindEmptyState } from "./computer-view";
+import { BotFilesPanel } from "./bot-files-panel";
+import { computerLabel, computerPlaceholder } from "./computer-view";
 
 type ComputerPanelProps = {
   bot: Bot;
@@ -86,6 +87,11 @@ export function ComputerPanel({
       </div>
     );
   }
+  // A desktop-kind bot runs on this Mac, so there is no screen to show. Its folder is the
+  // thing worth looking at: deliverables, notes and scratch work all land there.
+  if (computer?.kind === "desktop") {
+    return <BotFilesPanel botId={bot.id} />;
+  }
   const canOpen = !computerScreenError && !showingRecoveryHint;
   // The Open pill replaces the status text on hover; fade it so they never overlap.
   const hideOnHover = canOpen
@@ -105,10 +111,6 @@ export function ComputerPanel({
           >
             <Trans>Open in full window</Trans>
           </div>
-        ) : computer?.kind === "desktop" ? (
-          <DesktopKindEmptyState
-            className={`grid h-full place-items-center px-6 text-center text-sm text-muted-foreground/80 ${hideOnHover}`}
-          />
         ) : computer?.state === "running" && embeddedScreenUrl && !computerScreenError ? (
           <iframe
             key={screenFrameKey}

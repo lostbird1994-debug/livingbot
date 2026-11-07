@@ -41,8 +41,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Download, Settings, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
-import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary";
 import { ChatBackgroundSection } from "../../components/ChatBackgroundSettings";
+import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary";
 import { InstructionSettings } from "../../components/InstructionSettings";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
 import { thinkingLevelLabel } from "../../lib/model-catalog";
@@ -542,13 +542,13 @@ export function BotSettings({
       </div>
       <Tabs value={tab} onValueChange={(next) => onTabChange?.(next as BotPanelTab)}>
         <TabsList className="w-full">
-          <TabsTrigger value="computer">
-            <Trans>Computer</Trans>
+          <TabsTrigger value="computer" data-testid="bot-panel-tab-computer">
+            <Trans>Files</Trans>
           </TabsTrigger>
-          <TabsTrigger value="routines">
+          <TabsTrigger value="routines" data-testid="bot-panel-tab-routines">
             <Trans>Routines</Trans>
           </TabsTrigger>
-          <TabsTrigger value="settings">
+          <TabsTrigger value="settings" data-testid="bot-panel-tab-settings">
             <Trans>Advanced</Trans>
           </TabsTrigger>
         </TabsList>

@@ -817,9 +817,14 @@ msgstr "API 密钥"
 msgid "Appearance"
 msgstr "外观"
 
+#. placeholder {0}: appearanceLabel[value]
 #: src/pages/Shell.tsx
-msgid "Appearance: {label}"
+msgid "Appearance: {0}"
 msgstr ""
+
+#: src/pages/Shell.tsx
+#~ msgid "Appearance: {label}"
+#~ msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -1058,6 +1063,10 @@ msgstr "Bot"
 #: src/lib/browser-notifications.ts
 msgid "Bot"
 msgstr "Bot"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Bot folder"
+msgstr "Bot 文件夹"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
@@ -2437,6 +2446,7 @@ msgid "Customize bot avatar"
 msgstr "自定义机器人头像"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Dai"
 msgstr "黛蓝"
 
@@ -2997,6 +3007,10 @@ msgstr "要比较的字段，例如 id, modifiedTime（可选）"
 msgid "File"
 msgstr "文件"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Files"
+msgstr "文件"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Files or folders on the computer"
 msgstr "计算机上的文件或文件夹"
@@ -3341,6 +3355,7 @@ msgid "Incoming call"
 msgstr "来电"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Indigo"
 msgstr "靛蓝"
 
@@ -3574,6 +3589,10 @@ msgstr "自动加载网络图片"
 msgid "Loading activity…"
 msgstr "正在加载动态…"
 
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Loading files…"
+msgstr "正在读取文件…"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading integrations…"
 msgstr "正在加载集成…"
@@ -3650,6 +3669,7 @@ msgid "Main model"
 msgstr "主模型"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Malachite"
 msgstr "马尔斯"
 
@@ -4144,6 +4164,10 @@ msgstr ""
 msgid "No bots match"
 msgstr "没有匹配的 Bot"
 
+#: src/pages/shell/bot-files-panel.tsx
+msgid "No files yet."
+msgstr "还没有文件"
+
 #: src/components/AskCard.tsx
 msgid "No longer active"
 msgstr "已停用"
@@ -4632,6 +4656,7 @@ msgid "Plugins"
 msgstr "插件"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Porcelain"
 msgstr "白瓷"
 
@@ -4854,6 +4879,7 @@ msgstr "重定向 URI"
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
+#: src/pages/shell/bot-files-panel.tsx
 msgid "Refresh"
 msgstr "刷新"
 
@@ -5524,6 +5550,10 @@ msgstr "显示全部"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "显示 Bot"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Show in Finder"
+msgstr "在访达中显示"
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -6306,6 +6336,10 @@ msgstr "取消置顶"
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "不支持的文件类型：{0}"
+
+#: src/pages/shell/bot-files-panel.tsx
+msgid "Up"
+msgstr "上一级"
 
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"
