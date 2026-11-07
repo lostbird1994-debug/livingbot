@@ -32,6 +32,17 @@ export function localDocumentPath(value: string): string | undefined {
   return path;
 }
 
+/**
+ * Whether a bare file name is something `open` may launch. Attachments are named by the
+ * bot, so a name without one of these extensions is never handed to the launcher.
+ */
+export function isLocalDocumentName(name: string): boolean {
+  return (
+    documentEnd.test(name) &&
+    ![...name].some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
+  );
+}
+
 /** Keep offsets so Markdown can replace just the reference, not nearby prose. */
 export function localDocumentReferences(
   text: string,

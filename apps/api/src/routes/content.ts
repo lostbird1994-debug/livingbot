@@ -16,6 +16,7 @@ import {
   listSpaceArtifacts,
 } from "../artifacts.js";
 import { requireIdentityConfirmation } from "../identity-confirmation.js";
+import { openLocalArtifactFile } from "../local-artifact-file.js";
 import { listSpaceRuns } from "../runs.js";
 import { querySpaceSearch } from "../search.js";
 import { loadAllMessages } from "../thread-message-pages.js";
@@ -106,6 +107,17 @@ export function contentRoutes(ctx: RouterContext) {
       }),
       getById: authed.artifacts.getById.handler(async ({ context, input }) => {
         return getSpaceArtifactById(deps, context.actor, input);
+      }),
+      fileAction: authed.artifacts.fileAction.handler(async ({ context, input }) => {
+        return openLocalArtifactFile(
+          {
+            prisma: deps.prisma,
+            artifacts: deps.artifacts,
+            localHost: deps.env.sandboxProvider === "desktop",
+          },
+          context.actor,
+          input,
+        );
       }),
       remove: authed.artifacts.remove.handler(async ({ context, input }) => {
         return deleteArtifactFamily(deps, context.actor, { familyId: input.artifactId });

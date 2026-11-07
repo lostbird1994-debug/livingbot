@@ -1231,6 +1231,14 @@ export const appContract = {
       .output(ArtifactSchema),
     get: oc.input(threadTarget.and(z.object({ artifactId: Id }))).output(ArtifactWithContentSchema),
     getById: oc.input(z.object({ artifactId: Id })).output(ArtifactWithContentSchema),
+    /**
+     * Opens an attachment on the Mac this app runs on: `open` launches it in its own app,
+     * `reveal` shows it in Finder. The file is written to Downloads first, because an
+     * artifact lives in the app's own storage under a bare key.
+     */
+    fileAction: oc
+      .input(z.object({ artifactId: Id, action: z.enum(["open", "reveal"]) }))
+      .output(z.object({ ok: z.literal(true) })),
     remove: oc.input(z.object({ artifactId: Id })).output(z.object({ ok: z.literal(true) })),
   },
   usage: {

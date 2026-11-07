@@ -5,11 +5,12 @@ import { ChatMarkdown } from "@rakazo/chat-ui/web";
 import { isAttachmentAudioMimeType } from "@rakazo/contracts";
 import { fileSizeParts } from "@rakazo/core";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle, Spinner } from "@rakazo/ui-web";
-import { Code2, Download, FileText, Play, X } from "lucide-react";
+import { Code2, Download, FileText, FolderOpen, Play, X } from "lucide-react";
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
+import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 import { BuiCard } from "./ai/primitives";
 import { IconTooltip } from "./IconTooltip";
@@ -39,6 +40,10 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
   const closeButton = useRef<HTMLButtonElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  // Opening a file on this Mac writes it into Downloads first, so it has its own busy
+  // state: a failed open must not look like a failed download.
+  const [fileBusy, setFileBusy] = useState(false);
+  const [fileError, setFileError] = useState("");
 
   async function startDownload() {
     setDownloadError(null);
@@ -46,6 +51,19 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
       await downloadArtifact(props.target, props.artifactId, props.name, props.mimeType);
     } catch {
       setDownloadError(t`Could not download ${props.name}. Try again.`);
+    }
+  }
+
+  async function openOnThisMac(action: "open" | "reveal") {
+    if (fileBusy) return;
+    setFileBusy(true);
+    setFileError("");
+    try {
+      await rpc.artifacts.fileAction({ artifactId: props.artifactId, action });
+    } catch (error) {
+      setFileError(errorText(error));
+    } finally {
+      setFileBusy(false);
     }
   }
 
@@ -65,17 +83,35 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
   if (!previewable) {
     return (
       <div>
-        <button
-          type="button"
-          onClick={() => void startDownload()}
-          className="rounded-[20px] bg-card px-4 py-3 text-left text-[14px] text-foreground hover:bg-accent"
-        >
-          <div className="font-medium">{props.name}</div>
+        <div className="min-w-0 max-w-full rounded-[20px] bg-card px-4 py-3 text-[14px] text-foreground">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <button
+              type="button"
+              disabled={fileBusy}
+              onClick={() => void openOnThisMac("open")}
+              title={props.name}
+              className="max-w-full break-all text-left text-link underline underline-offset-2 hover:no-underline disabled:opacity-60"
+            >
+              {props.name}
+            </button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              disabled={fileBusy}
+              title={t`Open folder`}
+              onClick={() => void openOnThisMac("reveal")}
+            >
+              <FolderOpen className="size-3.5" />
+              {t`Open folder`}
+            </Button>
+          </div>
           <div className="mt-1 flex gap-2 text-muted-foreground">
             <span>{props.mimeType}</span>
             <span>{formatSize(props.size)}</span>
           </div>
-        </button>
+        </div>
+        {fileError ? <DownloadError message={fileError} /> : null}
         {downloadError ? <DownloadError message={downloadError} /> : null}
       </div>
     );
@@ -106,6 +142,17 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
               </span>
             </span>
           </button>
+          <IconTooltip label={t`Open folder`}>
+            <button
+              type="button"
+              aria-label={t`Open folder`}
+              disabled={fileBusy}
+              onClick={() => void openOnThisMac("reveal")}
+              className="grid w-14 shrink-0 place-items-center border-l border-border text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60"
+            >
+              <FolderOpen size={19} strokeWidth={1.8} />
+            </button>
+          </IconTooltip>
           <IconTooltip label={t`Download ${props.name}`}>
             <button
               type="button"
@@ -117,6 +164,7 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
             </button>
           </IconTooltip>
         </BuiCard>
+        {fileError ? <DownloadError message={fileError} /> : null}
         {downloadError ? <DownloadError message={downloadError} /> : null}
       </div>
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
