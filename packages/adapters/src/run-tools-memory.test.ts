@@ -147,7 +147,7 @@ describe("restricted consolidation", () => {
     context.source.memoryMaintenance = true;
     const source = {
       ...documents[0]!,
-      content: "# Summary\nCurrent rule\nOld detail\nMore detail",
+      content: `# Summary\nCurrent rule\nOld detail\n${"More detail ".repeat(60)}`,
     };
     read.mockImplementation(async ({ scope, path }) => ({
       documents: scope === "bot" && (!path || path === source.path) ? [source] : [],

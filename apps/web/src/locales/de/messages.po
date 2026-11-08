@@ -2897,8 +2897,8 @@ msgid "Every {n} hours at :{minute}"
 msgstr "Alle {n} Stunden um :{minute}"
 
 #: src/pages/KnowledgeSection.tsx
-msgid "Every bot in this space reads these notes and keeps them up to date."
-msgstr "Alle Bots in diesem Space lesen diese Notizen und halten sie aktuell."
+msgid "Shared summaries load automatically. Other shared notes are read on demand."
+msgstr "Geteilte Zusammenfassungen werden automatisch geladen. Andere geteilte Notizen werden bei Bedarf gelesen."
 
 #: src/lib/cron.ts
 #: src/pages/RoutineEditor.tsx

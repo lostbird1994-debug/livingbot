@@ -2897,8 +2897,8 @@ msgid "Every {n} hours at :{minute}"
 msgstr "{n}時間ごと、{minute}分"
 
 #: src/pages/KnowledgeSection.tsx
-msgid "Every bot in this space reads these notes and keeps them up to date."
-msgstr "このスペースのすべてのボットがこのメモを読み、最新の状態に保ちます。"
+msgid "Shared summaries load automatically. Other shared notes are read on demand."
+msgstr "共有の要約は自動で読み込まれます。その他の共有メモは必要に応じて読み取られます。"
 
 #: src/lib/cron.ts
 #: src/pages/RoutineEditor.tsx

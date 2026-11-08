@@ -57,7 +57,7 @@ export function SpaceMemorySection() {
         <Trans>Shared memory</Trans>
       </SettingsSectionHeading>
       <p className="mt-1 text-[13px] text-muted-foreground">
-        <Trans>Every bot in this space reads these notes and keeps them up to date.</Trans>
+        <Trans>Shared summaries load automatically. Other shared notes are read on demand.</Trans>
       </p>
       <div className="mt-3">
         <MemoryDocumentList input={{ scope: "user" }} testId="space-memory-list" />

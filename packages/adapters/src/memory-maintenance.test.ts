@@ -8,7 +8,7 @@ import { selectBuiltinToolsForRun } from "./run-tool-selection.js";
 const source = {
   id: "doc",
   path: "MEMORY.md",
-  content: "# Summary\nCurrent rule\nOld detail\nMore old detail",
+  content: `# Summary\nCurrent rule\nOld detail\n${"More old detail ".repeat(60)}`,
   revision: 7,
 };
 describe("memory maintenance proposals", () => {
@@ -22,7 +22,27 @@ describe("memory maintenance proposals", () => {
     expect(result.content).toContain("bot:MEMORY.md@v7#L1-L2");
     expect(result.content).toContain("> # Summary\n> Current rule");
     expect(result.content).toContain("> Old detail\n> More old detail");
-    expect(source.content).toBe("# Summary\nCurrent rule\nOld detail\nMore old detail");
+    expect(source.content).toBe(
+      `# Summary\nCurrent rule\nOld detail\n${"More old detail ".repeat(60)}`,
+    );
+  });
+  it("rejects line-count reductions that save too few actual Unicode characters", () => {
+    const tiny = { ...source, content: "# Summary\nKeep\n\n\n" };
+    expect(() =>
+      renderMemoryProposal(tiny, {
+        path: tiny.path,
+        expected_revision: tiny.revision,
+        keep_ranges: [{ start_line: 1, end_line: 2 }],
+      }),
+    ).toThrow(/at least 512 characters/);
+    const emoji = { ...source, content: `Keep\n${"🙂".repeat(300)}` };
+    expect(() =>
+      renderMemoryProposal(emoji, {
+        path: emoji.path,
+        expected_revision: emoji.revision,
+        keep_ranges: [{ start_line: 1, end_line: 1 }],
+      }),
+    ).toThrow(/at least 512 characters/);
   });
   it.each([
     [{ start_line: 3, end_line: 2 }],

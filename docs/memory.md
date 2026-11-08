@@ -16,8 +16,9 @@ be downloaded or deleted.
 ## Shared memory
 
 Some things every bot should know, such as your name, your company, or how you like reports
-written. Those go in **Shared memory**: every bot in the [space](./spaces.md) reads these notes and
-keeps them up to date.
+written. Those go in **Shared memory**, available to every bot in the [space](./spaces.md).
+Shared `MEMORY.md`, `USER.md` and `profile.md` load automatically within the memory budget.
+Other shared documents are listed for on-demand reads rather than loaded in every conversation.
 
 Find it in **Settings → Memory**.
 
@@ -27,6 +28,13 @@ Summaries load within the selected model's context budget. Other documents are l
 on demand. Keyword search supports Chinese substrings, single characters and English fragments.
 Encrypted notes use a separate keyed search index; matching candidates are decrypted and checked
 before returning excerpts. Message-history indexing is unchanged.
+Matching is a normalized literal substring, including spaces; several words are not combined
+with AND. Review artifacts under `memory/reviews/` are excluded from agent context, browsing,
+reads and ordinary search, while remaining available in human memory management.
+
+When the model window is unknown, memory uses an allowance of 1,024 estimated tokens. Known
+windows use one tenth of that window. Truncated summaries preserve their beginning and recent
+tail with the missing character range marked. Token counts are heuristic, not provider usage.
 
 Open a document's **Versions** to preview or restore a previous version. Restoring creates a new
 version, and refuses to overwrite changes made since you opened the document.
@@ -42,7 +50,10 @@ then the next run returns to 18:00. This does not wake a powered-off computer.
 This restricted run can only read memory, search it and propose a smaller summary. It must read
 every page of the current source version first. Proposals keep exact original line ranges, source
 versions and a complete source snapshot in `memory/reviews/`. Review these as ordinary memory
-documents. The task cannot overwrite the source, run commands, call integrations or create schedules.
+documents in the human interface. Agent tools cannot read or overwrite these reserved artifacts.
+Proposals must save at least 512 Unicode characters of source text; this is a usefulness threshold,
+not a semantic safety guarantee. Existing review artifacts are preserved.
+The task cannot overwrite the source, run commands, call integrations or create schedules.
 No candidate, a missing model or a failed validation leaves the summary unchanged.
 
 The operator CLI is `apps/api/dist/cli/memory-maintenance.js`: `plan-nightly` previews setup,
@@ -50,6 +61,14 @@ The operator CLI is `apps/api/dist/cli/memory-maintenance.js`: `plan-nightly` pr
 updates derived search fields, and `verify-search` compares indexed results with complete scans.
 Back up the database before migrating or backfilling. Backfill preserves content, revisions and
 timestamps and skips concurrent changes.
+
+After deploying an index migration, or returning from an older release, run `check-search`.
+It reads index-version counts, emits no memory text, and exits with status 2 if any document
+needs indexing. With a verified backup, explicitly run `backfill-search`, then repeat `check-search`
+and `verify-search`. Recheck after concurrent writes or backfill conflicts.
+An old writer can invalidate index tokens; search stays correct through decrypted fallback.
+Applications do not migrate or backfill memory on startup. Deployment must not be considered
+verified until these explicit checks pass.
 
 ## Memory providers
 

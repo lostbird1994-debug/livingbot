@@ -764,7 +764,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "search_memory",
     description:
-      "Find a term across all stored memory documents when the path is not obvious. Returns paths and snippets; follow with read_memory.",
+      "Find a normalized literal substring in memory when the path is not obvious. Spaces are literal; multiple terms are not ANDed. Review artifacts are excluded. Returns paths and snippets; follow with read_memory.",
     inputSchema: {
       type: "object",
       properties: {
@@ -795,7 +795,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_shared_memory",
     description:
-      "Save shared memory read by every bot. Read it first; replacing an existing document requires the expected_revision you read.",
+      "Save shared memory available to every bot on demand. Shared summaries load automatically. Read it first; replacing an existing document requires the expected_revision you read.",
     inputSchema: {
       type: "object",
       properties: {

@@ -9,12 +9,12 @@ commit preserves the working retrieval and proposal implementation before these 
 | Q2 | Preserve document counts and summary entry points in tight-budget fallback. | Implemented within the available allowance; regression passed |
 | Q3 | Retain both the beginning and recent tail of truncated summaries; mark the gap. | Implemented with explicit missing character offsets; regression passed |
 | Q4 | Do not claim tokenizer accuracy without reproducible target-model measurements. | Calibration deferred; estimate remains heuristic |
-| Q5 / B2 | Keep shared summaries in context and other shared notes available on demand; align copy. | Planned |
+| Q5 / B2 | Keep shared summaries in context and other shared notes available on demand; align copy. | Implemented in documentation and every interface locale |
 | Q6 | Exclude review artifacts from agent context, browsing, reads and ordinary search. Preserve human access. | Implemented; offline regression passed |
-| Q7 | Require meaningful absolute character savings before creating a proposal. | Planned |
+| Q7 | Require meaningful absolute character savings before creating a proposal. | Implemented: at least 512 Unicode characters; regression passed |
 | Q8 | Preserve complete search results; do not silently cap candidates. Measure worst-case workloads before changing the pagination contract. | Performance evaluation pending |
-| Q9 | Document normalized literal substring matching, including spaces. Multi-term AND is a separate feature. | Planned |
-| Q10 | Add a read-only index health command and explicit post-deploy/rollback checks. Never backfill on startup. | Planned |
+| Q9 | Document normalized literal substring matching, including spaces. Multi-term AND is a separate feature. | Implemented in tool descriptions and documentation |
+| Q10 | Add a read-only index health command and explicit post-deploy/rollback checks. Never backfill on startup. | Implemented: check-search exits nonzero when indexing is needed |
 | Q11 | Reserve review paths from ordinary agent writes. | Implemented; offline regression passed |
 | B1 | Label the root directory explicitly. | Implemented; regression passed |
 

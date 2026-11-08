@@ -10,6 +10,7 @@ import {
   backfillMemorySearch,
   contentEncryptionOf,
   createDb,
+  MEMORY_SEARCH_VERSION,
   normalizeMemorySearch,
   runAsSystem,
 } from "@rakazo/db";
@@ -18,8 +19,14 @@ import { MarkdownMemoryStore } from "@rakazo/memory";
 loadRootEnv();
 await unwrapEnvFromKeyManager();
 const command = process.argv[2];
-if (!["backfill-search", "verify-search", "plan-nightly", "enable-nightly"].includes(command ?? ""))
-  throw new Error("Use backfill-search, verify-search, plan-nightly or enable-nightly.");
+if (
+  !["backfill-search", "verify-search", "check-search", "plan-nightly", "enable-nightly"].includes(
+    command ?? "",
+  )
+)
+  throw new Error(
+    "Use backfill-search, verify-search, check-search, plan-nightly or enable-nightly.",
+  );
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required.");
 const { prisma, pool } = createDb(process.env.DATABASE_URL, {
   keyProvider: contentKeyProviderFromEnv(),
@@ -28,6 +35,23 @@ try {
   const result = await runAsSystem("explicit memory maintenance setup", async () => {
     if (command === "backfill-search") return backfillMemorySearch(prisma);
     if (command === "verify-search") return verifySearch();
+    if (command === "check-search") {
+      const versions = await prisma.memoryDocument.groupBy({
+        by: ["searchTokensVersion"],
+        _count: true,
+      });
+      const documents = versions.reduce((sum, row) => sum + row._count, 0);
+      const unindexed = versions
+        .filter((row) => row.searchTokensVersion !== MEMORY_SEARCH_VERSION)
+        .reduce((sum, row) => sum + row._count, 0);
+      if (unindexed) process.exitCode = 2;
+      return {
+        expectedVersion: MEMORY_SEARCH_VERSION,
+        documents,
+        unindexed,
+        healthy: unindexed === 0,
+      };
+    }
     return configureMemoryMaintenance(prisma, command === "enable-nightly");
   });
   process.stdout.write(`${JSON.stringify(result)}\n`);
