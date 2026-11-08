@@ -9,6 +9,7 @@ import type {
   AgentRuntimeEvent,
   AgentUsage,
 } from "@rakazo/adapter-kit";
+import { nativeCollaboration } from "./native-collaboration.js";
 import {
   assertAllowedOpenAiCompatibleUrl,
   assertHttpsForKeyedOpenAiCompatibleUrl,
@@ -278,6 +279,7 @@ export function openClawModelStream(
           connectionId: request.model.connectionId,
           message: prompt || request.prompt,
           instructions,
+          collaboration: nativeCollaboration(request, emit),
           attachments,
           signal: options?.signal ?? runtimeContext?.signal,
           answeredApproval: request.answeredApproval,

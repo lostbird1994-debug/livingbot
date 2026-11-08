@@ -1,0 +1,20 @@
+{
+  "id": "rakazo-collaboration",
+  "name": "Rakazo collaboration",
+  "activation": { "onStartup": true },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  },
+  "contracts": {
+    "tools": [
+      "message_bot",
+      "handoff_to_bot",
+      "list_fleet",
+      "connect_agent",
+      "respond_agent_connection",
+      "message_agent"
+    ]
+  }
+}

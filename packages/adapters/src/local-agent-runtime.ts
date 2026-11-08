@@ -1,17 +1,18 @@
 import { join } from "node:path";
-import { parseLocalAgentSelection } from "./local-agent-model.js";
 import type { AdapterContext, AgentRunRequest, AgentRuntimeEvent } from "@rakazo/adapter-kit";
+import { parseLocalAgentSelection } from "./local-agent-model.js";
+import { nativeCollaboration } from "./native-collaboration.js";
+import {
+  assertAllowedOpenAiCompatibleUrl,
+  assertHttpsForKeyedOpenAiCompatibleUrl,
+} from "./openai-compatible-url.js";
+import { NativeRunJournal } from "./openclaw-model-stream.js";
 import type { NativeFrame, NativePeer, NativeStore } from "./openclaw-native-driver.js";
 import {
   NativeExecutionError,
   nativeSessionKey,
   runNativeAgent,
 } from "./openclaw-native-driver.js";
-import { NativeRunJournal } from "./openclaw-model-stream.js";
-import {
-  assertAllowedOpenAiCompatibleUrl,
-  assertHttpsForKeyedOpenAiCompatibleUrl,
-} from "./openai-compatible-url.js";
 
 export const isLocalAgentModel = (model: AgentRunRequest["model"]) =>
   model.provider === "openai-compatible" && Boolean(parseLocalAgentSelection(model.id));
@@ -61,8 +62,8 @@ export async function connectLocalAgentBridge(
       for await (const chunk of response.body!) {
         pending += decoder.decode(chunk, { stream: true });
         if (pending.length > 2 * 1024 * 1024) throw new Error("Native event exceeds limit");
-        let end: number;
-        while ((end = pending.indexOf("\n")) >= 0) {
+        let end = pending.indexOf("\n");
+        while (end >= 0) {
           const line = pending.slice(0, end).trim();
           pending = pending.slice(end + 1);
           if (line.startsWith("data:")) {
@@ -75,6 +76,7 @@ export async function connectLocalAgentBridge(
             )
               onEvent(event as NativeFrame);
           }
+          end = pending.indexOf("\n");
         }
       }
     } catch {
@@ -215,6 +217,7 @@ export async function* runLocalAgent(
           connectionId: request.model.connectionId,
           message,
           instructions: request.instructions,
+          collaboration: nativeCollaboration(request, emit),
           signal,
           answeredApproval: request.answeredApproval,
           attachments: request.currentTurnImages?.map((image) => ({

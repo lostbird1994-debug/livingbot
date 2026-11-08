@@ -1,4 +1,7 @@
 import { createHash } from "node:crypto";
+import { isToolPauseResult } from "./approval-effect.js";
+import type { NativeCollaboration } from "./native-collaboration.js";
+import type { CollaborationCall } from "./native-collaboration-broker.js";
 
 export interface NativeFrame {
   event: string;
@@ -30,7 +33,8 @@ export interface NativeRecord {
     expiresAtMs: number;
     command: string;
     decisions: string[];
-    kind?: "question";
+    kind?: "question" | "collaboration";
+    callId?: string;
   };
 }
 export interface NativeStore {
@@ -55,6 +59,7 @@ export interface NativeInput {
   instructions: string;
   signal?: AbortSignal;
   answeredApproval?: { id: string; actionId: string };
+  collaboration?: NativeCollaboration;
   attachments?: unknown[];
   onText?: (delta: string) => void;
   onNotice?: (notice: NativeNotice) => void;
@@ -392,7 +397,36 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       "External runtime connection timed out",
     );
     peer = connection;
-    if (record.status === "approval") {
+    const collaboration = input.collaboration;
+    if (collaboration) {
+      await connection.request("rakazo.tools.register", {
+        sessionKey,
+        runId,
+        tools: collaboration.tools,
+      });
+    } else if (record.approval?.kind === "collaboration") {
+      throw new NativeExecutionError(
+        "Collaboration tools are unavailable during resume",
+        "unconfirmed",
+      );
+    }
+    if (record.status === "approval" && record.approval?.kind === "collaboration") {
+      const waiting = await connection.request<{ calls: CollaborationCall[] }>(
+        "rakazo.tools.poll",
+        { sessionKey, runId },
+      );
+      if (
+        record.approval.expiresAtMs <= Date.now() ||
+        !waiting.calls?.some((call) => call.id === record.approval?.callId)
+      )
+        throw new NativeExecutionError(
+          "Native collaboration request expired or was cancelled; start a new task to send it",
+          "failed",
+        );
+      record.status = "running";
+      delete record.approval;
+      await persist();
+    } else if (record.status === "approval") {
       const approval = record.approval;
       if (!approval || !Number.isFinite(approval.expiresAtMs) || approval.expiresAtMs <= Date.now())
         throw new NativeExecutionError(
@@ -442,7 +476,11 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
           ...(input.modelId !== undefined ? { model: input.modelId } : {}),
           sessionKey,
           message: input.message,
-          extraSystemPrompt: input.instructions,
+          extraSystemPrompt:
+            input.instructions +
+            (collaboration
+              ? "\n\nRakazo collaboration tools are connected to this bot's active run. Use the provided message_bot/handoff_to_bot tools for Rakazo teammates; tool results confirm delivery. Your Rakazo sender identity and space permissions are supplied by the host. Never substitute a shell command or a claim in plain text for a collaboration tool call."
+              : ""),
           idempotencyKey: runId,
           deliver: false,
           timeout: Math.ceil(runMs / 1000),
@@ -478,6 +516,63 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       if (paused) {
         await wait(Math.min(pollMs, 1000));
         continue;
+      }
+      if (collaboration) {
+        const batch = await connection.request<{ calls: CollaborationCall[] }>(
+          "rakazo.tools.poll",
+          { sessionKey, runId },
+        );
+        if (!Array.isArray(batch.calls) || batch.calls.length > 128)
+          throw new Error("Invalid native collaboration response");
+        for (const call of batch.calls) {
+          input.signal?.throwIfAborted();
+          if (!collaboration.tools.some((tool) => tool.name === call.name))
+            throw new Error("Native runtime requested an unavailable tool");
+          const executionId = `native-tool:${hash(`${runId}:${call.id}`)}`;
+          const started = Date.now();
+          let result: unknown;
+          let error: unknown;
+          try {
+            result = await collaboration.execute(call.name, call.args, executionId);
+          } catch (failure) {
+            error = failure;
+            result = { error: "Rakazo collaboration tool failed; delivery is not confirmed" };
+          }
+          const toolPaused = isToolPauseResult(result);
+          try {
+            await collaboration.completed?.({
+              name: call.name,
+              executionId,
+              durationMs: Date.now() - started,
+              result,
+              ...(error === undefined ? {} : { error }),
+              ...(toolPaused ? { paused: true } : {}),
+            });
+          } catch {
+            /* Audit hooks do not change the tool outcome. */
+          }
+          if (toolPaused) {
+            paused = true;
+            record.status = "approval";
+            record.approval = {
+              kind: "collaboration",
+              id: executionId,
+              command: call.name,
+              callId: call.id,
+              decisions: [],
+              expiresAtMs: Date.now() + 30 * 60_000,
+            };
+            await persist();
+            collaboration.onPaused();
+            return record.text;
+          }
+          await connection.request("rakazo.tools.resolve", {
+            sessionKey,
+            runId,
+            id: call.id,
+            result: result ?? null,
+          });
+        }
       }
       const terminal = await connection.request<any>(
         "agent.wait",
@@ -606,6 +701,8 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     closing = true;
     input.signal?.removeEventListener("abort", onAbort);
     wake?.();
+    if (input.collaboration && !paused)
+      await peer?.request("rakazo.tools.close", { sessionKey, runId }).catch(() => undefined);
     peer?.stop();
     await pending;
   }

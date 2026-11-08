@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { approvalPausedToolResult } from "./approval-effect.js";
+import { NativeCollaborationBroker } from "./native-collaboration-broker.js";
 import type {
   NativeFrame,
   NativeInput,
@@ -88,6 +90,150 @@ function fixture(overrides: Partial<NativeInput> = {}) {
 }
 
 describe("native external Agent lifecycle", () => {
+  it("executes and audits real collaboration calls through the owning run", async () => {
+    const f = fixture();
+    const broker = new NativeCollaborationBroker();
+    let pending: Promise<unknown> | undefined;
+    const executions: unknown[] = [];
+    const completions: unknown[] = [];
+    f.input.collaboration = {
+      tools: [
+        { name: "message_bot", description: "Message teammate", inputSchema: { type: "object" } },
+      ],
+      execute: async (...args) => {
+        executions.push(args);
+        return { delivered: true };
+      },
+      completed: async (value) => {
+        completions.push(value);
+      },
+      onPaused() {
+        throw Error("Unexpected pause");
+      },
+    };
+    f.setHandler(async (method, params) => {
+      if (method.startsWith("rakazo.tools.")) {
+        const action = method.slice("rakazo.tools.".length) as
+          | "register"
+          | "poll"
+          | "resolve"
+          | "close";
+        return broker[action](params);
+      }
+      if (method === "agent") {
+        pending = broker.call(params.sessionKey, params.idempotencyKey, {
+          id: "native-call",
+          name: "message_bot",
+          args: { bot_id: "peer", message: "hello" },
+        });
+        return { runId: params.idempotencyKey };
+      }
+      if (method === "agent.wait") return { status: "ok" };
+      if (method === "chat.history")
+        return {
+          messages: [
+            {
+              role: "assistant",
+              timestamp: Date.now(),
+              content: [{ type: "text", text: "Delivered" }],
+            },
+          ],
+        };
+      throw Error(method);
+    });
+    await expect(runNativeAgent(f.input, f.options)).resolves.toBe("Delivered");
+    await expect(pending).resolves.toEqual({ delivered: true });
+    expect(executions).toHaveLength(1);
+    expect(executions[0]).toEqual([
+      "message_bot",
+      { bot_id: "peer", message: "hello" },
+      expect.stringMatching(/^native-tool:/),
+    ]);
+    expect(completions).toEqual([
+      expect.objectContaining({ name: "message_bot", result: { delivered: true } }),
+    ]);
+    expect(f.calls.findIndex((c) => c.method === "rakazo.tools.register")).toBeLessThan(
+      f.calls.findIndex((c) => c.method === "agent"),
+    );
+  });
+  it.each([false, true])(
+    "resumes a gated call only while the native request remains pending (cancelled=%s)",
+    async (cancelled) => {
+      const f = fixture();
+      const broker = new NativeCollaborationBroker();
+      let pending: Promise<unknown> | undefined;
+      let approved = false;
+      let paused = 0;
+      const ids: string[] = [];
+      f.input.collaboration = {
+        tools: [
+          { name: "message_bot", description: "Message teammate", inputSchema: { type: "object" } },
+        ],
+        execute: async (_name, _args, id) => {
+          ids.push(id);
+          return approved ? { delivered: true } : approvalPausedToolResult();
+        },
+        completed: undefined,
+        onPaused() {
+          paused++;
+        },
+      };
+      f.setHandler(async (method, params) => {
+        if (method.startsWith("rakazo.tools.")) {
+          const action = method.slice("rakazo.tools.".length) as
+            | "register"
+            | "poll"
+            | "resolve"
+            | "close";
+          return broker[action](params);
+        }
+        if (method === "agent") {
+          pending = broker.call(params.sessionKey, params.idempotencyKey, {
+            id: "native-call",
+            name: "message_bot",
+            args: { message: "hello" },
+          });
+          return { runId: params.idempotencyKey };
+        }
+        if (method === "agent.wait") return { status: "ok" };
+        if (method === "chat.history")
+          return {
+            messages: [
+              {
+                role: "assistant",
+                timestamp: Date.now(),
+                content: [{ type: "text", text: "Delivered" }],
+              },
+            ],
+          };
+        throw Error(method);
+      });
+      await runNativeAgent(f.input, f.options);
+      expect(paused).toBe(1);
+      expect(f.store.records.get(f.input.key)).toMatchObject({
+        status: "approval",
+        approval: { kind: "collaboration" },
+      });
+      expect(f.calls.some((c) => c.method === "rakazo.tools.resolve")).toBe(false);
+      expect(f.calls.some((c) => c.method === "rakazo.tools.close")).toBe(false);
+      if (cancelled) {
+        const registration = f.calls.find((c) => c.method === "rakazo.tools.register")!.params;
+        broker.cancel(registration.sessionKey, registration.runId, "native-call");
+        await expect(runNativeAgent(f.input, f.options)).rejects.toMatchObject({ state: "failed" });
+        await expect(pending).resolves.toHaveProperty("error");
+        expect(ids).toHaveLength(1);
+        expect(f.calls.filter((c) => c.method === "agent")).toHaveLength(1);
+        return;
+      }
+      approved = true;
+      await expect(runNativeAgent(f.input, f.options)).resolves.toBe("Delivered");
+      await expect(pending).resolves.toEqual({ delivered: true });
+      expect(ids).toHaveLength(2);
+      expect(ids[0]).toBe(ids[1]);
+      expect(f.calls.filter((c) => c.method === "agent")).toHaveLength(1);
+      expect(f.calls.some((c) => c.method === "exec.approval.resolve")).toBe(false);
+    },
+  );
   it("records a pre-dispatch cancellation without opening a native connection", async () => {
     const controller = new AbortController();
     controller.abort();

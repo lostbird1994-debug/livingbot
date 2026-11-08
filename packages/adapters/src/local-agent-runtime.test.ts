@@ -1,11 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
 import type { AgentRunRequest, AgentRuntimeEvent } from "@rakazo/adapter-kit";
-import type { NativeFrame, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
+import { describe, expect, it, vi } from "vitest";
 import {
   connectLocalAgentBridge,
   isLocalAgentModel,
   runLocalAgent,
 } from "./local-agent-runtime.js";
+import { NativeCollaborationBroker } from "./native-collaboration-broker.js";
+import type { NativeFrame, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
+
 class Store implements NativeStore {
   rows = new Map<string, NativeRecord>();
   async read(key: string) {
@@ -90,6 +92,60 @@ async function collect(input: AgentRunRequest, f: ReturnType<typeof fixture>) {
   return events;
 }
 describe("local native Agent boundary", () => {
+  it.each(["codex", "workbuddy"])(
+    "connects %s collaboration to the run's executor",
+    async (engine) => {
+      const f = fixture();
+      const broker = new NativeCollaborationBroker();
+      const baseConnect = f.connect;
+      let pending: Promise<unknown> | undefined;
+      f.connect = async (url, key, event) => {
+        const peer = await baseConnect(url, key, event);
+        const original = peer.request;
+        peer.request = async <T>(method: string, params: any): Promise<T> => {
+          if (method.startsWith("rakazo.tools.")) {
+            const action = method.slice("rakazo.tools.".length) as
+              | "register"
+              | "poll"
+              | "resolve"
+              | "close";
+            return broker[action](params) as T;
+          }
+          if (method === "agent")
+            pending = broker.call(params.sessionKey, params.idempotencyKey, {
+              id: "native-message",
+              name: "message_bot",
+              args: { message: "hello" },
+            });
+          return original(method, params);
+        };
+        return peer;
+      };
+      const executeTool = vi.fn().mockResolvedValue({ delivered: true });
+      const events = await collect(
+        {
+          ...request,
+          model: { ...request.model, id: `native/${engine}` },
+          tools: [
+            {
+              name: "message_bot",
+              description: "Message teammate",
+              inputSchema: { type: "object" },
+            },
+          ],
+          executeTool,
+        },
+        f,
+      );
+      await expect(pending).resolves.toEqual({ delivered: true });
+      expect(executeTool).toHaveBeenCalledWith(
+        "message_bot",
+        { message: "hello" },
+        expect.stringMatching(/^native-tool:/),
+      );
+      expect(events.at(-1)?.type).toBe("done");
+    },
+  );
   it("recognizes explicitly configured native models only", () => {
     expect(isLocalAgentModel(request.model)).toBe(true);
     expect(isLocalAgentModel({ ...request.model, id: "native/workbuddy" })).toBe(true);
