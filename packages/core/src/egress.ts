@@ -50,11 +50,12 @@ const URL_IN_TEXT = /\bhttps?:\/\/[^\s<>"'`]+/gi;
 const EMAIL_IN_TEXT =
   /(?:"(?:[^"\\\r\n]|\\.)*"|(?<![^\s<>()[\]\\,;:"@，；、！？])[^\s<>()[\]\\,;:"@，；、！？]+)@(?:\[[^\]\r\n]+\]|[^\s<>()[\]\\,;:"@，；、！？]+)/g;
 const DOMAIN_IN_TEXT =
-  /(?<![\p{L}\p{N}\p{M}_@.-])(?:[\p{L}\p{N}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?\.)+\p{L}[\p{L}\p{N}\p{M}-]{0,62}[\p{L}\p{N}\p{M}](?![\p{L}\p{N}\p{M}_-])/gu;
+  /(?<![\p{L}\p{N}\p{M}_@./\\-])(?:[\p{L}\p{N}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?\.)+\p{L}[\p{L}\p{N}\p{M}-]{0,62}[\p{L}\p{N}\p{M}](?![\p{L}\p{N}\p{M}_-])/gu;
 
 /**
  * The sites a person named in their own words: http(s) links and bare domain names on a known
- * public suffix. Neither part of an email address names a site to fetch.
+ * public suffix. Email addresses and filename segments of local paths do not name sites.
+ * Explicit http(s) links are extracted first, including valid .py and .md destinations.
  */
 export function sitesInText(text: string): Set<string> {
   const sites = new Set<string>();

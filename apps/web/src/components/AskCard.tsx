@@ -17,7 +17,7 @@ import {
   selectedAskActionLabel,
 } from "@rakazo/core";
 import { Button, Input, Label, Switch, Textarea } from "@rakazo/ui-web";
-import { Check } from "lucide-react";
+import { Check, ShieldCheck } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
@@ -270,19 +270,43 @@ export function AskCard({
           ? "secret-ask-card"
           : block.instructionUpdate
             ? "instruction-approval-card"
-            : undefined
+            : approvalActions
+              ? "action-approval-card"
+              : undefined
       }
-      className="w-full min-w-0 max-w-xl px-5 py-4"
+      className={
+        approvalActions && block.approvalContext
+          ? "w-full min-w-0 max-w-xl rounded-2xl border border-border/70 bg-background px-5 py-5 shadow-xs"
+          : "w-full min-w-0 max-w-xl px-5 py-4"
+      }
     >
-      <div className="text-[15.5px] leading-[1.5] text-foreground">
-        {block.instructionUpdate ? (
-          <Trans>Update instructions?</Trans>
-        ) : block.approvalContext ? (
-          presentation.title
-        ) : (
-          <ChatMarkdown>{presentation.title}</ChatMarkdown>
-        )}
-      </div>
+      {approvalActions && block.approvalContext ? (
+        <div>
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <ShieldCheck aria-hidden className="size-4" />
+            <span>{presentation.operation}</span>
+          </div>
+          <h3 className="mt-2 break-words text-base font-semibold leading-relaxed text-foreground">
+            {presentation.target || presentation.operation}
+          </h3>
+          <p
+            data-testid="ask-reason"
+            className="mt-2 text-sm leading-relaxed text-muted-foreground"
+          >
+            {presentation.reason}
+          </p>
+        </div>
+      ) : (
+        <div className="text-[15.5px] leading-[1.5] text-foreground">
+          {block.instructionUpdate ? (
+            <Trans>Update instructions?</Trans>
+          ) : block.approvalContext ? (
+            presentation.title
+          ) : (
+            <ChatMarkdown>{presentation.title}</ChatMarkdown>
+          )}
+        </div>
+      )}
       {secretInput && block.credential ? (
         <div
           data-testid="secret-ask-destination"
@@ -298,7 +322,42 @@ export function AskCard({
           )}
         </div>
       ) : null}
-      {presentation.detail && !secretInput ? (
+      {approvalActions && block.approvalContext ? (
+        <dl
+          data-testid="ask-detail"
+          className="mt-4 space-y-3 border-t border-border/60 pt-4 text-sm leading-relaxed"
+        >
+          {presentation.rows?.map((row, index) => (
+            <div
+              key={`${row.label}-${index}`}
+              className="grid grid-cols-[minmax(5rem,auto)_minmax(0,1fr)] items-start gap-x-4 gap-y-1"
+            >
+              <dt className="text-muted-foreground">{row.label}</dt>
+              <dd className="min-w-0 whitespace-pre-wrap break-words text-foreground">
+                {row.before !== undefined ? (
+                  <div className="mb-1 text-muted-foreground">
+                    <span className="me-2 text-xs">
+                      <Trans>Before</Trans>
+                    </span>
+                    {row.before}
+                  </div>
+                ) : null}
+                <div>
+                  {row.before !== undefined ? (
+                    <span className="me-2 text-xs text-muted-foreground">
+                      <Trans>After</Trans>
+                    </span>
+                  ) : null}
+                  {row.after}
+                </div>
+              </dd>
+            </div>
+          ))}
+          {!block.approvalContext.changes?.length && block.detail ? (
+            <div className="whitespace-pre-wrap break-words">{block.detail}</div>
+          ) : null}
+        </dl>
+      ) : presentation.detail && !secretInput ? (
         <pre
           data-testid="ask-detail"
           className={
@@ -311,9 +370,11 @@ export function AskCard({
         </pre>
       ) : null}
       {presentation.expandedDetail && !secretInput ? (
-        <details className="mt-3 text-sm">
-          <summary className="cursor-pointer text-foreground">{presentation.expandedLabel}</summary>
-          <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-foreground">
+        <details className="mt-4 text-sm">
+          <summary className="w-fit cursor-pointer rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring">
+            {presentation.expandedLabel}
+          </summary>
+          <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted/40 p-3 font-sans text-sm leading-relaxed text-foreground">
             {presentation.expandedDetail}
           </pre>
         </details>
@@ -388,7 +449,13 @@ export function AskCard({
           <Trans>No longer active</Trans>
         </div>
       ) : ownerOnly ? null : displayActions?.length ? (
-        <div className="mt-3.5 flex flex-wrap gap-2">
+        <div
+          className={
+            block.approvalContext
+              ? "mt-5 flex flex-wrap gap-2 border-t border-border/60 pt-4"
+              : "mt-3.5 flex flex-wrap gap-2"
+          }
+        >
           {displayActions.map((action) => (
             <Button
               key={action.id}
@@ -412,6 +479,10 @@ export function AskCard({
                 ) : (
                   t`Dismiss`
                 )
+              ) : action.id === "allow" && presentation.confirmLabel ? (
+                presentation.confirmLabel
+              ) : action.id === "deny" && presentation.denyLabel ? (
+                presentation.denyLabel
               ) : (
                 approvalActionLabel(action.id, action.label, action.outcome, block.site)
               )}

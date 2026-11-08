@@ -77,6 +77,24 @@ describe("sitesInText", () => {
     expect([...sitesInText("Email bob@mail.example.com about notes.txt and index.ts")]).toEqual([]);
   });
 
+  it("does not mistake local path segments for country-code websites", () => {
+    expect([
+      ...sitesInText(
+        "Run `python3 tools/devlog.py`, read memory/rakazo-devlog.md and /tmp/release/notes.md. Also C:\\work\\build.py and ./docs/setup.md",
+      ),
+    ]).toEqual([]);
+  });
+
+  it("still recognizes explicit links and bare domains using the same suffixes", () => {
+    expect(
+      [
+        ...sitesInText(
+          "Read https://docs.example.md/guide and http://example.py/a; compare example.md and example.py/path.",
+        ),
+      ].sort(),
+    ).toEqual(["example.md", "example.py"]);
+  });
+
   it.each([
     "ada.li@example.org",
     "ada.li@例子.测试",

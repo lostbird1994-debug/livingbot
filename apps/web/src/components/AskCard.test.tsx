@@ -92,16 +92,56 @@ it("renders a Chinese approval with the task, actual change and reason", async (
         { id: "deny", label: "Deny" },
       ],
     });
-    expect(container.textContent).toContain("请确认：修改定时任务「机票巡检」");
-    expect(container.textContent).toContain("待授权网站：new.example.test");
-    expect(container.textContent).toContain("修改前：0 9 * * *");
-    expect(container.textContent).toContain("修改后：0 10 * * *");
-    expect(container.querySelector('[data-testid="ask-detail"]')?.textContent).toContain(
-      "需要确认的原因",
+    expect(container.querySelector("h3")?.textContent).toBe("机票巡检");
+    expect(container.textContent).toContain("修改定时任务");
+    expect(container.querySelector("dl")?.textContent).toContain("new.example.test");
+    expect(container.querySelector("dl")?.textContent).toContain("每天 9:00");
+    expect(container.querySelector("dl")?.textContent).toContain("每天 10:00");
+    expect(container.querySelector('[data-testid="ask-reason"]')?.textContent).toContain(
+      "尚未授权",
     );
-    expect(container.querySelector("summary")?.textContent).toBe("查看任务内容修改详情");
+    expect(container.querySelector("summary")?.textContent).toBe("查看任务详情");
     expect(container.querySelector("details")?.open).toBe(false);
     expect(container.querySelector("details")?.textContent).toContain("修改后：新任务内容");
+  } finally {
+    i18n.load("en", {});
+    i18n.activate("en");
+  }
+});
+
+it("uses a task-specific confirmation while sending the original allow action", async () => {
+  i18n.load("zh-CN", {});
+  i18n.activate("zh-CN");
+  const onAnswer = vi.fn(async () => undefined);
+  try {
+    await render(
+      {
+        kind: "ask",
+        text: "Review before schedule_create",
+        approvalEffectId: "effect",
+        approvalContext: {
+          tool: "schedule_create",
+          target: "Daily review",
+          reason: "policy",
+          changes: [
+            { field: "name", after: "Daily review" },
+            { field: "cron", after: "0 23 * * *" },
+            { field: "timezone", after: "Asia/Shanghai" },
+          ],
+        },
+        actions: [
+          { id: "allow", label: "Allow once" },
+          { id: "deny", label: "Deny" },
+        ],
+      },
+      undefined,
+      onAnswer,
+    );
+    expect(container.querySelector("dl")?.textContent).toContain("每天 23:00");
+    expect(container.querySelector("dl")?.textContent).not.toContain("0 23 * * *");
+    expect(button("不创建")).toBeDefined();
+    await act(async () => button("创建任务")!.click());
+    expect(onAnswer).toHaveBeenCalledWith("allow", undefined);
   } finally {
     i18n.load("en", {});
     i18n.activate("en");

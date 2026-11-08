@@ -1,4 +1,6 @@
 import type { MessageBlock } from "@rakazo/contracts";
+import type { CronLabels } from "./cron.js";
+import { ENGLISH_CRON_LABELS, formatCron, localizedClock } from "./cron.js";
 
 type Ask = Extract<MessageBlock, { kind: "ask" }>;
 
@@ -32,7 +34,7 @@ const ZH_TOOLS: Record<string, string> = {
 const ZH_FIELDS: Record<string, string> = {
   name: "任务名称",
   prompt: "任务内容",
-  cron: "执行时间（Cron）",
+  cron: "执行时间",
   every: "执行间隔",
   unit: "间隔单位",
   active: "是否启用",
@@ -42,15 +44,51 @@ const ZH_FIELDS: Record<string, string> = {
   delayMinutes: "延迟分钟数",
   delaySeconds: "延迟秒数",
   watch: "触发条件",
-  previous_schedule: "原执行时间（Cron）",
+  previous_schedule: "原执行时间",
 };
 const ZH_REASONS: Record<NonNullable<Ask["approvalContext"]>["reason"], string> = {
-  new_schedule_site: "该自动任务包含尚未授权的网站，后续任务可能自动访问该网站，需要你确认。",
+  new_schedule_site: "任务包含尚未授权的网站，请确认是否允许后续自动访问。",
   command_watch: "这个任务会定时运行命令，需要你确认具体命令。",
   unattended: "这项操作由自动任务或外部消息触发，需要你确认。",
   explicit: "这项操作需要由你本人明确确认。",
   policy: "当前审批规则要求你确认这项操作。",
   review: "自动审查未能确认这项操作符合你的授权，需要你确认。",
+};
+
+const ZH_CRON_LABELS: CronLabels = {
+  oneTime: "单次执行",
+  everyHour: "每小时",
+  cron: "自定义 Cron",
+  everyDay: "每天",
+  weekdays: "工作日",
+  weekends: "周末",
+  everyMonday: "每周一",
+  monthly: "每月",
+  weekdayNames: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
+  interval: (n, unit) => ({
+    lead: "每",
+    detail: `${n} ${{ minutes: "分钟", hours: "小时", days: "天" }[unit]}`,
+  }),
+  atTime: (time) => localizedClock(time, "zh-CN"),
+  onThe1stAt: (time) => `1 日 ${localizedClock(time, "zh-CN")}`,
+  onDayAt: (day, time) => `${day} 日 ${localizedClock(time, "zh-CN")}`,
+  hourAtMinute: (minute) => `每小时第 ${minute} 分钟`,
+  hoursAtMinute: (hours, minute) => `每 ${hours} 小时的第 ${minute} 分钟`,
+  daySpan: (from, to) => `${from}至${to}`,
+  everyDays: (names) => `每${names.join("、")}`,
+};
+
+export type ApprovalPresentation = {
+  title: string;
+  detail?: string;
+  expandedDetail?: string;
+  expandedLabel?: string;
+  operation?: string;
+  target?: string;
+  reason?: string;
+  rows?: { label: string; after: string; before?: string }[];
+  confirmLabel?: string;
+  denyLabel?: string;
 };
 const EN_REASONS: Record<keyof typeof ZH_REASONS, string> = {
   new_schedule_site:
@@ -63,10 +101,7 @@ const EN_REASONS: Record<keyof typeof ZH_REASONS, string> = {
 };
 
 /** Presentation only. Decisions and resolved changes come from the backend. */
-export function approvalPresentation(
-  block: Ask,
-  locale: string,
-): { title: string; detail?: string; expandedDetail?: string; expandedLabel?: string } {
+export function approvalPresentation(block: Ask, locale: string): ApprovalPresentation {
   const chinese = locale.toLowerCase().startsWith("zh");
   const context = block.approvalContext;
   if (!context) {
@@ -80,6 +115,7 @@ export function approvalPresentation(
     };
   }
   const operation = chinese ? (ZH_TOOLS[context.tool] ?? `执行操作 ${context.tool}`) : context.tool;
+  const reason = (chinese ? ZH_REASONS : EN_REASONS)[context.reason];
   const lines = [
     `${chinese ? "需要确认的原因" : "Reason"}：${(chinese ? ZH_REASONS : EN_REASONS)[context.reason]}`,
     ...(context.target ? [`${chinese ? "任务" : "Task"}：${context.target}`] : []),
@@ -87,9 +123,35 @@ export function approvalPresentation(
       ? [`${chinese ? "待授权网站" : "Websites to approve"}：${context.sites.join(", ")}`]
       : []),
   ];
+  const rows: NonNullable<ApprovalPresentation["rows"]> = [];
   const expanded: string[] = [];
+  const timezone = context.changes?.find((change) => change.field === "timezone")?.after;
   const value = (field: string, text: string) => {
+    if (field === "cron" || field === "previous_schedule") {
+      return text
+        .split(/\r?\n/)
+        .map((cron) => formatCron(cron, chinese ? ZH_CRON_LABELS : ENGLISH_CRON_LABELS))
+        .join("；");
+    }
+    if (field === "runAt" || field === "startAt") {
+      const date = new Date(text);
+      if (!Number.isNaN(date.getTime())) {
+        try {
+          return (
+            new Intl.DateTimeFormat(chinese ? "zh-CN" : "en-GB", {
+              dateStyle: "medium",
+              timeStyle: "short",
+              timeZone: timezone || "UTC",
+              hour12: false,
+            }).format(date) + (timezone ? "" : " UTC")
+          );
+        } catch {
+          /* Keep the original value when the time zone is not recognized. */
+        }
+      }
+    }
     if (!chinese) return text;
+    if (field === "timezone" && text === "Asia/Shanghai") return "北京时间（Asia/Shanghai）";
     if (field === "active") return text === "true" ? "启用" : text === "false" ? "暂停" : text;
     if (field === "unit")
       return (
@@ -99,6 +161,12 @@ export function approvalPresentation(
       );
     return text;
   };
+  if (context.sites?.length) {
+    rows.push({
+      label: chinese ? "待授权网站" : "Websites to approve",
+      after: context.sites.join(", "),
+    });
+  }
   for (const change of context.changes ?? []) {
     if (change.before === change.after) continue;
     const field = chinese ? (ZH_FIELDS[change.field] ?? change.field) : change.field;
@@ -108,17 +176,48 @@ export function approvalPresentation(
         ? `${field}：${after}`
         : `${field}：\n${chinese ? "修改前" : "Before"}：${value(change.field, change.before)}\n${chinese ? "修改后" : "After"}：${after}`;
     if (change.field === "prompt") expanded.push(changeText);
-    else lines.push(changeText);
+    else if (
+      change.field !== "name" ||
+      change.before !== undefined ||
+      change.after !== context.target
+    ) {
+      lines.push(changeText);
+      rows.push({
+        label: field,
+        after,
+        ...(change.before !== undefined ? { before: value(change.field, change.before) } : {}),
+      });
+    }
+    if (change.field === "cron" || change.field === "previous_schedule") {
+      expanded.push(
+        `${chinese ? "原始 Cron" : "Raw Cron"}：${change.before === undefined ? change.after : `${change.before} → ${change.after}`}`,
+      );
+    }
   }
   // Other approval kinds already have a bounded, redacted detail from the backend.
   if (!context.changes?.length && block.detail) lines.push(block.detail);
   return {
     title: `${chinese ? "请确认：" : "Confirm: "}${operation}${context.target ? `「${context.target}」` : ""}`,
     detail: lines.join("\n\n"),
+    operation,
+    target: context.target,
+    reason,
+    rows,
+    ...(context.tool === "schedule_create"
+      ? {
+          confirmLabel: chinese ? "创建任务" : "Create task",
+          denyLabel: chinese ? "不创建" : "Don't create",
+        }
+      : context.tool === "schedule_update"
+        ? {
+            confirmLabel: chinese ? "确认修改" : "Apply changes",
+            denyLabel: chinese ? "不修改" : "Don't change",
+          }
+        : {}),
     ...(expanded.length
       ? {
           expandedDetail: expanded.join("\n\n"),
-          expandedLabel: chinese ? "查看任务内容修改详情" : "View task instruction changes",
+          expandedLabel: chinese ? "查看任务详情" : "View task details",
         }
       : {}),
   };
