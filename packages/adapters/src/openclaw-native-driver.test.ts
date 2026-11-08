@@ -299,37 +299,59 @@ describe("native external Agent lifecycle", () => {
     expect(seen).toEqual([[], ["extra"]]);
     expect(f.store.records.get(f.input.key)?.steeringIds).toEqual(["extra"]);
   });
-  it("does not mark a dispatched but refused instruction as delivered", async () => {
-    let delivered = false;
-    const f = fixture({
-      claimSteering: async () => [{ id: "extra", text: "Additional instruction" }],
-      onSteered: () => {
-        delivered = true;
-      },
-    });
-    f.setHandler(async (method, params) => {
-      if (method === "agent") return { runId: params.idempotencyKey };
-      if (method === "agent.wait") return { status: "timeout" };
-      if (method === "chat.send") {
-        f.event({
-          event: "chat",
-          payload: {
-            runId: params.idempotencyKey,
-            state: "final",
-            message: {
-              content: [{ type: "text", text: "⚠️ No active run to steer in this session." }],
-            },
-          },
-        });
-        return { runId: params.idempotencyKey, status: "started" };
-      }
-      throw Error("Unexpected request");
-    });
-    await expect(runNativeAgent(f.input, f.options)).rejects.toThrow("追加指令尚未确认送达");
-    expect(delivered).toBe(false);
-    expect(f.store.records.get(f.input.key)?.steeringIds).toBeUndefined();
-    expect(f.store.records.get(f.input.key)?.status).toBe("unconfirmed");
-  });
+  it.each(["refused", "missing-receipt", "rpc-error"])(
+    "keeps the task running and reports unconfirmed instructions (%s)",
+    async (delivery) => {
+      let delivered = false;
+      let polls = 0;
+      const f = fixture({
+        claimSteering: async () => [{ id: "extra", text: "Additional instruction" }],
+        onSteered: () => {
+          delivered = true;
+        },
+      });
+      f.setHandler(async (method, params) => {
+        if (method === "agent") return { runId: params.idempotencyKey };
+        if (method === "agent.wait") return { status: ++polls < 2 ? "timeout" : "ok" };
+        if (method === "chat.history")
+          return {
+            messages: [
+              {
+                role: "assistant",
+                timestamp: Date.now(),
+                content: [{ type: "text", text: "Original task completed." }],
+              },
+              {
+                role: "assistant",
+                timestamp: Date.now(),
+                content: [{ type: "text", text: "⚠️ No active run to steer in this session." }],
+              },
+            ],
+          };
+        if (method === "chat.send") {
+          if (delivery === "rpc-error") throw new Error("Command rejected");
+          if (delivery === "refused")
+            f.event({
+              event: "chat",
+              payload: {
+                runId: params.idempotencyKey,
+                state: "final",
+                message: {
+                  content: [{ type: "text", text: "⚠️ No active run to steer in this session." }],
+                },
+              },
+            });
+          return { runId: params.idempotencyKey, status: "started" };
+        }
+        throw Error("Unexpected request");
+      });
+      await expect(runNativeAgent(f.input, f.options)).resolves.toContain("有追加指令尚未确认送达");
+      expect(f.store.records.get(f.input.key)?.text).toContain("Original task completed.");
+      expect(delivered).toBe(false);
+      expect(f.store.records.get(f.input.key)?.unconfirmedSteeringIds).toEqual(["extra"]);
+      expect(f.store.records.get(f.input.key)?.status).toBe("done");
+    },
+  );
   it("does not mistake a long silent tool for a failed model stream", async () => {
     const f = fixture();
     let polls = 0;

@@ -22,6 +22,8 @@ export interface NativeRecord {
   connectionId?: string;
   error?: string;
   steeringIds?: string[];
+  unconfirmedSteeringIds?: string[];
+  steeringReplies?: string[];
   approval?: {
     id: string;
     expiresAtMs: number;
@@ -481,39 +483,53 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       if (!outcome && !input.signal?.aborted && input.claimSteering) {
         const steering = await input.claimSteering(record.steeringIds ?? []);
         for (const item of steering) {
-          if (input.signal?.aborted || outcome) break;
+          if (input.signal?.aborted) return await cancel("External task cancelled");
+          if (outcome) {
+            record.unconfirmedSteeringIds = [...(record.unconfirmedSteeringIds ?? []), item.id];
+            await persist();
+            continue;
+          }
           // /steer never starts a second business task if the active run just ended.
           // A deterministic key protects a lost acknowledgement from duplicate delivery.
           const steeringId = `rakazo-steer-${hash(`${input.key}:${item.id}`)}`;
           steeringResults.set(steeringId, undefined);
-          await connection.request(
-            "chat.send",
-            {
-              sessionKey,
-              message: `/steer ${item.text}`,
-              idempotencyKey: steeringId,
-              deliver: false,
-              ...(item.attachments?.length ? { attachments: item.attachments } : {}),
-            },
-            { timeoutMs: options.connectMs ?? 15_000 },
-          );
+          let dispatched = false;
+          try {
+            await connection.request(
+              "chat.send",
+              {
+                sessionKey,
+                message: `/steer ${item.text}`,
+                idempotencyKey: steeringId,
+                deliver: false,
+                ...(item.attachments?.length ? { attachments: item.attachments } : {}),
+              },
+              { timeoutMs: options.connectMs ?? 15_000 },
+            );
+            dispatched = true;
+          } catch {
+            // A failed delivery must not disconnect a still-running business task.
+          }
           const deadline = Date.now() + (options.connectMs ?? 15_000);
-          while (!steeringResults.get(steeringId) && Date.now() < deadline) {
+          while (dispatched && !steeringResults.get(steeringId) && Date.now() < deadline) {
             if (input.signal?.aborted) return await cancel("External task cancelled");
             await wait(Math.min(100, deadline - Date.now()));
           }
           const receipt = steeringResults.get(steeringId);
           steeringResults.delete(steeringId);
+          if (receipt?.text)
+            record.steeringReplies = [...(record.steeringReplies ?? []), receipt.text];
           // Dispatch ACKs precede command execution. Only the command's correlated
           // final response proves the active agent accepted the instruction.
-          if (receipt?.state !== "final" || receipt.text.trim() !== "steered current session.")
-            throw new NativeExecutionError(
-              "追加指令尚未确认送达；请先终止当前任务，再重新发送追加内容。",
-              "unconfirmed",
-            );
+          const delivered =
+            receipt?.state === "final" && receipt.text.trim() === "steered current session.";
           record.steeringIds = [...(record.steeringIds ?? []), item.id];
+          if (!delivered) {
+            record.unconfirmedSteeringIds = [...(record.unconfirmedSteeringIds ?? []), item.id];
+            input.onNotice?.({ type: "progress", text: "追加指令尚未确认送达，原任务继续执行。" });
+          }
           await persist();
-          input.onSteered?.(item.fromRunUser !== false);
+          if (delivered) input.onSteered?.(item.fromRunUser !== false);
         }
       }
       // A timeout here means the status query is still pending, not a failed task.
@@ -521,20 +537,35 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     }
     {
       const history = await connection.request<any>("chat.history", { sessionKey, limit: 20 });
+      const commandReplies = new Set(record.steeringReplies ?? []);
+      if (record.steeringIds?.length) {
+        for (const text of [
+          "steered current session.",
+          "⚠️ No current session to steer.",
+          "⚠️ No active run to steer in this session.",
+          "⚠️ Current run is active but not accepting steering right now.",
+        ])
+          commandReplies.add(text);
+      }
       const last = (history.messages ?? []).findLast(
-        (m: any) => m.role === "assistant" && Number(m.timestamp) >= record.startedAt,
+        (m: any) =>
+          m.role === "assistant" &&
+          Number(m.timestamp) >= record.startedAt &&
+          !commandReplies.has(textOf(m).trim()),
       );
       if (input.modelId !== undefined && last?.model !== input.modelId)
         throw new NativeExecutionError(
           "Native result did not confirm the selected model; inspect before retrying",
           "unconfirmed",
         );
-      const text = textOf(last);
+      let text = textOf(last);
       if (!text)
         throw new NativeExecutionError(
           "Native task completed without a recoverable answer; inspect its session before retrying",
           "unconfirmed",
         );
+      if (record.unconfirmedSteeringIds?.length)
+        text += "\n\nRakazo 提示：有追加指令尚未确认送达，请核实后重新发送。";
       const delta = text.startsWith(record.text) ? text.slice(record.text.length) : text;
       record.text = text;
       record.usage = last?.usage;

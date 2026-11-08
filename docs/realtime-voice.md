@@ -52,4 +52,7 @@ approval runs. Exact abort run IDs and native terminal states release the durabl
 session guard. Missing evidence remains unresolved for reconciliation; already
 performed tool side effects are not rolled back. Additional text instructions are
 forwarded through OpenClaw's explicit steering command at the next available boundary,
-with deterministic request identities and a delivery journal.
+with deterministic request identities and a delivery journal. Dispatch acknowledgements
+are not delivery receipts. If an instruction is refused or its receipt is missing,
+the original task continues and its final reply explicitly reports the unconfirmed
+instruction; it is never silently retried.
