@@ -92,6 +92,7 @@ function fixture({
   fleetBots = [] as { id: string; name: string; thread?: { id: string } }[],
   secondResource = false,
   routines = [] as { name: string; prompt: string }[],
+  existingSchedule,
   connectedApps = [] as string[],
   userDevices,
   botUserId = "user-1",
@@ -104,6 +105,16 @@ function fixture({
   botUserId?: string;
   connectedApps?: string[];
   routines?: { name: string; prompt: string }[];
+  existingSchedule?: {
+    id: string;
+    name: string;
+    prompt: string;
+    botId: string;
+    userId: string;
+    spaceId: string;
+    threadId?: string;
+    crons?: string[];
+  };
   /** Adds `demo_get_other`, a read on a separate installed resource with the same name prefix. */
   secondResource?: boolean;
   /** The switch as the run starts; `liveBot` is what a later read sees. */
@@ -410,7 +421,19 @@ function fixture({
     },
     actionApprovalRule: { findMany: vi.fn(async () => (confirmationsOverride ? rules : [])) },
     userActionApprovalRule: { findMany: vi.fn(async () => (confirmationsOverride ? [] : rules)) },
-    routine: { findMany: vi.fn(async () => routines) },
+    routine: {
+      findMany: vi.fn(async () => routines),
+      findFirst: vi.fn(async ({ where }: { where: Record<string, unknown> }) => {
+        if (!existingSchedule) return null;
+        return ["id", "botId", "userId", "spaceId", "threadId"].every(
+          (field) =>
+            where[field] === undefined ||
+            where[field] === existingSchedule[field as keyof typeof existingSchedule],
+        )
+          ? { crons: ["0 9 * * *"], ...existingSchedule }
+          : null;
+      }),
+    },
     actionAutoReviewPreference: {
       findUnique: vi.fn(async () =>
         confirmationsOverride && savedPreference ? { enabled: autoReview, skipApprovals } : null,
@@ -2419,6 +2442,97 @@ describe("Auto Review of new sites", () => {
       executionId: "call-2",
     });
     const search = { name: "web_search", args: { query: "news" }, executionId: "call-1" };
+
+    const existingSchedule = {
+      id: "routine-1",
+      name: "Daily news",
+      prompt: "Read https://news.example.test/daily",
+      botId: "bot-1",
+      userId: "user-1",
+      spaceId: "space-1",
+    };
+    it("does not ask again when an owned routine retains its existing site", async () => {
+      const f = fixture({ builtin: true, sourceRole: "user", existingSchedule });
+      f.setCalls([
+        search,
+        {
+          name: "schedule_update",
+          args: {
+            routineId: "routine-1",
+            prompt: "Read https://news.example.test/daily every 90 minutes",
+          },
+          executionId: "call-2",
+        },
+      ]);
+      await f.run(true);
+      expect(f.pauseRunForInput).not.toHaveBeenCalled();
+      expect(isApprovalPausedResult(f.results.at(-1))).toBe(false);
+    });
+    it.each(["botId", "userId", "spaceId"] as const)(
+      "does not inherit sites from a different %s",
+      async (field) => {
+        const f = fixture({
+          builtin: true,
+          sourceRole: "user",
+          existingSchedule: { ...existingSchedule, [field]: "other" },
+        });
+        f.setCalls([
+          search,
+          {
+            name: "schedule_update",
+            args: {
+              routineId: "routine-1",
+              prompt: existingSchedule.prompt,
+            },
+            executionId: "call-2",
+          },
+        ]);
+        await f.run();
+        expect(f.pauseRunForInput).toHaveBeenCalledTimes(1);
+      },
+    );
+    it("still asks for a new site and explains the resolved task changes", async () => {
+      const f = fixture({
+        builtin: true,
+        sourceRole: "user",
+        existingSchedule,
+        rules: [{ effect: "always_allow", matchKind: "tool", matchValue: "schedule_update" }],
+      });
+      f.setCalls([
+        search,
+        {
+          name: "schedule_update",
+          args: {
+            routineId: "routine-1",
+            cron: "*/30 * * * *",
+            prompt: "Read https://unapproved.test/",
+          },
+          executionId: "call-2",
+        },
+      ]);
+      await f.run();
+      expect(f.pauseRunForInput).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blocks: [
+            expect.objectContaining({
+              approvalContext: expect.objectContaining({
+                tool: "schedule_update",
+                target: "Daily news",
+                reason: "new_schedule_site",
+                sites: ["unapproved.test"],
+                changes: expect.arrayContaining([
+                  { field: "cron", before: "0 9 * * *", after: "*/30 * * * *" },
+                ]),
+              }),
+              actions: [
+                { id: "allow", label: "Allow once" },
+                { id: "deny", label: "Deny" },
+              ],
+            }),
+          ],
+        }),
+      );
+    });
 
     it("asks before saving a routine that names a site the run was not given", async () => {
       const f = fixture({ builtin: true, sourceRole: "user", prompt: "Find news daily" });

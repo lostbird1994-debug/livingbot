@@ -114,6 +114,31 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     kind: z.literal("ask"),
     text: z.string(),
     approvalEffectId: Id.optional(),
+    /** Resolved by the backend; clients localize the explanation without interpreting tool args. */
+    approvalContext: z
+      .object({
+        tool: z.string(),
+        reason: z.enum([
+          "new_schedule_site",
+          "command_watch",
+          "unattended",
+          "explicit",
+          "policy",
+          "review",
+        ]),
+        target: z.string().optional(),
+        sites: z.array(z.string()).optional(),
+        changes: z
+          .array(
+            z.object({
+              field: z.string(),
+              before: z.string().optional(),
+              after: z.string(),
+            }),
+          )
+          .optional(),
+      })
+      .optional(),
     /** Native runtime approval, answerable only by the run owner. */
     ownerOnly: z.boolean().optional(),
     approvalRequestId: z.string().optional(),

@@ -147,10 +147,11 @@ export function createRunTrustLoaders(
       });
     return trustedSitesPromise;
   };
-  const routineNamesNewSite = async (prompt: string) => {
-    const trusted = await loadTrustedSites();
+  const untrustedRoutineSites = async (prompt: string, existingPrompt = "") => {
+    const trusted = new Set(await loadTrustedSites());
+    for (const site of sitesInText(existingPrompt)) trusted.add(site);
     const rules = await loadApprovalRules();
-    return [...sitesInText(prompt)].some(
+    return [...sitesInText(prompt)].filter(
       (site) => !trusted.has(site) && !siteAlwaysAllowed(rules, site),
     );
   };
@@ -202,7 +203,7 @@ export function createRunTrustLoaders(
     loadAutoReviewPreference,
     loadOwnerWords,
     loadTrustedSites,
-    routineNamesNewSite,
+    untrustedRoutineSites,
     loadTrustedConnectors,
     receivedOutsideMessage,
   };

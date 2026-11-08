@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { i18n } from "@lingui/core";
 import type { LoginFieldInput } from "@rakazo/contracts";
 import type { ReactNode } from "react";
 import { act } from "react";
@@ -67,6 +68,45 @@ async function render(
 function button(name: string) {
   return [...container.querySelectorAll("button")].find((item) => item.textContent === name);
 }
+
+it("renders a Chinese approval with the task, actual change and reason", async () => {
+  i18n.load("zh-CN", {});
+  i18n.activate("zh-CN");
+  try {
+    await render({
+      kind: "ask",
+      approvalEffectId: "e",
+      text: "Review before schedule_update",
+      approvalContext: {
+        tool: "schedule_update",
+        target: "机票巡检",
+        reason: "new_schedule_site",
+        sites: ["new.example.test"],
+        changes: [
+          { field: "cron", before: "0 9 * * *", after: "0 10 * * *" },
+          { field: "prompt", before: "旧任务内容", after: "新任务内容" },
+        ],
+      },
+      actions: [
+        { id: "allow", label: "Allow once" },
+        { id: "deny", label: "Deny" },
+      ],
+    });
+    expect(container.textContent).toContain("请确认：修改定时任务「机票巡检」");
+    expect(container.textContent).toContain("待授权网站：new.example.test");
+    expect(container.textContent).toContain("修改前：0 9 * * *");
+    expect(container.textContent).toContain("修改后：0 10 * * *");
+    expect(container.querySelector('[data-testid="ask-detail"]')?.textContent).toContain(
+      "需要确认的原因",
+    );
+    expect(container.querySelector("summary")?.textContent).toBe("查看任务内容修改详情");
+    expect(container.querySelector("details")?.open).toBe(false);
+    expect(container.querySelector("details")?.textContent).toContain("修改后：新任务内容");
+  } finally {
+    i18n.load("en", {});
+    i18n.activate("en");
+  }
+});
 
 async function type(label: string, value: string) {
   await act(async () => {

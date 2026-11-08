@@ -38,8 +38,43 @@ export function buildApprovalAskBlock(
   toolName: string,
   args: Record<string, unknown>,
   secrets: string[],
-  options?: { reviewReason?: string; summary?: FleetCardSummary; batch?: ToolBatch },
+  options?: {
+    reviewReason?: string;
+    summary?: FleetCardSummary;
+    batch?: ToolBatch;
+    approvalContext?: Extract<MessageBlock, { kind: "ask" }>["approvalContext"];
+  },
 ): MessageBlock {
+  if (options?.approvalContext) {
+    const { approvalContext, ...rest } = options;
+    const block = buildApprovalAskBlock(effectId, toolName, args, secrets, rest);
+    if (block.kind !== "ask") return block;
+    const safe = (value: string) =>
+      truncate(redactSecrets(value, secrets), MAX_APPROVAL_DETAIL_LENGTH);
+    return {
+      ...block,
+      ...(block.actions &&
+      ["new_schedule_site", "command_watch", "unattended", "explicit"].includes(
+        approvalContext.reason,
+      )
+        ? { actions: block.actions.filter((action) => action.id !== "always") }
+        : {}),
+      approvalContext: {
+        ...approvalContext,
+        ...(approvalContext.target ? { target: safe(approvalContext.target) } : {}),
+        ...(approvalContext.sites ? { sites: approvalContext.sites.map(safe) } : {}),
+        ...(approvalContext.changes
+          ? {
+              changes: approvalContext.changes.map((change) => ({
+                field: change.field,
+                after: safe(change.after),
+                ...(change.before !== undefined ? { before: safe(change.before) } : {}),
+              })),
+            }
+          : {}),
+      },
+    };
+  }
   if (options?.summary) {
     // Built from what was resolved before the effect was recorded, not from what the model typed.
     return {

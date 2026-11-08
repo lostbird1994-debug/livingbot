@@ -2,6 +2,28 @@ import { describe, expect, it } from "vitest";
 import { approvalDetailLength, buildApprovalAskBlock } from "./approval-ask.js";
 
 describe("buildApprovalAskBlock", () => {
+  it("redacts resolved changes and omits an ineffective permanent allow action", () => {
+    const block = buildApprovalAskBlock("effect-1", "schedule_update", {}, ["fake-secret"], {
+      approvalContext: {
+        tool: "schedule_update",
+        reason: "new_schedule_site",
+        target: "Task fake-secret",
+        sites: ["example.test"],
+        changes: [{ field: "prompt", before: "old fake-secret", after: "new fake-secret" }],
+      },
+    });
+    expect(JSON.stringify(block)).not.toContain("fake-secret");
+    expect(block).toMatchObject({
+      approvalContext: {
+        target: "Task [redacted]",
+        changes: [{ field: "prompt", before: "old [redacted]", after: "new [redacted]" }],
+      },
+      actions: [
+        { id: "allow", label: "Allow once" },
+        { id: "deny", label: "Deny" },
+      ],
+    });
+  });
   it("binds the approval to its effect and redacts secrets", () => {
     const block = buildApprovalAskBlock(
       "effect-1",

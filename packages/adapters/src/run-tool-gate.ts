@@ -6,6 +6,7 @@ import type {
   ToolBatch,
 } from "@rakazo/adapter-kit";
 import { runContinueJob } from "@rakazo/adapter-kit";
+import type { MessageBlock } from "@rakazo/contracts";
 import { MEMORY_MAINTENANCE_TOOL_NAMES, PRIVATE_MEMORY_TOOL_NAMES } from "@rakazo/contracts";
 import {
   applyJudgeDecision,
@@ -84,6 +85,7 @@ type ApprovalCard = {
   reviewReason: string | undefined;
   summary: FleetCardSummary | undefined;
   batch: ToolBatch | undefined;
+  approvalContext: Extract<MessageBlock, { kind: "ask" }>["approvalContext"];
 };
 
 /** A tool call that passed its approval gate, as tool handlers receive it. */
@@ -245,12 +247,27 @@ export async function gateToolCall(
   // ones its runs may fetch. Once outside content entered this run, a routine naming a
   // site this run was not given needs a person: a reviewer would judge it on this run's
   // context, and passing it would trust the site for every later run.
-  const scheduleNamesNewSite =
+  const existingRoutine =
+    name === "schedule_update"
+      ? await deps.prisma.routine.findFirst({
+          where: {
+            id: String(args.routineId ?? "").trim(),
+            spaceId: run.spaceId,
+            userId: run.userId,
+            botId: ctx.bot.id,
+            bot: { archivedAt: null },
+            ...(ctx.thread.groupId ? { threadId: ctx.thread.id } : {}),
+          },
+        })
+      : null;
+  const newScheduleSites =
     (name === "schedule_create" ||
       name === "create_child_routine" ||
       (name === "schedule_update" && Boolean(args.prompt))) &&
-    (await isRunTainted(ctx)) &&
-    (await ctx.trust.routineNamesNewSite(String(args.prompt ?? "")));
+    (await isRunTainted(ctx))
+      ? await ctx.trust.untrustedRoutineSites(String(args.prompt ?? ""), existingRoutine?.prompt)
+      : [];
+  const scheduleNamesNewSite = newScheduleSites.length > 0;
   const requiresApprovalByDefault =
     request.heldForApproval ||
     commandWatch ||
@@ -492,7 +509,50 @@ export async function gateToolCall(
     nextApprovedTool,
     bypassApproval: gateDecision === "allow" && gated,
   });
-  const card = { reviewReason, summary: request.fleetSummary, batch: connectorTool?.batch };
+  const changes = name.startsWith("schedule_")
+    ? Object.entries(args)
+        .filter(([field, value]) => field !== "routineId" && value != null && value !== "")
+        .map(([field, value]) => ({
+          field,
+          ...(existingRoutine && field in existingRoutine
+            ? { before: String(existingRoutine[field as keyof typeof existingRoutine] ?? "") }
+            : field === "cron" && existingRoutine
+              ? { before: existingRoutine.crons.join("; ") }
+              : {}),
+          after: typeof value === "object" ? JSON.stringify(value) : String(value),
+        }))
+    : undefined;
+  if (
+    existingRoutine &&
+    changes &&
+    !args.cron &&
+    ["every", "unit", "startAt", "timezone"].some((field) => args[field] != null)
+  ) {
+    changes.unshift({ field: "previous_schedule", after: existingRoutine.crons.join("; ") });
+  }
+  const card: ApprovalCard = {
+    reviewReason,
+    summary: request.fleetSummary,
+    batch: connectorTool?.batch,
+    approvalContext: {
+      tool: name,
+      reason: scheduleNamesNewSite
+        ? "new_schedule_site"
+        : commandWatch
+          ? "command_watch"
+          : requiresUnattendedApproval
+            ? "unattended"
+            : toolRequiresExplicitApproval(name)
+              ? "explicit"
+              : reviewReason
+                ? "review"
+                : "policy",
+      ...(name.startsWith("schedule_")
+        ? { target: existingRoutine?.name ?? String(args.name ?? args.routineId ?? ""), changes }
+        : {}),
+      ...(newScheduleSites.length ? { sites: newScheduleSites } : {}),
+    },
+  };
 
   if (applied?.duplicate) {
     const gate = resolveDuplicateEffectGate(applied.effect, name);

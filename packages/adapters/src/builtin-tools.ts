@@ -1302,7 +1302,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "schedule_update",
     description:
-      "Edit one of this bot's schedules by routineId instead of cancelling and recreating it. Send only what changes. Timing fields replace the current timing; startAt alone moves the next run of the current repeat. active false pauses it.",
+      "Edit one of this bot's schedules by routineId instead of cancelling and recreating it. Send only what changes: for a timing-only request, omit name and prompt entirely. Do not resend or rewrite the task instructions unless the user requested that change. Timing fields replace the current timing; startAt alone moves the next run of the current repeat. active false pauses it.",
     inputSchema: {
       type: "object",
       properties: {

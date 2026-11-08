@@ -29,6 +29,12 @@ When a bot needs a yes, it posts a card in the chat showing exactly what it want
 Cards never block the chat. Keep talking to the bot, and answer the card whenever you're ready. You
 get a notification when a bot is waiting on you, if notifications are on in the bot's settings.
 
+New cards carry a backend-resolved operation and reason. In the Chinese interface, the title and
+explanation are Chinese. Schedule cards name the task, show requested changes and any newly
+unapproved sites, and let you expand instruction changes. Known credentials are redacted. Older
+cards can have their generic title localized, but missing historical details are not reconstructed.
+Cards requiring a person omit the ineffective "Always allow this tool" choice.
+
 ## Allow and Block lists
 
 Every **Always allow** choice is saved in **Settings → Approvals**. Switch any entry between
@@ -46,6 +52,12 @@ In **Auto** and **Ask**, these always show a card, and **Always allow** doesn't 
 - Actions that text you didn't write could be steering, such as changes in a run started by a
   webhook.
 - A routine that watches a command, or that names a site the run found in outside content.
+
+Changing only an existing routine's timing does not trigger the new-site check. When updating a
+routine, sites already in that routine's saved instructions remain trusted for that update, scoped
+to the same owner, bot and space (and the same thread for group routines). Newly introduced,
+unapproved sites still require confirmation after outside content has entered the run. This does
+not grant account-wide site access or override a Block rule.
 
 **Never ask** runs all of them. The one exception is accepting another owner's bot connection, which
 it refuses when someone else started the run or outside content entered it.

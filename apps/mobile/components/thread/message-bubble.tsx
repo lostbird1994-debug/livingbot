@@ -3,6 +3,7 @@ import type { LoginFieldInput, MessageBlock } from "@rakazo/contracts";
 import { isAttachmentAudioMimeType } from "@rakazo/contracts";
 import type { ChildBotBlock, PeerExchange } from "@rakazo/core";
 import {
+  approvalPresentation,
   formatFileSize,
   isApprovalAskBlock,
   memberName,
@@ -196,8 +197,9 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
 }) {
   const colorScheme = useResolvedAppearance();
   const tokens = withUserBubble(mobileTokens(), userBubble);
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [peerExpanded, setPeerExpanded] = useState(false);
+  const [approvalExpanded, setApprovalExpanded] = useState(false);
   const artifactTarget: MobileArtifactTarget = groupId ? { groupId } : { botId };
   const cardBotId = message.botId ?? botId;
   const computerBotId = message.botId ?? (groupId ? undefined : botId);
@@ -347,6 +349,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
     (block) => block.kind === "ask" && Boolean(block.actions?.length),
   );
   if (askBlock?.kind === "ask" && askBlock.actions?.length) {
+    const presentation = approvalPresentation(askBlock, locale);
     return (
       <View style={{ gap: 8, width: "100%" }}>
         <View
@@ -367,26 +370,48 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                 <Text {...actionProps} style={{ color: tokens.foreground, ...typeScale.cardTitle }}>
                   {askBlock.instructionUpdate
                     ? t("Update instructions?")
-                    : plainAskTitle(askBlock.text)}
+                    : plainAskTitle(presentation.title)}
                 </Text>
               ) : null}
-              {askBlock.detail ? (
+              {presentation.detail ? (
                 <Text
                   {...(askBlock.text ? {} : actionProps)}
                   style={{
                     color:
-                      askBlock.detailFormat === "text" ? tokens.foreground : tokens.mutedForeground,
+                      askBlock.approvalContext || askBlock.detailFormat === "text"
+                        ? tokens.foreground
+                        : tokens.mutedForeground,
                     marginTop: askBlock.text ? 8 : 0,
                     // Commands and an approval's tool arguments read as code; a bot's own note
                     // under its question is text.
-                    ...(askBlock.detailFormat === "code" ||
-                    (!askBlock.detailFormat && askBlock.approvalEffectId)
+                    ...(!askBlock.approvalContext &&
+                    (askBlock.detailFormat === "code" ||
+                      (!askBlock.detailFormat && askBlock.approvalEffectId))
                       ? { ...typeScale.caption, fontFamily: "Menlo" }
                       : typeScale.secondary),
                   }}
                 >
-                  {askBlock.detail}
+                  {presentation.detail}
                 </Text>
+              ) : null}
+              {presentation.expandedDetail ? (
+                <>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: approvalExpanded }}
+                    onPress={() => setApprovalExpanded((value) => !value)}
+                    style={{ marginTop: 8, paddingVertical: 8 }}
+                  >
+                    <Text style={{ color: tokens.foreground, ...typeScale.secondary }}>
+                      {presentation.expandedLabel}
+                    </Text>
+                  </Pressable>
+                  {approvalExpanded ? (
+                    <Text selectable style={{ color: tokens.foreground, ...typeScale.secondary }}>
+                      {presentation.expandedDetail}
+                    </Text>
+                  ) : null}
+                </>
               ) : null}
               {askBlock.status === "answered" ? (
                 <Text

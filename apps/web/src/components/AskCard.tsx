@@ -1,3 +1,4 @@
+import { i18n } from "@lingui/core";
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ChatMarkdown } from "@rakazo/chat-ui/web";
@@ -9,6 +10,7 @@ import {
   loginCardFields,
 } from "@rakazo/contracts";
 import {
+  approvalPresentation,
   isApprovalAskBlock,
   isSecretAskBlock,
   resolveAskChoice,
@@ -91,6 +93,7 @@ export function AskCard({
   onDismiss: () => Promise<void>;
 }) {
   const { t } = useLingui();
+  const presentation = approvalPresentation(block, i18n.locale || "en");
   const [editing, setEditing] = useState(false);
   const [answer, setAnswer] = useState(block.instructionUpdate?.after ?? "");
   const [dismissed, setDismissed] = useState(false);
@@ -274,8 +277,10 @@ export function AskCard({
       <div className="text-[15.5px] leading-[1.5] text-foreground">
         {block.instructionUpdate ? (
           <Trans>Update instructions?</Trans>
+        ) : block.approvalContext ? (
+          presentation.title
         ) : (
-          <ChatMarkdown>{block.text}</ChatMarkdown>
+          <ChatMarkdown>{presentation.title}</ChatMarkdown>
         )}
       </div>
       {secretInput && block.credential ? (
@@ -293,17 +298,25 @@ export function AskCard({
           )}
         </div>
       ) : null}
-      {block.detail && !secretInput ? (
+      {presentation.detail && !secretInput ? (
         <pre
           data-testid="ask-detail"
           className={
-            block.detailFormat === "text"
+            block.approvalContext || block.detailFormat === "text"
               ? "mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-[15.5px] leading-[1.5] text-foreground"
               : "mt-2.5 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-background px-3 py-2 font-mono text-[13px] leading-[1.6] text-foreground"
           }
         >
-          {block.detail}
+          {presentation.detail}
         </pre>
+      ) : null}
+      {presentation.expandedDetail && !secretInput ? (
+        <details className="mt-3 text-sm">
+          <summary className="cursor-pointer text-foreground">{presentation.expandedLabel}</summary>
+          <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-foreground">
+            {presentation.expandedDetail}
+          </pre>
+        </details>
       ) : null}
       {block.instructionUpdate && editing && canAnswer && !answered ? (
         <form
