@@ -44,15 +44,17 @@ describe("memory maintenance proposals", () => {
       }),
     ).toThrow(/at least 512 characters/);
   });
-  it.each([
-    [{ start_line: 3, end_line: 2 }],
-    [{ start_line: 1, end_line: 5 }],
+  it.each(
     [
-      { start_line: 1, end_line: 2 },
-      { start_line: 2, end_line: 3 },
-    ],
-    [{ start_line: 1, end_line: 4 }],
-  ])("rejects invalid or ineffective ranges: %j", (keep_ranges) => {
+      [{ start_line: 3, end_line: 2 }],
+      [{ start_line: 1, end_line: 5 }],
+      [
+        { start_line: 1, end_line: 2 },
+        { start_line: 2, end_line: 3 },
+      ],
+      [{ start_line: 1, end_line: 4 }],
+    ].map((keep_ranges) => ({ keep_ranges })),
+  )("rejects invalid or ineffective ranges: %j", ({ keep_ranges }) => {
     expect(() =>
       renderMemoryProposal(source, {
         path: source.path,
