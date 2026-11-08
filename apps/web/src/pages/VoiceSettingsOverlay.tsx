@@ -354,6 +354,10 @@ export function VoiceSettingsOverlay({
       ) : null}
       {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
       {notice ? <p className="mb-4 text-sm text-success">{notice}</p> : null}
+      <p className="mb-6 text-xs text-muted-foreground">
+        按 ⌥ Space 开启或退出持续语音模式。桌面版支持在其他软件中使用。
+        唤醒别名与语音通知请在每个机器人的“高级”页设置，默认关闭。
+      </p>
       {catalog.length ? (
         <Field>
           <FieldLabel htmlFor={providerSelectId}>

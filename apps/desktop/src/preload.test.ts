@@ -56,6 +56,7 @@ describe("desktop preload bridge", () => {
       "platform",
       "settings",
       "update",
+      "voice",
       "window",
     ]);
     expect(Object.keys(bridge.window).sort()).toEqual([

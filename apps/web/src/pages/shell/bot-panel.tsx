@@ -42,6 +42,7 @@ import { Download, Settings, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
 import { ChatBackgroundSection } from "../../components/ChatBackgroundSettings";
+import { BotVoiceSettings } from "../../components/voice/BotVoiceSettings";
 import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
 import { thinkingLevelLabel } from "../../lib/model-catalog";
@@ -620,6 +621,7 @@ export function BotSettings({
               />
             </div>
           </section>
+          <BotVoiceSettings key={bot.id} bot={bot} />
           <ChatBackgroundSection botId={bot.id} botName={name} />
           <ErrorBoundary fallback={<SectionLoadFailed />}>
             <Suspense fallback={null}>

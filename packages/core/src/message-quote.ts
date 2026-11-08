@@ -9,6 +9,19 @@ import { blocksToAgentHistoryText } from "./attachments.js";
 import { replyAttachment } from "./message-replies.js";
 
 const markdownParser = unified().use(remarkParse).use(remarkGfm);
+
+/** Structural first paragraph only: never promote tables, code or later details to a conclusion. */
+export function firstReplyParagraph(markdown: string): string {
+  const tree = markdownParser.parse(markdown.slice(0, 100_000));
+  const first = tree.children.find(
+    (node) => node.type !== "heading" && node.type !== "thematicBreak",
+  );
+  const paragraph = first?.type === "blockquote" ? first.children[0] : first;
+  if (paragraph?.type !== "paragraph") return "";
+  return toText(toHast({ type: "root", children: [paragraph] }))
+    .replace(/\s+/gu, " ")
+    .trim();
+}
 /** Past this much source text in one message, quote derivation refuses to run. */
 export const MAX_QUOTABLE_SOURCE_LENGTH = 100_000;
 

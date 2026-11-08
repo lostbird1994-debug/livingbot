@@ -12,6 +12,18 @@ function subscribe(channel) {
 contextBridge.exposeInMainWorld("rakazoDesktop", {
   platform: process.platform,
   nativeWindowFrame: process.platform === "win32",
+  voice: {
+    connect: () => ipcRenderer.invoke("desktop.voice.connect"),
+    update: (state) => ipcRenderer.invoke("desktop.voice.update", state),
+    reveal: () => ipcRenderer.invoke("desktop.voice.reveal"),
+    onCommand: (listener) => {
+      const handler = (_event, command) => {
+        if (command === "toggle" || command === "exit" || command === "mute") listener(command);
+      };
+      ipcRenderer.on("desktop.voice.command", handler);
+      return () => ipcRenderer.off("desktop.voice.command", handler);
+    },
+  },
   badge: {
     set: (count) => ipcRenderer.invoke("desktop.badge.set", count),
   },

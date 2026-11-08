@@ -15,6 +15,7 @@ import {
   speechFromBlocks,
   spokenDecision,
   spokenMemory,
+  VOICE_MODE_CALL_PREFIX,
 } from "@rakazo/core";
 import { getGlobalBroadcastChannel } from "better-auth/client";
 import { useSyncExternalStore } from "react";
@@ -131,6 +132,18 @@ export function useCallSession(): CallState | null {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
+let wakeInterceptor: ((text: string, botId: string) => string | null) | null = null;
+
+/** A voice-mode name switch consumes the utterance before it can reach the previous bot. */
+export function interceptCallWake(
+  handler: (text: string, botId: string) => string | null,
+): () => void {
+  wakeInterceptor = handler;
+  return () => {
+    if (wakeInterceptor === handler) wakeInterceptor = null;
+  };
+}
+
 function emit() {
   for (const watcher of [...watchers]) watcher();
 }
@@ -149,10 +162,17 @@ export function startCall(call: {
   transcribe?: boolean;
   /** The bot called and the user picked up: no ringing, and the bot speaks first. */
   answered?: { callId: string; opening: string };
+  /** The user called the bot by name: no ringback, straight to talking. */
+  instant?: boolean;
+  /** What the caller said after that name, sent as the call's first turn. */
+  firstUtterance?: string;
+  /** Voice mode already has its own floating controls; leave the normal chat visible. */
+  voiceMode?: boolean;
 }): void {
   if (leaving) return;
   endCall();
-  callId = call.answered?.callId ?? newClientId();
+  callId =
+    call.answered?.callId ?? `${call.voiceMode ? VOICE_MODE_CALL_PREFIX : ""}${newClientId()}`;
   transcribe = call.transcribe;
   spokenMemory.clear();
   interim.clear();
@@ -167,7 +187,7 @@ export function startCall(call: {
     connectedAt: null,
     phase: "ringing",
     muted: false,
-    minimized: false,
+    minimized: call.voiceMode ?? false,
     transcriptOpen: false,
     caption: "",
     heard: "",
@@ -204,12 +224,15 @@ export function startCall(call: {
   pickup = ringing;
   const ringingCallId = callId;
   const opening = call.answered?.opening.trim() ?? "";
-  void pickUp(ringing.signal, { ring: !call.answered }).then(() => {
+  void pickUp(ringing.signal, { ring: !call.answered && !call.instant }).then(() => {
     if (ringing.signal.aborted || !state || callId !== ringingCallId) return;
     pickup = null;
     if (!opening) {
       set({ phase: "listening", connectedAt: Date.now() });
-      void listen();
+      // A wake already heard the request: sending it beats asking the caller to repeat it.
+      const first = call.firstUtterance?.trim() ?? "";
+      if (first) void handleTranscript(first, false);
+      else void listen();
       return;
     }
     // The bot opens the call; its speech ending hands the turn to the user.
@@ -548,13 +571,23 @@ async function openMic() {
   }
 }
 
-async function handleTranscript(text: string) {
+async function handleTranscript(text: string, routeWake = true) {
   if (!state) return;
   // Dictation stopped itself to deliver this final.
   micOpen = false;
   if (!text.trim()) {
     void listen();
     return;
+  }
+  if (routeWake && wakeInterceptor && !spokenMemory.isEcho(text)) {
+    const routed = wakeInterceptor(text, state.botId);
+    if (routed === null) return;
+    text = routed;
+    if (!text.trim()) {
+      dictation.stop("submit");
+      void listen();
+      return;
+    }
   }
   if (state.phase === "speaking") {
     if (!isCallBargeIn(text)) {

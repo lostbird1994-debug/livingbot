@@ -5,6 +5,7 @@ import {
   latestSpokenCallReply,
   voiceChatDuration,
   voiceChatSummary,
+  VOICE_MODE_CALL_PREFIX,
 } from "./voice-chat-groups.js";
 
 let seq = 0;
@@ -21,6 +22,21 @@ function message(fields: Partial<ThreadMessage> & { role: ThreadMessage["role"] 
 }
 
 describe("groupVoiceChats", () => {
+  it("renders voice-mode utterances and replies as ordinary chat bubbles on request", () => {
+    const callId = `${VOICE_MODE_CALL_PREFIX}sample`;
+    const user = message({ role: "user", callId, runId: "r" });
+    const bot = message({ role: "bot", runId: "r" });
+    const marker = message({
+      role: "bot",
+      callId,
+      blocks: [{ kind: "voice_call", callId, title: "", farewell: "" }],
+    });
+    expect(groupVoiceChats([user, bot, marker], { inlineVoiceMode: true })).toEqual([
+      { kind: "message", message: user },
+      { kind: "message", message: bot },
+    ]);
+    expect(groupVoiceChats([user, bot, marker])[0]?.kind).toBe("voiceChat");
+  });
   it.each([0, 125])(
     "keeps an initial hang-up marker's metadata (%s seconds)",
     (durationSeconds) => {

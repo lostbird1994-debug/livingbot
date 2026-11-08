@@ -39,6 +39,7 @@ import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
 import { PageLoading } from "../components/PageLoading";
+import { VoiceAssistant } from "../components/voice/VoiceAssistant";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { authClient } from "../lib/auth";
 import { peekBootstrapSeed } from "../lib/bootstrap";
@@ -1157,6 +1158,13 @@ function SpaceShell() {
         bots={bootstrapMe?.phoneCallsEnabled ? bots : []}
         transcribe={voiceStatus ? Boolean(voiceStatus.transcribe) : undefined}
         onAnswered={(botId) => navigate(`/app/${botId}`)}
+      />
+
+      <VoiceAssistant
+        bots={bots}
+        activeBotId={inGroup ? null : active?.id}
+        transcribe={voiceStatus ? Boolean(voiceStatus.transcribe) : undefined}
+        onWake={selectBot}
       />
 
       <ShellSidePanel

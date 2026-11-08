@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="voice.css">
+  <title>Rakazo 语音模式</title>
+</head>
+<body>
+  <main aria-label="语音模式">
+    <svg class="mic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+      <rect x="9" y="2" width="6" height="12" rx="3"></rect>
+      <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"></path>
+    </svg>
+    <div class="copy" role="status" aria-live="polite">
+      <strong id="label">正在连接语音</strong>
+      <span id="detail">请稍候</span>
+    </div>
+    <div class="actions">
+      <button id="mute" type="button" aria-pressed="false">静音</button>
+      <button id="exit" type="button">退出</button>
+    </div>
+  </main>
+  <script src="voice.js"></script>
+</body>
+</html>

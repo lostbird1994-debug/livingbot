@@ -72,6 +72,17 @@ export function isDesktopMenuCommand(value: unknown): value is DesktopMenuComman
 }
 
 export interface RakazoDesktop {
+  voice?: {
+    connect: () => Promise<{ registered: boolean; shortcut: string }>;
+    onCommand: (listener: (command: "toggle" | "exit" | "mute") => void) => () => void;
+    update: (state: {
+      active: boolean;
+      label: string;
+      detail: string;
+      muted: boolean;
+    }) => Promise<void>;
+    reveal: () => Promise<void>;
+  };
   /** Optional for compatibility with older desktop releases. */
   badge?: {
     set: (count: number) => Promise<boolean>;

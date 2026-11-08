@@ -1,6 +1,9 @@
 import type { MessageBlock } from "@rakazo/contracts";
 import { speechFromBlocks } from "./speech-text.js";
 
+/** Voice mode uses normal chat bubbles; explicit phone calls retain their transcript card. */
+export const VOICE_MODE_CALL_PREFIX = "voice-mode-";
+
 /** The fields grouping reads; web `ThreadMessage` and mobile `MobileMessage` both satisfy it. */
 export type VoiceChatMessage = {
   id: string;
@@ -37,7 +40,10 @@ const SUMMARY_MAX = 120;
  * even when it reuses the run of a call turn. The bot's `voice_call` marker
  * closes the group, so the work it does after hanging up renders as chat.
  */
-export function groupVoiceChats<T extends VoiceChatMessage>(messages: T[]): ThreadItem<T>[] {
+export function groupVoiceChats<T extends VoiceChatMessage>(
+  messages: T[],
+  options: { inlineVoiceMode?: boolean } = {},
+): ThreadItem<T>[] {
   const items: ThreadItem<T>[] = [];
   let open: VoiceChatGroup<T> | undefined;
   let openRunIds = new Set<string>();
@@ -86,7 +92,14 @@ export function groupVoiceChats<T extends VoiceChatMessage>(messages: T[]): Thre
     }
     items.push({ kind: "message", message });
   }
-  return items;
+  if (!options.inlineVoiceMode) return items;
+  return items.flatMap((item): ThreadItem<T>[] =>
+    item.kind === "voiceChat" && item.callId.startsWith(VOICE_MODE_CALL_PREFIX)
+      ? item.messages
+          .filter((message) => !isCallMarker(message))
+          .map((message) => ({ kind: "message", message }))
+      : [item],
+  );
 }
 
 /** Newest bot turn still inside this call's open card. Typed turns and wrap-up sit outside. */

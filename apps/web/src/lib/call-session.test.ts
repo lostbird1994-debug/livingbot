@@ -9,7 +9,14 @@ import {
 } from "@rakazo/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { pickUp } from "./call-pickup.js";
-import { ECHO_GUARD_MS, endCall, getSnapshot, startCall, toggleMute } from "./call-session";
+import {
+  ECHO_GUARD_MS,
+  endCall,
+  getSnapshot,
+  interceptCallWake,
+  startCall,
+  toggleMute,
+} from "./call-session";
 import { dictation } from "./dictation.js";
 import { recheckSessionOnUnauthorized, rpc } from "./rpc.js";
 import { reduceThreadSnapshot } from "./thread-events.js";
@@ -100,6 +107,19 @@ describe("call session", () => {
       muted: false,
     });
     expect(listen).toHaveBeenCalledWith(expect.objectContaining({ transcribe: true }));
+  });
+
+  it("routes a new name before sending any command to the previous bot", async () => {
+    await answeredCall({ botId: "old-bot", botName: "Ada" });
+    const off = interceptCallWake((text) => (text.startsWith("小雨") ? null : text));
+    try {
+      const options = listen.mock.calls.at(-1)?.[0];
+      await options?.onFinal("小雨，查一下邮件");
+      expect(send).not.toHaveBeenCalled();
+      expect(followUp).not.toHaveBeenCalled();
+    } finally {
+      off();
+    }
   });
 
   it("releases the microphone after an empty give-up without retrying automatically", async () => {

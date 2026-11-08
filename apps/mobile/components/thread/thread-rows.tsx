@@ -109,7 +109,10 @@ export function useThreadRows({
     [visibleMessages, readSeq, snap?.olderCursor],
   );
   // Group calls in reading order, then reverse for the inverted list.
-  const liveItems = useMemo(() => groupVoiceChats(visibleMessages).reverse(), [visibleMessages]);
+  const liveItems = useMemo(
+    () => groupVoiceChats(visibleMessages, { inlineVoiceMode: true }).reverse(),
+    [visibleMessages],
+  );
   const messagesById = useMemo(
     () => new Map((snap?.messages ?? []).map((message) => [message.id, message])),
     [snap?.messages],

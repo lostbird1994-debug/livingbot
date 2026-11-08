@@ -490,7 +490,7 @@ export const Transcript = memo(function Transcript({
             {t`Load earlier messages`}
           </Button>
         ) : null}
-        {groupVoiceChats(reactionView.visibleMessages).map((item) => {
+        {groupVoiceChats(reactionView.visibleMessages, { inlineVoiceMode: true }).map((item) => {
           if (item.kind === "voiceChat") {
             return (
               <div key={item.key}>

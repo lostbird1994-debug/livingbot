@@ -86,6 +86,7 @@ import {
 } from "./setup-config.js";
 import { clearSetup, readSetup, writeSetup } from "./setup-store.js";
 import { createSystemSpeech } from "./system-speech.js";
+import { installVoiceMode } from "./voice-mode.js";
 import type { UserDeviceAccess } from "./user-device.js";
 import { createUserDeviceAccess, deviceName } from "./user-device.js";
 import { oauthPopupSessionPreferences, shouldOpenInAppPopup } from "./window-open.js";
@@ -106,6 +107,7 @@ const PROBE_TIMEOUT_MS = 8_000;
 const DESKTOP_STACK_PROBE_PATH = "/.well-known/rakazo-desktop-stack";
 const DESKTOP_STACK_TOKEN_HEADER = "x-rakazo-desktop-stack-token";
 let mainWindow: BrowserWindow | null = null;
+let voiceMode: ReturnType<typeof installVoiceMode> | undefined;
 
 /** The server or the network refused the page; the setup window says so and the server logs its side. */
 class ServerUnavailable extends Error {}
@@ -311,6 +313,7 @@ function createWindow(url: string, partition: string | null) {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      backgroundThrottling: false,
       ...(partition === null ? {} : { partition }),
     },
   });
@@ -318,6 +321,8 @@ function createWindow(url: string, partition: string | null) {
     reportDesktopError(new Error("Renderer unresponsive"), "desktop.unresponsive"),
   );
   mainWindow = win;
+  win.webContents.on("did-start-loading", () => voiceMode?.reset());
+  win.on("closed", () => voiceMode?.reset());
   appWindowTargets.set(win, url);
   const targetOrigin = safeOrigin(url);
   // Intentional OAuth flows open the provider's authorize page via a named
@@ -1248,6 +1253,10 @@ if (!hasSingleInstanceLock) {
 
 app.whenReady().then(async () => {
   if (!hasSingleInstanceLock) return;
+  voiceMode = installVoiceMode({
+    window: () => mainWindow,
+    authorize: (event) => fromAppFrame(permissionTarget(), event),
+  });
   installSessionPermissions(session.defaultSession, permissionTarget);
   const userDataDir = app.getPath("userData");
   try {
@@ -1714,6 +1723,7 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   quitting = true;
+  voiceMode?.dispose();
   clearTimeout(warmWindowTimer);
   // Containers keep running; only an in-flight pull/up is cut short.
   hostComputer?.activate(false);

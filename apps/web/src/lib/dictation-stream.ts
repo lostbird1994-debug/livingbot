@@ -63,6 +63,7 @@ export class DictationStream {
   private sink: GainNode | null = null;
   private headers = new Headers({ "content-type": "application/json" });
   private onText: ((text: string) => void) | null = null;
+  private onFailure: (() => void) | null = null;
   private pending: Float32Array[] = [];
   private pendingSamples = 0;
   private committed = "";
@@ -74,6 +75,7 @@ export class DictationStream {
     stream: MediaStream,
     headers: Headers,
     onText: (text: string) => void,
+    onFailure?: () => void,
   ): Promise<boolean> {
     const Ctor = contextCtor();
     if (!Ctor || typeof Ctor.prototype.createScriptProcessor !== "function") return false;
@@ -82,6 +84,29 @@ export class DictationStream {
     this.headers = new Headers(headers);
     this.headers.set("content-type", "application/json");
     this.onText = onText;
+    this.onFailure = onFailure ?? null;
+    // Capture before the network handshake, so a short name cannot disappear while
+    // the recognition session opens. The bounded queue is sent when the id arrives.
+    try {
+      const context = new Ctor();
+      this.context = context;
+      const source = context.createMediaStreamSource(stream);
+      const node = context.createScriptProcessor(2048, 1, 1);
+      const sink = context.createGain();
+      sink.gain.value = 0;
+      node.onaudioprocess = (event) =>
+        this.take(event.inputBuffer.getChannelData(0), context.sampleRate);
+      source.connect(node);
+      node.connect(sink);
+      sink.connect(context.destination);
+      this.source = source;
+      this.node = node;
+      this.sink = sink;
+      if (context.state === "suspended") await context.resume();
+    } catch {
+      this.abort();
+      return false;
+    }
     try {
       const res = await fetch("/api/voice/stream/start", {
         method: "POST",
@@ -90,49 +115,40 @@ export class DictationStream {
         body: "{}",
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(FEED_TIMEOUT_MS)]),
       });
-      if (!res.ok) return false;
+      if (!res.ok) {
+        this.abort();
+        return false;
+      }
       const data = (await res.json()) as { id?: string };
-      if (!data.id) return false;
+      if (!data.id) {
+        this.abort();
+        return false;
+      }
       this.id = data.id;
       if (controller.signal.aborted) {
         this.abort();
         return false;
       }
     } catch {
-      return false;
-    }
-
-    try {
-      const context = new Ctor();
-      this.context = context;
-      const source = context.createMediaStreamSource(stream);
-      const node = context.createScriptProcessor(2048, 1, 1);
-      const sink = context.createGain();
-      sink.gain.value = 0;
-      node.onaudioprocess = (event) => {
-        this.take(event.inputBuffer.getChannelData(0), context.sampleRate);
-      };
-      source.connect(node);
-      node.connect(sink);
-      sink.connect(context.destination);
-      this.source = source;
-      this.node = node;
-      this.sink = sink;
-      if (context.state === "suspended") void context.resume();
-      return true;
-    } catch {
       this.abort();
       return false;
     }
+
+    if (this.failed) {
+      this.abort();
+      return false;
+    }
+    void this.pump();
+    return true;
   }
 
   private take(channel: Float32Array, rate: number) {
-    if (!this.id || this.failed) return;
+    if (this.failed) return;
     const down = downsample(channel, rate, TARGET_RATE);
     this.pending.push(down);
     this.pendingSamples += down.length;
     if (this.pendingSamples > MAX_QUEUED) {
-      this.failed = true;
+      this.fail();
       return;
     }
     if (this.pendingSamples < (TARGET_RATE * CHUNK_MS) / 1000) return;
@@ -169,7 +185,7 @@ export class DictationStream {
           signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
         });
         if (!res.ok) {
-          this.failed = true;
+          this.fail();
           return;
         }
         const data = (await res.json()) as {
@@ -177,12 +193,15 @@ export class DictationStream {
           finals?: string[];
           error?: string | null;
         };
-        if (data.error) this.failed = true;
+        if (data.error) {
+          this.fail();
+          return;
+        }
         if (data.finals?.length) this.committed += data.finals.join("");
         const text = `${this.committed}${data.partial ?? ""}`;
         if (text) this.onText?.(text);
       } catch {
-        this.failed = true;
+        this.fail();
       }
     };
     // Clearing the slot in `finally` is what keeps chunks flowing: leaving a settled promise
@@ -239,6 +258,12 @@ export class DictationStream {
       body: JSON.stringify({ id }),
       keepalive: true,
     }).catch(() => undefined);
+  }
+
+  private fail() {
+    if (this.failed) return;
+    this.failed = true;
+    this.onFailure?.();
   }
 
   private teardown() {
