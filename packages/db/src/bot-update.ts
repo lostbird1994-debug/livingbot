@@ -1,3 +1,5 @@
+import type { BotRoleCard } from "@rakazo/contracts";
+import { botRoleCard } from "@rakazo/contracts";
 import { displayName } from "@rakazo/core";
 import { getLogger } from "@rakazo/logging";
 import { writeBotInstructions } from "./bot-instructions.js";
@@ -5,6 +7,12 @@ import type { Bot, Prisma, PrismaClient } from "./client.js";
 import { appendEventInTransaction } from "./events.js";
 
 type AppendEvent = typeof appendEventInTransaction;
+
+export class RoleCardConflictError extends Error {
+  constructor() {
+    super("Role card changed; reload before saving.");
+  }
+}
 
 /**
  * When profile labels or instructions change, write `bot.updated` in the same
@@ -21,6 +29,7 @@ export async function commitBotUpdate(
     data: Omit<Prisma.BotUncheckedUpdateInput, "instructions"> & { instructions?: string };
     emitBotUpdated: boolean;
     expectedInstructions?: string;
+    expectedRoleCard?: BotRoleCard;
     /** Write only while these settings hold; otherwise Prisma throws P2025. */
     expectedSettings?: Partial<
       Pick<Bot, "modelProvider" | "modelId" | "thinkingLevel" | "autoSpeak" | "voiceId">
@@ -39,7 +48,8 @@ export async function commitBotUpdate(
   if (
     !options.emitBotUpdated &&
     options.data.instructions === undefined &&
-    !options.instructionRestore
+    !options.instructionRestore &&
+    options.expectedRoleCard === undefined
   ) {
     return options.prisma.bot.update({
       where: { id: options.botId, ...options.expectedSettings },
@@ -52,6 +62,14 @@ export async function commitBotUpdate(
   const committed = await options.prisma.$transaction(async (tx) => {
     // Event appends also lock the thread; all writers take it before the bot row.
     await tx.$queryRaw`SELECT id FROM threads WHERE id = ${options.threadId} FOR UPDATE`;
+    if (options.expectedRoleCard !== undefined) {
+      const bot = await tx.bot.findUniqueOrThrow({
+        where: { id: options.botId },
+        select: { roleCard: true },
+      });
+      if (JSON.stringify(botRoleCard(bot.roleCard)) !== JSON.stringify(options.expectedRoleCard))
+        throw new RoleCardConflictError();
+    }
     if (typeof instructions === "string" || options.instructionRestore) {
       await writeBotInstructions(tx, {
         botId: options.botId,

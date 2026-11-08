@@ -1,10 +1,17 @@
-import type { Bot, BotAvatarSet, ComputerMode, ThinkingLevel } from "@rakazo/contracts";
+import type {
+  Bot,
+  BotAvatarSet,
+  BotRoleCard,
+  ComputerMode,
+  ThinkingLevel,
+} from "@rakazo/contracts";
 import {
   BOT_AVATAR_SHAPE_COUNT,
   BOT_COLORS,
   BOT_DESCRIPTION_MAX_LENGTH,
   BOT_INSTRUCTIONS_MAX_LENGTH,
   BOT_NAME_MAX_LENGTH,
+  botRoleCard,
   resolveBotAvatarSet,
 } from "@rakazo/contracts";
 import {
@@ -32,6 +39,7 @@ import {
 } from "react-native";
 import { BotAvatar } from "../components/bot-avatar";
 import { BotContextCards } from "../components/bot-context-cards";
+import { BotRoleCardEditor } from "../components/bot-role-card-editor";
 import { ComputerModePicker } from "../components/computer-mode-picker";
 import { glassHeaderOptions } from "../components/glass-title";
 import type { MenuPickerChoice } from "../components/menu-picker";
@@ -78,6 +86,8 @@ export default function BotSettingsScreen() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [instructions, setInstructions] = useState("");
+  const [roleCard, setRoleCard] = useState(() => botRoleCard(undefined));
+  const [loadedOpen, setLoadedOpen] = useState(false);
   const [color, setColor] = useState<string>(BOT_COLORS[0]);
   const [computerMode, setComputerMode] = useState<ComputerMode>("team");
   const [avatarSet, setAvatarSet] = useState<BotAvatarSet>("organic");
@@ -163,6 +173,7 @@ export default function BotSettingsScreen() {
         notifySave.reset(next.notifyOnFinish ?? true);
         setDescription(next.description ?? "");
         setInstructions(next.instructions ?? "");
+        setRoleCard(botRoleCard(next.roleCard));
         setColor(next.color);
         setAvatarSet(resolveBotAvatarSet(next.avatarSet));
         setComputerMode(next.computerMode);
@@ -362,6 +373,8 @@ export default function BotSettingsScreen() {
         description?: string;
         instructions?: string;
         expectedInstructions?: string;
+        roleCard?: BotRoleCard;
+        expectedRoleCard?: BotRoleCard;
         color?: string;
         avatarSet?: BotAvatarSet;
         modelProvider?: string | null;
@@ -369,6 +382,10 @@ export default function BotSettingsScreen() {
         thinkingLevel?: ThinkingLevel | null;
         autoSpeak?: boolean;
       } = { botId };
+      if (JSON.stringify(roleCard) !== JSON.stringify(botRoleCard(bot.roleCard))) {
+        input.roleCard = roleCard;
+        input.expectedRoleCard = botRoleCard(bot.roleCard);
+      }
       if (profile.description !== (bot.description ?? "")) {
         input.description = profile.description;
       }
@@ -425,6 +442,7 @@ export default function BotSettingsScreen() {
   const dirty =
     bot &&
     (description.trim() !== (bot.description ?? "") ||
+      JSON.stringify(roleCard) !== JSON.stringify(botRoleCard(bot.roleCard)) ||
       instructions !== (bot.instructions ?? "") ||
       color !== bot.color ||
       avatarSet !== resolveBotAvatarSet(bot.avatarSet) ||
@@ -554,6 +572,115 @@ export default function BotSettingsScreen() {
         {botId ? <BotContextCards key={botId} botId={botId} /> : null}
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel={t("Loaded context")}
+          accessibilityState={{ expanded: loadedOpen }}
+          onPress={() => setLoadedOpen((open) => !open)}
+          style={{
+            marginTop: 24,
+            minHeight: 44,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text style={[styles.sectionHeading, { color: tokens.mutedForeground }]}>
+            {t("Loaded context")}
+          </Text>
+          <Chevron expanded={loadedOpen} />
+        </Pressable>
+        {loadedOpen ? (
+          <View style={{ gap: 24, marginTop: 16 }}>
+            <BotRoleCardEditor value={roleCard} onChange={setRoleCard} disabled={pending} />
+            <View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  paddingEnd: 16,
+                  marginBottom: 8,
+                }}
+              >
+                <SettingsSectionHeading>{t("Instructions")}</SettingsSectionHeading>
+                {bot?.instructionHistory?.length && instructions === bot.instructions ? (
+                  <View style={{ width: 44 }}>
+                    <MenuPickerMenu
+                      label={t("Instruction history")}
+                      value=""
+                      choices={bot.instructionHistory.map((version) => ({
+                        key: version.id,
+                        label: `${new Date(version.createdAt).toLocaleString()} (${version.reason})`,
+                      }))}
+                      onChange={(versionId) => {
+                        if (pending || instructions !== bot.instructions) return;
+                        const version = bot.instructionHistory?.find(
+                          (item) => item.id === versionId,
+                        );
+                        if (version)
+                          Alert.alert(t("Restore"), version.instructions, [
+                            { text: t("Cancel"), style: "cancel" },
+                            {
+                              text: t("Restore"),
+                              onPress: () => {
+                                void rpc("bots/restoreInstructions", {
+                                  botId: bot.id,
+                                  versionId,
+                                  expectedInstructions: bot.instructions,
+                                })
+                                  .then((updated) => {
+                                    setBot(updated);
+                                    setInstructions(updated.instructions ?? "");
+                                  })
+                                  .catch((err) => setError(errorText(err)));
+                              },
+                            },
+                          ]);
+                      }}
+                    >
+                      <View
+                        accessible
+                        accessibilityRole="button"
+                        accessibilityLabel={t("Instruction history")}
+                        style={{
+                          minHeight: 44,
+                          minWidth: 44,
+                          alignItems: "flex-end",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <NativeSymbol
+                          ios="clock.arrow.circlepath"
+                          android="time-outline"
+                          size={18}
+                          color={tokens.mutedForeground}
+                        />
+                      </View>
+                    </MenuPickerMenu>
+                  </View>
+                ) : null}
+              </View>
+              <GrowingTextInput
+                label={t("Instructions")}
+                maxLength={BOT_INSTRUCTIONS_MAX_LENGTH}
+                value={instructions}
+                onChangeText={setInstructions}
+                backgroundColor={native.fill}
+              />
+            </View>
+            <SettingsGroup label={t("How other bots see it")}>
+              <GrowingTextInput
+                label={t("How other bots see it")}
+                value={description}
+                maxLength={BOT_DESCRIPTION_MAX_LENGTH}
+                onChangeText={setDescription}
+                placeholder={t("What this bot is for")}
+                inset={0}
+              />
+            </SettingsGroup>
+          </View>
+        ) : null}
+        <Pressable
+          accessibilityRole="button"
           accessibilityLabel={t("Advanced")}
           accessibilityState={{ expanded: advancedOpen }}
           onPress={() => setAdvancedOpen((open) => !open)}
@@ -672,92 +799,7 @@ export default function BotSettingsScreen() {
                 />
               </View>
             </SettingsGroup>
-            <View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingEnd: 16,
-                  marginBottom: 8,
-                }}
-              >
-                <SettingsSectionHeading>{t("Instructions")}</SettingsSectionHeading>
-                {bot?.instructionHistory?.length && instructions === bot.instructions ? (
-                  <View style={{ width: 44 }}>
-                    <MenuPickerMenu
-                      label={t("Instruction history")}
-                      value=""
-                      choices={bot.instructionHistory.map((version) => ({
-                        key: version.id,
-                        label: `${new Date(version.createdAt).toLocaleString()} (${version.reason})`,
-                      }))}
-                      onChange={(versionId) => {
-                        if (pending || instructions !== bot.instructions) return;
-                        const version = bot.instructionHistory?.find(
-                          (item) => item.id === versionId,
-                        );
-                        if (version)
-                          Alert.alert(t("Restore"), version.instructions, [
-                            { text: t("Cancel"), style: "cancel" },
-                            {
-                              text: t("Restore"),
-                              onPress: () => {
-                                void rpc("bots/restoreInstructions", {
-                                  botId: bot.id,
-                                  versionId,
-                                  expectedInstructions: bot.instructions,
-                                })
-                                  .then((updated) => {
-                                    setBot(updated);
-                                    setInstructions(updated.instructions ?? "");
-                                  })
-                                  .catch((err) => setError(errorText(err)));
-                              },
-                            },
-                          ]);
-                      }}
-                    >
-                      <View
-                        accessible
-                        accessibilityRole="button"
-                        accessibilityLabel={t("Instruction history")}
-                        style={{
-                          minHeight: 44,
-                          minWidth: 44,
-                          alignItems: "flex-end",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <NativeSymbol
-                          ios="clock.arrow.circlepath"
-                          android="time-outline"
-                          size={18}
-                          color={tokens.mutedForeground}
-                        />
-                      </View>
-                    </MenuPickerMenu>
-                  </View>
-                ) : null}
-              </View>
-              <GrowingTextInput
-                label={t("Instructions")}
-                maxLength={BOT_INSTRUCTIONS_MAX_LENGTH}
-                value={instructions}
-                onChangeText={setInstructions}
-                backgroundColor={native.fill}
-              />
-            </View>
-            <SettingsGroup label={t("How other bots see it")}>
-              <GrowingTextInput
-                label={t("How other bots see it")}
-                value={description}
-                maxLength={BOT_DESCRIPTION_MAX_LENGTH}
-                onChangeText={setDescription}
-                placeholder={t("What this bot is for")}
-                inset={0}
-              />
-            </SettingsGroup>
+
             <View style={{ paddingHorizontal: 16, borderRadius: 12, backgroundColor: native.fill }}>
               <Pressable
                 accessibilityRole="button"

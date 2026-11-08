@@ -1,4 +1,13 @@
 export const ZH_TW_MESSAGES: Record<string, string> = {
+  "Loaded context": "載入內容",
+  Identity: "身分",
+  Personality: "性格",
+  "User identity": "使用者身分",
+  Backstory: "背景故事",
+  "Shared USER.md, MEMORY.md and profile.md will not load automatically. Private memory is preserved.":
+    "不再自動載入共用 USER.md、MEMORY.md 和 profile.md，私人記憶保留。",
+  "User identity and backstory load only when enabled.":
+    "使用者身分和背景故事僅在各自開關開啟時載入。",
   "How other bots see it": "其他機器人如何瞭解它",
   "Share to": "分享到",
   "{count} files": "{count} 個檔案",

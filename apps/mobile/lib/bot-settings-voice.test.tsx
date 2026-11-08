@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { BOT_COLORS, BOT_SETTINGS_SECTIONS } from "@rakazo/contracts";
+import { BOT_COLORS, BOT_SETTINGS_SECTIONS, botRoleCard } from "@rakazo/contracts";
 import type { ComponentProps, ReactNode } from "react";
 import { act, createElement, useEffect } from "react";
 import type { Root } from "react-dom/client";
@@ -369,8 +369,35 @@ describe("bot settings device voice menu", () => {
   const render = async () => {
     await act(async () => root.render(<BotSettingsScreen />));
     await expand();
+    await act(async () =>
+      container.querySelector<HTMLButtonElement>('[aria-label="Loaded context"]')!.click(),
+    );
   };
   const menu = () => container.querySelector('[data-menu="Device voice"]');
+
+  it("saves independent role switches with a baseline from Loaded context", async () => {
+    mocks.rpc.mockResolvedValue(undefined);
+    await render();
+    await act(async () =>
+      container.querySelector<HTMLButtonElement>('button[aria-label="User identity"]')!.click(),
+    );
+    expect(
+      container.querySelector('button[aria-label="Backstory"]')?.getAttribute("aria-checked"),
+    ).toBe("false");
+    await act(async () =>
+      [...container.querySelectorAll("button")]
+        .find((button) => button.textContent === "Save")!
+        .click(),
+    );
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      "bots/update",
+      expect.objectContaining({
+        botId: "bot-fixture",
+        roleCard: { ...botRoleCard(undefined), userIdentityEnabled: true },
+        expectedRoleCard: botRoleCard(undefined),
+      }),
+    );
+  });
 
   it.each([false, true])("loads and saves cross-space communication: %s", async (enabled) => {
     mocks.crossSpaceCommunication = enabled;
@@ -693,7 +720,7 @@ describe("bot settings device voice menu", () => {
     expect(trigger.querySelector('[data-ios="chevron.right"]')).not.toBeNull();
     expect(container.querySelector('[aria-label="Instructions"]')).toBeNull();
     await expand();
-    expect(container.querySelector('[aria-label="Instructions"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Instructions"]')).toBeNull();
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
     expect(trigger.querySelector('[data-ios="chevron.down"]')).not.toBeNull();
     expect(JSON.parse((trigger.nextElementSibling as HTMLElement).dataset.style!)).toMatchObject({

@@ -6,10 +6,11 @@ import { Button, Disclosure, Textarea } from "@rakazo/ui-web";
 import { Popover, PopoverContent, PopoverTrigger } from "@rakazo/ui-web/components/ui/popover";
 import { History } from "lucide-react";
 import { useId, useState } from "react";
-import { rpc } from "../lib/rpc";
+import { useSpaceRpc } from "../lib/space-rpc";
 import { errorText } from "../lib/user-error";
 
-export function InstructionSettings({ bot }: { bot: Bot }) {
+export function InstructionSettings({ bot, onSaved }: { bot: Bot; onSaved?: () => void }) {
+  const rpc = useSpaceRpc();
   const { t } = useLingui();
   const id = useId();
   const [previousBot, setPreviousBot] = useState(bot);
@@ -36,6 +37,7 @@ export function InstructionSettings({ bot }: { bot: Bot }) {
       setCurrent(updated);
       setInstructions(updated.instructions);
       setBaseline(updated.instructions);
+      onSaved?.();
     } catch (err) {
       setError(errorText(err));
       setConflict((current) => current || (err instanceof ORPCError && err.code === "CONFLICT"));

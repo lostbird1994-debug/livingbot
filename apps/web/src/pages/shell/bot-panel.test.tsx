@@ -123,6 +123,14 @@ vi.mock("./avatar-studio-popover", () => ({
   ),
 }));
 vi.mock("../ScratchpadSection", () => ({ ScratchpadSection: () => <h3>Open work</h3> }));
+vi.mock("../LoadedContextPanel", () => ({
+  LoadedContextPanel: ({ publicProfile, bot }: { publicProfile?: ReactNode; bot: Bot }) => (
+    <div data-testid="loaded-editors">
+      <InstructionSettings bot={bot} />
+      {publicProfile}
+    </div>
+  ),
+}));
 vi.mock("../KnowledgeSection", () => ({
   KnowledgeSection: () => <h3>Memory and skills</h3>,
 }));
@@ -190,6 +198,7 @@ async function render(
     root.render(
       <QueryClientProvider client={queryClient}>
         <BotSettings
+          tab={focusModel ? "settings" : "loaded"}
           onOpenConnections={() => undefined}
           focusModel={focusModel}
           bot={bot(description, overrides)}
@@ -271,7 +280,11 @@ it("shows the profile and the Advanced tab's controls", async () => {
     [...container.querySelectorAll("button")].some((button) => button.textContent === "Save"),
   ).toBe(false);
   const advanced = container.querySelector<HTMLElement>('[data-testid="bot-settings-advanced"]')!;
-  expect(advanced.querySelector('textarea[id$="-instructions"]')).not.toBeNull();
+  expect(advanced.querySelector('textarea[id$="-instructions"]')).toBeNull();
+  expect(advanced.querySelector('textarea[id$="-description"]')).toBeNull();
+  expect(
+    container.querySelector('[data-testid="loaded-editors"] textarea[id$="-instructions"]'),
+  ).not.toBeNull();
   expect(
     container
       .querySelector('[id$="-disabled-tools"]')

@@ -43,7 +43,6 @@ import type { ReactNode } from "react";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
 import { ChatBackgroundSection } from "../../components/ChatBackgroundSettings";
 import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary";
-import { InstructionSettings } from "../../components/InstructionSettings";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
 import { thinkingLevelLabel } from "../../lib/model-catalog";
 import { lazyComponent } from "../../lib/preload-recovery";
@@ -569,7 +568,27 @@ export function BotSettings({
           {loadedOpened ? (
             <ErrorBoundary fallback={<SectionLoadFailed />}>
               <Suspense fallback={null}>
-                <LoadedContextPanel key={bot.id} botId={bot.id} active={tab === "loaded"} />
+                <LoadedContextPanel
+                  key={bot.id}
+                  botId={bot.id}
+                  bot={bot}
+                  active={tab === "loaded"}
+                  publicProfile={
+                    <SettingsGroup label={t`How other bots see it`} plain>
+                      <Textarea
+                        id={`${ids}-description`}
+                        aria-label={t`How other bots see it`}
+                        value={description}
+                        maxLength={BOT_DESCRIPTION_MAX_LENGTH}
+                        onChange={(event) => setDescription(event.target.value)}
+                        onBlur={() => void enqueueSave()}
+                        placeholder={t`What this bot is for`}
+                        rows={2}
+                        className="min-h-16 resize-none field-sizing-content"
+                      />
+                    </SettingsGroup>
+                  }
+                />
               </Suspense>
             </ErrorBoundary>
           ) : null}
@@ -759,20 +778,6 @@ export function BotSettings({
                   }}
                 />
               </div>
-            </SettingsGroup>
-            <InstructionSettings key={bot.id} bot={bot} />
-            <SettingsGroup label={t`How other bots see it`} plain>
-              <Textarea
-                id={`${ids}-description`}
-                aria-label={t`How other bots see it`}
-                value={description}
-                maxLength={BOT_DESCRIPTION_MAX_LENGTH}
-                onChange={(e) => setDescription(e.target.value)}
-                onBlur={() => void enqueueSave()}
-                placeholder={t`What this bot is for`}
-                rows={2}
-                className="min-h-16 resize-none field-sizing-content"
-              />
             </SettingsGroup>
             <SettingsGroup label={t`Tools`} plain>
               <section data-testid="bot-settings-tools">

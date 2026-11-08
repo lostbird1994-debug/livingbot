@@ -29,6 +29,7 @@ type ScopedMemoryDocument = MemorySnapshot["documents"][number] & {
 };
 
 export interface MemoryContextBudgets {
+  excludeSharedProfile?: boolean;
   documentMaxChars?: number;
   totalMaxChars?: number;
   indexMaxChars?: number;
@@ -69,7 +70,13 @@ export async function previewAgentMemoryContext(
     memory.read({ scope: "user" }, context),
   ]);
   const documents: ScopedMemoryDocument[] = [
-    ...userMemory.documents.map((document) => ({ ...document, scope: "user" as const })),
+    ...userMemory.documents
+      .filter(
+        (document) =>
+          !budgets.excludeSharedProfile ||
+          !["user.md", "memory.md", "profile.md"].includes(normalizeMemoryPath(document.path)),
+      )
+      .map((document) => ({ ...document, scope: "user" as const })),
     ...botMemory.documents.map((document) => ({ ...document, scope: "bot" as const })),
   ].filter((document) => !isMemoryReviewPath(document.path));
   documents.sort(sortForPrompt);

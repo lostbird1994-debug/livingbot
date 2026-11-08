@@ -57,4 +57,20 @@ describe("loaded bot context preview", () => {
     );
     expect(read).toHaveBeenCalledWith({ scope: "user" }, expect.objectContaining(actor));
   });
+  it("previews saved role modules with the executor's shared-profile exclusions", async () => {
+    const { deps, findFirst } = fixture();
+    findFirst.mockResolvedValue({
+      id: "bot",
+      name: "Example",
+      description: "",
+      instructions: "",
+      roleCard: { identity: "Librarian", userIdentity: "Visitor", userIdentityEnabled: true },
+    });
+    const result = await loadedBotContext(deps, actor, "bot");
+    expect(result.identity).toContain("Librarian");
+    expect(result.identity).toContain("Visitor");
+    expect(result.sharedProfileExcluded).toBe(true);
+    expect(result.memory.context).toContain("Private fact");
+    expect(result.memory.context).not.toContain("Shared fact");
+  });
 });

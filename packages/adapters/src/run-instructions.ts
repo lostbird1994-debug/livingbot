@@ -1,4 +1,4 @@
-import { FLEET_WRITE_TOOL_NAMES } from "@rakazo/contracts";
+import { botRoleCard, FLEET_WRITE_TOOL_NAMES } from "@rakazo/contracts";
 import { runReadsThreadHistory, toolRequiresExplicitApproval } from "@rakazo/core";
 import { MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import { replyGuidanceForOfferedTools } from "./run-replies.js";
@@ -434,25 +434,42 @@ export function runIdentityInstruction(
     name: string;
     description?: string | null;
     instructions?: string | null;
+    roleCard?: unknown;
   },
   trigger: string,
 ): string {
   const description = bot.description?.trim() ?? "";
   const rawInstructions = bot.instructions ?? "";
   const instructions = rawInstructions.trim();
+  const card = botRoleCard(bot.roleCard);
+  const role = [
+    card.identity.trim() ? `Bot identity:\n${card.identity}` : "",
+    card.personality.trim() ? `Personality:\n${card.personality}` : "",
+    card.userIdentityEnabled && card.userIdentity.trim()
+      ? `User identity for this bot:\n${card.userIdentity}`
+      : "",
+    card.backstoryEnabled && card.backstory.trim() ? `Backstory:\n${card.backstory}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const withRole = (profile: string) => (role ? `${profile}\n\n${role}` : profile);
   if (trigger !== "created") {
     const identity = description ? `${bot.name}\n${description}` : bot.name;
     // Older bots saved one text as both fields; do not repeat it.
-    if (!instructions || instructions === description) return identity;
-    return [
-      identity,
-      "Teammates see only the profile above. These instructions are private to you:",
-      instructions,
-    ].join("\n");
+    if (!instructions || instructions === description) return withRole(identity);
+    return withRole(
+      [
+        identity,
+        "Teammates see only the profile above. These instructions are private to you:",
+        instructions,
+      ].join("\n"),
+    );
   }
-  return [
-    `Name: ${bot.name.trim() || "(none)"}`,
-    `Description: ${description || "(none)"}`,
-    instructions ? `Instructions:\n${instructions}` : "Instructions: (none)",
-  ].join("\n");
+  return withRole(
+    [
+      `Name: ${bot.name.trim() || "(none)"}`,
+      `Description: ${description || "(none)"}`,
+      instructions ? `Instructions:\n${instructions}` : "Instructions: (none)",
+    ].join("\n"),
+  );
 }

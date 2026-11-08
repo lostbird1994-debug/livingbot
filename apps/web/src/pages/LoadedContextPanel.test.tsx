@@ -25,7 +25,11 @@ vi.mock("../lib/query", () => ({
     },
   }),
 }));
-vi.mock("./KnowledgeSection", () => ({ KnowledgeSection: () => <div>Memory editor</div> }));
+vi.mock("./KnowledgeSection", () => ({
+  KnowledgeSection: () => <div>Memory editor</div>,
+  LoadedMemoryEditor: () => <button type="button">Edit full document</button>,
+}));
+vi.mock("./BotRoleCardEditor", () => ({ BotRoleCardEditor: () => <div>Role editor</div> }));
 vi.mock("@rakazo/ui-web", () => ({
   Button: ({
     variant: _variant,

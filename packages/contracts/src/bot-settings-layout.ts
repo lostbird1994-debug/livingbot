@@ -2,6 +2,7 @@
 export const BOT_SETTINGS_SECTIONS = {
   openWork: ["scratchpad"],
   memory: ["knowledge"],
+  loaded: ["identity", "personality", "userIdentity", "backstory", "instructions", "description"],
   advanced: [
     "model",
     "thinking",
@@ -11,8 +12,6 @@ export const BOT_SETTINGS_SECTIONS = {
     "voice",
     "crossSpaceCommunication",
     "fleetManagement",
-    "instructions",
-    "description",
     "disabledTools",
     "credentials",
     "skills",

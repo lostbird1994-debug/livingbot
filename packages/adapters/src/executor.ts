@@ -7,7 +7,7 @@ import {
   SandboxUnresponsiveError,
 } from "@rakazo/adapter-kit";
 import type { MessageBlock, ModelRoleChoice, RunStatus } from "@rakazo/contracts";
-import { disabledBuiltinToolSet } from "@rakazo/contracts";
+import { disabledBuiltinToolSet, excludesSharedProfile } from "@rakazo/contracts";
 import {
   assertTransition,
   botMessageAllowsSilence,
@@ -935,7 +935,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         runSecrets.push(...resolved.redact);
         const memoryContext = messagingChannelRun
           ? undefined
-          : await loadAgentMemoryContext(deps.memory, bot.id, context);
+          : await loadAgentMemoryContext(deps.memory, bot.id, context, {
+              excludeSharedProfile: excludesSharedProfile(bot.roleCard),
+            });
         // A pin stays as it was created. Unpinned runs still record the model they
         // used; modelPinned is what keeps that record from becoming the next choice.
         if (!run.modelPinned) {

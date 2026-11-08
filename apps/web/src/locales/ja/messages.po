@@ -665,6 +665,10 @@ msgstr "詳細設定"
 msgid "Advanced..."
 msgstr "詳細設定..."
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 msgid "Agent from another app"
 msgstr ""
@@ -916,6 +920,10 @@ msgstr "確認"
 msgid "Asleep"
 msgstr "スリープ中"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Assembled identity and instructions"
+msgstr ""
+
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
 msgid "at {0}"
@@ -1034,6 +1042,10 @@ msgstr "ログインに戻る"
 msgid "Background preview for {botName}"
 msgstr ""
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Backstory"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "ベースURL"
@@ -1102,8 +1114,8 @@ msgid "Bot folder"
 msgstr ""
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "Bot identity and instructions"
-msgstr ""
+#~ msgid "Bot identity and instructions"
+#~ msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
@@ -1211,6 +1223,7 @@ msgstr "画像を読み取れません"
 #: src/components/VaultSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/BotRoleCardEditor.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/connection-controls.tsx
@@ -2860,6 +2873,10 @@ msgstr "編集"
 msgid "Edit first"
 msgstr "先に編集"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Edit full document"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
 msgstr "名前を編集"
@@ -2892,6 +2909,14 @@ msgstr "{0}を有効にする"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Enable automatic organization"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Enable backstory"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Enable user identity"
 msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
@@ -3389,6 +3414,10 @@ msgstr "完了しました"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Icon set"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Identity"
 msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -4769,6 +4798,10 @@ msgstr "ペルソナ"
 msgid "Personal"
 msgstr "個人"
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Personality"
+msgstr ""
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "Phone call"
 msgstr "電話"
@@ -5115,6 +5148,7 @@ msgid "Release control"
 msgstr "操作を戻す"
 
 #: src/components/InstructionSettings.tsx
+#: src/pages/BotRoleCardEditor.tsx
 msgid "Reload"
 msgstr "再読み込み"
 
@@ -5380,6 +5414,10 @@ msgstr "取り消す"
 msgid "Revoked"
 msgstr ""
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Role settings changed elsewhere. Reload before saving."
+msgstr ""
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Room guidance"
 msgstr "ルームのガイダンス"
@@ -5480,6 +5518,10 @@ msgstr "認証情報を保存"
 #: src/components/VaultSettings.tsx
 msgid "Save new value"
 msgstr "新しい値を保存"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Save role settings"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -5755,6 +5797,10 @@ msgstr ""
 #: src/pages/KnowledgeSection.tsx
 msgid "Shared summaries load automatically. Other shared notes are read on demand."
 msgstr "共有の要約は自動で読み込まれます。その他の共有メモは必要に応じて読み取られます。"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
+msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -6694,6 +6740,14 @@ msgstr "スペースのデフォルトを使用"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "英数字、_、-のみで512文字以内で入力してください。"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "User identity"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
+msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"

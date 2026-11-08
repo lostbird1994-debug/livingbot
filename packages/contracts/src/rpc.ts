@@ -33,6 +33,7 @@ import {
   TicketSchema,
   UpdateTicketInput,
 } from "./board.js";
+import { BotRoleCardSchema } from "./bot-role-card.js";
 import {
   BotSecretMetadata,
   BotSecretPutInput,
@@ -732,6 +733,8 @@ export const appContract = {
     loadedContext: oc.input(botId).output(
       z.object({
         identity: z.string(),
+        roleCard: BotRoleCardSchema,
+        sharedProfileExcluded: z.boolean(),
         scratchpad: z.string(),
         memory: z.object({
           context: z.string(),

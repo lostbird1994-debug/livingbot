@@ -666,6 +666,10 @@ msgstr "進階"
 msgid "Advanced..."
 msgstr "進階..."
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+msgstr "儲存後，不再自動載入共用 USER.md、MEMORY.md 和 profile.md。該機器人的私人記憶保留。"
+
 #: src/components/AccountDataSettings.tsx
 msgid "Agent from another app"
 msgstr ""
@@ -917,6 +921,10 @@ msgstr "詢問"
 msgid "Asleep"
 msgstr "休眠中"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Assembled identity and instructions"
+msgstr "組裝後的完整身分與指令"
+
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
 msgid "at {0}"
@@ -1035,6 +1043,10 @@ msgstr "返回登入"
 msgid "Background preview for {botName}"
 msgstr ""
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Backstory"
+msgstr "背景故事"
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "基底網址"
@@ -1103,8 +1115,8 @@ msgid "Bot folder"
 msgstr ""
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "Bot identity and instructions"
-msgstr ""
+#~ msgid "Bot identity and instructions"
+#~ msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
@@ -1212,6 +1224,7 @@ msgstr "無法讀取影像"
 #: src/components/VaultSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/BotRoleCardEditor.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/connection-controls.tsx
@@ -2861,6 +2874,10 @@ msgstr "編輯"
 msgid "Edit first"
 msgstr "先編輯"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Edit full document"
+msgstr "編輯完整文件"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
 msgstr "編輯名稱"
@@ -2894,6 +2911,14 @@ msgstr "啟用 {0}"
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Enable automatic organization"
 msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Enable backstory"
+msgstr "啟用背景故事"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Enable user identity"
+msgstr "啟用使用者身分"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
@@ -3391,6 +3416,10 @@ msgstr "我做完了"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Icon set"
 msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Identity"
+msgstr "身分"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "If you heard that, voice is ready."
@@ -4770,6 +4799,10 @@ msgstr "人設"
 msgid "Personal"
 msgstr "個人"
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Personality"
+msgstr "性格"
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "Phone call"
 msgstr "語音通話"
@@ -5116,6 +5149,7 @@ msgid "Release control"
 msgstr "交還控制權"
 
 #: src/components/InstructionSettings.tsx
+#: src/pages/BotRoleCardEditor.tsx
 msgid "Reload"
 msgstr "重新載入"
 
@@ -5381,6 +5415,10 @@ msgstr "撤銷授權"
 msgid "Revoked"
 msgstr ""
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Role settings changed elsewhere. Reload before saving."
+msgstr "角色設定已在別處更新，請重新載入後再編輯。"
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Room guidance"
 msgstr "聊天室指引"
@@ -5481,6 +5519,10 @@ msgstr "儲存憑證"
 #: src/components/VaultSettings.tsx
 msgid "Save new value"
 msgstr "儲存新值"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Save role settings"
+msgstr "儲存角色設定"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -5756,6 +5798,10 @@ msgstr ""
 #: src/pages/KnowledgeSection.tsx
 msgid "Shared summaries load automatically. Other shared notes are read on demand."
 msgstr "共用摘要自動載入，其他共用筆記按需讀取。"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
+msgstr "該機器人已停止自動載入共用 USER.md、MEMORY.md 和 profile.md。"
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -6695,6 +6741,14 @@ msgstr "使用空間預設模型"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "最多可使用 512 個英文字母、數字、_ 或 -。"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "User identity"
+msgstr "使用者身分"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
+msgstr "使用者身分和背景故事僅在各自開關開啟時載入。關閉這兩個開關後，共用記憶按原規則載入。"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"

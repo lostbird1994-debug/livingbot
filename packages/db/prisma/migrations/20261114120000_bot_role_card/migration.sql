@@ -1,0 +1,1 @@
+ALTER TABLE "bots" ADD COLUMN "roleCard" JSONB NOT NULL DEFAULT '{}';

@@ -1,11 +1,13 @@
 import { Trans, useLingui } from "@lingui/react/macro";
+import type { Bot } from "@rakazo/contracts";
 import { Button, SectionHeading, Spinner } from "@rakazo/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { RotateCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { useSpaceQueries } from "../lib/query";
 import { errorText } from "../lib/user-error";
-import { KnowledgeSection } from "./KnowledgeSection";
+import { BotRoleCardEditor } from "./BotRoleCardEditor";
+import { KnowledgeSection, LoadedMemoryEditor } from "./KnowledgeSection";
 
 const characters = (text: string) => Array.from(text).length;
 const textClass =
@@ -32,7 +34,17 @@ function Content({
 }
 
 /** Current private-chat inputs, with exact memory excerpts supplied by the executor's renderer. */
-export function LoadedContextPanel({ botId, active = true }: { botId: string; active?: boolean }) {
+export function LoadedContextPanel({
+  botId,
+  active = true,
+  bot,
+  publicProfile,
+}: {
+  botId: string;
+  active?: boolean;
+  bot?: Bot;
+  publicProfile?: ReactNode;
+}) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
   const query = useQuery({
@@ -84,9 +96,25 @@ export function LoadedContextPanel({ botId, active = true }: { botId: string; ac
           </p>
         ) : null}
       </div>
+      {bot ? (
+        <BotRoleCardEditor
+          bot={bot}
+          publicProfile={publicProfile}
+          onSaved={() => {
+            void query.refetch();
+          }}
+        />
+      ) : null}
+      {data.sharedProfileExcluded ? (
+        <p className="text-xs text-muted-foreground">
+          <Trans>
+            Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs.
+          </Trans>
+        </p>
+      ) : null}
       <div className="space-y-2">
         <Content
-          title={<Trans>Bot identity and instructions</Trans>}
+          title={<Trans>Assembled identity and instructions</Trans>}
           detail={t`${characters(data.identity)} characters`}
         >
           <pre className={textClass}>{data.identity}</pre>
@@ -120,6 +148,7 @@ export function LoadedContextPanel({ botId, active = true }: { botId: string; ac
                   </Trans>
                 </p>
                 <pre className={textClass}>{doc.excerpt}</pre>
+                <LoadedMemoryEditor botId={botId} scope={doc.scope} path={doc.path} />
               </Content>
             ))}
             {!loaded.length ? (

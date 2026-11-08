@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { AGENT_SECRET_NAME_PATTERN } from "./agent-secret-name.js";
 import { BotAvatarSetSchema, BotAvatarValueSchema } from "./bot-avatar.js";
+import { BotRoleCardSchema } from "./bot-role-card.js";
 import { DisabledBuiltinToolsSchema } from "./builtin-tools.js";
 import {
   cloudflareGatewayRoutingId,
@@ -86,6 +87,7 @@ export const BotSchema = z.object({
   title: z.string(),
   description: z.string(),
   instructions: z.string(),
+  roleCard: BotRoleCardSchema.optional(),
   instructionHistory: z.array(InstructionVersionSchema).optional(),
   color: z.string(),
   avatarSet: BotAvatarSetSchema.optional(),
@@ -370,6 +372,7 @@ export const CreateBotInput = z.object({
   name: z.string().trim().min(1).max(BOT_NAME_MAX_LENGTH),
   description: z.string().max(BOT_DESCRIPTION_MAX_LENGTH).default(""),
   instructions: z.string().max(BOT_INSTRUCTIONS_MAX_LENGTH).default(""),
+  roleCard: BotRoleCardSchema.optional(),
   notifyOnFinish: z.boolean().default(true),
   fleetManagement: z.boolean().optional(),
   color: BotAvatarValueSchema.optional(),
@@ -389,6 +392,8 @@ export const UpdateBotInput = z
     description: z.string().trim().max(BOT_DESCRIPTION_MAX_LENGTH).optional(),
     instructions: z.string().trim().max(BOT_INSTRUCTIONS_MAX_LENGTH).optional(),
     expectedInstructions: z.string().max(BOT_INSTRUCTIONS_MAX_LENGTH).optional(),
+    roleCard: BotRoleCardSchema.optional(),
+    expectedRoleCard: BotRoleCardSchema.optional(),
     /** Ignored; installed mobile apps may still send it. */
     selfUpdateInstructions: z.boolean().optional(),
     notifyOnFinish: z.boolean().optional(),
@@ -411,6 +416,12 @@ export const UpdateBotInput = z
     expectedSettings: BotSettingsValuesSchema.optional(),
   })
   .superRefine((value, ctx) => {
+    if (value.roleCard !== undefined && value.expectedRoleCard === undefined)
+      ctx.addIssue({
+        code: "custom",
+        path: ["expectedRoleCard"],
+        message: "Reload role settings before saving.",
+      });
     const providerProvided = value.modelProvider !== undefined;
     const modelProvided = value.modelId !== undefined;
     if (!providerProvided && !modelProvided) return;

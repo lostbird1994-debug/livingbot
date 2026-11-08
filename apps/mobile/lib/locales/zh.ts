@@ -1,4 +1,13 @@
 export const ZH_MESSAGES: Record<string, string> = {
+  "Loaded context": "加载内容",
+  Identity: "身份",
+  Personality: "性格",
+  "User identity": "用户身份",
+  Backstory: "背景故事",
+  "Shared USER.md, MEMORY.md and profile.md will not load automatically. Private memory is preserved.":
+    "不再自动加载共享 USER.md、MEMORY.md 和 profile.md，私有记忆保留。",
+  "User identity and backstory load only when enabled.":
+    "用户身份和背景故事仅在各自开关开启时加载。",
   "How other bots see it": "其他机器人如何了解它",
   "Share to": "分享到",
   "{count} files": "{count} 个文件",

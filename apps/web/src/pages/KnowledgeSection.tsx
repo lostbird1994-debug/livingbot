@@ -46,6 +46,25 @@ export function KnowledgeSection({ botId }: { botId: string }) {
   );
 }
 
+/** Edit the complete stored source, never the truncated prompt excerpt. */
+export function LoadedMemoryEditor({
+  botId,
+  scope,
+  path,
+}: {
+  botId: string;
+  scope: "bot" | "user";
+  path: string;
+}) {
+  return (
+    <MemoryDocumentList
+      input={scope === "bot" ? { botId, scope } : { scope }}
+      testId={`loaded-memory-editor-${scope}-${path}`}
+      pathFilter={path}
+    />
+  );
+}
+
 /** The space's shared memory documents, mounted in the Memory settings overlay. */
 export function SpaceMemorySection() {
   return (
@@ -70,10 +89,12 @@ function MemoryDocumentList({
   input,
   testId,
   compact = false,
+  pathFilter,
 }: {
   input: { botId?: string; scope: "bot" | "user" };
   testId: string;
   compact?: boolean;
+  pathFilter?: string;
 }) {
   const rpc = useSpaceRpc();
   const { t } = useLingui();
@@ -308,7 +329,12 @@ function MemoryDocumentList({
           </div>
         ) : null}
         <div>
-          {(compact && !showAll ? docs.slice(0, 5) : docs).map((doc) => (
+          {(pathFilter
+            ? docs.filter((doc) => doc.path === pathFilter)
+            : compact && !showAll
+              ? docs.slice(0, 5)
+              : docs
+          ).map((doc) => (
             <div key={doc.id} className="border-b border-border last:border-0">
               <div className="flex items-center gap-2">
                 <Button
@@ -322,7 +348,7 @@ function MemoryDocumentList({
                     className="min-w-0 truncate text-[14px] font-normal text-foreground"
                     dir="auto"
                   >
-                    {doc.path}
+                    {pathFilter ? <Trans>Edit full document</Trans> : doc.path}
                   </span>
                 </Button>
                 <Tooltip>

@@ -3,8 +3,55 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("./events.js", () => ({ appendEventInTransaction: vi.fn() }));
 vi.mock("./bot-instructions.js", () => ({ writeBotInstructions: vi.fn() }));
 
+import { botRoleCard } from "@rakazo/contracts";
 import { writeBotInstructions } from "./bot-instructions.js";
-import { botProfileLabelsChanged, commitBotUpdate } from "./bot-update.js";
+import { botProfileLabelsChanged, commitBotUpdate, RoleCardConflictError } from "./bot-update.js";
+
+it.each([false, true])(
+  "checks the role baseline under the thread lock before writes (conflict=%s)",
+  async (conflict) => {
+    const baseline = botRoleCard(undefined);
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue([]),
+      bot: {
+        findUniqueOrThrow: vi
+          .fn()
+          .mockResolvedValue({ roleCard: conflict ? { personality: "Concurrent edit" } : {} }),
+        update: vi.fn().mockResolvedValue({ id: "bot", name: "Example", description: "" }),
+      },
+    };
+    const append = vi.fn().mockResolvedValue({ seq: 1 });
+    const notify = vi.fn().mockResolvedValue(undefined);
+    const promise = commitBotUpdate(
+      {
+        prisma: {
+          $transaction: async (operation: (client: typeof tx) => Promise<unknown>) => operation(tx),
+        } as never,
+        notify,
+        spaceId: "space",
+        threadId: "thread",
+        botId: "bot",
+        emitBotUpdated: true,
+        expectedRoleCard: baseline,
+        data: { roleCard: { ...baseline, personality: "Patient" } },
+      },
+      append,
+    );
+    if (conflict) {
+      await expect(promise).rejects.toBeInstanceOf(RoleCardConflictError);
+      expect(tx.bot.update).not.toHaveBeenCalled();
+      expect(append).not.toHaveBeenCalled();
+      expect(notify).not.toHaveBeenCalled();
+    } else {
+      await promise;
+      expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+        tx.bot.findUniqueOrThrow.mock.invocationCallOrder[0]!,
+      );
+      expect(tx.bot.update).toHaveBeenCalledOnce();
+      expect(append).toHaveBeenCalledOnce();
+    }
+  },
+);
 
 describe("botProfileLabelsChanged", () => {
   it("is true when name, description, or color is present", () => {

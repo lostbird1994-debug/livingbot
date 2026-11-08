@@ -665,6 +665,10 @@ msgstr "Avancé"
 msgid "Advanced..."
 msgstr "Avancé..."
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 msgid "Agent from another app"
 msgstr ""
@@ -916,6 +920,10 @@ msgstr "Demander"
 msgid "Asleep"
 msgstr "En veille"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Assembled identity and instructions"
+msgstr ""
+
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
 msgid "at {0}"
@@ -1034,6 +1042,10 @@ msgstr "Retour à la connexion"
 msgid "Background preview for {botName}"
 msgstr ""
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Backstory"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "URL de base"
@@ -1102,8 +1114,8 @@ msgid "Bot folder"
 msgstr ""
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "Bot identity and instructions"
-msgstr ""
+#~ msgid "Bot identity and instructions"
+#~ msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
@@ -1211,6 +1223,7 @@ msgstr "Ne peut pas lire les images"
 #: src/components/VaultSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/BotRoleCardEditor.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/connection-controls.tsx
@@ -2860,6 +2873,10 @@ msgstr "Modifier"
 msgid "Edit first"
 msgstr "Modifier d'abord"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Edit full document"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
 msgstr "Modifier le nom"
@@ -2892,6 +2909,14 @@ msgstr "Activer {0}"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Enable automatic organization"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Enable backstory"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Enable user identity"
 msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
@@ -3389,6 +3414,10 @@ msgstr "J'ai terminé"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Icon set"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Identity"
 msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -4769,6 +4798,10 @@ msgstr "Personnalité"
 msgid "Personal"
 msgstr ""
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Personality"
+msgstr ""
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "Phone call"
 msgstr "Appel téléphonique"
@@ -5115,6 +5148,7 @@ msgid "Release control"
 msgstr "Rendre le contrôle"
 
 #: src/components/InstructionSettings.tsx
+#: src/pages/BotRoleCardEditor.tsx
 msgid "Reload"
 msgstr "Recharger"
 
@@ -5380,6 +5414,10 @@ msgstr "Révoquer"
 msgid "Revoked"
 msgstr ""
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Role settings changed elsewhere. Reload before saving."
+msgstr ""
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Room guidance"
 msgstr "Guide de la salle"
@@ -5479,6 +5517,10 @@ msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "Save new value"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Save role settings"
 msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
@@ -5755,6 +5797,10 @@ msgstr ""
 #: src/pages/KnowledgeSection.tsx
 msgid "Shared summaries load automatically. Other shared notes are read on demand."
 msgstr "Les résumés partagés sont chargés automatiquement. Les autres notes partagées sont lues à la demande."
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
+msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -6693,6 +6739,14 @@ msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "User identity"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
 msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx

@@ -664,6 +664,7 @@ model Bot {
   name              String
   description       String            @default("")
   instructions      String            @default("")
+  roleCard          Json              @default("{}")
   instructionHistory Json @default("[]")
   color             String
   avatarSet         String            @default("organic")

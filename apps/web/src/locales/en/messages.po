@@ -665,6 +665,10 @@ msgstr "Advanced"
 msgid "Advanced..."
 msgstr "Advanced..."
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+msgstr "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+
 #: src/components/AccountDataSettings.tsx
 msgid "Agent from another app"
 msgstr "Agent from another app"
@@ -916,6 +920,10 @@ msgstr "Ask"
 msgid "Asleep"
 msgstr "Asleep"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Assembled identity and instructions"
+msgstr "Assembled identity and instructions"
+
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
 msgid "at {0}"
@@ -1034,6 +1042,10 @@ msgstr "Back to sign in"
 msgid "Background preview for {botName}"
 msgstr "Background preview for {botName}"
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Backstory"
+msgstr "Backstory"
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "Base URL"
@@ -1102,8 +1114,8 @@ msgid "Bot folder"
 msgstr "Bot folder"
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "Bot identity and instructions"
-msgstr "Bot identity and instructions"
+#~ msgid "Bot identity and instructions"
+#~ msgstr "Bot identity and instructions"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
@@ -1211,6 +1223,7 @@ msgstr "Can't read images"
 #: src/components/VaultSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/BotRoleCardEditor.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/connection-controls.tsx
@@ -2860,6 +2873,10 @@ msgstr "Edit"
 msgid "Edit first"
 msgstr "Edit first"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Edit full document"
+msgstr "Edit full document"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
 msgstr "Edit name"
@@ -2893,6 +2910,14 @@ msgstr "Enable {0}"
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Enable automatic organization"
 msgstr "Enable automatic organization"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Enable backstory"
+msgstr "Enable backstory"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Enable user identity"
+msgstr "Enable user identity"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
@@ -3390,6 +3415,10 @@ msgstr "I’m done"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Icon set"
 msgstr "Icon set"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Identity"
+msgstr "Identity"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "If you heard that, voice is ready."
@@ -4769,6 +4798,10 @@ msgstr "Persona"
 msgid "Personal"
 msgstr "Personal"
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Personality"
+msgstr "Personality"
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "Phone call"
 msgstr "Phone call"
@@ -5115,6 +5148,7 @@ msgid "Release control"
 msgstr "Release control"
 
 #: src/components/InstructionSettings.tsx
+#: src/pages/BotRoleCardEditor.tsx
 msgid "Reload"
 msgstr "Reload"
 
@@ -5380,6 +5414,10 @@ msgstr "Revoke"
 msgid "Revoked"
 msgstr "Revoked"
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Role settings changed elsewhere. Reload before saving."
+msgstr "Role settings changed elsewhere. Reload before saving."
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Room guidance"
 msgstr "Room guidance"
@@ -5480,6 +5518,10 @@ msgstr "Save credential"
 #: src/components/VaultSettings.tsx
 msgid "Save new value"
 msgstr "Save new value"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Save role settings"
+msgstr "Save role settings"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -5755,6 +5797,10 @@ msgstr "Shared memory organizer"
 #: src/pages/KnowledgeSection.tsx
 msgid "Shared summaries load automatically. Other shared notes are read on demand."
 msgstr "Shared summaries load automatically. Other shared notes are read on demand."
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
+msgstr "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -6694,6 +6740,14 @@ msgstr "Use space default"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Use up to 512 letters, digits, _ or -."
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "User identity"
+msgstr "User identity"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
+msgstr "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"

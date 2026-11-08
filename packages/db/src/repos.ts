@@ -2,11 +2,13 @@ import type {
   Actor,
   Bot,
   BotAvatarSet,
+  BotRoleCard,
   BotSection,
   MessageBlock,
   SpaceBot,
 } from "@rakazo/contracts";
 import {
+  botRoleCard,
   canonicalPiProviderId,
   DEFAULT_NEW_BOT_AVATAR_SET,
   disabledBuiltinToolSet,
@@ -84,6 +86,7 @@ function mapBot(
     name: string;
     description: string;
     instructions: string;
+    roleCard?: unknown;
     instructionHistory?: unknown;
     color: string;
     avatarSet?: string;
@@ -126,6 +129,7 @@ function mapBot(
     title: "",
     description: bot.description,
     instructions: bot.instructions,
+    roleCard: botRoleCard(bot.roleCard),
     instructionHistory: InstructionVersionSchema.array().parse(bot.instructionHistory ?? []),
     color: bot.color,
     avatarSet: resolveBotAvatarSet(bot.avatarSet),
@@ -519,6 +523,7 @@ export function createRepos(
         name: string;
         description: string;
         instructions: string;
+        roleCard?: BotRoleCard;
         notifyOnFinish: boolean;
         fleetManagement?: boolean;
         color?: string;
@@ -609,6 +614,7 @@ export function createRepos(
               name: displayName(input.name, ""),
               description: input.description,
               instructions: input.instructions,
+              ...(input.roleCard ? { roleCard: input.roleCard } : {}),
               notifyOnFinish: input.notifyOnFinish,
               fleetManagement: input.fleetManagement,
               color: avatar.color,

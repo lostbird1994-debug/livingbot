@@ -25,7 +25,7 @@ import type {
   SettingsScope,
   VaultPutInput,
 } from "@rakazo/contracts";
-import { BotSecretAuth, resolveBotAvatarSet } from "@rakazo/contracts";
+import { BotSecretAuth, botRoleCard, resolveBotAvatarSet } from "@rakazo/contracts";
 import { ACTIVE_RUN_STATUSES, displayName, WORKSPACE_CHIEF_SPAWN_KEY } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import {
@@ -36,6 +36,7 @@ import {
   expireComputerExecutionLeases,
   InstructionConflictError,
   IsolationError,
+  RoleCardConflictError,
   recordComputerRunEnd,
   recordSecurityEvent,
   restoreBotUnderComputerQuota,
@@ -296,6 +297,7 @@ export function botsRoutes(ctx: RouterContext) {
             name: duplicateBotName(source.name),
             description: source.description,
             instructions: source.instructions,
+            roleCard: botRoleCard(source.roleCard),
             notifyOnFinish: source.notifyOnFinish,
             color: source.color,
             avatarSet: resolveBotAvatarSet(source.avatarSet),
@@ -364,13 +366,18 @@ export function botsRoutes(ctx: RouterContext) {
           spaceId: context.actor.spaceId,
           threadId: existing.thread.id,
           botId: input.botId,
-          emitBotUpdated: botProfileLabelsChanged(input) || input.expectedSettings !== undefined,
+          emitBotUpdated:
+            botProfileLabelsChanged(input) ||
+            input.expectedSettings !== undefined ||
+            input.roleCard !== undefined,
           expectedInstructions: input.expectedInstructions,
+          expectedRoleCard: input.expectedRoleCard,
           expectedSettings: input.expectedSettings,
           data: {
             name: input.name,
             description: input.description,
             instructions: input.instructions,
+            roleCard: input.roleCard,
             notifyOnFinish: input.notifyOnFinish,
             color: input.color,
             avatarSet: input.avatarSet,
@@ -402,7 +409,11 @@ export function botsRoutes(ctx: RouterContext) {
             throw new ORPCError("CONFLICT", {
               message: "Settings changed; review the current settings first.",
             });
-          if (!(error instanceof InstructionConflictError)) throw error;
+          if (
+            !(error instanceof InstructionConflictError) &&
+            !(error instanceof RoleCardConflictError)
+          )
+            throw error;
           throw new ORPCError("CONFLICT", { message: error.message });
         });
         for (const setting of changedBotSettings(existing, input)) {
