@@ -183,6 +183,13 @@ function policyFixture() {
               },
       ),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      findMany: vi.fn().mockResolvedValue([
+        {
+          botId: "bot",
+          active: true,
+          bot: { name: "Chief", spawnKey: "onboarding:first", disabledBuiltinTools: [] },
+        },
+      ]),
     },
   };
   return { prisma, previous, document };
@@ -263,10 +270,13 @@ describe("memory organization scheduling", () => {
   it("scopes shared ownership to the current account and space", async () => {
     const { prisma } = policyFixture();
     expect(await ownsSharedMemoryOrganization(prisma as never, scope)).toBe(true);
-    expect(prisma.routine.findFirst).toHaveBeenCalledWith(
+    expect(prisma.routine.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ userId: "user", spaceId: "space", active: true }),
-        orderBy: { botId: "asc" },
+        where: expect.objectContaining({
+          userId: "user",
+          spaceId: "space",
+          memoryMaintenance: true,
+        }),
       }),
     );
   });
@@ -310,6 +320,14 @@ describe("memory organization scheduling", () => {
         operation({
           $queryRaw: vi.fn().mockResolvedValue([{ locked: 1 }]),
           routine: {
+            findMany: vi.fn().mockResolvedValue([
+              {
+                id: "active",
+                botId: "bot",
+                active: true,
+                bot: { name: "Chief", spawnKey: "onboarding:first", disabledBuiltinTools: [] },
+              },
+            ]),
             findFirst: vi.fn(async ({ where }) =>
               where.sharedMemoryOrganizer ? null : { id: "active" },
             ),

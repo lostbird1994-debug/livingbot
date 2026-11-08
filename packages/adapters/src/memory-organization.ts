@@ -1,6 +1,8 @@
 import type { AdapterContext, MemorySnapshot, MemoryStore } from "@rakazo/adapter-kit";
 import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
+import type { Actor } from "@rakazo/contracts";
 import { isMemoryArchivePath, isMemoryReviewPath } from "@rakazo/contracts";
+import { findWorkspaceChief, nextCronDate, WORKSPACE_CHIEF_SPAWN_KEY } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { lockSpaceSettings, withTransactionRetry } from "@rakazo/db";
 import { normalizeMemoryPath } from "./memory-context.js";
@@ -28,6 +30,132 @@ export const AUTOMATIC_MEMORY_PROMPT = `${MEMORY_ORGANIZATION_VERSION}
 type Decision = typeof MemoryConsolidationDecision._output;
 type Document = MemorySnapshot["documents"][number];
 type Scope = { spaceId: string; userId: string; botId: string };
+
+export function chiefMemoryRoutine<
+  T extends {
+    botId: string;
+    bot: { name: string; spawnKey: string | null };
+  },
+>(routines: readonly T[]): T | undefined {
+  const chief = findWorkspaceChief(
+    routines.map((row) => ({
+      ...row.bot,
+      routine: row,
+    })),
+  );
+  return chief?.routine;
+}
+
+const chiefRoutineQuery = (member: { spaceId: string; userId: string }) => ({
+  where: { ...member, memoryMaintenance: true, bot: { archivedAt: null } },
+  include: { bot: { select: { name: true, spawnKey: true, disabledBuiltinTools: true } } },
+});
+
+/** Called after onboarding bot creation; retries safely without changing existing schedules. */
+export async function ensureChiefMemoryOrganization(
+  prisma: PrismaClient,
+  actor: Actor,
+  botId: string,
+  now = new Date(),
+) {
+  return withTransactionRetry(() =>
+    prisma.$transaction(
+      async (tx) => {
+        await lockSpaceSettings(tx, actor);
+        const bot = await tx.bot.findFirst({
+          where: {
+            id: botId,
+            spaceId: actor.spaceId,
+            userId: actor.userId,
+            archivedAt: null,
+            spawnKey: WORKSPACE_CHIEF_SPAWN_KEY,
+          },
+          select: { id: true, disabledBuiltinTools: true },
+        });
+        if (
+          !bot ||
+          bot.disabledBuiltinTools.some((name) => ["read_memory", "organize_memory"].includes(name))
+        )
+          return;
+        const user = await tx.user.findUnique({
+          where: { id: actor.userId },
+          select: { timezone: true },
+        });
+        const timezone = user?.timezone ?? "UTC";
+        const routine = await tx.routine.upsert({
+          where: { id: `memory-review:${botId}` },
+          create: {
+            id: `memory-review:${botId}`,
+            spaceId: actor.spaceId,
+            userId: actor.userId,
+            botId,
+            name: "Automatic memory organization",
+            prompt: AUTOMATIC_MEMORY_PROMPT,
+            crons: ["0 18 * * *"],
+            timezone,
+            active: true,
+            notify: false,
+            memoryMaintenance: true,
+            nextRunAt: nextCronDate("0 18 * * *", now, timezone),
+          },
+          update: {},
+        });
+        const selected = await tx.routine.findFirst({
+          where: { spaceId: actor.spaceId, userId: actor.userId, sharedMemoryOrganizer: true },
+          select: { id: true },
+        });
+        if (!selected)
+          await tx.routine.update({
+            where: { id: routine.id },
+            data: { sharedMemoryOrganizer: true },
+          });
+      },
+      { isolationLevel: "Serializable" },
+    ),
+  );
+}
+
+/** Explicit operator action: reassign current spaces without touching memory, models or clocks. */
+export async function assignSharedMemoryToWorkspaceChiefs(prisma: PrismaClient) {
+  const members = await prisma.routine.findMany({
+    where: { memoryMaintenance: true, bot: { archivedAt: null } },
+    distinct: ["spaceId", "userId"],
+    select: { spaceId: true, userId: true },
+  });
+  const result = { changed: 0, unchanged: 0, missingChief: 0, unavailableChief: 0 };
+  for (const member of members) {
+    const status = await withTransactionRetry(() =>
+      prisma.$transaction(
+        async (tx) => {
+          await lockSpaceSettings(tx, member);
+          const rows = await tx.routine.findMany(chiefRoutineQuery(member));
+          const chief = chiefMemoryRoutine(rows);
+          if (!chief) return "missingChief" as const;
+          if (
+            !chief.active ||
+            chief.bot.disabledBuiltinTools.some((name) =>
+              ["read_memory", "organize_memory"].includes(name),
+            )
+          )
+            return "unavailableChief" as const;
+          if (chief.sharedMemoryOrganizer) return "unchanged" as const;
+          await tx.routine.updateMany({
+            where: { ...member, sharedMemoryOrganizer: true },
+            data: { sharedMemoryOrganizer: false },
+          });
+          await tx.routine.update({
+            where: { id: chief.id },
+            data: { sharedMemoryOrganizer: true },
+          });
+          return "changed" as const;
+        },
+        { isolationLevel: "Serializable" },
+      ),
+    );
+    result[status]++;
+  }
+  return result;
+}
 
 export async function ownsSharedMemoryOrganization(prisma: PrismaClient, scope: Scope) {
   // An explicitly selected but paused/disabled organizer must not silently hand work elsewhere.
@@ -57,21 +185,21 @@ export async function ownsSharedMemoryOrganization(prisma: PrismaClient, scope: 
       )
     );
   }
-  const owner = await prisma.routine.findFirst({
-    where: {
-      spaceId: scope.spaceId,
-      userId: scope.userId,
-      memoryMaintenance: true,
-      active: true,
-      bot: {
-        archivedAt: null,
-        NOT: { disabledBuiltinTools: { hasSome: ["read_memory", "organize_memory"] } },
-      },
-    },
-    orderBy: { botId: "asc" },
-    select: { botId: true },
-  });
-  return owner?.botId === scope.botId;
+  const owner = chiefMemoryRoutine(
+    await prisma.routine.findMany(
+      chiefRoutineQuery({
+        spaceId: scope.spaceId,
+        userId: scope.userId,
+      }),
+    ),
+  );
+  return Boolean(
+    owner?.botId === scope.botId &&
+      owner.active &&
+      !owner.bot.disabledBuiltinTools.some((name) =>
+        ["read_memory", "organize_memory"].includes(name),
+      ),
+  );
 }
 
 /** A verified immutable preimage is committed first. A failed summary CAS preserves that backup. */
@@ -306,20 +434,15 @@ export async function enableAutomaticMemoryOrganization(prisma: PrismaClient, no
             select: { id: true },
           });
           if (selected) return;
-          const candidate = await tx.routine.findFirst({
-            where: {
-              ...member,
-              memoryMaintenance: true,
-              active: true,
-              bot: {
-                archivedAt: null,
-                NOT: { disabledBuiltinTools: { hasSome: ["read_memory", "organize_memory"] } },
-              },
-            },
-            orderBy: [{ botId: "asc" }, { id: "asc" }],
-            select: { id: true },
-          });
-          if (candidate)
+          const candidate = chiefMemoryRoutine(
+            await tx.routine.findMany(chiefRoutineQuery(member)),
+          );
+          if (
+            candidate?.active &&
+            !candidate.bot.disabledBuiltinTools.some((name) =>
+              ["read_memory", "organize_memory"].includes(name),
+            )
+          )
             await tx.routine.update({
               where: { id: candidate.id },
               data: { sharedMemoryOrganizer: true },

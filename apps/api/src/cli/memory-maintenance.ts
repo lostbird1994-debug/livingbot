@@ -1,5 +1,6 @@
 import type { AdapterContext } from "@rakazo/adapter-kit";
 import {
+  assignSharedMemoryToWorkspaceChiefs,
   configureMemoryMaintenance,
   contentKeyProviderFromEnv,
   enableAutomaticMemoryOrganization,
@@ -28,10 +29,11 @@ if (
     "plan-nightly",
     "enable-nightly",
     "enable-auto",
+    "assign-chief",
   ].includes(command ?? "")
 )
   throw new Error(
-    "Use backfill-search, verify-search, check-search, plan-nightly, enable-nightly or enable-auto.",
+    "Use backfill-search, verify-search, check-search, plan-nightly, enable-nightly, enable-auto or assign-chief.",
   );
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required.");
 const { prisma, pool } = createDb(process.env.DATABASE_URL, {
@@ -40,6 +42,7 @@ const { prisma, pool } = createDb(process.env.DATABASE_URL, {
 try {
   const result = await runAsSystem("explicit memory maintenance setup", async () => {
     if (command === "enable-auto") return enableAutomaticMemoryOrganization(prisma);
+    if (command === "assign-chief") return assignSharedMemoryToWorkspaceChiefs(prisma);
     if (command === "backfill-search") return backfillMemorySearch(prisma);
     if (command === "verify-search") return verifySearch();
     if (command === "check-search") {

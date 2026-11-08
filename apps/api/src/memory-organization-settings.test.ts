@@ -32,6 +32,7 @@ function fixture() {
     createdAt: new Date("2026-01-01"),
     bot: {
       name: "Example bot",
+      spawnKey: "onboarding:first",
       modelId: "example-model",
       disabledBuiltinTools: [],
     },
@@ -75,11 +76,34 @@ describe("memory organizer settings", () => {
       }),
     );
   });
-  it("returns the deterministic eligible default until an owner is explicitly selected", async () => {
-    const { prisma, routine } = fixture();
+  it("defaults to the renamed Chief even when an ordinary bot sorts first", async () => {
+    const { prisma, routine, row } = fixture();
+    routine.findMany.mockResolvedValue([
+      { ...row, id: "ordinary", bot: { ...row.bot, spawnKey: null } },
+      row,
+    ]);
     routine.findFirst.mockResolvedValue(null);
     expect((await listMemoryOrganizers(prisma as never, actor)).sharedRoutineId).toBe("routine");
   });
+  it.each(["missing", "paused", "disabled"])(
+    "shows no implicit owner when Chief is %s",
+    async (kind) => {
+      const { prisma, routine, row } = fixture();
+      routine.findFirst.mockResolvedValue(null);
+      routine.findMany.mockResolvedValue([
+        {
+          ...row,
+          active: kind !== "paused",
+          bot: {
+            ...row.bot,
+            spawnKey: kind === "missing" ? null : "onboarding:first",
+            disabledBuiltinTools: kind === "disabled" ? ["organize_memory"] : [],
+          },
+        },
+      ]);
+      expect((await listMemoryOrganizers(prisma as never, actor)).sharedRoutineId).toBeNull();
+    },
+  );
   it("switches only this member's assignment in one serializable transaction", async () => {
     const { prisma, routine } = fixture();
     await selectSharedMemoryOrganizer(prisma as never, actor, "routine");

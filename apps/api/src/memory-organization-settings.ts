@@ -1,4 +1,5 @@
 import { ORPCError } from "@orpc/server";
+import { chiefMemoryRoutine } from "@rakazo/adapters";
 import type { Actor } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { lockSpaceSettings, withTransactionRetry } from "@rakazo/db";
@@ -17,6 +18,7 @@ export async function listMemoryOrganizers(prisma: PrismaClient, actor: Actor) {
       bot: {
         select: {
           name: true,
+          spawnKey: true,
           modelId: true,
           disabledBuiltinTools: true,
         },
@@ -30,7 +32,8 @@ export async function listMemoryOrganizers(prisma: PrismaClient, actor: Actor) {
     where: { spaceId: actor.spaceId, userId: actor.userId, sharedMemoryOrganizer: true },
     select: { id: true },
   });
-  const owner = explicit?.id ?? rows.find((row) => row.active && eligible(row))?.id ?? null;
+  const chief = chiefMemoryRoutine(rows);
+  const owner = explicit?.id ?? (chief?.active && eligible(chief) ? chief.id : null);
   return {
     sharedRoutineId: owner,
     routines: rows.map((row) => ({

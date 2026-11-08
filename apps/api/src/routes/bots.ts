@@ -5,6 +5,7 @@ import type { getBotSecretMetadata } from "@rakazo/adapters";
 import {
   archiveBot,
   checkpointAndStopComputer,
+  ensureChiefMemoryOrganization,
   forgetBotSecret,
   hasActiveComputerControl,
   listBotSecretMetadata,
@@ -25,7 +26,7 @@ import type {
   VaultPutInput,
 } from "@rakazo/contracts";
 import { BotSecretAuth, resolveBotAvatarSet } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, displayName } from "@rakazo/core";
+import { ACTIVE_RUN_STATUSES, displayName, WORKSPACE_CHIEF_SPAWN_KEY } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import {
   BotSectionNameConflictError,
@@ -265,6 +266,8 @@ export function botsRoutes(ctx: RouterContext) {
         } catch (error) {
           throw mapSpaceLifecycleError(error);
         }
+        if (bot.spawnKey === WORKSPACE_CHIEF_SPAWN_KEY)
+          await ensureChiefMemoryOrganization(deps.prisma, context.actor, bot.id);
         await enqueueBotIntroRun(deps, context.actor, bot).catch((error) => {
           getLogger().error("bot intro run enqueue", error);
         });
