@@ -14,3 +14,14 @@ export function isEmptyBotMemory(doc: Pick<MemoryDocument, "path" | "content">):
   const heading = doc.content.split("\n")[0] ?? "";
   return heading.startsWith("# ") && doc.content === initialBotMemory(heading.slice(2));
 }
+/** Reserved proposal artifacts remain available to human memory management, not agent recall. */
+export const MEMORY_REVIEW_DIRECTORY = "memory/reviews/";
+
+export function isMemoryReviewPath(path: string): boolean {
+  return path
+    .trim()
+    .normalize("NFKC")
+    .replace(/^\.?\//, "")
+    .toLowerCase()
+    .startsWith(MEMORY_REVIEW_DIRECTORY);
+}

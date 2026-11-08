@@ -1,4 +1,5 @@
 import type { AdapterContext, MemorySnapshot, MemoryStore } from "@rakazo/adapter-kit";
+import { isMemoryReviewPath } from "@rakazo/contracts";
 import { estimateTextTokens } from "./context-selection.js";
 import { charLength, truncateChars } from "./utf8.js";
 
@@ -48,7 +49,7 @@ export async function loadAgentMemoryContext(
   const documents: ScopedMemoryDocument[] = [
     ...userMemory.documents.map((document) => ({ ...document, scope: "user" as const })),
     ...botMemory.documents.map((document) => ({ ...document, scope: "bot" as const })),
-  ];
+  ].filter((document) => !isMemoryReviewPath(document.path));
   if (documents.length === 0) return undefined;
   documents.sort(sortForPrompt);
   let fitted = { ...budgets };

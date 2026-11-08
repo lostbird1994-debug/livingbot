@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { initialBotMemory, isEmptyBotMemory } from "./bot-memory.js";
+import { initialBotMemory, isEmptyBotMemory, isMemoryReviewPath } from "./bot-memory.js";
+
+describe("reserved memory review paths", () => {
+  it.each([
+    "memory/reviews/a.md",
+    "./MEMORY/REVIEWS/a.md",
+    "/memory/reviews/a.md",
+    "ｍｅｍｏｒｙ/reviews/a.md",
+  ])("recognizes a review path: %s", (path) => expect(isMemoryReviewPath(path)).toBe(true));
+  it.each(["MEMORY.md", "memory/reviews-topic.md", "archive/memory/reviews/a.md"])(
+    "preserves ordinary memory: %s",
+    (path) => expect(isMemoryReviewPath(path)).toBe(false),
+  );
+});
 
 describe("empty bot memory", () => {
   it.each(["", " \n\t", initialBotMemory("Fixture"), initialBotMemory("Original name")])(

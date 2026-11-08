@@ -11,7 +11,11 @@ import type {
   MemoryStore,
   PortableFile,
 } from "@rakazo/adapter-kit";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
+import {
+  isMemoryReviewPath,
+  MEMORY_REVIEW_DIRECTORY,
+  MEMORY_REVISION_CONFLICT_ERROR,
+} from "@rakazo/adapter-kit";
 import type { PrismaClient } from "@rakazo/db";
 import {
   contentEncryptionOf,
@@ -73,6 +77,7 @@ export class MarkdownMemoryStore implements MemoryStore {
         ? Prisma.sql`(${Prisma.join(indexed, " OR ")})`
         : Prisma.sql`FALSE`;
       const visible = Prisma.sql`m."spaceId" = ${context.spaceId} AND m."userId" = ${context.userId}
+        AND regexp_replace(lower(normalize(btrim(m.path), NFKC)), '^([.]/|/)', '') NOT LIKE ${`${MEMORY_REVIEW_DIRECTORY}%`}
         ${request.scope === "all" ? Prisma.empty : Prisma.sql`AND m.scope = ${request.scope}`}
         ${request.botId ? Prisma.sql`AND m."botId" = ${request.botId}` : Prisma.empty}`;
       const rows = await this.prisma.$queryRaw<
@@ -109,6 +114,7 @@ export class MarkdownMemoryStore implements MemoryStore {
       });
     }
     return documents
+      .filter((doc) => !isMemoryReviewPath(doc.path))
       .map((doc) => {
         const content = normalizeMemorySearch(doc.content);
         const path = normalizeMemorySearch(doc.path);

@@ -1,5 +1,9 @@
 import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
-import { HistoryReadInputSchema, HistorySearchInputSchema } from "@rakazo/contracts";
+import {
+  HistoryReadInputSchema,
+  HistorySearchInputSchema,
+  isMemoryReviewPath,
+} from "@rakazo/contracts";
 import { redactSecrets } from "@rakazo/core";
 import { readHistory, searchHistory } from "@rakazo/db";
 import { sharedMemorySaveError } from "./builtin-tools.js";
@@ -125,6 +129,10 @@ export const memoryTools: ToolHandlers = {
     const { args } = call;
     const wanted = String(args.path ?? "").trim();
     const requestedPath = scopedPath(wanted).path;
+    if (isMemoryReviewPath(requestedPath))
+      return call.finish({
+        error: "Review artifacts are available only in human memory management.",
+      });
     if (!requestedPath || requestedPath.endsWith("/")) {
       return call.finish(await listMemoryDirectory(ctx, wanted, args.offset));
     }
@@ -208,6 +216,7 @@ export const memoryTools: ToolHandlers = {
       ...userHits.map((hit) => ({ ...hit, scope: "user" as const })),
       ...botHits.map((hit) => ({ ...hit, scope: "bot" as const })),
     ]
+      .filter((hit) => !isMemoryReviewPath(hit.path))
       .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
       .slice(0, limit)
       .map((hit) => ({
@@ -227,6 +236,10 @@ export const memoryTools: ToolHandlers = {
       return call.finish({ error: "write_memory can only write bot memory." });
     }
     const path = qualified.path;
+    if (isMemoryReviewPath(path))
+      return call.finish({
+        error: "Review paths are reserved for the maintenance proposal writer.",
+      });
     const content = String(args.content ?? "");
     if (!path) return call.finish({ error: "path is required, for example MEMORY.md." });
     if (!content.trim()) {
@@ -325,6 +338,10 @@ export const memoryTools: ToolHandlers = {
     const invalid = sharedMemorySaveError(args);
     if (invalid) return call.finish({ error: invalid });
     const requested = scopedPath(String(args.path ?? ""));
+    if (isMemoryReviewPath(requested.path))
+      return call.finish({
+        error: "Review paths are reserved for the maintenance proposal writer.",
+      });
     if (requested.scope === "bot") {
       return call.finish({ error: "save_shared_memory can only write shared memory." });
     }
@@ -483,6 +500,7 @@ async function listMemoryDirectory(ctx: RunContext, wanted: string, rawOffset: u
   const documents = (await listMemoryDocuments(ctx))
     .filter(
       (document) =>
+        !isMemoryReviewPath(document.path) &&
         (!scope || document.scope === scope) &&
         normalizeMemoryPath(document.path).startsWith(prefix),
     )

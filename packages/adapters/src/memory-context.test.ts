@@ -19,6 +19,21 @@ const context: AdapterContext = {
 };
 
 describe("agent memory context", () => {
+  it("keeps proposal snapshots out of agent context and directory counts", async () => {
+    const result = await loadAgentMemoryContext(
+      storeWith(
+        readFrom([
+          document("source", "MEMORY.md", "current fact", 1, "2026-11-07"),
+          document("review", "memory/reviews/source.v1.md", "obsolete fact", 1, "2026-11-08"),
+        ]),
+      ),
+      "bot-1",
+      context,
+    );
+    expect(result).toContain("current fact");
+    expect(result).not.toContain("obsolete fact");
+    expect(result).not.toContain("memory/reviews/");
+  });
   it("inlines the summary and the profile, and lists everything else", async () => {
     const result = await loadAgentMemoryContext(storeWith(pairRead), "bot-1", context);
 

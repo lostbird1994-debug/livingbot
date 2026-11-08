@@ -110,6 +110,38 @@ describe("save_shared_memory", () => {
 });
 
 describe("restricted consolidation", () => {
+  it.each(["memory/reviews/1.v3.md", "bot:./MEMORY/REVIEWS/1.v3.md"])(
+    "reserves proposal writes and reads from ordinary agent tools: %s",
+    async (path) => {
+      const { context, call, commit, read } = setup();
+      await expect(
+        memoryTools.write_memory!(
+          context,
+          call("write_memory", {
+            path,
+            content: "replacement",
+            expected_revision: 0,
+          }),
+        ),
+      ).resolves.toHaveProperty("error");
+      await expect(
+        memoryTools.read_memory!(context, call("read_memory", { path })),
+      ).resolves.toHaveProperty("error");
+      expect(commit).not.toHaveBeenCalled();
+      expect(read).not.toHaveBeenCalled();
+    },
+  );
+  it("omits review snapshots from browsing and tool search", async () => {
+    const { context, call, read, search } = setup();
+    const review = { ...documents[0]!, path: "memory/reviews/1.v3.md" };
+    read.mockResolvedValue({ documents: [documents[0]!, review] });
+    search.mockResolvedValue([{ path: review.path, snippet: "obsolete", score: 10 }]);
+    const directory = await memoryTools.read_memory!(context, call("read_memory", { path: "" }));
+    expect(JSON.stringify(directory)).not.toContain(review.path);
+    expect(
+      await memoryTools.search_memory!(context, call("search_memory", { query: "obsolete" })),
+    ).toMatchObject({ matches: 0, results: [] });
+  });
   it("requires complete paginated reading before saving an immutable review document", async () => {
     const { context, call, read, commit } = setup();
     context.source.memoryMaintenance = true;

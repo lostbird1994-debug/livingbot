@@ -4,6 +4,7 @@ import {
   contentKeyProviderFromEnv,
   unwrapEnvFromKeyManager,
 } from "@rakazo/adapters";
+import { isMemoryReviewPath } from "@rakazo/contracts";
 import { loadRootEnv } from "@rakazo/core/node/load-root-env";
 import {
   backfillMemorySearch,
@@ -62,7 +63,8 @@ async function verifySearch() {
         traceId: "verify-memory-search",
         signal: new AbortController().signal,
       };
-      const { documents } = await memory.read(request, context);
+      const snapshot = await memory.read(request, context);
+      const documents = snapshot.documents.filter((doc) => !isMemoryReviewPath(doc.path));
       const samples = new Set([
         "导账",
         "账",

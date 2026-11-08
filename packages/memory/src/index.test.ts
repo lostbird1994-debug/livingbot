@@ -11,6 +11,29 @@ const context: AdapterContext = {
 };
 
 describe("memory store contract shape", () => {
+  it("excludes review snapshots from plaintext search while keeping explicit human reads", async () => {
+    const rows = [
+      {
+        id: "source",
+        path: "MEMORY.md",
+        content: "current fact",
+        revision: 1,
+        updatedAt: new Date(),
+      },
+      {
+        id: "review",
+        path: "./MEMORY/REVIEWS/source.v1.md",
+        content: "obsolete fact",
+        revision: 1,
+        updatedAt: new Date(),
+      },
+    ];
+    const store = new MarkdownMemoryStore({
+      memoryDocument: { findMany: vi.fn().mockResolvedValue(rows) },
+    } as never);
+    expect(await store.search({ scope: "bot", query: "obsolete" }, context)).toEqual([]);
+    expect((await store.read({ scope: "bot" }, context)).documents).toHaveLength(2);
+  });
   it("filters indexed candidates in SQL, then rejects false candidates after decryption", async () => {
     const $queryRaw = vi.fn().mockResolvedValue([
       { id: "1", path: "notes.md", content: "月结导账流程" },
@@ -38,6 +61,8 @@ describe("memory store contract shape", () => {
     expect(sql.text).toContain('"searchTokensVersion" <>');
     expect(sql.text).toContain('m."userId" =');
     expect(sql.text).toContain('m."spaceId" =');
+    expect(sql.text).toContain("NOT LIKE");
+    expect(sql.values).toContain("memory/reviews/%");
     expect(sql.values).toEqual(
       expect.arrayContaining(["workspace-1", "user-1", "bot", "bot-1", [1, 2], [3, 4]]),
     );
