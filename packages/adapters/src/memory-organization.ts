@@ -2,6 +2,7 @@ import type { AdapterContext, MemorySnapshot, MemoryStore } from "@rakazo/adapte
 import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
 import { isMemoryArchivePath, isMemoryReviewPath } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
+import { lockSpaceSettings, withTransactionRetry } from "@rakazo/db";
 import { normalizeMemoryPath } from "./memory-context.js";
 import type { MemoryConsolidationDecision } from "./memory-maintenance.js";
 import { configureMemoryMaintenance, renderMemoryProposal } from "./memory-maintenance.js";
@@ -278,7 +279,7 @@ export async function enableAutomaticMemoryOrganization(prisma: PrismaClient, no
   const setup = await configureMemoryMaintenance(prisma, true, now);
   const routines = await prisma.routine.findMany({
     where: { memoryMaintenance: true, bot: { archivedAt: null } },
-    select: { id: true, active: true },
+    select: { id: true, active: true, spaceId: true, userId: true },
   });
   for (const routine of routines)
     await prisma.routine.update({
@@ -289,6 +290,45 @@ export async function enableAutomaticMemoryOrganization(prisma: PrismaClient, no
         ...(routine.active ? { nextRunAt: now } : {}),
       },
     });
+  const members = new Map(
+    routines.map((routine) => [
+      JSON.stringify([routine.spaceId, routine.userId]),
+      { spaceId: routine.spaceId, userId: routine.userId },
+    ]),
+  );
+  for (const member of members.values()) {
+    await withTransactionRetry(() =>
+      prisma.$transaction(
+        async (tx) => {
+          await lockSpaceSettings(tx, member);
+          const selected = await tx.routine.findFirst({
+            where: { ...member, sharedMemoryOrganizer: true },
+            select: { id: true },
+          });
+          if (selected) return;
+          const candidate = await tx.routine.findFirst({
+            where: {
+              ...member,
+              memoryMaintenance: true,
+              active: true,
+              bot: {
+                archivedAt: null,
+                NOT: { disabledBuiltinTools: { hasSome: ["read_memory", "organize_memory"] } },
+              },
+            },
+            orderBy: [{ botId: "asc" }, { id: "asc" }],
+            select: { id: true },
+          });
+          if (candidate)
+            await tx.routine.update({
+              where: { id: candidate.id },
+              data: { sharedMemoryOrganizer: true },
+            });
+        },
+        { isolationLevel: "Serializable" },
+      ),
+    );
+  }
   return {
     ...setup,
     upgraded: routines.length,

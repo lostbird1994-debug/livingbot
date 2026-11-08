@@ -301,11 +301,22 @@ describe("memory organization scheduling", () => {
       bot: { findMany: vi.fn().mockResolvedValue([]) },
       routine: {
         findMany: vi.fn().mockResolvedValue([
-          { id: "paused", active: false },
-          { id: "active", active: true },
+          { id: "paused", active: false, spaceId: "space", userId: "user" },
+          { id: "active", active: true, spaceId: "space", userId: "user" },
         ]),
         update,
       },
+      $transaction: vi.fn(async (operation) =>
+        operation({
+          $queryRaw: vi.fn().mockResolvedValue([{ locked: 1 }]),
+          routine: {
+            findFirst: vi.fn(async ({ where }) =>
+              where.sharedMemoryOrganizer ? null : { id: "active" },
+            ),
+            update,
+          },
+        }),
+      ),
     };
     await enableAutomaticMemoryOrganization(prisma as never, now);
     expect(update).toHaveBeenNthCalledWith(1, {
@@ -322,6 +333,10 @@ describe("memory organization scheduling", () => {
         prompt: AUTOMATIC_MEMORY_PROMPT,
         nextRunAt: now,
       },
+    });
+    expect(update).toHaveBeenNthCalledWith(3, {
+      where: { id: "active" },
+      data: { sharedMemoryOrganizer: true },
     });
   });
 });
