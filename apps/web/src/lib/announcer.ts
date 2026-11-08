@@ -65,6 +65,7 @@ export class Announcer {
   private speaking = false;
   private lastAt = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private epoch = 0;
   /** Set by whoever knows whether the app is already using the audio path. */
   private blocked: () => boolean = () => false;
 
@@ -86,6 +87,7 @@ export class Announcer {
 
   /** A call started, or the user silenced announcements: nothing already queued may speak. */
   clear(): void {
+    this.epoch += 1;
     this.queue = [];
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
@@ -110,9 +112,10 @@ export class Announcer {
     }
     if (this.blocked() || speaker.isSpeaking()) return;
     this.speaking = true;
+    const epoch = this.epoch;
     try {
       await playChime();
-      if (!this.blocked() && next.allowed?.() !== false)
+      if (epoch === this.epoch && !this.blocked() && next.allowed?.() !== false)
         await speaker.speak(next.line, { ...(next.botId ? { botId: next.botId } : {}) });
     } catch {
       // A refused voice provider is reported by the speaker itself; the queue keeps moving.

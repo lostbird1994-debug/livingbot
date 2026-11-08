@@ -19,6 +19,7 @@ import {
 } from "@rakazo/core";
 import { getGlobalBroadcastChannel } from "better-auth/client";
 import { useSyncExternalStore } from "react";
+import { announcer } from "./announcer.js";
 import { pickUp } from "./call-pickup.js";
 import { dictation } from "./dictation.js";
 import {
@@ -94,6 +95,8 @@ let feed: {
 } | null = null;
 /** Every bot message already spoken this call: a streaming message updates many times. */
 const spokenMessageIds = new Set<string>();
+/** Only runs acknowledged for this voice session may drive its reply playback. */
+const voiceReplyRuns = new Set<string>();
 let unsubSpeech: (() => void) | null = null;
 let unsubDictation: (() => void) | null = null;
 let hangUpAfterReply = false;
@@ -188,6 +191,7 @@ export function startCall(call: {
   voiceMode?: boolean;
 }): void {
   if (leaving) return;
+  announcer.clear();
   endCall();
   callId =
     call.answered?.callId ?? `${call.voiceMode ? VOICE_MODE_CALL_PREFIX : ""}${newClientId()}`;
@@ -322,6 +326,7 @@ function dropCall(): void {
   speaker.stop();
   thread = null;
   spokenMessageIds.clear();
+  voiceReplyRuns.clear();
   spokenMemory.clear();
   if (state) {
     state = null;
@@ -430,7 +435,8 @@ export function toggleMute(): void {
     set({ heard: "" });
     return;
   }
-  if (state.phase === "listening") void listen();
+  if (callId.startsWith(VOICE_MODE_CALL_PREFIX) && state.phase === "thinking") void openMic();
+  else if (state.phase === "listening") void listen();
   else if (state.phase === "speaking") void openMic();
 }
 
@@ -583,7 +589,7 @@ async function openMic() {
   try {
     await dictation.listen({
       mode: "endpoint",
-      endpointMs: 3000,
+      endpointMs: callId.startsWith(VOICE_MODE_CALL_PREFIX) ? 5000 : 3000,
       transcribe,
       onFinal: (text) => void handleTranscript(text),
     });
@@ -645,8 +651,16 @@ async function handleTranscript(text: string, routeWake = true) {
   const callFeed = feed;
   const turnCallId = callId;
   const closing = isFarewell(text);
+  // Replies already present before this instruction belong to earlier conversation.
+  if (turnCallId.startsWith(VOICE_MODE_CALL_PREFIX)) {
+    for (const message of thread?.messages ?? []) {
+      if (message.role === "bot") spokenMessageIds.add(message.id);
+    }
+  }
   awaitingReply = true;
   set({ heard: text, phase: "thinking", exchanges: [...exchanges, { role: "user", text }] });
+  // Sending and refreshing can wait on an external runner. Capture the next utterance now.
+  if (turnCallId.startsWith(VOICE_MODE_CALL_PREFIX) && !closing) void openMic();
   if (closing) {
     hangUpAfterReply = true;
     // A second goodbye replaces this timer. Clear the previous one or it can
@@ -680,7 +694,12 @@ async function handleTranscript(text: string, routeWake = true) {
             ...(voicePlayback ? { voicePlayback } : {}),
           });
     releasePendingSend = callSends.track(turnCallId, sendRequest);
-    await sendRequest;
+    const sent = await sendRequest;
+    if (state?.botId === botId && callId === turnCallId && "runId" in sent && sent.runId) {
+      voiceReplyRuns.add(sent.runId);
+    }
+    if (state?.botId === botId && callId === turnCallId && askMessage?.runId)
+      voiceReplyRuns.add(askMessage.runId);
     if (interruptedPlayback === voicePlayback) interruptedPlayback = undefined;
   } catch (error) {
     if (!state || state.botId !== botId || callId !== turnCallId) return;
@@ -739,6 +758,11 @@ function reactToThread() {
   const { botId } = state;
   const messages = thread?.messages ?? [];
   const lastBot = [...messages].reverse().find((message) => message.role === "bot");
+  if (
+    callId.startsWith(VOICE_MODE_CALL_PREFIX) &&
+    (!lastBot?.runId || !voiceReplyRuns.has(lastBot.runId))
+  )
+    return;
   if (
     callId.startsWith(VOICE_MODE_CALL_PREFIX) &&
     lastBot &&

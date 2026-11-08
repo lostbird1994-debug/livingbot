@@ -27,7 +27,8 @@ def new_state():
     return dict(state=np.zeros((2, 1, 128), dtype=np.float32),
                 context=np.zeros((1, 64), dtype=np.float32),
                 tail=np.zeros(0, dtype=np.float32), audio=np.zeros(0, dtype=np.float32),
-                heard=False, silence=0, checked=0, quiet_reset=0, probability=0.0, at=time.monotonic())
+                heard=False, silence=0, checked=0, quiet_reset=0, ended=False,
+                probability=0.0, at=time.monotonic())
 
 
 def feed(key, pcm):
@@ -53,6 +54,7 @@ def feed(key, pcm):
             s["silence"] = 0
             s["checked"] = 0
             s["quiet_reset"] = 0
+            s["ended"] = False
         else:
             s["silence"] += 512
             # Reset recurrent noise history only during sustained quiet.
@@ -62,12 +64,14 @@ def feed(key, pcm):
                 s["quiet_reset"] = s["silence"]
     s["tail"] = frames[(len(frames) // 512) * 512:]
     silence_ms = s["silence"] * 1000 / RATE
-    complete = s["heard"] and silence_ms >= 3000
+    # A pause to think is not the end of a turn. The caller also applies its own
+    # minimum quiet window; only prolonged silence bypasses the semantic model.
     if s["heard"] and silence_ms >= 600 and s["silence"] - s["checked"] >= RATE * 0.4:
         s["checked"] = s["silence"]
         padded = np.pad(s["audio"], (max(0, 8 * RATE - len(s["audio"])), 0))
         features = compute_whisper_log_mel_features(padded, do_normalize=True)[None, ...]
-        complete = complete or float(turn.run(None, {"input_features": features})[0].ravel()[0]) > 0.5
+        s["ended"] = float(turn.run(None, {"input_features": features})[0].ravel()[0]) > 0.5
+    complete = s["heard"] and (silence_ms >= 12000 or s["ended"])
     return dict(complete=bool(complete), speechProbability=s["probability"], silenceMs=silence_ms)
 
 

@@ -44,6 +44,64 @@ function stubRecorderFallback(fetchMock: ReturnType<typeof vi.fn>) {
 }
 
 describe("Dictation recorder fallback", () => {
+  it("waits through thinking pauses, ignores a stale end decision after resumed speech, and flushes only once", async () => {
+    vi.useFakeTimers();
+    const level = { current: 0.6 };
+    vi.stubGlobal(
+      "AudioContext",
+      class {
+        state = "running";
+        createMediaStreamSource() {
+          return { connect() {} };
+        }
+        createAnalyser() {
+          return {
+            fftSize: 2048,
+            getByteTimeDomainData(data: Uint8Array) {
+              data.fill(Math.round(128 + level.current * 127));
+            },
+          };
+        }
+        async close() {}
+        async resume() {}
+      },
+    );
+    stubRecorderFallback(vi.fn(async () => Response.json({ text: "完整指令" })));
+    let onTurn: Parameters<DictationStream["start"]>[4];
+    vi.spyOn(DictationStream.prototype, "start").mockImplementation(
+      async (_stream, _headers, onText, _failure, turn) => {
+        onTurn = turn;
+        onText("先检查");
+        return true;
+      },
+    );
+    const finish = vi.spyOn(DictationStream.prototype, "finish").mockResolvedValue("完整指令");
+    const onFinal = vi.fn();
+    const dictation = new Dictation();
+    await dictation.listen({ mode: "endpoint", endpointMs: 5000, transcribe: true, onFinal });
+    await vi.advanceTimersByTimeAsync(80);
+    level.current = 0;
+    const verdict = (silenceMs: number, complete = true) =>
+      onTurn?.({ available: true, complete, silenceMs, speechProbability: 0.01 });
+    verdict(640);
+    await vi.advanceTimersByTimeAsync(3000);
+    verdict(3000);
+    expect(finish).not.toHaveBeenCalled();
+    level.current = 0.6;
+    await vi.advanceTimersByTimeAsync(80);
+    level.current = 0;
+    verdict(5200); // An older response must not cut off the resumed utterance.
+    expect(finish).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(5040);
+    verdict(5200, false);
+    expect(finish).not.toHaveBeenCalled();
+    verdict(5200);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(finish).toHaveBeenCalledOnce();
+    expect(onFinal).toHaveBeenCalledExactlyOnceWith("完整指令");
+    dictation.stop();
+  });
+
   it("does not duplicate streaming partial text when the complete recording takes over", async () => {
     const fetchMock = vi.fn(async () => Response.json({ text: "complete recorded sentence" }));
     stubRecorderFallback(fetchMock);
@@ -576,6 +634,7 @@ describe("Dictation recorder fallback", () => {
 
   it.each([
     ["recorder fallback", "", 240],
+    ["voice mode with a thinking pause", "", 5000],
     [
       "phone with Web Speech available",
       "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
@@ -652,7 +711,7 @@ describe("Dictation recorder fallback", () => {
     expect(dictation.state.status).toBe("listening");
     await vi.advanceTimersByTimeAsync(80);
     level.current = 0;
-    await vi.advanceTimersByTimeAsync((endpointMs ?? 1_200) - 80);
+    await vi.advanceTimersByTimeAsync((endpointMs === 5000 ? 12000 : (endpointMs ?? 1_200)) - 80);
     expect(stopped).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(onFinal).not.toHaveBeenCalled();

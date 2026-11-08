@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { announcementLine, announcer } from "../../lib/announcer";
 import {
   endCall,
+  getSnapshot as getCallSnapshot,
   interceptCallWake,
   startCall,
   toggleMute,
@@ -117,6 +118,7 @@ export function VoiceAssistant({
     }
     const next = action === "exit" ? false : !activeRef.current;
     activeRef.current = next;
+    if (next) announcer.clear();
     if (!next) {
       listener.current?.stop();
       if (callRef.current) endCall();
@@ -252,7 +254,7 @@ export function VoiceAssistant({
   }, [armed, call]);
 
   useEffect(() => {
-    announcer.setBlockedCheck(() => Boolean(callRef.current));
+    announcer.setBlockedCheck(() => activeRef.current || Boolean(getCallSnapshot()));
     return () => {
       announcer.clear();
       announcer.setBlockedCheck(() => true);
@@ -297,7 +299,8 @@ export function VoiceAssistant({
           document.visibilityState === "visible" &&
           document.hasFocus()
         ) &&
-        !callRef.current;
+        !activeRef.current &&
+        !getCallSnapshot();
       const request = (requests.current.get(bot.id) ?? 0) + 1;
       requests.current.set(bot.id, request);
       void rpc.threads

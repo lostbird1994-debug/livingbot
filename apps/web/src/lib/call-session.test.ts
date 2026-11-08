@@ -879,6 +879,56 @@ describe("call session", () => {
     expect(speaker.speakStream).toHaveBeenCalledTimes(1);
   });
 
+  it("never reads an earlier run while the first voice instruction is being accepted", async () => {
+    const pending = deferred<{ runId: string; taskId: string }>();
+    send.mockReturnValueOnce(pending.promise as never);
+    await answeredCall({ botId: "call-bot", botName: "Ada", voiceMode: true });
+    const feed = vi.mocked(runThreadSubscription).mock.calls.at(-1)![0];
+    getThread.mockResolvedValue(
+      snapshot([{ ...botMessage("old-reply", "历史回复。"), runId: "old-run" }]) as never,
+    );
+    await heard("处理新的任务");
+    await feed.refresh();
+    expect(speaker.speakStream).not.toHaveBeenCalled();
+    expect(speak).not.toHaveBeenCalled();
+    pending.resolve({ runId: "run-1", taskId: "task-1" });
+    await flushMicrotasks();
+    expect(speaker.speakStream).not.toHaveBeenCalled();
+    expect(speak).not.toHaveBeenCalled();
+  });
+
+  it("keeps the voice mic open while send and thread refresh are pending, including after unmute", async () => {
+    const pending = deferred<{ runId: string; taskId: string }>();
+    const refresh = deferred<ThreadSnapshot>();
+    send.mockReturnValueOnce(pending.promise as never);
+    await answeredCall({ botId: "call-bot", botName: "Ada", voiceMode: true });
+    getThread.mockReturnValue(refresh.promise as never);
+    await heard("开始任务");
+    expect(listen).toHaveBeenCalledTimes(2);
+    expect(listen).toHaveBeenLastCalledWith(expect.objectContaining({ endpointMs: 5000 }));
+    expect(getSnapshot()?.phase).toBe("thinking");
+    toggleMute();
+    toggleMute();
+    expect(listen).toHaveBeenCalledTimes(3);
+    pending.resolve({ runId: "run-1", taskId: "task-1" });
+    await flushMicrotasks();
+    expect(listen).toHaveBeenCalledTimes(3);
+    refresh.resolve(snapshot([], runningRun));
+    await flushMicrotasks();
+  });
+
+  it("sends the next spoken instruction as a follow-up while the active voice task continues", async () => {
+    await answeredCall({ botId: "call-bot", botName: "Ada", voiceMode: true });
+    getThread.mockResolvedValue(snapshot([], runningRun) as never);
+    await heard("开始任务");
+    await flushMicrotasks();
+    await heard("补充一条要求");
+    await flushMicrotasks();
+    expect(send).toHaveBeenCalledOnce();
+    expect(followUp).toHaveBeenCalledWith(expect.objectContaining({ text: "补充一条要求" }));
+    expect(listen).toHaveBeenCalledTimes(3);
+  });
+
   it("does not speak a message a refresh re-delivers", async () => {
     await answeredCall({ botId: "call-bot", botName: "Ada", transcribe: false });
     const feed = vi.mocked(runThreadSubscription).mock.calls[0]?.[0];

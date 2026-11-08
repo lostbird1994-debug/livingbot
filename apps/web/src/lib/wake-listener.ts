@@ -41,6 +41,11 @@ export class WakeListener {
   private lastTextAt = 0;
   private hadVoice = false;
   private turnAt = 0;
+  private localVoiceAt = 0;
+
+  private hasCommand(): boolean {
+    return Boolean(matchWake(this.heard, this.targets)?.rest.trim());
+  }
 
   get isRunning(): boolean {
     return this.running;
@@ -153,6 +158,7 @@ export class WakeListener {
     }
     const rms = Math.sqrt(sum / samples.length);
     const now = Date.now();
+    if (rms > WAKE_RMS) this.localVoiceAt = now;
     if (rms > WAKE_RMS && now - this.turnAt > 2000) {
       this.hadVoice = true;
       this.voiceAt = now;
@@ -166,7 +172,8 @@ export class WakeListener {
       // Recognition progress also anchors the endpoint; room noise must not keep
       // a completed name open forever, or quiet speech close it mid-word.
       const textQuiet = now - this.lastTextAt;
-      if (silent > ABANDON_SILENCE_MS && textQuiet > 350) this.finishTap();
+      const timeout = this.hasCommand() ? 12000 : ABANDON_SILENCE_MS;
+      if (silent > timeout && textQuiet > 350) this.finishTap();
     } else if (this.hadVoice && silent > ABANDON_SILENCE_MS) {
       // A lone name may only become text after the recognition stream is flushed.
       this.finishTap();
@@ -181,6 +188,7 @@ export class WakeListener {
     this.heard = "";
     this.hadVoice = false;
     this.turnAt = 0;
+    this.localVoiceAt = 0;
     this.lastTextAt = Date.now();
     void tap
       .start(
@@ -195,7 +203,13 @@ export class WakeListener {
           this.turnAt = Date.now();
           if (turn.speechProbability >= 0.7) this.hadVoice = true;
           if (this.hadVoice) this.voiceAt = Date.now() - turn.silenceMs;
-          if (turn.complete) this.finishTap();
+          const minimum = this.hasCommand() ? 5000 : 600;
+          if (
+            turn.complete &&
+            turn.silenceMs >= minimum &&
+            Date.now() - this.localVoiceAt >= minimum
+          )
+            this.finishTap();
         },
       )
       .then((started) => {

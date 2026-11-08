@@ -1,5 +1,22 @@
-import { describe, expect, it } from "vitest";
-import { announcementLine } from "./announcer";
+import { describe, expect, it, vi } from "vitest";
+import { Announcer, announcementLine } from "./announcer";
+import { speaker } from "./tts";
+
+it("discards an announcement already waiting for its chime when a voice session starts", async () => {
+  const speak = vi.spyOn(speaker, "speak").mockResolvedValue(undefined);
+  const speaking = vi.spyOn(speaker, "isSpeaking").mockReturnValue(false);
+  const announcer = new Announcer();
+  try {
+    announcer.announce("有新消息");
+    announcer.clear();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(speak).not.toHaveBeenCalled();
+  } finally {
+    speak.mockRestore();
+    speaking.mockRestore();
+  }
+});
 
 describe("announcementLine", () => {
   it("reads the whole first paragraph, including multiple sentences", () => {

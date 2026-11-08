@@ -27,6 +27,7 @@ vi.mock("../../lib/call-session", () => ({
   endCall: fake.endCall,
   toggleMute: fake.toggleMute,
   useCallSession: () => fake.call,
+  getSnapshot: () => fake.call,
   interceptCallWake: (handler: unknown) => {
     fake.intercept = handler;
     return () => {
@@ -209,6 +210,19 @@ it("suppresses notifications for the visible conversation and for bots that did 
     [bot("a", { updatedAt: "2", preview: "完成" }), bot("b", { updatedAt: "2", preview: "完成" })],
     "a",
   );
+  expect(fake.announce).not.toHaveBeenCalled();
+});
+
+it("drops notifications throughout voice mode, including while waiting for a wake name", async () => {
+  prefs("a", true, true);
+  await render([bot()]);
+  await act(async () => wake());
+  fake.get.mockResolvedValue({
+    run: null,
+    messages: [{ id: "new-reply", role: "bot", blocks: [{ kind: "text", text: "任务完成。" }] }],
+  });
+  await render([bot("a", { updatedAt: "2", preview: "完成" })]);
+  expect(fake.prepare).not.toHaveBeenCalled();
   expect(fake.announce).not.toHaveBeenCalled();
 });
 

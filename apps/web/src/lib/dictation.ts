@@ -181,6 +181,7 @@ export class Dictation {
   /** Realtime transcript tap; null whenever streaming is unavailable or already finished. */
   private streamTap: DictationStream | null = null;
   private turnAt = 0;
+  private soundAt = 0;
   private audioContext: AudioContext | null = null;
   private vadTimer: ReturnType<typeof setInterval> | undefined;
   private onFinal: ((text: string) => void) | null = null;
@@ -463,6 +464,7 @@ export class Dictation {
     // what makes stopping feel instant. A refusal here just means the old path stays in charge.
     const tap = new DictationStream();
     this.turnAt = 0;
+    this.soundAt = 0;
     this.streamTap = tap;
     void tap
       .start(
@@ -476,7 +478,12 @@ export class Dictation {
         (turn) => {
           if (this.token !== mine || this.streamTap !== tap || mode !== "endpoint") return;
           this.turnAt = Date.now();
-          if (turn.complete && this.media?.state === "recording") {
+          if (
+            turn.complete &&
+            turn.silenceMs >= endpointMs &&
+            Date.now() - this.soundAt >= endpointMs &&
+            this.media?.state === "recording"
+          ) {
             this.stopVad();
             this.media.stop();
           }
@@ -571,19 +578,22 @@ export class Dictation {
           sum += n * n;
         }
         const rms = Math.sqrt(sum / data.length);
+        if (rms > SILENCE_RMS) {
+          this.soundAt = Date.now();
+          heardSpeech = true;
+          silentFor = 0;
+        }
         // Local semantic inference owns endpointing while healthy. RMS is only a fallback.
         if (Date.now() - this.turnAt < 2000) {
           silentFor = 0;
           return;
         }
         if (rms > SILENCE_RMS) {
-          heardSpeech = true;
-          silentFor = 0;
           return;
         }
         if (!heardSpeech) return;
         silentFor += ENDPOINT_TICK_MS;
-        if (silentFor < endpointMs) return;
+        if (silentFor < (endpointMs >= 5000 ? Math.max(endpointMs, 12000) : endpointMs)) return;
         this.stopVad();
         try {
           media.stop();
