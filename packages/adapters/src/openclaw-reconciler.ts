@@ -9,7 +9,11 @@ import {
 } from "./openai-compatible-url.js";
 import { connectOpenClawSdk, NativeRunJournal } from "./openclaw-model-stream.js";
 import type { NativePeer, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
-import { confirmsNativeAbort, isNativeCancelled } from "./openclaw-native-driver.js";
+import {
+  confirmsNativeAbort,
+  isNativeCancelled,
+  nativeRunIndexKey,
+} from "./openclaw-native-driver.js";
 import { resolveConnectedRunModel } from "./run-model.js";
 
 /** Status-only recovery: never dispatch a new agent run or automatically approve a request. */
@@ -108,9 +112,6 @@ export function createOpenClawReconciler(
     const scanDeadline = Date.now() + 25_000;
     for (const run of runs) {
       if (deps.shutdownSignal?.aborted || Date.now() >= scanDeadline) break;
-      // OpenClaw owns its full tool loop; the outer Pi bridge makes one native
-      // invocation per run (ordinal zero), including approval resumes.
-      const key = JSON.stringify([run.id, 0]);
       const local = run.modelId?.startsWith("native/");
       const store =
         dependencies.store ??
@@ -123,7 +124,22 @@ export function createOpenClawReconciler(
           process.env.ENCRYPTION_KEY ?? "",
         );
       try {
+        // A follow-up arriving just as a native turn ends can start another
+        // invocation under this run. Cancel that current invocation, not ordinal zero.
+        const active = await store.read(nativeRunIndexKey(run.id));
+        const key = active?.executionKey ?? JSON.stringify([run.id, 0]);
+        const identity = JSON.parse(key);
+        if (
+          !Array.isArray(identity) ||
+          identity.length !== 2 ||
+          identity[0] !== run.id ||
+          !Number.isInteger(identity[1]) ||
+          identity[1] < 0
+        )
+          throw new Error("Native execution index identity changed");
         const record = await store.read(key);
+        if (active?.executionKey && record?.runId !== active.runId)
+          throw new Error("Native execution index is inconsistent");
         if (!record || ["done", "failed", "cancelled"].includes(record.status)) continue;
         const expired =
           record.status === "approval" &&

@@ -96,6 +96,25 @@ describe("native external Agent lifecycle", () => {
     expect(f.calls).toEqual([]);
     expect(f.store.records.get(f.input.key)?.status).toBe("cancelled");
   });
+  it("persists the active execution index before native dispatch", async () => {
+    const f = fixture({ activeKey: "active-index" });
+    const connect = f.options.connect;
+    f.options.connect = async (onEvent) => {
+      const peer = await connect(onEvent);
+      const request = peer.request.bind(peer);
+      peer.request = async (method, params, options) => {
+        if (method === "agent")
+          expect(f.store.records.get("active-index")).toMatchObject({
+            executionKey: f.input.key,
+            status: "dispatching",
+          });
+        return request(method, params, options);
+      };
+      return peer;
+    };
+    await runNativeAgent(f.input, f.options);
+    expect(f.store.records.get("active-index")?.status).toBe("done");
+  });
   it("isolates sessions by user, bot and group while preserving stable identities", () => {
     expect(nativeSessionKey("u/b/group-1", "main")).toBe(nativeSessionKey("u/b/group-1", "main"));
     for (const scope of ["u/b/group-2", "u/b2/group-1", "u2/b/group-1"])

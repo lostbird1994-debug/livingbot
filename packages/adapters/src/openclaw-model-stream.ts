@@ -19,7 +19,11 @@ import type {
   NativeRecord,
   NativeStore,
 } from "./openclaw-native-driver.js";
-import { NativeExecutionError, runNativeAgent } from "./openclaw-native-driver.js";
+import {
+  NativeExecutionError,
+  nativeRunIndexKey,
+  runNativeAgent,
+} from "./openclaw-native-driver.js";
 
 export const isOpenClawModel = (model: AgentRunRequest["model"]) =>
   model.provider === "openai-compatible" && /^openclaw\/[a-zA-Z0-9_-]+$/.test(model.id);
@@ -267,6 +271,7 @@ export function openClawModelStream(
       const finalText = await runNativeAgent(
         {
           key,
+          activeKey: nativeRunIndexKey(request.runId),
           scope,
           agentId,
           gatewayOrigin: url.origin,

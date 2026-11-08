@@ -24,6 +24,7 @@ export interface NativeRecord {
   steeringIds?: string[];
   unconfirmedSteeringIds?: string[];
   steeringReplies?: string[];
+  executionKey?: string;
   approval?: {
     id: string;
     expiresAtMs: number;
@@ -44,6 +45,7 @@ export interface NativeNotice {
 }
 export interface NativeInput {
   key: string;
+  activeKey?: string;
   scope: string;
   agentId: string;
   modelId?: string;
@@ -79,6 +81,7 @@ export interface NativeOptions {
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 export const nativeSessionKey = (scope: string, agentId: string) =>
   `agent:${agentId}:rakazo:${hash(scope)}`;
+export const nativeRunIndexKey = (runId: string) => JSON.stringify(["active-execution", runId]);
 /** An exact native abort response confirms that this run's controller was aborted. */
 export const confirmsNativeAbort = (result: any, runId: string): boolean =>
   result?.unconfirmed !== true &&
@@ -199,6 +202,20 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     lastStoredStatus = snapshot.status;
     pending = pending.then(async () => {
       await options.store.write(input.key, snapshot);
+      if (writeOwner && input.activeKey) {
+        const active = await options.store.read(input.activeKey);
+        if (
+          !active ||
+          active.executionKey === input.key ||
+          (snapshot.status === "dispatching" &&
+            ["done", "failed", "cancelled"].includes(active.status))
+        )
+          await options.store.write(input.activeKey, {
+            ...snapshot,
+            text: "",
+            executionKey: input.key,
+          });
+      }
       if (writeOwner) {
         const current = await options.store.read(sessionOwnerKey);
         if (

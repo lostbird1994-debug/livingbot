@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { createOpenClawReconciler, reconcileNativeExecution } from "./openclaw-reconciler.js";
-import type { NativeRecord, NativeStore, NativePeer } from "./openclaw-native-driver.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import type { NativePeer, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
+import { nativeRunIndexKey } from "./openclaw-native-driver.js";
+import { createOpenClawReconciler, reconcileNativeExecution } from "./openclaw-reconciler.js";
+
 class Store implements NativeStore {
   rows = new Map<string, NativeRecord>();
   async read(key: string) {
@@ -138,6 +140,21 @@ describe("durable native cancellation reconciliation", () => {
       }),
     );
     expect(f.peer.stop).toHaveBeenCalled();
+  });
+  it("cancels the active continuation instead of a completed first invocation", async () => {
+    const f = scheduled("cancelled");
+    const first = JSON.stringify(["rakazo-run", 0]);
+    const next = JSON.stringify(["rakazo-run", 1]);
+    f.store.rows.set(first, { ...f.record, status: "done" });
+    f.store.rows.set(next, f.record);
+    f.store.rows.set(nativeRunIndexKey("rakazo-run"), { ...f.record, executionKey: next });
+    await createOpenClawReconciler(f.deps, {
+      store: f.store,
+      connect: f.connect,
+      resolveModel: f.resolveModel,
+    })();
+    expect(f.calls).toEqual(["chat.abort", "agent.wait"]);
+    expect(f.store.rows.get(next)?.status).toBe("cancelled");
   });
   it("leaves an unexpired approval waiting for its owner without reconnecting", async () => {
     const f = scheduled("waiting_input");
