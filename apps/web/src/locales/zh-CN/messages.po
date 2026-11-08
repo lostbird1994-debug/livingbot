@@ -436,6 +436,10 @@ msgstr "{title}，保存为 {savedAs}"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# 个工具} other {# 个工具}}"
 
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "@ 的时候用这个，改过记得同步"
+msgstr "@ 的时候用这个，改过记得同步"
+
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
 msgid "@{0}"
@@ -479,6 +483,11 @@ msgstr "访问令牌（可选）"
 msgid "Account"
 msgstr "账户"
 
+#: src/pages/settings-nav.ts
+msgid "Account and preferences"
+msgstr "账户与偏好"
+
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Account default"
 msgstr "账户默认"
@@ -876,6 +885,10 @@ msgstr ""
 #~ msgid "Appearance: {label}"
 #~ msgstr ""
 
+#: src/pages/SettingsOverlay.tsx
+msgid "Applies to every workspace"
+msgstr "对所有工作区生效"
+
 #: src/components/AskCard.tsx
 msgid "Apply"
 msgstr "应用"
@@ -889,7 +902,8 @@ msgid "Approval model"
 msgstr "审批模型"
 
 #: src/pages/settings-nav.ts
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Approvals"
 msgstr "审批"
 
@@ -1044,6 +1058,10 @@ msgstr "Shell 命令可通过 {commandVariable} 使用"
 msgid "Avatar Studio"
 msgstr "头像工作室"
 
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "B 站凭据"
+msgstr "B 站凭据"
+
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -1054,7 +1072,6 @@ msgstr "头像工作室"
 #: src/pages/NavLinkPage.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
-#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Back"
 msgstr "返回"
@@ -1126,6 +1143,7 @@ msgstr "Bot"
 #: src/lib/identity-display.ts
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/MessagingSettingsPanel.tsx
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 #: src/pages/shell/message-view.tsx
@@ -1165,6 +1183,10 @@ msgstr "Bot 屏幕"
 #: src/pages/shell/computer-panel.tsx
 msgid "Bot screen preview"
 msgstr "Bot 屏幕预览"
+
+#: src/pages/settings-nav.ts
+msgid "Bot settings"
+msgstr "Bot 设置"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1268,7 +1290,7 @@ msgstr "无法读取图像"
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Cancel"
 msgstr "取消"
 
@@ -1511,12 +1533,10 @@ msgid "Close MCP servers"
 msgstr "关闭 MCP 服务器"
 
 #: src/pages/MemorySettingsOverlay.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Close memory settings"
 msgstr "关闭记忆设置"
 
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Close model settings"
 msgstr "关闭模型设置"
 
@@ -1534,6 +1554,10 @@ msgstr "关闭面板"
 msgid "Close preview"
 msgstr "关闭预览"
 
+#: src/pages/SettingsOverlay.tsx
+msgid "Close settings"
+msgstr "关闭设置"
+
 #: src/components/integrations/skills-dialog.tsx
 msgid "Close skills"
 msgstr "关闭技能"
@@ -1543,10 +1567,9 @@ msgid "Close table"
 msgstr "关闭表格"
 
 #: src/pages/SettingsOverlay.tsx
-msgid "Close user settings"
-msgstr "关闭用户设置"
+#~ msgid "Close user settings"
+#~ msgstr "关闭用户设置"
 
-#: src/pages/SettingsOverlay.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Close voice settings"
 msgstr "关闭语音设置"
@@ -2478,6 +2501,10 @@ msgstr "无法更新钱包"
 msgid "Create"
 msgstr "创建"
 
+#: src/pages/SettingsOverlay.tsx
+msgid "Create a bot in the sidebar to configure it here."
+msgstr "先在侧栏新建一个 Bot，再回来配置。"
+
 #. placeholder {0}: bot.name
 #: src/pages/shell/dialogs.tsx
 msgid "Create a section and move {0} into it."
@@ -2571,17 +2598,26 @@ msgstr "自定义请求头"
 msgid "Customer support"
 msgstr "客户支持"
 
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Customize"
 msgstr "自定义"
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Customize {label}"
-msgstr "自定义{label}"
+#~ msgid "Customize {label}"
+#~ msgstr "自定义{label}"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "自定义机器人头像"
+
+#: src/pages/SpaceSettingSection.tsx
+msgid "Customize to give this workspace its own copy."
+msgstr "点「自定义」给这个工作区单独存一份。"
+
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Customized"
+msgstr "已自定义"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -2659,7 +2695,7 @@ msgstr "默认范围"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Delete"
 msgstr "删除"
 
@@ -2703,13 +2739,16 @@ msgid "Delete section"
 msgstr "删除分组"
 
 #: src/pages/shell/shell-dialogs.tsx
-#: src/pages/SpaceSettingsPanel.tsx
 msgid "Delete space"
 msgstr "删除工作区"
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Delete this Space's credentials?"
-msgstr "要删除此工作区的凭据吗？"
+#~ msgid "Delete this Space's credentials?"
+#~ msgstr "要删除此工作区的凭据吗？"
+
+#: src/pages/SpaceSettingSection.tsx
+msgid "Delete this workspace's credentials?"
+msgstr "删除这个工作区的凭据？"
 
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
@@ -2939,6 +2978,10 @@ msgstr "编辑名称"
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
 msgstr "编辑资料"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Editing"
+msgstr "正在编辑"
 
 #: src/pages/LoadedContextPanel.tsx
 msgid "Edits affect your bots using this document in this workspace."
@@ -3242,6 +3285,11 @@ msgstr "已完成。"
 msgid "Finishing MCP connection…"
 msgstr "正在完成 MCP 连接…"
 
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Following the global default"
+msgstr "正在跟随全局默认"
+
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
 msgstr "忘记密码？"
@@ -3300,8 +3348,8 @@ msgstr "网关 ID"
 
 #: src/pages/settings-nav.ts
 #: src/pages/SettingsOverlay.tsx
-msgid "General"
-msgstr "通用"
+#~ msgid "General"
+#~ msgstr "通用"
 
 #: src/components/InviteDialog.tsx
 msgid "Get a free month for each friend who starts a trial."
@@ -3322,6 +3370,10 @@ msgstr "Git 事件"
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Glass blur"
 msgstr "毛玻璃强度"
+
+#: src/pages/settings-nav.ts
+msgid "Global settings"
+msgstr "全局设置"
 
 #: src/pages/NotFound.tsx
 msgid "Go home"
@@ -3554,9 +3606,14 @@ msgstr "来电"
 msgid "Indigo"
 msgstr "靛蓝"
 
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
 msgstr "沿用默认"
+
+#: src/components/InheritanceBadge.tsx
+msgid "Inherited"
+msgstr "继承"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Input"
@@ -3900,14 +3957,11 @@ msgid "Malachite"
 msgstr "马尔斯"
 
 #: src/pages/BillingSettingsPanel.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Manage"
 msgstr "管理"
 
-#. placeholder {0}: option.name
 #. placeholder {0}: providerName(choice)
 #: src/pages/ModelRoleSettings.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Manage {0}"
 msgstr "管理 {0}"
 
@@ -4013,6 +4067,7 @@ msgstr "成员（{0}）"
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Memory"
 msgstr "记忆"
 
@@ -4040,6 +4095,7 @@ msgstr "按需读取的记忆文件"
 msgid "Memory for {title}"
 msgstr "{title} 的记忆"
 
+#: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
 msgid "Memory scope"
 msgstr "记忆范围"
@@ -4170,6 +4226,10 @@ msgstr "模型"
 msgid "Model \"{modelId}\" was not listed."
 msgstr "模型“{modelId}”未列出。"
 
+#: src/pages/settings-nav.ts
+msgid "Model and thinking"
+msgstr "模型与思考"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Model connections"
 msgstr "模型连接"
@@ -4186,7 +4246,8 @@ msgstr "模型选项"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/settings-nav.ts
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Models"
 msgstr "模型"
 
@@ -4410,6 +4471,10 @@ msgstr "无认证"
 msgid "No bots"
 msgstr ""
 
+#: src/pages/SettingsOverlay.tsx
+msgid "No bots in this workspace yet"
+msgstr "这个工作区还没有 Bot"
+
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
@@ -4536,6 +4601,10 @@ msgstr "暂无待办"
 #: src/pages/RoutineEditor.tsx
 msgid "No trigger"
 msgstr "无触发器"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "No workspaces yet"
+msgstr "还没有工作区"
 
 #: src/pages/LoadedContextPanel.tsx
 msgid "None"
@@ -4678,11 +4747,15 @@ msgstr "单次购买，额度不会过期。"
 msgid "Only this bot's chat shows the picture. It stays on this device."
 msgstr "只有这个 Bot 的对话会显示这张图，图片只保存在本机。"
 
+#~ msgid "Only this workspace"
+#~ msgstr "只对这个工作区生效"
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/shell/computer-panel.tsx
 #: src/pages/shell/import-setup-card.tsx
 #: src/pages/shell/message-view.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Open"
 msgstr "打开"
 
@@ -4726,6 +4799,10 @@ msgstr "打开外部链接？"
 #: src/components/LocalMessageFileLink.tsx
 msgid "Open folder"
 msgstr "打开文件夹"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Open in Bot settings"
+msgstr "在 Bot 设置中打开"
 
 #: src/pages/shell/computer-panel.tsx
 msgid "Open in full window"
@@ -4804,6 +4881,10 @@ msgstr "其他模型…"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Output"
 msgstr "输出"
+
+#: src/pages/settings-nav.ts
+msgid "Overview"
+msgstr "概况"
 
 #: src/lib/identity-display.ts
 #: src/pages/Board.tsx
@@ -5512,7 +5593,7 @@ msgstr "正在恢复工作区"
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/ScratchpadSection.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Retry"
 msgstr "重试"
 
@@ -5553,6 +5634,7 @@ msgid "Revoked"
 msgstr ""
 
 #: src/pages/BotRoleCardEditor.tsx
+#: src/pages/settings-nav.ts
 msgid "Role and instructions"
 msgstr "角色与指令"
 
@@ -5889,10 +5971,17 @@ msgstr "服务器名称"
 msgid "Server URL"
 msgstr "服务器 URL"
 
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "SESSDATA 不能为空"
+msgstr "SESSDATA 不能为空"
+
+#: src/components/InheritanceBadge.tsx
+msgid "Set here"
+msgstr "已在此设置"
+
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/MessagingSettingsPanel.tsx
-#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Settings"
 msgstr "设置"
@@ -6156,17 +6245,17 @@ msgid "Sorted by {column}, descending"
 msgstr "按 {column} 排序，降序"
 
 #: src/lib/identity-display.ts
-#: src/pages/SettingsOverlay.tsx
 msgid "Space"
 msgstr "工作区"
 
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Space default"
 msgstr "工作区默认"
 
 #: src/pages/SettingsOverlay.tsx
-msgid "Spaces"
-msgstr "工作区"
+#~ msgid "Spaces"
+#~ msgstr "工作区"
 
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
@@ -6508,7 +6597,7 @@ msgstr "这通电话已经不响了。"
 
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "This can't be undone."
 msgstr "此操作无法撤销。"
 
@@ -6618,6 +6707,14 @@ msgstr "此订阅登录在 Rakazo 中尚不可用。请使用部署凭据或选�
 msgid "This week"
 msgstr "本周"
 
+#: src/pages/SpaceSettingSection.tsx
+msgid "This workspace keeps its own copy; the global one is untouched."
+msgstr "这个工作区用自己的一份，全局那份不受影响。"
+
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "This workspace's own settings"
+msgstr "这个工作区自己的一份"
+
 #: src/lib/cron.ts
 msgid "Thursday"
 msgstr "周四"
@@ -6688,6 +6785,10 @@ msgstr "工具名称"
 #: src/pages/shell/bot-panel.tsx
 msgid "Tools"
 msgstr "工具"
+
+#: src/pages/settings-nav.ts
+msgid "Tools and permissions"
+msgstr "工具与权限"
 
 #: src/components/composer/DictationInput.tsx
 #: src/components/composer/HoldToTalk.tsx
@@ -6890,17 +6991,21 @@ msgstr "使用找到的模型"
 msgid "Use Connect to verify the key."
 msgstr "请使用“连接”验证密钥。"
 
+#: src/pages/SpaceSettingSection.tsx
+msgid "Use default"
+msgstr "使用默认"
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Use default guidance"
 msgstr "使用默认指引"
 
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Use defaults"
 msgstr "使用默认设置"
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Use defaults for {label}"
-msgstr "{label}使用默认设置"
+#~ msgid "Use defaults for {label}"
+#~ msgstr "{label}使用默认设置"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Use in this bot"
@@ -6974,7 +7079,8 @@ msgid "Value"
 msgstr "值"
 
 #: src/pages/settings-nav.ts
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Vault"
 msgstr "保管库"
 
@@ -7016,11 +7122,13 @@ msgstr "查看源代码"
 
 #: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "语音"
 
+#: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
 msgid "Voice and notifications"
 msgstr "语音与通知"
@@ -7175,12 +7283,17 @@ msgid "Works with your ChatGPT or Claude plan."
 msgstr "可使用你的 ChatGPT 或 Claude 套餐。"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
+#: src/pages/SettingsOverlay.tsx
 msgid "Workspace"
 msgstr "工作区"
 
 #: src/pages/LoadedContextPanel.tsx
 msgid "Workspace “{spaceName}” · shared by your bots"
 msgstr "工作区「{spaceName}」· 你的 Bot 共享"
+
+#: src/pages/settings-nav.ts
+msgid "Workspace settings"
+msgstr "工作区设置"
 
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LoadedContextPanel.tsx
@@ -7230,8 +7343,8 @@ msgid "Your data"
 msgstr ""
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Your defaults"
-msgstr "你的默认设置"
+#~ msgid "Your defaults"
+#~ msgstr "你的默认设置"
 
 #: src/pages/Auth.tsx
 msgid "Your email address"
@@ -7276,50 +7389,227 @@ msgstr "你的语音提供方额度已用完。"
 msgid "Your voice provider key was rejected."
 msgstr "你的语音提供方拒绝了该密钥。"
 
-msgid "Global settings"
-msgstr "全局设置"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "一次最多看几条"
+msgstr "一次最多看几条"
 
-msgid "Workspace settings"
-msgstr "工作区设置"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "不爱看"
+msgstr "不爱看"
 
-msgid "Bot settings"
-msgstr "Bot 设置"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "两次之间至少隔（分钟）"
+msgstr "两次之间至少隔（分钟）"
 
-msgid "Account and preferences"
-msgstr "账户与偏好"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "什么时候醒"
+msgstr "什么时候醒"
 
-msgid "Overview"
-msgstr "概况"
+#. placeholder {0}: status.plan.atText ?? "待定"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今天：{0} 醒"
+msgstr "今天：{0} 醒"
 
-msgid "Editing"
-msgstr "正在编辑"
+#. placeholder {0}: status.plan.reason ?? "自己决定的"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今天：不看（{0}）"
+msgstr "今天：不看（{0}）"
 
-msgid "Applies to every workspace"
-msgstr "对所有工作区生效"
+#. placeholder {0}: Math.round(settings.night.skipChance * 100)
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今天不想看的概率：{0}%"
+msgstr "今天不想看的概率：{0}%"
 
-msgid "Close settings"
-msgstr "关闭设置"
+#. placeholder {0}: plan.atText ?? "稍后"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今晚 {0} 醒过来"
+msgstr "今晚 {0} 醒过来"
 
-msgid "No workspaces yet"
-msgstr "还没有工作区"
+#. placeholder {0}: plan.reason ?? ""
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今晚不想看：{0}"
+msgstr "今晚不想看：{0}"
 
-msgid "No bots in this workspace yet"
-msgstr "这个工作区还没有 Bot"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "从"
+msgstr "从"
 
-msgid "Create a bot in the sidebar to configure it here."
-msgstr "先在侧栏新建一个 Bot，再回来配置。"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "作息"
+msgstr "作息"
 
-msgid "Only this workspace"
-msgstr "只对这个工作区生效"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "你的 B 站 mid"
+msgstr "你的 B 站 mid"
 
-msgid "Following the global default"
-msgstr "正在跟随全局默认"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "你的昵称"
+msgstr "你的昵称"
 
-msgid "This workspace keeps its own copy; the global one is untouched."
-msgstr "这个工作区用自己的一份，全局那份不受影响。"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "依赖体检"
+msgstr "依赖体检"
 
-msgid "Customize to give this workspace its own copy."
-msgstr "点「自定义」给这个工作区单独存一份。"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "保存凭据"
+msgstr "保存凭据"
 
-msgid "Delete this workspace's credentials?"
-msgstr "删除这个工作区的凭据？"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "保存设置"
+msgstr "保存设置"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "值得发的分数线（0–20）"
+msgstr "值得发的分数线（0–20）"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "允许分享"
+msgstr "允许分享"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "全天监听"
+msgstr "全天监听"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "关掉就在评论区 @ 你；打开走私信（需要两个号互关）。两条路共用同一份额度。"
+msgstr "关掉就在评论区 @ 你；打开走私信（需要两个号互关）。两条路共用同一份额度。"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "养鱼"
+msgstr "养鱼"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "凭据只写不读，保存后不再显示"
+msgstr "凭据只写不读，保存后不再显示"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "凭据已保存（内容不会回显）"
+msgstr "凭据已保存（内容不会回显）"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "分享"
+msgstr "分享"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "分享评论要 @ 的人；在个人空间地址栏里能看到"
+msgstr "分享评论要 @ 的人；在个人空间地址栏里能看到"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "到"
+msgstr "到"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "发到 B 站私信"
+msgstr "发到 B 站私信"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "听人找她"
+msgstr "听人找她"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "在 bilibili.com 按 F12 → Application → Cookies → https://www.bilibili.com，复制这三个值。 SESSDATA 是 HttpOnly，用 document.cookie 拿不到，必须手动复制。"
+msgstr "在 bilibili.com 按 F12 → Application → Cookies → https://www.bilibili.com，复制这三个值。 SESSDATA 是 HttpOnly，用 document.cookie 拿不到，必须手动复制。"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "她怎么自称"
+msgstr "她怎么自称"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "她是谁"
+msgstr "她是谁"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "工具"
+msgstr "工具"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "工具链就位"
+msgstr "工具链就位"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "工具链还没就位"
+msgstr "工具链还没就位"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "已保存，下一次醒来就按这个来"
+msgstr "已保存，下一次醒来就按这个来"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "已配置"
+msgstr "已配置"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "怎么称呼你"
+msgstr "怎么称呼你"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "打扰你的方式与额度"
+msgstr "打扰你的方式与额度"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "摆烂也是一种活法；她掷到不看时会写日记说明理由"
+msgstr "摆烂也是一种活法；她掷到不看时会写日记说明理由"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "未配置"
+msgstr "未配置"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "正在读她的设置…"
+msgstr "正在读她的设置…"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "每天最多几条"
+msgstr "每天最多几条"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "爱看"
+msgstr "爱看"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "爱看什么"
+msgstr "爱看什么"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "用顿号或逗号分隔"
+msgstr "用顿号或逗号分隔"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "监听会真的发请求，新号别开"
+msgstr "监听会真的发请求，新号别开"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "直播间弹幕"
+msgstr "直播间弹幕"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "确认她真的能干活"
+msgstr "确认她真的能干活"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "私信监听（只认你）"
+msgstr "私信监听（只认你）"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "角色名"
+msgstr "角色名"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "评论区监听"
+msgstr "评论区监听"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "读不到设置。她可能还没有自己的文件夹。"
+msgstr "读不到设置。她可能还没有自己的文件夹。"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "醒几次"
+msgstr "醒几次"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "重掷今晚计划"
+msgstr "重掷今晚计划"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "重试"
+msgstr "重试"

@@ -436,6 +436,10 @@ msgstr "{title}, {savedAs}(으)로 저장"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, other {도구 #개}}"
 
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "@ 的时候用这个，改过记得同步"
+msgstr "Used when @-mentioning you; update it if you rename"
+
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
 msgid "@{0}"
@@ -450,8 +454,8 @@ msgid "A bit of everything"
 msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
-msgid "A bot you switched \"notify when finished\" on says one short line when its work is done or it needs you. Never during a call."
-msgstr ""
+#~ msgid "A bot you switched \"notify when finished\" on says one short line when its work is done or it needs you. Never during a call."
+#~ msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "A command's output"
@@ -479,6 +483,11 @@ msgstr "액세스 토큰(선택 사항)"
 msgid "Account"
 msgstr "계정"
 
+#: src/pages/settings-nav.ts
+msgid "Account and preferences"
+msgstr ""
+
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Account default"
 msgstr "계정 기본값"
@@ -521,6 +530,7 @@ msgstr "활동"
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/RoutineEditor.tsx
 #: src/pages/ScratchpadSection.tsx
 msgid "Add"
 msgstr "추가"
@@ -608,8 +618,8 @@ msgid "Add MCP server"
 msgstr "MCP 서버 추가"
 
 #: src/pages/ScratchpadSection.tsx
-msgid "Add open work"
-msgstr "진행 중인 작업 추가"
+#~ msgid "Add open work"
+#~ msgstr "진행 중인 작업 추가"
 
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
@@ -636,6 +646,10 @@ msgstr ""
 msgid "Add to routine"
 msgstr "자동 실행에 추가"
 
+#: src/pages/ScratchpadSection.tsx
+msgid "Add to-do"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Add trigger"
 msgstr "트리거 추가"
@@ -655,6 +669,10 @@ msgstr ""
 msgid "Adding…"
 msgstr "추가 중…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Adjust appearance"
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -669,8 +687,16 @@ msgstr "고급 설정"
 msgid "Advanced..."
 msgstr "고급..."
 
+#: src/components/AskCard.tsx
+msgid "After"
+msgstr ""
+
 #: src/pages/BotRoleCardEditor.tsx
-msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+#~ msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+#~ msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "After saving, workspace-shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
 msgstr ""
 
 #: src/components/AccountDataSettings.tsx
@@ -846,6 +872,10 @@ msgstr "API 키"
 msgid "Appearance"
 msgstr "모양"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Appearance · this device"
+msgstr ""
+
 #. placeholder {0}: appearanceLabel[value]
 #: src/pages/Shell.tsx
 msgid "Appearance: {0}"
@@ -854,6 +884,10 @@ msgstr ""
 #: src/pages/Shell.tsx
 #~ msgid "Appearance: {label}"
 #~ msgstr ""
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Applies to every workspace"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -868,7 +902,8 @@ msgid "Approval model"
 msgstr "승인 모델"
 
 #: src/pages/settings-nav.ts
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Approvals"
 msgstr "승인"
 
@@ -1023,6 +1058,10 @@ msgstr "셸 명령에서 {commandVariable}(으)로 사용 가능"
 msgid "Avatar Studio"
 msgstr "아바타 스튜디오"
 
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "B 站凭据"
+msgstr "Bilibili credentials"
+
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -1033,7 +1072,6 @@ msgstr "아바타 스튜디오"
 #: src/pages/NavLinkPage.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
-#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Back"
 msgstr "뒤로"
@@ -1068,6 +1106,10 @@ msgstr ""
 msgid "Bearer token"
 msgstr "Bearer 토큰"
 
+#: src/components/AskCard.tsx
+msgid "Before"
+msgstr ""
+
 #: src/pages/settings-nav.ts
 msgid "Billing"
 msgstr ""
@@ -1101,6 +1143,7 @@ msgstr "Bot"
 #: src/lib/identity-display.ts
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/MessagingSettingsPanel.tsx
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 #: src/pages/shell/message-view.tsx
@@ -1129,6 +1172,10 @@ msgstr "Bot은 화면만 보고 직접 조작하지 않습니다"
 msgid "Bot models"
 msgstr ""
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Bot private memory"
+msgstr ""
+
 #: src/pages/shell/computer-overlay.tsx
 msgid "Bot screen"
 msgstr "Bot 화면"
@@ -1136,6 +1183,10 @@ msgstr "Bot 화면"
 #: src/pages/shell/computer-panel.tsx
 msgid "Bot screen preview"
 msgstr "Bot 화면 미리보기"
+
+#: src/pages/settings-nav.ts
+msgid "Bot settings"
+msgstr ""
 
 #: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1236,9 +1287,10 @@ msgstr "이미지를 읽을 수 없음"
 #: src/pages/Onboarding.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Cancel"
 msgstr "취소"
 
@@ -1481,12 +1533,10 @@ msgid "Close MCP servers"
 msgstr "MCP 서버 설정 닫기"
 
 #: src/pages/MemorySettingsOverlay.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Close memory settings"
 msgstr "기억 설정 닫기"
 
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Close model settings"
 msgstr "AI 모델 설정 닫기"
 
@@ -1495,6 +1545,7 @@ msgid "Close navigation"
 msgstr "메뉴 닫기"
 
 #: src/pages/GroupPanel.tsx
+#: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/side-panel.tsx
 msgid "Close panel"
 msgstr "패널 닫기"
@@ -1502,6 +1553,10 @@ msgstr "패널 닫기"
 #: src/components/ArtifactFileCard.tsx
 msgid "Close preview"
 msgstr "미리보기 닫기"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Close settings"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Close skills"
@@ -1512,10 +1567,9 @@ msgid "Close table"
 msgstr "표 닫기"
 
 #: src/pages/SettingsOverlay.tsx
-msgid "Close user settings"
-msgstr "계정 설정 닫기"
+#~ msgid "Close user settings"
+#~ msgstr "계정 설정 닫기"
 
-#: src/pages/SettingsOverlay.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Close voice settings"
 msgstr "음성 설정 닫기"
@@ -1775,6 +1829,10 @@ msgstr ""
 msgid "Contains code to run"
 msgstr "실행할 코드 포함"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Context"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Context limit"
@@ -1803,6 +1861,10 @@ msgstr ""
 #: src/pages/Auth.tsx
 msgid "Continue with {0}"
 msgstr "{0}(으)로 계속"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Conversation data"
+msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Conversations"
@@ -2118,6 +2180,10 @@ msgstr "로그인 옵션을 불러올 수 없습니다"
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not load skill"
 msgstr "스킬을 불러오지 못했습니다"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Could not load tasks"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Could not load this artifact."
@@ -2435,6 +2501,10 @@ msgstr ""
 msgid "Create"
 msgstr "만들기"
 
+#: src/pages/SettingsOverlay.tsx
+msgid "Create a bot in the sidebar to configure it here."
+msgstr ""
+
 #. placeholder {0}: bot.name
 #: src/pages/shell/dialogs.tsx
 msgid "Create a section and move {0} into it."
@@ -2516,6 +2586,10 @@ msgstr "현재 비밀번호"
 msgid "Current preview for a private chat. Not a record of a past model request."
 msgstr ""
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Current workspace · shared by your bots"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 msgid "Custom header"
 msgstr ""
@@ -2524,17 +2598,26 @@ msgstr ""
 msgid "Customer support"
 msgstr "고객 지원"
 
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Customize"
 msgstr "맞춤설정"
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Customize {label}"
-msgstr "{label} 맞춤설정"
+#~ msgid "Customize {label}"
+#~ msgstr "{label} 맞춤설정"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "봇 아바타 맞춤설정"
+
+#: src/pages/SpaceSettingSection.tsx
+msgid "Customize to give this workspace its own copy."
+msgstr ""
+
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Customized"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -2608,7 +2691,7 @@ msgstr "기본 기억 범위"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Delete"
 msgstr "삭제"
 
@@ -2652,13 +2735,16 @@ msgid "Delete section"
 msgstr "섹션 삭제"
 
 #: src/pages/shell/shell-dialogs.tsx
-#: src/pages/SpaceSettingsPanel.tsx
 msgid "Delete space"
 msgstr ""
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Delete this Space's credentials?"
-msgstr "이 스페이스의 자격 증명을 삭제할까요?"
+#~ msgid "Delete this Space's credentials?"
+#~ msgstr "이 스페이스의 자격 증명을 삭제할까요?"
+
+#: src/pages/SpaceSettingSection.tsx
+msgid "Delete this workspace's credentials?"
+msgstr ""
 
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
@@ -2888,6 +2974,14 @@ msgstr "이름 편집"
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
 msgstr "Bot 정보 수정"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Editing"
+msgstr ""
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Edits affect your bots using this document in this workspace."
+msgstr ""
 
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
@@ -3187,6 +3281,11 @@ msgstr "완료되었습니다."
 msgid "Finishing MCP connection…"
 msgstr "MCP 연결을 마무리하는 중…"
 
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Following the global default"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
 msgstr "비밀번호를 잊으셨나요?"
@@ -3245,8 +3344,8 @@ msgstr "게이트웨이 ID"
 
 #: src/pages/settings-nav.ts
 #: src/pages/SettingsOverlay.tsx
-msgid "General"
-msgstr "일반"
+#~ msgid "General"
+#~ msgstr "일반"
 
 #: src/components/InviteDialog.tsx
 msgid "Get a free month for each friend who starts a trial."
@@ -3266,6 +3365,10 @@ msgstr "Git 이벤트"
 
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Glass blur"
+msgstr ""
+
+#: src/pages/settings-nav.ts
+msgid "Global settings"
 msgstr ""
 
 #: src/pages/NotFound.tsx
@@ -3347,6 +3450,10 @@ msgstr "숨김"
 #: src/components/VaultSettings.tsx
 msgid "Hide"
 msgstr "숨기기"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Hide new to-do"
+msgstr ""
 
 #: src/components/I18nBootstrap.tsx
 msgid "Hide password"
@@ -3495,9 +3602,14 @@ msgstr ""
 msgid "Indigo"
 msgstr ""
 
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
 msgstr "기본 설정 사용"
+
+#: src/components/InheritanceBadge.tsx
+msgid "Inherited"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Input"
@@ -3533,6 +3645,7 @@ msgstr "지침 기록"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
+#: src/pages/BotRoleCardEditor.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions"
 msgstr "지침"
@@ -3545,6 +3658,10 @@ msgstr "지침 {position}"
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions are too long. Untick some files."
 msgstr "지침이 너무 깁니다. 일부 파일의 선택을 해제하세요."
+
+#: src/components/InstructionSettings.tsx
+msgid "Instructions save when you leave this field."
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Instructions updated"
@@ -3693,8 +3810,8 @@ msgid "Listen"
 msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
-msgid "Listen for a bot's name"
-msgstr ""
+#~ msgid "Listen for a bot's name"
+#~ msgstr ""
 
 #: src/components/call/CallCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
@@ -3702,12 +3819,12 @@ msgid "Listening"
 msgstr ""
 
 #: src/components/voice/VoiceAssistant.tsx
-msgid "Listening for a name"
-msgstr ""
+#~ msgid "Listening for a name"
+#~ msgstr ""
 
 #: src/components/voice/VoiceAssistant.tsx
-msgid "Listening stopped: {trouble}"
-msgstr ""
+#~ msgid "Listening stopped: {trouble}"
+#~ msgstr ""
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Listening…"
@@ -3735,8 +3852,8 @@ msgid "Load web images automatically"
 msgstr "웹 이미지 자동으로 불러오기"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Loaded context"
-msgstr ""
+#~ msgid "Loaded context"
+#~ msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
@@ -3770,6 +3887,10 @@ msgstr ""
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading preview…"
 msgstr "미리보기를 불러오는 중…"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Loading tasks…"
+msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
@@ -3832,14 +3953,11 @@ msgid "Malachite"
 msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Manage"
 msgstr "관리"
 
-#. placeholder {0}: option.name
 #. placeholder {0}: providerName(choice)
 #: src/pages/ModelRoleSettings.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Manage {0}"
 msgstr "{0} 관리"
 
@@ -3945,6 +4063,7 @@ msgstr ""
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Memory"
 msgstr "기억"
 
@@ -3955,13 +4074,24 @@ msgstr "기억 {position}"
 #. placeholder {0}: characters(data.memory.body)
 #. placeholder {1}: data.budgets.body
 #: src/pages/LoadedContextPanel.tsx
-msgid "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
+#~ msgid "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
+#~ msgstr ""
+
+#. placeholder {0}: characters(data.memory.body)
+#. placeholder {1}: data.budgets.body
+#: src/pages/LoadedContextPanel.tsx
+msgid "Memory block: {0} / {1} characters. Workspace-shared source text: {shared} characters."
+msgstr ""
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Memory files read on demand"
 msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Memory for {title}"
 msgstr "{title}의 기억"
 
+#: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
 msgid "Memory scope"
 msgstr "기억 사용 범위"
@@ -4092,6 +4222,10 @@ msgstr "모델"
 msgid "Model \"{modelId}\" was not listed."
 msgstr "\"{modelId}\" 모델이 목록에 없습니다."
 
+#: src/pages/settings-nav.ts
+msgid "Model and thinking"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Model connections"
 msgstr "모델 연결"
@@ -4108,7 +4242,8 @@ msgstr "모델 선택지"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/settings-nav.ts
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Models"
 msgstr "AI 모델"
 
@@ -4270,8 +4405,8 @@ msgid "New messages"
 msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
-msgid "New open-work item"
-msgstr "새 진행 작업"
+#~ msgid "New open-work item"
+#~ msgstr "새 진행 작업"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -4300,6 +4435,10 @@ msgstr "새 스페이스"
 msgid "New ticket"
 msgstr ""
 
+#: src/pages/ScratchpadSection.tsx
+msgid "New to-do"
+msgstr ""
+
 #: src/components/markdown-copy.tsx
 msgid "Next page"
 msgstr "다음 페이지"
@@ -4326,6 +4465,10 @@ msgstr "인증 없음"
 
 #: src/components/integrations/agent-access.tsx
 msgid "No bots"
+msgstr ""
+
+#: src/pages/SettingsOverlay.tsx
+msgid "No bots in this workspace yet"
 msgstr ""
 
 #: src/pages/GroupPanel.tsx
@@ -4419,6 +4562,10 @@ msgstr "답장 없음"
 msgid "No results"
 msgstr "검색 결과가 없습니다"
 
+#: src/pages/RoutineEditor.tsx
+msgid "No routines yet"
+msgstr ""
+
 #: src/components/markdown-copy.tsx
 msgid "No rows"
 msgstr "행 없음"
@@ -4443,9 +4590,17 @@ msgstr ""
 msgid "No tickets yet"
 msgstr ""
 
+#: src/pages/ScratchpadSection.tsx
+msgid "No to-dos yet"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "No trigger"
 msgstr "트리거 없음"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "No workspaces yet"
+msgstr ""
 
 #: src/pages/LoadedContextPanel.tsx
 msgid "None"
@@ -4468,6 +4623,10 @@ msgstr ""
 msgid "Not checked yet"
 msgstr "아직 확인되지 않음"
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Not filled in"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "가져오지 않음"
@@ -4479,6 +4638,14 @@ msgstr "Rakazo 카탈로그에 없음"
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
 msgstr "플러그인 카탈로그에 없음"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Not loaded · disabled"
+msgstr ""
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Not loaded: workspace-shared USER.md, MEMORY.md and profile.md. This bot has its own user identity or backstory enabled."
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
@@ -4502,8 +4669,8 @@ msgid "Nothing remembered yet"
 msgstr "아직 기억한 내용이 없습니다"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Notifications"
-msgstr "알림"
+#~ msgid "Notifications"
+#~ msgstr "알림"
 
 #: src/pages/ActivityList.tsx
 msgid "Now"
@@ -4561,8 +4728,8 @@ msgid "on the 1st at {0}"
 msgstr "1일 {0}에"
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "On-demand memory directory"
-msgstr ""
+#~ msgid "On-demand memory directory"
+#~ msgstr ""
 
 #: src/lib/cron.ts
 msgid "One-time"
@@ -4581,6 +4748,7 @@ msgstr ""
 #: src/pages/shell/computer-panel.tsx
 #: src/pages/shell/import-setup-card.tsx
 #: src/pages/shell/message-view.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Open"
 msgstr "열기"
 
@@ -4625,6 +4793,10 @@ msgstr "외부 링크를 열까요?"
 msgid "Open folder"
 msgstr ""
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Open in Bot settings"
+msgstr ""
+
 #: src/pages/shell/computer-panel.tsx
 msgid "Open in full window"
 msgstr "전체 창으로 열기"
@@ -4634,7 +4806,6 @@ msgid "Open navigation"
 msgstr "메뉴 열기"
 
 #: src/pages/LoadedContextPanel.tsx
-#: src/pages/ScratchpadSection.tsx
 msgid "Open work"
 msgstr "진행 중인 작업"
 
@@ -4703,6 +4874,10 @@ msgstr "다른 모델 직접 입력…"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Output"
 msgstr "출력"
+
+#: src/pages/settings-nav.ts
+msgid "Overview"
+msgstr ""
 
 #: src/lib/identity-display.ts
 #: src/pages/Board.tsx
@@ -4807,6 +4982,10 @@ msgstr ""
 msgid "Permissions"
 msgstr "권한"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Permissions and collaboration"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Persona"
 msgstr "페르소나"
@@ -4903,8 +5082,8 @@ msgid "Preferences"
 msgstr "환경설정"
 
 #: src/pages/VoiceSettingsOverlay.tsx
-msgid "Press ⌥ Space anywhere in the app to open the microphone for one try: say a bot's name and it calls you back. No microphone stays on in between."
-msgstr ""
+#~ msgid "Press ⌥ Space anywhere in the app to open the microphone for one try: say a bot's name and it calls you back. No microphone stays on in between."
+#~ msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -4916,6 +5095,10 @@ msgstr ""
 #: src/components/ArtifactFileCard.tsx
 msgid "Preview {0}"
 msgstr "{0} 미리보기"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Preview for the current private-chat settings"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
@@ -4933,7 +5116,6 @@ msgstr ""
 msgid "Priority"
 msgstr ""
 
-#: src/pages/LoadedContextPanel.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Private"
 msgstr "Bot 전용"
@@ -4944,6 +5126,10 @@ msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Profile shown to other bots"
 msgstr ""
 
 #: src/pages/shell/import-status.ts
@@ -5002,8 +5188,8 @@ msgid "Reactions"
 msgstr "반응"
 
 #: src/pages/VoiceSettingsOverlay.tsx
-msgid "Read new messages aloud"
-msgstr ""
+#~ msgid "Read new messages aloud"
+#~ msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
@@ -5399,7 +5585,8 @@ msgstr ""
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/ScratchpadSection.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Retry"
 msgstr "다시 시도"
 
@@ -5440,6 +5627,11 @@ msgid "Revoked"
 msgstr ""
 
 #: src/pages/BotRoleCardEditor.tsx
+#: src/pages/settings-nav.ts
+msgid "Role and instructions"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
 msgid "Role settings changed elsewhere. Reload before saving."
 msgstr ""
 
@@ -5458,8 +5650,8 @@ msgstr "key 교체"
 msgid "Routine"
 msgstr "자동 실행"
 
+#: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/bot-panel.tsx
 msgid "Routines"
 msgstr "자동 실행"
 
@@ -5602,12 +5794,12 @@ msgid "Saving…"
 msgstr "저장 중…"
 
 #: src/components/voice/VoiceAssistant.tsx
-msgid "Say a bot's name to call it"
-msgstr ""
+#~ msgid "Say a bot's name to call it"
+#~ msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
-msgid "Say a name to start the call. This browser keeps the microphone open, but only sends audio once someone speaks, and only to recognise the name."
-msgstr ""
+#~ msgid "Say a name to start the call. This browser keeps the microphone open, but only sends audio once someone speaks, and only to recognise the name."
+#~ msgstr ""
 
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
@@ -5772,10 +5964,17 @@ msgstr "서버 이름"
 msgid "Server URL"
 msgstr "서버 URL"
 
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "SESSDATA 不能为空"
+msgstr "SESSDATA cannot be empty"
+
+#: src/components/InheritanceBadge.tsx
+msgid "Set here"
+msgstr ""
+
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/MessagingSettingsPanel.tsx
-#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Settings"
 msgstr "설정"
@@ -5813,27 +6012,34 @@ msgstr "모양"
 msgid "Shape {0}"
 msgstr ""
 
-#: src/pages/LoadedContextPanel.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Shared"
 msgstr "함께 사용"
 
 #: src/pages/KnowledgeSection.tsx
-msgid "Shared memory"
-msgstr "공유 기억"
+msgid "Shared by your bots in this workspace. Summaries load automatically; other notes are read on demand."
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+#~ msgid "Shared memory"
+#~ msgstr "공유 기억"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Shared memory organizer"
 msgstr ""
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Shared profile loading rules"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
-msgid "Shared summaries load automatically. Other shared notes are read on demand."
-msgstr "공유 요약은 자동으로 불러옵니다. 다른 공유 메모는 필요할 때 읽습니다."
+#~ msgid "Shared summaries load automatically. Other shared notes are read on demand."
+#~ msgstr "공유 요약은 자동으로 불러옵니다. 다른 공유 메모는 필요할 때 읽습니다."
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
-msgstr ""
+#~ msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
+#~ msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -5849,6 +6055,10 @@ msgstr ""
 
 #: src/pages/shell/bot-files-panel.tsx
 msgid "Show in Finder"
+msgstr ""
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Show less"
 msgstr ""
 
 #: src/pages/Artifacts.tsx
@@ -6028,17 +6238,17 @@ msgid "Sorted by {column}, descending"
 msgstr "{column} 기준 정렬됨, 내림차순"
 
 #: src/lib/identity-display.ts
-#: src/pages/SettingsOverlay.tsx
 msgid "Space"
 msgstr "스페이스"
 
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Space default"
 msgstr "스페이스 기본값"
 
 #: src/pages/SettingsOverlay.tsx
-msgid "Spaces"
-msgstr "스페이스"
+#~ msgid "Spaces"
+#~ msgstr "스페이스"
 
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
@@ -6202,6 +6412,10 @@ msgstr "표"
 msgid "Take control"
 msgstr "제어권 가져오기"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Task list"
+msgstr ""
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "작업 가르치기"
@@ -6350,6 +6564,10 @@ msgstr "이 백업을 읽지 못했습니다."
 msgid "This bot"
 msgstr "이 봇"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "This bot only"
+msgstr ""
+
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "이 Bot은 별도 Linux 화면이 아니라 현재 컴퓨터에서 실행됩니다. 터미널과 파일 작업은 홈 폴더를 사용합니다."
@@ -6372,7 +6590,7 @@ msgstr ""
 
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "This can't be undone."
 msgstr "되돌릴 수 없습니다."
 
@@ -6482,6 +6700,14 @@ msgstr "이 구독 로그인 방식은 아직 Rakazo에서 지원되지 않습�
 msgid "This week"
 msgstr ""
 
+#: src/pages/SpaceSettingSection.tsx
+msgid "This workspace keeps its own copy; the global one is untouched."
+msgstr ""
+
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "This workspace's own settings"
+msgstr ""
+
 #: src/lib/cron.ts
 msgid "Thursday"
 msgstr "목요일"
@@ -6513,6 +6739,10 @@ msgstr ""
 
 #: src/lib/ticket-status.ts
 msgid "To do"
+msgstr ""
+
+#: src/pages/ScratchpadSection.tsx
+msgid "To-do list"
 msgstr ""
 
 #: src/pages/shell/bot-picker.tsx
@@ -6547,6 +6777,10 @@ msgstr "도구 이름"
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Tools"
+msgstr ""
+
+#: src/pages/settings-nav.ts
+msgid "Tools and permissions"
 msgstr ""
 
 #: src/components/composer/DictationInput.tsx
@@ -6639,6 +6873,10 @@ msgstr "음소거 해제"
 #: src/pages/BotContextMenu.tsx
 msgid "Unpin"
 msgstr "고정 해제"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Unsaved changes"
+msgstr ""
 
 #. placeholder {0}: pending.file.name
 #: src/pages/shell/use-composer-actions.ts
@@ -6746,17 +6984,21 @@ msgstr "찾은 모델 중에서 선택"
 msgid "Use Connect to verify the key."
 msgstr "키를 확인하려면 연결을 사용하세요."
 
+#: src/pages/SpaceSettingSection.tsx
+msgid "Use default"
+msgstr ""
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Use default guidance"
 msgstr ""
 
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Use defaults"
 msgstr "기본값 사용"
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Use defaults for {label}"
-msgstr "{label}에 기본값 사용"
+#~ msgid "Use defaults for {label}"
+#~ msgstr "{label}에 기본값 사용"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Use in this bot"
@@ -6787,8 +7029,12 @@ msgid "User identity"
 msgstr ""
 
 #: src/pages/BotRoleCardEditor.tsx
-msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
+msgid "User identity and backstory load only when their switches are on. Both off: workspace-shared profiles load as usual."
 msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+#~ msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
+#~ msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
@@ -6826,7 +7072,8 @@ msgid "Value"
 msgstr "값"
 
 #: src/pages/settings-nav.ts
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Vault"
 msgstr "보관함"
 
@@ -6854,6 +7101,10 @@ msgstr ""
 msgid "View and edit all private memory"
 msgstr ""
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "View assembled inputs"
+msgstr ""
+
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "View organizer"
 msgstr ""
@@ -6864,10 +7115,16 @@ msgstr ""
 
 #: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "음성"
+
+#: src/pages/settings-nav.ts
+#: src/pages/shell/bot-panel.tsx
+msgid "Voice and notifications"
+msgstr ""
 
 #: src/components/composer/DictationInput.tsx
 msgid "Voice input"
@@ -7019,7 +7276,21 @@ msgid "Works with your ChatGPT or Claude plan."
 msgstr "ChatGPT 또는 Claude 요금제로 사용할 수 있습니다."
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
+#: src/pages/SettingsOverlay.tsx
 msgid "Workspace"
+msgstr ""
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Workspace “{spaceName}” · shared by your bots"
+msgstr ""
+
+#: src/pages/settings-nav.ts
+msgid "Workspace settings"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+#: src/pages/LoadedContextPanel.tsx
+msgid "Workspace-shared memory"
 msgstr ""
 
 #: src/lib/billing.ts
@@ -7065,8 +7336,8 @@ msgid "Your data"
 msgstr ""
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Your defaults"
-msgstr "내 기본값"
+#~ msgid "Your defaults"
+#~ msgstr "내 기본값"
 
 #: src/pages/Auth.tsx
 msgid "Your email address"
@@ -7110,3 +7381,228 @@ msgstr "음성 서비스 크레딧이 모두 소진되었습니다."
 #: src/lib/user-error.ts
 msgid "Your voice provider key was rejected."
 msgstr "음성 서비스에서 키를 거부했습니다."
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "一次最多看几条"
+msgstr "Videos per wake"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "不爱看"
+msgstr "Avoid"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "两次之间至少隔（分钟）"
+msgstr "Minimum gap (minutes)"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "什么时候醒"
+msgstr "When she wakes"
+
+#. placeholder {0}: status.plan.atText ?? "待定"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今天：{0} 醒"
+msgstr "Today: wakes at {0}"
+
+#. placeholder {0}: status.plan.reason ?? "自己决定的"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今天：不看（{0}）"
+msgstr "Today: skipping ({0})"
+
+#. placeholder {0}: Math.round(settings.night.skipChance * 100)
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今天不想看的概率：{0}%"
+msgstr "Chance of skipping today: {0}%"
+
+#. placeholder {0}: plan.atText ?? "稍后"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今晚 {0} 醒过来"
+msgstr "Waking tonight at {0}"
+
+#. placeholder {0}: plan.reason ?? ""
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今晚不想看：{0}"
+msgstr "Skipping tonight: {0}"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "从"
+msgstr "From"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "作息"
+msgstr "Schedule"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "你的 B 站 mid"
+msgstr "Your Bilibili mid"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "你的昵称"
+msgstr "Your display name"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "依赖体检"
+msgstr "Dependency check"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "保存凭据"
+msgstr "Save credentials"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "保存设置"
+msgstr "Save settings"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "值得发的分数线（0–20）"
+msgstr "Share score threshold (0–20)"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "允许分享"
+msgstr "Allow sharing"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "全天监听"
+msgstr "Listen all day"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "关掉就在评论区 @ 你；打开走私信（需要两个号互关）。两条路共用同一份额度。"
+msgstr "Off: @-mentions you in the comments. On: direct message (needs two mutual-follow accounts). Both share one quota."
+
+#: src/pages/shell/bot-panel.tsx
+msgid "养鱼"
+msgstr "Fish"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "凭据只写不读，保存后不再显示"
+msgstr "Credentials are write-only; they are never shown again"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "凭据已保存（内容不会回显）"
+msgstr "Credentials saved (never echoed back)"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "分享"
+msgstr "Sharing"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "分享评论要 @ 的人；在个人空间地址栏里能看到"
+msgstr "The person to @ in shared comments; it is in your profile URL"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "到"
+msgstr "To"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "发到 B 站私信"
+msgstr "Send as Bilibili DM"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "听人找她"
+msgstr "Listening"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "在 bilibili.com 按 F12 → Application → Cookies → https://www.bilibili.com，复制这三个值。 SESSDATA 是 HttpOnly，用 document.cookie 拿不到，必须手动复制。"
+msgstr "On bilibili.com press F12 → Application → Cookies → https://www.bilibili.com and copy these three values. SESSDATA is HttpOnly, so document.cookie cannot read it; copy it by hand."
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "她怎么自称"
+msgstr "How she refers to herself"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "她是谁"
+msgstr "Who she is"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "工具"
+msgstr "Tools"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "工具链就位"
+msgstr "Toolchain ready"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "工具链还没就位"
+msgstr "Toolchain not in place"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "已保存，下一次醒来就按这个来"
+msgstr "Saved; takes effect on her next wake"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "已配置"
+msgstr "Set"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "怎么称呼你"
+msgstr "What she calls you"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "打扰你的方式与额度"
+msgstr "How she reaches you, and how often"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "摆烂也是一种活法；她掷到不看时会写日记说明理由"
+msgstr "Skipping is allowed too; when she rolls a skip she still writes a diary entry explaining why"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "未配置"
+msgstr "Not set"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "正在读她的设置…"
+msgstr "Reading her settings…"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "每天最多几条"
+msgstr "Daily maximum"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "爱看"
+msgstr "Likes"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "爱看什么"
+msgstr "What she likes"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "用顿号或逗号分隔"
+msgstr "Separate with commas"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "监听会真的发请求，新号别开"
+msgstr "Listening makes real requests; leave it off on a young account"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "直播间弹幕"
+msgstr "Live-stream chat"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "确认她真的能干活"
+msgstr "Check that she can actually work"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "私信监听（只认你）"
+msgstr "DM listening (you only)"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "角色名"
+msgstr "Character name"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "评论区监听"
+msgstr "Comment listening"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "读不到设置。她可能还没有自己的文件夹。"
+msgstr "Could not read the settings. She may not have her own folder yet."
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "醒几次"
+msgstr "Wakes"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "重掷今晚计划"
+msgstr "Roll tonight's plan again"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "重试"
+msgstr "Retry"

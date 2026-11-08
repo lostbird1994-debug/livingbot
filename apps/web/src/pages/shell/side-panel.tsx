@@ -75,7 +75,7 @@ export function ShellSidePanel({
   openBot: (botId: string) => void;
   openCreatedBot: (bot: Bot) => void;
   modelFocusRequest: number;
-  openSettings: (section: SettingsSection) => void;
+  openSettings: (section: SettingsSection, spaceId?: string | null, botId?: string | null) => void;
   memoryProviderConfigured: boolean;
   setAgentSkills: (skills: AgentSkillCatalogEntry[]) => void;
   onClearBot: (bot: Bot) => void;
@@ -83,7 +83,11 @@ export function ShellSidePanel({
   const { t } = useLingui();
   const open = Boolean(panel && (active || activeGroup || panel === "import-agent"));
   const botTab =
-    panel === "computer" || panel === "routines" || panel === "loaded" || panel === "settings"
+    panel === "computer" ||
+    panel === "routines" ||
+    panel === "loaded" ||
+    panel === "settings" ||
+    panel === "whale"
       ? panel
       : null;
 
@@ -205,6 +209,7 @@ export function ShellSidePanel({
               routines={routinesPanel}
               focusModel={modelFocusRequest}
               onOpenConnections={() => openSettings("models")}
+              onOpenSettings={() => openSettings("bot-role", active.spaceId, active.id)}
               memoryProviderConfigured={memoryProviderConfigured}
               onSkillsChange={setAgentSkills}
               onSave={async ({ computerMode, ...patch }) => {

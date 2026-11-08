@@ -17,7 +17,10 @@ const SETTINGS_SECTIONS = [
   "space-confirmations",
   "space-vault",
   "bot-role",
+  "bot-model",
+  "bot-memory",
   "bot-voice",
+  "bot-tools",
 ] as const;
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];

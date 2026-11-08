@@ -17,6 +17,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
+import { InheritanceBadge } from "../components/InheritanceBadge";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { VaultSettings } from "../components/VaultSettings";
 import { useSpaceQueries } from "../lib/query";
@@ -92,6 +93,12 @@ export function SpaceSettingSection({
   }
 
   const custom = overrides.data.includes(setting);
+  const labels: Record<SpaceSetting, string> = {
+    models: t`Models`,
+    voice: t`Voice`,
+    confirmations: t`Approvals`,
+    credentials: t`Vault`,
+  };
 
   return (
     <div className="space-y-3" data-testid={`space-setting-section-${setting}`}>
@@ -99,7 +106,14 @@ export function SpaceSettingSection({
         <SettingsRow
           label={
             <>
-              <p>{custom ? t`Only this workspace` : t`Following the global default`}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span>{labels[setting]}</span>
+                <InheritanceBadge
+                  own={custom}
+                  ownLabel={t`Customized`}
+                  inheritedLabel={t`Following the global default`}
+                />
+              </div>
               <p className="text-[13px] text-muted-foreground">
                 {custom
                   ? t`This workspace keeps its own copy; the global one is untouched.`
@@ -149,9 +163,7 @@ export function SpaceSettingSection({
               <AlertDialogAction
                 variant="destructive"
                 disabled={pending}
-                onClick={() =>
-                  void setOverride(false).then(() => setConfirmingReset(false))
-                }
+                onClick={() => void setOverride(false).then(() => setConfirmingReset(false))}
               >
                 {t`Delete`}
               </AlertDialogAction>

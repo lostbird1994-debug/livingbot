@@ -9,10 +9,18 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@rakazo/ui-web";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
+import { computersAreUnavailable } from "../components/ComputersUnavailableHint";
+import { InheritanceBadge } from "../components/InheritanceBadge";
+import { SETTINGS_CONTENT_WIDTH } from "../components/SettingsRows";
+import { VaultSettings } from "../components/VaultSettings";
+import { desktopBridge } from "../lib/desktop";
+import { useSpaceQueries } from "../lib/query";
+import { SpaceRpcProvider, useSpaceRpc } from "../lib/space-rpc";
 import {
   ComputerSettingsPanel,
   GeneralSettingsPanels,
@@ -26,16 +34,6 @@ import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
 import { PaymentWalletSettingsPanel } from "./PaymentWalletSettingsPanel";
 import { SpaceSettingSection } from "./SpaceSettingSection";
 import { SpaceSettingsPanel } from "./SpaceSettingsPanel";
-import { VoiceSettingsOverlay } from "./VoiceSettingsOverlay";
-import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
-import { computersAreUnavailable } from "../components/ComputersUnavailableHint";
-import { InstructionSettings } from "../components/InstructionSettings";
-import { SETTINGS_CONTENT_WIDTH } from "../components/SettingsRows";
-import { BotVoiceSettings } from "../components/voice/BotVoiceSettings";
-import { VaultSettings } from "../components/VaultSettings";
-import { desktopBridge } from "../lib/desktop";
-import { useSpaceQueries } from "../lib/query";
-import { SpaceRpcProvider } from "../lib/space-rpc";
 import type { SettingsPanel } from "./settings-nav";
 import {
   SETTINGS_PANEL_DEFAULT,
@@ -43,8 +41,11 @@ import {
   useSettingsNavItems,
   useSettingsPanelLabels,
 } from "./settings-nav";
+import type { BotSettingsPage } from "./shell/bot-panel";
+import { BotSettings } from "./shell/bot-panel";
 import type { SettingsSpace } from "./shell/dialogs";
 import type { SettingsSection } from "./shell-overlay";
+import { VoiceSettingsOverlay } from "./VoiceSettingsOverlay";
 
 /** Which workspace or bot a panel edits, shown above its pages so the target is never implied. */
 function ScopeBar({ label, children }: { label: string; children?: ReactNode }) {
@@ -252,13 +253,17 @@ function WorkspacePages({
   onRenameSpace,
   onClose,
   onBusyChange,
+  onSectionChange,
 }: {
   section: SettingsSection;
   space: SettingsSpace | null;
   onRenameSpace?: (spaceId: string, name: string) => Promise<void>;
   onClose: () => void;
   onBusyChange: (busy: boolean) => void;
+  onSectionChange: (section: SettingsSection) => void;
 }) {
+  const queries = useSpaceQueries();
+  const overrides = useQuery(queries.spaceSettings.overrides.queryOptions());
   if (section === "space") {
     return space ? (
       <SpaceSettingsPanel
@@ -266,6 +271,8 @@ function WorkspacePages({
         space={space}
         onRename={(name) => onRenameSpace?.(space.id, name) ?? Promise.resolve()}
         onBusyChange={onBusyChange}
+        onOpenSection={onSectionChange}
+        overrides={overrides.data}
       />
     ) : null;
   }
@@ -284,6 +291,35 @@ function WorkspacePages({
   return null;
 }
 
+/** The section id a Bot page lives at. */
+const BOT_PAGES: Partial<Record<SettingsSection, BotSettingsPage>> = {
+  "bot-role": "role",
+  "bot-model": "model",
+  "bot-memory": "memory",
+  "bot-voice": "voice",
+  "bot-tools": "tools",
+};
+
+/** Says whether this page's setting belongs to the bot or comes from the level above it. */
+function BotPageStatus({ bot, page }: { bot: Bot; page: BotSettingsPage }) {
+  const { t } = useLingui();
+  if (page === "model") {
+    return (
+      <InheritanceBadge
+        own={Boolean(bot.modelProvider && bot.modelId)}
+        inheritedLabel={t`Space default`}
+      />
+    );
+  }
+  if (page === "memory") {
+    return <InheritanceBadge own={bot.memoryScope != null} inheritedLabel={t`Inherit default`} />;
+  }
+  if (page === "voice") {
+    return <InheritanceBadge own={Boolean(bot.voiceId)} inheritedLabel={t`Account default`} />;
+  }
+  return null;
+}
+
 /** One bot's own settings, with its own bot picker so the panel never depends on the open chat. */
 function BotPages({
   section,
@@ -295,24 +331,56 @@ function BotPages({
   onBotChange: (botId: string) => void;
 }) {
   const { t } = useLingui();
+  const rpc = useSpaceRpc();
   const queries = useSpaceQueries();
+  const queryClient = useQueryClient();
   const botsQuery = useQuery(queries.bots.list.queryOptions());
   const bots = (botsQuery.data ?? []).filter((bot) => !bot.archivedAt);
   const bot: Bot | undefined = bots.find((item) => item.id === botId) ?? bots[0];
+  const memoryQuery = useQuery({
+    ...queries.memory.providerConfig.queryOptions(),
+    enabled: Boolean(bot),
+  });
+  const page = BOT_PAGES[section] ?? "role";
   return (
     <>
       <BotScope botId={bot?.id ?? null} onBotChange={onBotChange} />
       <div
         data-testid="settings-scroll"
-        className="rk-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-6 sm:px-8 sm:pb-8"
+        className="rk-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-8 pt-5 sm:px-8"
       >
-        <div className={SETTINGS_CONTENT_WIDTH}>
+        <div className={`space-y-4 ${SETTINGS_CONTENT_WIDTH}`}>
           {bot ? (
-            section === "bot-voice" ? (
-              <BotVoiceSettings key={bot.id} bot={bot} />
-            ) : (
-              <InstructionSettings key={bot.id} bot={bot} />
-            )
+            <>
+              <BotPageStatus bot={bot} page={page} />
+              <BotSettings
+                key={`${bot.id}:${page}`}
+                page={page}
+                bot={bot}
+                memoryProviderConfigured={memoryQuery.data != null}
+                onSave={async ({ computerMode, ...patch }) => {
+                  if (computerMode !== undefined && computerMode !== bot.computerMode) {
+                    await rpc.bots.setComputer({ botId: bot.id, mode: computerMode });
+                  }
+                  await rpc.bots.update({ botId: bot.id, ...patch });
+                  await queryClient.invalidateQueries({ queryKey: queries.bots.list.queryKey() });
+                }}
+                onExport={async () => {
+                  const manifest = await rpc.export.bot({ botId: bot.id });
+                  const blob = new Blob([JSON.stringify(manifest, null, 2)], {
+                    type: "application/json",
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.href = url;
+                  link.download = `${bot.name.toLowerCase().replace(/\s+/g, "-")}-export.json`;
+                  link.click();
+                  URL.revokeObjectURL(url);
+                }}
+                // Clearing a conversation stays in the bot panel, where the confirmation lives.
+                onClear={() => undefined}
+              />
+            </>
           ) : (
             <div className="space-y-1">
               <p className="text-sm text-foreground">{t`No bots in this workspace yet`}</p>
@@ -381,8 +449,8 @@ export function SettingsOverlay({
   const panelRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const [navOverflow, setNavOverflow] = useState({ previous: false, next: false });
-  const [memoryBusy, setMemoryBusy] = useState(false);
-  const [voiceBusy, setVoiceBusy] = useState(false);
+  // Voice, memory and a workspace's own pages each hold the dialog while they save.
+  const [busy, setBusy] = useState(false);
   const [keepComputerRecovery, setKeepComputerRecovery] = useState(false);
   const recoveryHoldTimer = useRef<number | undefined>(undefined);
   const showComputer = keepComputerRecovery || computersAreUnavailable(sandboxProvider);
@@ -401,7 +469,7 @@ export function SettingsOverlay({
   const section = navItems.some((item) => item.id === requestedSection)
     ? requestedSection
     : (navItems[0]?.id ?? SETTINGS_PANEL_DEFAULT[panel]);
-  const panelBusy = memoryBusy || voiceBusy;
+  const panelBusy = busy;
   // Every panel acts on one target: the workspace panel binds the space it edits, the bot
   // panel binds that space's bots, and the global panel reads account-wide.
   const boundSpaceId = panel === "global" ? null : (space?.id ?? null);
@@ -613,7 +681,8 @@ export function SettingsOverlay({
                         space={space ?? null}
                         onRenameSpace={onRenameSpace}
                         onClose={requestClose}
-                        onBusyChange={setVoiceBusy}
+                        onBusyChange={setBusy}
+                        onSectionChange={onSectionChange}
                       />
                     ) : (
                       <GlobalPages
@@ -631,7 +700,7 @@ export function SettingsOverlay({
                         messagingEnabled={messagingEnabled}
                         paymentWalletProvider={paymentWalletProvider}
                         onClose={requestClose}
-                        onVoiceBusy={setVoiceBusy}
+                        onVoiceBusy={setBusy}
                         holdComputerRecovery={holdComputerRecovery}
                         releaseComputerRecovery={releaseComputerRecovery}
                         showComputer={showComputer}

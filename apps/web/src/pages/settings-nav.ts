@@ -14,6 +14,7 @@ import {
   UserRound,
   Volume2,
   Wallet,
+  Wrench,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { SettingsSection } from "./shell-overlay";
@@ -52,7 +53,7 @@ const PANEL_SECTIONS: Record<SettingsPanel, readonly SettingsSection[]> = {
     "memory",
     "usage",
   ],
-  bot: ["bot-role", "bot-voice"],
+  bot: ["bot-role", "bot-model", "bot-memory", "bot-voice", "bot-tools"],
 };
 
 const SECTION_PANEL = new Map<SettingsSection, SettingsPanel>(
@@ -107,7 +108,10 @@ const ICONS: Record<SettingsSection, SettingsNavItem["icon"]> = {
   billing: CreditCard,
   updates: CloudDownload,
   "bot-role": UserRound,
+  "bot-model": Cpu,
+  "bot-memory": Brain,
   "bot-voice": Volume2,
+  "bot-tools": Wrench,
 };
 
 /** The names the three panels carry in the account menu and their headers. */
@@ -145,7 +149,10 @@ export function useSettingsNavItems(
     billing: t`Billing`,
     updates: t`Updates`,
     "bot-role": t`Role and instructions`,
+    "bot-model": t`Model and thinking`,
+    "bot-memory": t`Memory scope`,
     "bot-voice": t`Voice and notifications`,
+    "bot-tools": t`Tools and permissions`,
   };
   return PANEL_SECTIONS[panel]
     .filter((id) => {

@@ -1,18 +1,34 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Input } from "@rakazo/ui-web";
+import type { SpaceSetting } from "@rakazo/contracts";
+import { Button, Input } from "@rakazo/ui-web";
 import { useEffect, useId, useState } from "react";
+import { InheritanceBadge } from "../components/InheritanceBadge";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import type { SettingsSpace } from "./shell/dialogs";
+import type { SettingsSection } from "./shell-overlay";
 
-/** One space's overview: its name. Deleting a space stays in the sidebar's own menu. */
+/** The settings a workspace may keep its own copy of, and the page each one lives on. */
+const OWNED: ReadonlyArray<{ setting: SpaceSetting; section: SettingsSection }> = [
+  { setting: "models", section: "space-models" },
+  { setting: "voice", section: "space-voice" },
+  { setting: "confirmations", section: "space-confirmations" },
+  { setting: "credentials", section: "space-vault" },
+];
+
+/** One space's overview: its name and which settings it owns. Deleting stays in the sidebar menu. */
 export function SpaceSettingsPanel({
   space,
   onRename,
   onBusyChange,
+  onOpenSection,
+  overrides,
 }: {
   space: SettingsSpace;
   onRename: (name: string) => Promise<void>;
   onBusyChange?: (busy: boolean) => void;
+  onOpenSection?: (section: SettingsSection) => void;
+  /** The settings this workspace keeps its own copy of; undefined hides the summary. */
+  overrides?: readonly string[];
 }) {
   const { t } = useLingui();
   const nameId = useId();
@@ -46,6 +62,13 @@ export function SpaceSettingsPanel({
       setPending(false);
     }
   }
+
+  const labels: Record<SpaceSetting, string> = {
+    models: t`Models`,
+    voice: t`Voice`,
+    confirmations: t`Approvals`,
+    credentials: t`Vault`,
+  };
 
   return (
     <div className="space-y-8" data-testid="space-settings">
@@ -91,6 +114,45 @@ export function SpaceSettingsPanel({
             ) : null}
           </SettingsRow>
         </SettingsGroup>
+      ) : null}
+      {overrides ? (
+        <section data-testid="space-settings-overrides" className="space-y-2">
+          <h3 className="px-1 text-[14px] font-medium text-foreground">
+            <Trans>This workspace's own settings</Trans>
+          </h3>
+          <div className="divide-y divide-border rounded-xl border border-border">
+            {OWNED.map((item) => {
+              const own = overrides.includes(item.setting);
+              return (
+                <div
+                  key={item.setting}
+                  data-testid={`space-override-${item.setting}`}
+                  className="flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2.5"
+                >
+                  <div className="flex flex-wrap items-center gap-2 text-[14px] text-foreground">
+                    <span>{labels[item.setting]}</span>
+                    <InheritanceBadge
+                      own={own}
+                      ownLabel={t`Customized`}
+                      inheritedLabel={t`Following the global default`}
+                    />
+                  </div>
+                  {onOpenSection ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full"
+                      aria-label={t`Open`}
+                      onClick={() => onOpenSection(item.section)}
+                    >
+                      <Trans>Open</Trans>
+                    </Button>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       ) : null}
     </div>
   );

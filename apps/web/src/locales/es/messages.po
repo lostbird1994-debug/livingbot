@@ -436,6 +436,10 @@ msgstr "{title}, guardado como {savedAs}"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# herramienta} other {# herramientas}}"
 
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "@ 的时候用这个，改过记得同步"
+msgstr "Used when @-mentioning you; update it if you rename"
+
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
 msgid "@{0}"
@@ -450,8 +454,8 @@ msgid "A bit of everything"
 msgstr "Un poco de todo"
 
 #: src/pages/VoiceSettingsOverlay.tsx
-msgid "A bot you switched \"notify when finished\" on says one short line when its work is done or it needs you. Never during a call."
-msgstr ""
+#~ msgid "A bot you switched \"notify when finished\" on says one short line when its work is done or it needs you. Never during a call."
+#~ msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "A command's output"
@@ -479,6 +483,11 @@ msgstr "Token de acceso (opcional)"
 msgid "Account"
 msgstr "Cuenta"
 
+#: src/pages/settings-nav.ts
+msgid "Account and preferences"
+msgstr ""
+
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Account default"
 msgstr "Predeterminado de la cuenta"
@@ -521,6 +530,7 @@ msgstr "Actividad"
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/RoutineEditor.tsx
 #: src/pages/ScratchpadSection.tsx
 msgid "Add"
 msgstr "Agregar"
@@ -608,8 +618,8 @@ msgid "Add MCP server"
 msgstr "Agregar servidor MCP"
 
 #: src/pages/ScratchpadSection.tsx
-msgid "Add open work"
-msgstr "Añadir trabajo pendiente"
+#~ msgid "Add open work"
+#~ msgstr "Añadir trabajo pendiente"
 
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
@@ -636,6 +646,10 @@ msgstr "Agregar habilidades"
 msgid "Add to routine"
 msgstr "Agregar a la rutina"
 
+#: src/pages/ScratchpadSection.tsx
+msgid "Add to-do"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Add trigger"
 msgstr "Agregar disparador"
@@ -655,6 +669,10 @@ msgstr "Agregado"
 msgid "Adding…"
 msgstr "Agregando…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Adjust appearance"
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -669,8 +687,16 @@ msgstr "Avanzado"
 msgid "Advanced..."
 msgstr "Avanzado..."
 
+#: src/components/AskCard.tsx
+msgid "After"
+msgstr ""
+
 #: src/pages/BotRoleCardEditor.tsx
-msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+#~ msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+#~ msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "After saving, workspace-shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
 msgstr ""
 
 #: src/components/AccountDataSettings.tsx
@@ -846,6 +872,10 @@ msgstr "Claves de API"
 msgid "Appearance"
 msgstr "Apariencia"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Appearance · this device"
+msgstr ""
+
 #. placeholder {0}: appearanceLabel[value]
 #: src/pages/Shell.tsx
 msgid "Appearance: {0}"
@@ -854,6 +884,10 @@ msgstr ""
 #: src/pages/Shell.tsx
 #~ msgid "Appearance: {label}"
 #~ msgstr "Apariencia: {label}"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Applies to every workspace"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -868,7 +902,8 @@ msgid "Approval model"
 msgstr "Modelo de aprobación"
 
 #: src/pages/settings-nav.ts
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Approvals"
 msgstr "Aprobaciones"
 
@@ -1023,6 +1058,10 @@ msgstr "Disponible para los comandos de shell como {commandVariable}"
 msgid "Avatar Studio"
 msgstr "Estudio de avatares"
 
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "B 站凭据"
+msgstr "Bilibili credentials"
+
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -1033,7 +1072,6 @@ msgstr "Estudio de avatares"
 #: src/pages/NavLinkPage.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
-#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Back"
 msgstr "Atrás"
@@ -1068,6 +1106,10 @@ msgstr "Autenticación básica ({username})"
 msgid "Bearer token"
 msgstr "Token Bearer"
 
+#: src/components/AskCard.tsx
+msgid "Before"
+msgstr ""
+
 #: src/pages/settings-nav.ts
 msgid "Billing"
 msgstr "Facturación"
@@ -1101,6 +1143,7 @@ msgstr "bot"
 #: src/lib/identity-display.ts
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/MessagingSettingsPanel.tsx
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 #: src/pages/shell/message-view.tsx
@@ -1129,6 +1172,10 @@ msgstr "El bot observa, no actúa"
 msgid "Bot models"
 msgstr "Modelos de los bots"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Bot private memory"
+msgstr ""
+
 #: src/pages/shell/computer-overlay.tsx
 msgid "Bot screen"
 msgstr "Pantalla del bot"
@@ -1136,6 +1183,10 @@ msgstr "Pantalla del bot"
 #: src/pages/shell/computer-panel.tsx
 msgid "Bot screen preview"
 msgstr "Vista previa de la pantalla del bot"
+
+#: src/pages/settings-nav.ts
+msgid "Bot settings"
+msgstr ""
 
 #: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1236,9 +1287,10 @@ msgstr "No puede leer imágenes"
 #: src/pages/Onboarding.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -1481,12 +1533,10 @@ msgid "Close MCP servers"
 msgstr "Cerrar servidores MCP"
 
 #: src/pages/MemorySettingsOverlay.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Close memory settings"
 msgstr "Cerrar configuración de memoria"
 
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Close model settings"
 msgstr "Cerrar configuración de modelos"
 
@@ -1495,6 +1545,7 @@ msgid "Close navigation"
 msgstr "Cerrar navegación"
 
 #: src/pages/GroupPanel.tsx
+#: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/side-panel.tsx
 msgid "Close panel"
 msgstr "Cerrar panel"
@@ -1502,6 +1553,10 @@ msgstr "Cerrar panel"
 #: src/components/ArtifactFileCard.tsx
 msgid "Close preview"
 msgstr "Cerrar vista previa"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Close settings"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Close skills"
@@ -1512,10 +1567,9 @@ msgid "Close table"
 msgstr "Cerrar tabla"
 
 #: src/pages/SettingsOverlay.tsx
-msgid "Close user settings"
-msgstr "Cerrar configuración de usuario"
+#~ msgid "Close user settings"
+#~ msgstr "Cerrar configuración de usuario"
 
-#: src/pages/SettingsOverlay.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Close voice settings"
 msgstr "Cerrar configuración de voz"
@@ -1775,6 +1829,10 @@ msgstr "Conector"
 msgid "Contains code to run"
 msgstr "Contiene código ejecutable"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Context"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Context limit"
@@ -1803,6 +1861,10 @@ msgstr "Continuar al pago"
 #: src/pages/Auth.tsx
 msgid "Continue with {0}"
 msgstr "Continuar con {0}"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Conversation data"
+msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Conversations"
@@ -2118,6 +2180,10 @@ msgstr "No se pudieron cargar las opciones de inicio de sesión"
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not load skill"
 msgstr "No se pudo cargar la habilidad"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Could not load tasks"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Could not load this artifact."
@@ -2435,6 +2501,10 @@ msgstr "No se pudo actualizar tu billetera"
 msgid "Create"
 msgstr "Crear"
 
+#: src/pages/SettingsOverlay.tsx
+msgid "Create a bot in the sidebar to configure it here."
+msgstr ""
+
 #. placeholder {0}: bot.name
 #: src/pages/shell/dialogs.tsx
 msgid "Create a section and move {0} into it."
@@ -2516,6 +2586,10 @@ msgstr "Contraseña actual"
 msgid "Current preview for a private chat. Not a record of a past model request."
 msgstr ""
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Current workspace · shared by your bots"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 msgid "Custom header"
 msgstr "Encabezado personalizado"
@@ -2524,17 +2598,26 @@ msgstr "Encabezado personalizado"
 msgid "Customer support"
 msgstr "Atención al cliente"
 
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Customize"
 msgstr "Personalizar"
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Customize {label}"
-msgstr "Personalizar {label}"
+#~ msgid "Customize {label}"
+#~ msgstr "Personalizar {label}"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "Personalizar avatar del bot"
+
+#: src/pages/SpaceSettingSection.tsx
+msgid "Customize to give this workspace its own copy."
+msgstr ""
+
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Customized"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -2608,7 +2691,7 @@ msgstr "Alcance predeterminado"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -2652,13 +2735,16 @@ msgid "Delete section"
 msgstr "Eliminar sección"
 
 #: src/pages/shell/shell-dialogs.tsx
-#: src/pages/SpaceSettingsPanel.tsx
 msgid "Delete space"
 msgstr "Eliminar espacio"
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Delete this Space's credentials?"
-msgstr "¿Eliminar las credenciales de este espacio?"
+#~ msgid "Delete this Space's credentials?"
+#~ msgstr "¿Eliminar las credenciales de este espacio?"
+
+#: src/pages/SpaceSettingSection.tsx
+msgid "Delete this workspace's credentials?"
+msgstr ""
 
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
@@ -2888,6 +2974,14 @@ msgstr "Editar nombre"
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
 msgstr "Editar perfil"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Editing"
+msgstr ""
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Edits affect your bots using this document in this workspace."
+msgstr ""
 
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
@@ -3187,6 +3281,11 @@ msgstr "Terminado."
 msgid "Finishing MCP connection…"
 msgstr "Finalizando conexión MCP…"
 
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "Following the global default"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
 msgstr "¿Olvidaste la contraseña?"
@@ -3245,8 +3344,8 @@ msgstr "ID de gateway"
 
 #: src/pages/settings-nav.ts
 #: src/pages/SettingsOverlay.tsx
-msgid "General"
-msgstr "General"
+#~ msgid "General"
+#~ msgstr "General"
 
 #: src/components/InviteDialog.tsx
 msgid "Get a free month for each friend who starts a trial."
@@ -3266,6 +3365,10 @@ msgstr "Evento de Git"
 
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Glass blur"
+msgstr ""
+
+#: src/pages/settings-nav.ts
+msgid "Global settings"
 msgstr ""
 
 #: src/pages/NotFound.tsx
@@ -3347,6 +3450,10 @@ msgstr "Oculto"
 #: src/components/VaultSettings.tsx
 msgid "Hide"
 msgstr "Ocultar"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Hide new to-do"
+msgstr ""
 
 #: src/components/I18nBootstrap.tsx
 msgid "Hide password"
@@ -3495,9 +3602,14 @@ msgstr "Llamada entrante"
 msgid "Indigo"
 msgstr ""
 
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
 msgstr "Heredar predeterminado"
+
+#: src/components/InheritanceBadge.tsx
+msgid "Inherited"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Input"
@@ -3533,6 +3645,7 @@ msgstr "Historial de instrucciones"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
+#: src/pages/BotRoleCardEditor.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions"
 msgstr "Instrucciones"
@@ -3545,6 +3658,10 @@ msgstr "Instrucciones {position}"
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions are too long. Untick some files."
 msgstr "Las instrucciones son demasiado largas. Desmarca algunos archivos."
+
+#: src/components/InstructionSettings.tsx
+msgid "Instructions save when you leave this field."
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Instructions updated"
@@ -3693,8 +3810,8 @@ msgid "Listen"
 msgstr "Escuchar"
 
 #: src/pages/VoiceSettingsOverlay.tsx
-msgid "Listen for a bot's name"
-msgstr ""
+#~ msgid "Listen for a bot's name"
+#~ msgstr ""
 
 #: src/components/call/CallCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
@@ -3702,12 +3819,12 @@ msgid "Listening"
 msgstr "Escuchando"
 
 #: src/components/voice/VoiceAssistant.tsx
-msgid "Listening for a name"
-msgstr ""
+#~ msgid "Listening for a name"
+#~ msgstr ""
 
 #: src/components/voice/VoiceAssistant.tsx
-msgid "Listening stopped: {trouble}"
-msgstr ""
+#~ msgid "Listening stopped: {trouble}"
+#~ msgstr ""
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Listening…"
@@ -3735,8 +3852,8 @@ msgid "Load web images automatically"
 msgstr "Cargar imágenes web automáticamente"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Loaded context"
-msgstr ""
+#~ msgid "Loaded context"
+#~ msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
@@ -3770,6 +3887,10 @@ msgstr "Cargando plugins…"
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading preview…"
 msgstr "Cargando vista previa…"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Loading tasks…"
+msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
@@ -3832,14 +3953,11 @@ msgid "Malachite"
 msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Manage"
 msgstr "Gestionar"
 
-#. placeholder {0}: option.name
 #. placeholder {0}: providerName(choice)
 #: src/pages/ModelRoleSettings.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Manage {0}"
 msgstr "Gestionar {0}"
 
@@ -3945,6 +4063,7 @@ msgstr "Miembros ({0})"
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Memory"
 msgstr "Memoria"
 
@@ -3955,13 +4074,24 @@ msgstr "Memoria {position}"
 #. placeholder {0}: characters(data.memory.body)
 #. placeholder {1}: data.budgets.body
 #: src/pages/LoadedContextPanel.tsx
-msgid "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
+#~ msgid "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
+#~ msgstr ""
+
+#. placeholder {0}: characters(data.memory.body)
+#. placeholder {1}: data.budgets.body
+#: src/pages/LoadedContextPanel.tsx
+msgid "Memory block: {0} / {1} characters. Workspace-shared source text: {shared} characters."
+msgstr ""
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Memory files read on demand"
 msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Memory for {title}"
 msgstr "Memoria para {title}"
 
+#: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
 msgid "Memory scope"
 msgstr "Alcance de memoria"
@@ -4092,6 +4222,10 @@ msgstr "Modelo"
 msgid "Model \"{modelId}\" was not listed."
 msgstr "El modelo \"{modelId}\" no aparece en la lista."
 
+#: src/pages/settings-nav.ts
+msgid "Model and thinking"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Model connections"
 msgstr "Conexiones de modelos"
@@ -4108,7 +4242,8 @@ msgstr "Opciones del modelo"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/settings-nav.ts
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Models"
 msgstr "Modelos"
 
@@ -4270,8 +4405,8 @@ msgid "New messages"
 msgstr "Mensajes nuevos"
 
 #: src/pages/ScratchpadSection.tsx
-msgid "New open-work item"
-msgstr "Nuevo elemento de trabajo abierto"
+#~ msgid "New open-work item"
+#~ msgstr "Nuevo elemento de trabajo abierto"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -4300,6 +4435,10 @@ msgstr "Nuevo space"
 msgid "New ticket"
 msgstr "Nuevo ticket"
 
+#: src/pages/ScratchpadSection.tsx
+msgid "New to-do"
+msgstr ""
+
 #: src/components/markdown-copy.tsx
 msgid "Next page"
 msgstr "Página siguiente"
@@ -4326,6 +4465,10 @@ msgstr "Sin autenticación"
 
 #: src/components/integrations/agent-access.tsx
 msgid "No bots"
+msgstr ""
+
+#: src/pages/SettingsOverlay.tsx
+msgid "No bots in this workspace yet"
 msgstr ""
 
 #: src/pages/GroupPanel.tsx
@@ -4419,6 +4562,10 @@ msgstr "Sin respuesta"
 msgid "No results"
 msgstr "Sin resultados"
 
+#: src/pages/RoutineEditor.tsx
+msgid "No routines yet"
+msgstr ""
+
 #: src/components/markdown-copy.tsx
 msgid "No rows"
 msgstr "Sin filas"
@@ -4443,9 +4590,17 @@ msgstr "No hay envíos"
 msgid "No tickets yet"
 msgstr "Aún no hay tickets"
 
+#: src/pages/ScratchpadSection.tsx
+msgid "No to-dos yet"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "No trigger"
 msgstr "Sin disparador"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "No workspaces yet"
+msgstr ""
 
 #: src/pages/LoadedContextPanel.tsx
 msgid "None"
@@ -4468,6 +4623,10 @@ msgstr "No se agregaron: {0}"
 msgid "Not checked yet"
 msgstr "Aún no comprobado"
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Not filled in"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "No importado"
@@ -4479,6 +4638,14 @@ msgstr "No está en el catálogo de Rakazo"
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
 msgstr "No está en el catálogo de plugins"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Not loaded · disabled"
+msgstr ""
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Not loaded: workspace-shared USER.md, MEMORY.md and profile.md. This bot has its own user identity or backstory enabled."
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
@@ -4502,8 +4669,8 @@ msgid "Nothing remembered yet"
 msgstr "Aún no hay recuerdos"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Notifications"
-msgstr "Notificaciones"
+#~ msgid "Notifications"
+#~ msgstr "Notificaciones"
 
 #: src/pages/ActivityList.tsx
 msgid "Now"
@@ -4561,8 +4728,8 @@ msgid "on the 1st at {0}"
 msgstr "el día 1 a las {0}"
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "On-demand memory directory"
-msgstr ""
+#~ msgid "On-demand memory directory"
+#~ msgstr ""
 
 #: src/lib/cron.ts
 msgid "One-time"
@@ -4581,6 +4748,7 @@ msgstr ""
 #: src/pages/shell/computer-panel.tsx
 #: src/pages/shell/import-setup-card.tsx
 #: src/pages/shell/message-view.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Open"
 msgstr "Abrir"
 
@@ -4625,6 +4793,10 @@ msgstr "¿Abrir enlace externo?"
 msgid "Open folder"
 msgstr ""
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Open in Bot settings"
+msgstr ""
+
 #: src/pages/shell/computer-panel.tsx
 msgid "Open in full window"
 msgstr "Abrir en ventana completa"
@@ -4634,7 +4806,6 @@ msgid "Open navigation"
 msgstr "Abrir navegación"
 
 #: src/pages/LoadedContextPanel.tsx
-#: src/pages/ScratchpadSection.tsx
 msgid "Open work"
 msgstr "Trabajo abierto"
 
@@ -4703,6 +4874,10 @@ msgstr "Otro modelo…"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Output"
 msgstr "Salida"
+
+#: src/pages/settings-nav.ts
+msgid "Overview"
+msgstr ""
 
 #: src/lib/identity-display.ts
 #: src/pages/Board.tsx
@@ -4807,6 +4982,10 @@ msgstr "Pendiente"
 msgid "Permissions"
 msgstr "Permisos"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Permissions and collaboration"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Persona"
 msgstr "Personalidad"
@@ -4903,8 +5082,8 @@ msgid "Preferences"
 msgstr "Preferencias"
 
 #: src/pages/VoiceSettingsOverlay.tsx
-msgid "Press ⌥ Space anywhere in the app to open the microphone for one try: say a bot's name and it calls you back. No microphone stays on in between."
-msgstr ""
+#~ msgid "Press ⌥ Space anywhere in the app to open the microphone for one try: say a bot's name and it calls you back. No microphone stays on in between."
+#~ msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -4916,6 +5095,10 @@ msgstr "Vista previa"
 #: src/components/ArtifactFileCard.tsx
 msgid "Preview {0}"
 msgstr "Vista previa de {0}"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Preview for the current private-chat settings"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
@@ -4933,7 +5116,6 @@ msgstr "Secciones de configuración anteriores"
 msgid "Priority"
 msgstr "Prioridad"
 
-#: src/pages/LoadedContextPanel.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Private"
 msgstr "Privado"
@@ -4945,6 +5127,10 @@ msgstr "Espacio de trabajo privado con sus propios bots y grupos."
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
 msgstr "Productividad"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Profile shown to other bots"
+msgstr ""
 
 #: src/pages/shell/import-status.ts
 msgid "Program: {name}"
@@ -5002,8 +5188,8 @@ msgid "Reactions"
 msgstr "Reacciones"
 
 #: src/pages/VoiceSettingsOverlay.tsx
-msgid "Read new messages aloud"
-msgstr ""
+#~ msgid "Read new messages aloud"
+#~ msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
@@ -5399,7 +5585,8 @@ msgstr "Restaurando tu espacio de trabajo"
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/ScratchpadSection.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Retry"
 msgstr "Reintentar"
 
@@ -5440,6 +5627,11 @@ msgid "Revoked"
 msgstr ""
 
 #: src/pages/BotRoleCardEditor.tsx
+#: src/pages/settings-nav.ts
+msgid "Role and instructions"
+msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
 msgid "Role settings changed elsewhere. Reload before saving."
 msgstr ""
 
@@ -5458,8 +5650,8 @@ msgstr "Rotar clave"
 msgid "Routine"
 msgstr "Rutina"
 
+#: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/bot-panel.tsx
 msgid "Routines"
 msgstr "Rutinas"
 
@@ -5602,12 +5794,12 @@ msgid "Saving…"
 msgstr "Guardando…"
 
 #: src/components/voice/VoiceAssistant.tsx
-msgid "Say a bot's name to call it"
-msgstr ""
+#~ msgid "Say a bot's name to call it"
+#~ msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
-msgid "Say a name to start the call. This browser keeps the microphone open, but only sends audio once someone speaks, and only to recognise the name."
-msgstr ""
+#~ msgid "Say a name to start the call. This browser keeps the microphone open, but only sends audio once someone speaks, and only to recognise the name."
+#~ msgstr ""
 
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
@@ -5772,10 +5964,17 @@ msgstr "Nombre del servidor"
 msgid "Server URL"
 msgstr "URL del servidor"
 
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "SESSDATA 不能为空"
+msgstr "SESSDATA cannot be empty"
+
+#: src/components/InheritanceBadge.tsx
+msgid "Set here"
+msgstr ""
+
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/MessagingSettingsPanel.tsx
-#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Settings"
 msgstr "Configuración"
@@ -5813,27 +6012,34 @@ msgstr "Forma"
 msgid "Shape {0}"
 msgstr "Forma {0}"
 
-#: src/pages/LoadedContextPanel.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Shared"
 msgstr "Compartido"
 
 #: src/pages/KnowledgeSection.tsx
-msgid "Shared memory"
-msgstr "Memoria compartida"
+msgid "Shared by your bots in this workspace. Summaries load automatically; other notes are read on demand."
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+#~ msgid "Shared memory"
+#~ msgstr "Memoria compartida"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Shared memory organizer"
 msgstr ""
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Shared profile loading rules"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
-msgid "Shared summaries load automatically. Other shared notes are read on demand."
-msgstr "Los resúmenes compartidos se cargan automáticamente. Las demás notas compartidas se leen cuando se necesitan."
+#~ msgid "Shared summaries load automatically. Other shared notes are read on demand."
+#~ msgstr "Los resúmenes compartidos se cargan automáticamente. Las demás notas compartidas se leen cuando se necesitan."
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
-msgstr ""
+#~ msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
+#~ msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -5849,6 +6055,10 @@ msgstr "Mostrar bots"
 
 #: src/pages/shell/bot-files-panel.tsx
 msgid "Show in Finder"
+msgstr ""
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Show less"
 msgstr ""
 
 #: src/pages/Artifacts.tsx
@@ -6028,17 +6238,17 @@ msgid "Sorted by {column}, descending"
 msgstr "Ordenado por {column}, descendente"
 
 #: src/lib/identity-display.ts
-#: src/pages/SettingsOverlay.tsx
 msgid "Space"
 msgstr "Espacio"
 
+#: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Space default"
 msgstr "Predeterminado del Space"
 
 #: src/pages/SettingsOverlay.tsx
-msgid "Spaces"
-msgstr "Espacios"
+#~ msgid "Spaces"
+#~ msgstr "Espacios"
 
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
@@ -6202,6 +6412,10 @@ msgstr "Tabla"
 msgid "Take control"
 msgstr "Tomar el control"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Task list"
+msgstr ""
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "Enseñar una tarea"
@@ -6350,6 +6564,10 @@ msgstr "No se pudo leer esta copia de seguridad."
 msgid "This bot"
 msgstr "Este bot"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "This bot only"
+msgstr ""
+
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "Este bot se ejecuta en esta computadora, no en un escritorio Linux. El shell y los archivos usan tu carpeta de inicio."
@@ -6372,7 +6590,7 @@ msgstr "Esta llamada ya no está sonando."
 
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "This can't be undone."
 msgstr "Esta acción no se puede deshacer."
 
@@ -6482,6 +6700,14 @@ msgstr "Este inicio de sesión por suscripción aún no está disponible en Raka
 msgid "This week"
 msgstr "Esta semana"
 
+#: src/pages/SpaceSettingSection.tsx
+msgid "This workspace keeps its own copy; the global one is untouched."
+msgstr ""
+
+#: src/pages/SpaceSettingsPanel.tsx
+msgid "This workspace's own settings"
+msgstr ""
+
 #: src/lib/cron.ts
 msgid "Thursday"
 msgstr "jueves"
@@ -6514,6 +6740,10 @@ msgstr "Hasta {0}"
 #: src/lib/ticket-status.ts
 msgid "To do"
 msgstr "Por hacer"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "To-do list"
+msgstr ""
 
 #: src/pages/shell/bot-picker.tsx
 msgid "To:"
@@ -6548,6 +6778,10 @@ msgstr "Nombre de la herramienta"
 #: src/pages/shell/bot-panel.tsx
 msgid "Tools"
 msgstr "Herramientas"
+
+#: src/pages/settings-nav.ts
+msgid "Tools and permissions"
+msgstr ""
 
 #: src/components/composer/DictationInput.tsx
 #: src/components/composer/HoldToTalk.tsx
@@ -6639,6 +6873,10 @@ msgstr "Activar el sonido"
 #: src/pages/BotContextMenu.tsx
 msgid "Unpin"
 msgstr "Desfijar"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Unsaved changes"
+msgstr ""
 
 #. placeholder {0}: pending.file.name
 #: src/pages/shell/use-composer-actions.ts
@@ -6746,17 +6984,21 @@ msgstr "Usar un modelo encontrado"
 msgid "Use Connect to verify the key."
 msgstr "Usa Conectar para verificar la clave."
 
+#: src/pages/SpaceSettingSection.tsx
+msgid "Use default"
+msgstr ""
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Use default guidance"
 msgstr "Usar las pautas predeterminadas"
 
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
 msgid "Use defaults"
 msgstr "Usar predeterminados"
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Use defaults for {label}"
-msgstr "Usar predeterminados en {label}"
+#~ msgid "Use defaults for {label}"
+#~ msgstr "Usar predeterminados en {label}"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Use in this bot"
@@ -6787,8 +7029,12 @@ msgid "User identity"
 msgstr ""
 
 #: src/pages/BotRoleCardEditor.tsx
-msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
+msgid "User identity and backstory load only when their switches are on. Both off: workspace-shared profiles load as usual."
 msgstr ""
+
+#: src/pages/BotRoleCardEditor.tsx
+#~ msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
+#~ msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
@@ -6826,7 +7072,8 @@ msgid "Value"
 msgstr "Valor"
 
 #: src/pages/settings-nav.ts
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 msgid "Vault"
 msgstr "Bóveda"
 
@@ -6854,6 +7101,10 @@ msgstr "Ver todo"
 msgid "View and edit all private memory"
 msgstr ""
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "View assembled inputs"
+msgstr ""
+
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "View organizer"
 msgstr ""
@@ -6864,10 +7115,16 @@ msgstr "Ver código fuente"
 
 #: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/SpaceSettingSection.tsx
+#: src/pages/SpaceSettingsPanel.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "Voz"
+
+#: src/pages/settings-nav.ts
+#: src/pages/shell/bot-panel.tsx
+msgid "Voice and notifications"
+msgstr ""
 
 #: src/components/composer/DictationInput.tsx
 msgid "Voice input"
@@ -7019,8 +7276,22 @@ msgid "Works with your ChatGPT or Claude plan."
 msgstr "Funciona con tu plan de ChatGPT o Claude."
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
+#: src/pages/SettingsOverlay.tsx
 msgid "Workspace"
 msgstr "Espacio de trabajo"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Workspace “{spaceName}” · shared by your bots"
+msgstr ""
+
+#: src/pages/settings-nav.ts
+msgid "Workspace settings"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+#: src/pages/LoadedContextPanel.tsx
+msgid "Workspace-shared memory"
+msgstr ""
 
 #: src/lib/billing.ts
 msgid "year"
@@ -7065,8 +7336,8 @@ msgid "Your data"
 msgstr ""
 
 #: src/pages/SpaceSettingOverrides.tsx
-msgid "Your defaults"
-msgstr "Tus predeterminados"
+#~ msgid "Your defaults"
+#~ msgstr "Tus predeterminados"
 
 #: src/pages/Auth.tsx
 msgid "Your email address"
@@ -7110,3 +7381,228 @@ msgstr "Tu proveedor de voz se quedó sin crédito."
 #: src/lib/user-error.ts
 msgid "Your voice provider key was rejected."
 msgstr "Tu proveedor de voz rechazó la clave."
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "一次最多看几条"
+msgstr "Videos per wake"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "不爱看"
+msgstr "Avoid"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "两次之间至少隔（分钟）"
+msgstr "Minimum gap (minutes)"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "什么时候醒"
+msgstr "When she wakes"
+
+#. placeholder {0}: status.plan.atText ?? "待定"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今天：{0} 醒"
+msgstr "Today: wakes at {0}"
+
+#. placeholder {0}: status.plan.reason ?? "自己决定的"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今天：不看（{0}）"
+msgstr "Today: skipping ({0})"
+
+#. placeholder {0}: Math.round(settings.night.skipChance * 100)
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今天不想看的概率：{0}%"
+msgstr "Chance of skipping today: {0}%"
+
+#. placeholder {0}: plan.atText ?? "稍后"
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今晚 {0} 醒过来"
+msgstr "Waking tonight at {0}"
+
+#. placeholder {0}: plan.reason ?? ""
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "今晚不想看：{0}"
+msgstr "Skipping tonight: {0}"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "从"
+msgstr "From"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "作息"
+msgstr "Schedule"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "你的 B 站 mid"
+msgstr "Your Bilibili mid"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "你的昵称"
+msgstr "Your display name"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "依赖体检"
+msgstr "Dependency check"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "保存凭据"
+msgstr "Save credentials"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "保存设置"
+msgstr "Save settings"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "值得发的分数线（0–20）"
+msgstr "Share score threshold (0–20)"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "允许分享"
+msgstr "Allow sharing"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "全天监听"
+msgstr "Listen all day"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "关掉就在评论区 @ 你；打开走私信（需要两个号互关）。两条路共用同一份额度。"
+msgstr "Off: @-mentions you in the comments. On: direct message (needs two mutual-follow accounts). Both share one quota."
+
+#: src/pages/shell/bot-panel.tsx
+msgid "养鱼"
+msgstr "Fish"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "凭据只写不读，保存后不再显示"
+msgstr "Credentials are write-only; they are never shown again"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "凭据已保存（内容不会回显）"
+msgstr "Credentials saved (never echoed back)"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "分享"
+msgstr "Sharing"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "分享评论要 @ 的人；在个人空间地址栏里能看到"
+msgstr "The person to @ in shared comments; it is in your profile URL"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "到"
+msgstr "To"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "发到 B 站私信"
+msgstr "Send as Bilibili DM"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "听人找她"
+msgstr "Listening"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "在 bilibili.com 按 F12 → Application → Cookies → https://www.bilibili.com，复制这三个值。 SESSDATA 是 HttpOnly，用 document.cookie 拿不到，必须手动复制。"
+msgstr "On bilibili.com press F12 → Application → Cookies → https://www.bilibili.com and copy these three values. SESSDATA is HttpOnly, so document.cookie cannot read it; copy it by hand."
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "她怎么自称"
+msgstr "How she refers to herself"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "她是谁"
+msgstr "Who she is"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "工具"
+msgstr "Tools"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "工具链就位"
+msgstr "Toolchain ready"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "工具链还没就位"
+msgstr "Toolchain not in place"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "已保存，下一次醒来就按这个来"
+msgstr "Saved; takes effect on her next wake"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "已配置"
+msgstr "Set"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "怎么称呼你"
+msgstr "What she calls you"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "打扰你的方式与额度"
+msgstr "How she reaches you, and how often"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "摆烂也是一种活法；她掷到不看时会写日记说明理由"
+msgstr "Skipping is allowed too; when she rolls a skip she still writes a diary entry explaining why"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "未配置"
+msgstr "Not set"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "正在读她的设置…"
+msgstr "Reading her settings…"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "每天最多几条"
+msgstr "Daily maximum"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "爱看"
+msgstr "Likes"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "爱看什么"
+msgstr "What she likes"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "用顿号或逗号分隔"
+msgstr "Separate with commas"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "监听会真的发请求，新号别开"
+msgstr "Listening makes real requests; leave it off on a young account"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "直播间弹幕"
+msgstr "Live-stream chat"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "确认她真的能干活"
+msgstr "Check that she can actually work"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "私信监听（只认你）"
+msgstr "DM listening (you only)"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "角色名"
+msgstr "Character name"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "评论区监听"
+msgstr "Comment listening"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "读不到设置。她可能还没有自己的文件夹。"
+msgstr "Could not read the settings. She may not have her own folder yet."
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "醒几次"
+msgstr "Wakes"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "重掷今晚计划"
+msgstr "Roll tonight's plan again"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "重试"
+msgstr "Retry"

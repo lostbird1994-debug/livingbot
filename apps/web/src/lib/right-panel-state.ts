@@ -17,6 +17,7 @@ const durablePanels: readonly Panel[] = [
   "routines",
   "loaded",
   "settings",
+  "whale",
   "routine",
   "group-settings",
   null,

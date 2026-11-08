@@ -201,6 +201,26 @@ describe("SpaceSettingsPanel", () => {
     expect(container.querySelector("input")).toBeNull();
   });
 
+  it("lists which settings this workspace keeps its own copy of", async () => {
+    const onOpenSection = vi.fn();
+    await render({ overrides: ["models"], onOpenSection });
+    expect(container.querySelectorAll('[data-testid^="space-override-"]')).toHaveLength(4);
+    expect(container.querySelector('[data-testid="space-override-models"]')?.textContent).toContain(
+      "Customized",
+    );
+    expect(container.querySelector('[data-testid="space-override-voice"]')?.textContent).toContain(
+      "Following the global default",
+    );
+    await click("Open");
+    // The first row is the model page, so its own button opens that one.
+    expect(onOpenSection).toHaveBeenCalledWith("space-models");
+  });
+
+  it("keeps the summary out of the way until the overrides are known", async () => {
+    await render({});
+    expect(container.querySelector('[data-testid="space-settings-overrides"]')).toBeNull();
+  });
+
   it("never offers deleting the space, which stays in the sidebar menu", async () => {
     await render({
       space: { id: "space-a", name: "Support", canRename: true, canDelete: true, botCount: 2 },

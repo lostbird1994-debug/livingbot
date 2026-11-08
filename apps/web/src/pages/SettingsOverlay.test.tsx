@@ -81,14 +81,10 @@ vi.mock("../components/ApprovalRulesSettings", () => ({
 vi.mock("../components/VaultSettings", () => ({
   VaultSettings: ({ scope }: { scope: string }) => <div data-testid="vault-pages">{scope}</div>,
 }));
-vi.mock("../components/InstructionSettings", () => ({
-  InstructionSettings: ({ bot }: { bot: { name: string } }) => (
-    <div data-testid="bot-role-pages">{bot.name}</div>
-  ),
-}));
-vi.mock("../components/voice/BotVoiceSettings", () => ({
-  BotVoiceSettings: ({ bot }: { bot: { name: string } }) => (
-    <div data-testid="bot-voice-pages">{bot.name}</div>
+// The bot panel owns its own fields; the dialog only has to hand it one page at a time.
+vi.mock("./shell/bot-panel", () => ({
+  BotSettings: ({ bot, page }: { bot: { name: string }; page: string }) => (
+    <div data-testid={`bot-page-${page}`}>{bot.name}</div>
   ),
 }));
 vi.mock("../components/SettingsRows", () => ({ SETTINGS_CONTENT_WIDTH: "" }));
@@ -118,7 +114,12 @@ vi.mock("../lib/query", () => ({
     memory: {
       providerConfig: { queryOptions: () => ({ queryKey: ["memory"], queryFn: async () => null }) },
     },
-    usage: { summary: { queryOptions: () => ({ queryKey: ["usage"], queryFn: async () => null }) } },
+    usage: {
+      summary: { queryOptions: () => ({ queryKey: ["usage"], queryFn: async () => null }) },
+    },
+    spaceSettings: {
+      overrides: { queryOptions: () => ({ queryKey: ["overrides"], queryFn: async () => [] }) },
+    },
   }),
   queryClient: { setQueryData: () => undefined, invalidateQueries: () => undefined },
 }));
@@ -206,7 +207,9 @@ it("opens the workspace panel with that workspace's pages", async () => {
     // Account pages stay out of the workspace panel.
     expect(nav(container, "general")).toBeNull();
     expect(nav(container, "billing")).toBeNull();
-    expect(container.querySelector('[data-testid="settings-scope"]')?.textContent).toContain("Acme");
+    expect(container.querySelector('[data-testid="settings-scope"]')?.textContent).toContain(
+      "Acme",
+    );
   } finally {
     await cleanup();
   }
@@ -238,18 +241,45 @@ it("switches the workspace from inside the panel", async () => {
 });
 
 it("opens the bot panel with a bot picker and that bot's pages", async () => {
-  const { container, cleanup } = await render({ requestedSection: "bot-role", space: acme, spaces });
+  const { container, cleanup } = await render({
+    requestedSection: "bot-role",
+    space: acme,
+    spaces,
+  });
   try {
     await flush();
     expect(panelOf(container)).toBe("bot");
     expect(container.querySelector("h2")?.textContent).toBe("Bot settings");
-    expect(nav(container, "bot-role")).not.toBeNull();
-    expect(nav(container, "bot-voice")).not.toBeNull();
+    for (const id of ["bot-role", "bot-model", "bot-memory", "bot-voice", "bot-tools"]) {
+      expect(nav(container, id)).not.toBeNull();
+    }
     const options = [...container.querySelectorAll('[data-testid="settings-scope"] option')].map(
       (option) => option.textContent,
     );
     expect(options).toEqual(["小K", "Scout"]);
-    expect(container.querySelector('[data-testid="bot-role-pages"]')?.textContent).toBe("小K");
+    expect(container.querySelector('[data-testid="bot-page-role"]')?.textContent).toBe("小K");
+  } finally {
+    await cleanup();
+  }
+});
+
+it("gives each bot page its own fields and says what the bot inherits", async () => {
+  const { container, rerender, cleanup } = await render({
+    requestedSection: "bot-model",
+    space: acme,
+    spaces,
+    botId: "bot-1",
+  });
+  try {
+    await flush();
+    expect(container.querySelector('[data-testid="bot-page-model"]')).not.toBeNull();
+    // A bot without its own model follows the workspace default.
+    const badge = container.querySelector('[data-testid="inheritance-badge"]');
+    expect(badge?.getAttribute("data-own")).toBe("false");
+    expect(badge?.textContent).toContain("Space default");
+    await rerender({ requestedSection: "bot-tools", space: acme, spaces, botId: "bot-1" });
+    expect(container.querySelector('[data-testid="bot-page-tools"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="bot-page-model"]')).toBeNull();
   } finally {
     await cleanup();
   }
@@ -275,7 +305,7 @@ it("switches the bot from inside the panel", async () => {
       select.dispatchEvent(new Event("change", { bubbles: true }));
     });
     expect(onBotChange).toHaveBeenCalledWith("bot-2");
-    expect(container.querySelector('[data-testid="bot-voice-pages"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="bot-page-voice"]')).not.toBeNull();
   } finally {
     await cleanup();
   }
