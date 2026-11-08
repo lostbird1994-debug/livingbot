@@ -9,6 +9,7 @@ import {
 } from "@rakazo/core";
 import { rpc, selectedSpaceId, withSpaceHeaders } from "./rpc.js";
 import { errorText, voiceAccountErrorText } from "./user-error.js";
+import { VoicePlayback } from "./voice-playback.js";
 
 export type SpeechStatus = "idle" | "preparing" | "speaking";
 
@@ -39,6 +40,12 @@ export class Speaker {
   private objectUrl: string | null = null;
   private settlePlayback: ((finished: boolean) => void) | null = null;
   private request: AbortController | null = null;
+  private playback: VoicePlayback | null = null;
+  private lastHeard = "";
+
+  get heardText(): string {
+    return this.playback?.heardText ?? this.lastHeard;
+  }
 
   subscribe(fn: (s: SpeechSnapshot) => void): () => void {
     this.watchers.add(fn);
@@ -63,12 +70,159 @@ export class Speaker {
   }
 
   stop() {
+    if (this.playback) this.lastHeard = this.playback.heardText;
+    this.playback?.stop();
+    this.playback = null;
     this.token += 1;
     this.request?.abort();
     this.request = null;
     if (this.settlePlayback) this.settlePlayback(false);
     else this.teardownAudio();
     if (this.snapshot.status !== "idle" || this.snapshot.error) this.set(IDLE);
+  }
+
+  /** Synthesizes stable text as it arrives, without waiting for the whole model reply. */
+  async speakStream(
+    texts: AsyncIterable<string>,
+    opts: SpeakOptions = {},
+  ): Promise<string | undefined> {
+    this.stop();
+    this.lastHeard = "";
+    const mine = this.token;
+    const controller = new AbortController();
+    this.request = controller;
+    const live = () => this.token === mine && !controller.signal.aborted;
+    const spaceId = opts.spaceId ?? selectedSpaceId();
+    let playback: VoicePlayback | null = null;
+    let id = 0;
+    const iterator = texts[Symbol.asyncIterator]();
+    this.set({ status: "preparing", botId: opts.botId, messageId: opts.messageId });
+    try {
+      if (typeof AudioContext === "function") {
+        playback = new VoicePlayback(live, (caption) => {
+          this.set({ status: "speaking", botId: opts.botId, messageId: opts.messageId, caption });
+        });
+        this.playback = playback;
+      }
+      while (live()) {
+        const entry = await withAbort(iterator.next(), controller.signal);
+        if (entry.done) break;
+        const text = entry.value;
+        if (!live()) break;
+        const utterances = await withAbort(
+          this.prepare(text, opts, controller.signal, spaceId),
+          controller.signal,
+        );
+        for (const utterance of utterances) {
+          if (!live()) break;
+          if (
+            playback &&
+            (await this.renderStream(utterance, ++id, playback, opts, controller.signal, spaceId))
+          )
+            continue;
+          const blob = await this.render(utterance, opts, controller.signal, spaceId);
+          if (!live()) break;
+          if (playback) {
+            // Other providers return complete clips; keep them on the same timeline.
+            const bytes = await blob.arrayBuffer();
+            const decode = new AudioContext();
+            try {
+              const audio = await decode.decodeAudioData(bytes);
+              const samples = audio.getChannelData(0);
+              const pcm = new Uint8Array(samples.length * 2);
+              const view = new DataView(pcm.buffer);
+              samples.forEach((sample, index) => {
+                view.setInt16(index * 2, Math.max(-1, Math.min(1, sample)) * 32767, true);
+              });
+              await playback.push(pcm, audio.sampleRate, id, utterance);
+            } finally {
+              await decode.close();
+            }
+          } else {
+            this.set({
+              status: "speaking",
+              botId: opts.botId,
+              messageId: opts.messageId,
+              caption: utterance,
+            });
+            if (!(await this.play(blob, live))) break;
+            this.lastHeard += utterance;
+          }
+        }
+      }
+      await playback?.drain();
+      if (playback) this.lastHeard = playback.heardText;
+    } catch (error) {
+      if (live()) {
+        const failure = errorText(error);
+        this.set({ ...IDLE, error: failure });
+        return failure;
+      }
+    } finally {
+      // An interrupted producer may still be awaiting more text. Never block cancellation on it.
+      void iterator.return?.().catch(() => undefined);
+      if (this.playback === playback) this.playback = null;
+      playback?.stop();
+      if (this.request === controller) this.request = null;
+      if (live() && !this.snapshot.error) this.set(IDLE);
+    }
+  }
+
+  private async renderStream(
+    text: string,
+    id: number,
+    playback: VoicePlayback,
+    opts: SpeakOptions,
+    signal: AbortSignal,
+    spaceId: string | null,
+  ): Promise<boolean> {
+    const response = await fetch("/api/voice/speak-stream", {
+      method: "POST",
+      credentials: "include",
+      headers: withSpaceHeaders({ "content-type": "application/json" }, spaceId),
+      body: JSON.stringify({ text, botId: opts.botId, voiceId: opts.voiceId, scope: opts.scope }),
+      signal,
+    });
+    if (response.status === 409) {
+      await response.body?.cancel();
+      return false;
+    }
+    if (!response.ok || !response.body) throw new Error("语音连接失败，请查看文字回复。");
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let pending = "";
+    let received = false;
+    try {
+      while (!signal.aborted) {
+        const part = await reader.read();
+        pending += decoder.decode(part.value, { stream: !part.done });
+        if (pending.length > 1024 * 1024) throw new Error("Invalid audio stream");
+        while (pending.includes("\n")) {
+          const end = pending.indexOf("\n");
+          const line = pending.slice(0, end);
+          pending = pending.slice(end + 1);
+          if (!line) continue;
+          const chunk = JSON.parse(line) as { pcm: string; sampleRate: number };
+          const raw = atob(chunk.pcm);
+          await playback.push(
+            Uint8Array.from(raw, (char) => char.charCodeAt(0)),
+            chunk.sampleRate,
+            id,
+            text,
+          );
+          received = true;
+        }
+        if (part.done) {
+          if (pending.trim()) throw new Error("Incomplete audio stream");
+          break;
+        }
+      }
+      if (!received) throw new Error("没有收到语音，请查看文字回复。");
+      return true;
+    } finally {
+      await reader.cancel().catch(() => undefined);
+      reader.releaseLock();
+    }
   }
 
   private teardownAudio() {

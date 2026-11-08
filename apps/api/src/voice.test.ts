@@ -495,6 +495,42 @@ describe("prepareVoice", () => {
       utterances: ["Deploy done.", "Next, the release notes."],
     });
   });
+  it("uses a short notification summary and falls back to a generic notice", async () => {
+    const deps = depsWith();
+    const summarize = vi
+      .fn()
+      .mockResolvedValueOnce("任务完成，请确认时间")
+      .mockResolvedValueOnce(null);
+    deps.notificationSummary = summarize;
+    const input = { botId: "bot-1", text: long, purpose: "notification" as const };
+    expect((await prepareVoice(deps, actor, input)).utterances).toEqual(["任务完成，请确认时间"]);
+    expect((await prepareVoice(deps, actor, input)).utterances).toEqual(["有新消息，请查看"]);
+  });
+  it("exposes PCM chunks on the authenticated speech stream", async () => {
+    const deps = depsWith();
+    const streamSpeech = vi.fn(async function* () {
+      yield { bytes: new Uint8Array([1, 2]), sampleRate: 24000 };
+      yield { bytes: new Uint8Array([3, 4]), sampleRate: 24000 };
+    });
+    vi.spyOn(adapters, "createVoiceProvider").mockReturnValue({ streamSpeech } as never);
+    const app = new Hono();
+    mountVoiceHttpRoutes(app, deps, async () => actor);
+    const response = await app.request("/api/voice/speak-stream", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: "你好", botId: "bot-1" }),
+    });
+    expect(response.headers.get("content-type")).toBe("application/x-ndjson");
+    expect(
+      (await response.text())
+        .trim()
+        .split("\n")
+        .map((row) => JSON.parse(row)),
+    ).toEqual([
+      { pcm: "AQI=", sampleRate: 24000 },
+      { pcm: "AwQ=", sampleRate: 24000 },
+    ]);
+  });
 
   it.each([
     ["Chinese", "中".repeat(2400)],

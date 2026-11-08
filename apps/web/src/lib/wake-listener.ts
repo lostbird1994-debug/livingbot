@@ -7,7 +7,7 @@ import { matchWake, type WakeMatch, type WakeTarget } from "./wake-word";
 const TICK_MS = 100;
 /** Used for endpoint timing only; never gates capture or name recognition. */
 const WAKE_RMS = 0.012;
-const ABANDON_SILENCE_MS = 700;
+const ABANDON_SILENCE_MS = 3000;
 
 export type WakeHit = WakeMatch<WakeTarget>;
 
@@ -40,6 +40,7 @@ export class WakeListener {
   private generation = 0;
   private lastTextAt = 0;
   private hadVoice = false;
+  private turnAt = 0;
 
   get isRunning(): boolean {
     return this.running;
@@ -152,7 +153,7 @@ export class WakeListener {
     }
     const rms = Math.sqrt(sum / samples.length);
     const now = Date.now();
-    if (rms > WAKE_RMS) {
+    if (rms > WAKE_RMS && now - this.turnAt > 2000) {
       this.hadVoice = true;
       this.voiceAt = now;
     }
@@ -165,8 +166,8 @@ export class WakeListener {
       // Recognition progress also anchors the endpoint; room noise must not keep
       // a completed name open forever, or quiet speech close it mid-word.
       const textQuiet = now - this.lastTextAt;
-      if ((silent > ABANDON_SILENCE_MS && textQuiet > 350) || textQuiet > 1_600) this.finishTap();
-    } else if (this.hadVoice && silent > 1_200) {
+      if (silent > ABANDON_SILENCE_MS && textQuiet > 350) this.finishTap();
+    } else if (this.hadVoice && silent > ABANDON_SILENCE_MS) {
       // A lone name may only become text after the recognition stream is flushed.
       this.finishTap();
     }
@@ -179,6 +180,7 @@ export class WakeListener {
     this.tap = tap;
     this.heard = "";
     this.hadVoice = false;
+    this.turnAt = 0;
     this.lastTextAt = Date.now();
     void tap
       .start(
@@ -187,6 +189,13 @@ export class WakeListener {
         (text) => this.inspect(text),
         () => {
           if (this.tap === tap) this.stop("语音识别连接中断，请重新进入语音模式。");
+        },
+        (turn) => {
+          if (this.tap !== tap || this.finishing || this.paused) return;
+          this.turnAt = Date.now();
+          if (turn.speechProbability >= 0.7) this.hadVoice = true;
+          if (this.hadVoice) this.voiceAt = Date.now() - turn.silenceMs;
+          if (turn.complete) this.finishTap();
         },
       )
       .then((started) => {

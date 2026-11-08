@@ -71,3 +71,23 @@ it("returns cloud synthesis as a complete WAV and advertises cross-platform synt
   expect(Buffer.from(clip.bytes).subarray(44)).toEqual(Buffer.from([1, 2, 3, 4]));
   expect(socket.closed).toBe(true);
 });
+it("yields audio before synthesis finishes and closes the upstream socket on interruption", async () => {
+  const provider = new DashScopeVoiceProvider();
+  const stream = provider.streamSpeech(
+    { text: "Example", voiceId: "longanhuan_v3.1", apiKey: "test-key" },
+    context,
+  );
+  const first = stream.next();
+  await vi.waitFor(() => expect(sockets.instances).toHaveLength(1));
+  const socket = sockets.instances[0]!;
+  socket.emit("open");
+  socket.emit("message", JSON.stringify({ header: { event: "task-started" } }));
+  socket.emit("message", new Uint8Array([1, 2, 3, 4]));
+  expect(await first).toEqual({
+    done: false,
+    value: { bytes: new Uint8Array([1, 2, 3, 4]), sampleRate: 24000 },
+  });
+  expect(socket.closed).toBe(false);
+  await stream.return(undefined);
+  expect(socket.closed).toBe(true);
+});

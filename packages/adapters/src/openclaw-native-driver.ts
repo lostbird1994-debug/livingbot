@@ -21,6 +21,7 @@ export interface NativeRecord {
   gatewayOrigin?: string;
   connectionId?: string;
   error?: string;
+  steeringIds?: string[];
   approval?: {
     id: string;
     expiresAtMs: number;
@@ -55,6 +56,15 @@ export interface NativeInput {
   onNotice?: (notice: NativeNotice) => void;
   onStarted?: () => Promise<void>;
   onUsage?: (usage: Record<string, unknown> | undefined) => void;
+  claimSteering?: (seenIds: string[]) => Promise<
+    Array<{
+      id: string;
+      text: string;
+      fromRunUser?: boolean;
+      attachments?: unknown[];
+    }>
+  >;
+  onSteered?: (fromRunUser: boolean) => void;
 }
 export interface NativeOptions {
   store: NativeStore;
@@ -67,6 +77,15 @@ export interface NativeOptions {
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 export const nativeSessionKey = (scope: string, agentId: string) =>
   `agent:${agentId}:rakazo:${hash(scope)}`;
+/** An exact native abort response confirms that this run's controller was aborted. */
+export const confirmsNativeAbort = (result: any, runId: string): boolean =>
+  result?.unconfirmed !== true &&
+  result?.aborted === true &&
+  Array.isArray(result.runIds) &&
+  result.runIds.includes(runId);
+export const isNativeCancelled = (result: any): boolean =>
+  result?.unconfirmed !== true &&
+  (result?.status === "aborted" || ["aborted", "rpc", "stop"].includes(result?.stopReason));
 export class NativeExecutionError extends Error {
   constructor(
     message: string,
@@ -136,7 +155,18 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       saved.status,
     );
   const sessionOwnerKey = `session-owner:${sessionKey}`;
-  const owner = await options.store.read(sessionOwnerKey);
+  let owner = await options.store.read(sessionOwnerKey);
+  const ownerWaitUntil = Date.now() + cancelMs;
+  while (
+    owner &&
+    owner.runId !== runId &&
+    ["dispatching", "running", "approval", "unconfirmed"].includes(owner.status) &&
+    !input.signal?.aborted &&
+    Date.now() < ownerWaitUntil
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, Math.min(100, cancelMs)));
+    owner = await options.store.read(sessionOwnerKey);
+  }
   if (
     owner &&
     owner.runId !== runId &&
@@ -148,7 +178,7 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     );
   let lastStoredStatus: NativeRecord["status"] | undefined;
   let lastTextPersistAt = 0;
-  let record: NativeRecord = saved ?? {
+  const record: NativeRecord = saved ?? {
     version: 1,
     sessionKey,
     runId,
@@ -167,7 +197,16 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     lastStoredStatus = snapshot.status;
     pending = pending.then(async () => {
       await options.store.write(input.key, snapshot);
-      if (writeOwner) await options.store.write(sessionOwnerKey, { ...snapshot, text: "" });
+      if (writeOwner) {
+        const current = await options.store.read(sessionOwnerKey);
+        if (
+          !current ||
+          current.runId === runId ||
+          (snapshot.status === "dispatching" &&
+            ["done", "failed", "cancelled"].includes(current.status))
+        )
+          await options.store.write(sessionOwnerKey, { ...snapshot, text: "" });
+      }
     });
     return pending;
   };
@@ -178,10 +217,18 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
   let paused = false;
   let peer: NativePeer | undefined;
   let closing = false;
+  const steeringResults = new Map<string, { state: string; text: string } | undefined>();
   const notify = () => wake?.();
   const onEvent = (frame: NativeFrame) => {
     if (closing) return;
     const p = frame.payload ?? {};
+    if (frame.event === "chat" && steeringResults.has(p.runId)) {
+      if (["final", "error", "aborted"].includes(p.state)) {
+        steeringResults.set(p.runId, { state: p.state, text: textOf(p.message) });
+        notify();
+      }
+      return;
+    }
     if (frame.event === "exec.approval.requested" && p.request?.sessionKey === sessionKey) {
       record.approval = {
         id: String(p.id),
@@ -244,7 +291,8 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         input.onNotice?.({ type: "progress", text: `${name}: ${phase}` });
       }
       if (p.stream === "lifecycle") {
-        if (p.data?.phase === "end") outcome = "done";
+        if (p.data?.phase === "end")
+          outcome = p.data.aborted === true || p.data.status === "cancelled" ? "cancelled" : "done";
         if (p.data?.phase === "error") {
           outcome = "failed";
           nativeError = String(p.data?.error ?? "External agent failed");
@@ -271,14 +319,21 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       cancelMs,
       "Cancellation acknowledgement timed out",
     );
-    // 'aborted' acknowledges the signal; agent.wait proves that the native runner settled.
+    // OpenClaw aborts the actual controller before returning this exact run ID.
+    // Older bridges returning a bare boolean still require terminal status evidence.
+    if (confirmsNativeAbort(result, runId)) outcome = "cancelled";
     if (!result.aborted && !outcome) {
       const current = await peer.request<any>(
         "agent.wait",
         { runId, timeoutMs: Math.min(cancelMs, 1000) },
         { timeoutMs: cancelMs },
       );
-      if (current.status !== "ok" && current.status !== "error" && current.status !== "aborted")
+      if (
+        !isNativeCancelled(current) &&
+        current.status !== "ok" &&
+        current.status !== "error" &&
+        current.status !== "aborted"
+      )
         throw new NativeExecutionError(
           "Cancellation could not be confirmed; do not retry this task",
           "unconfirmed",
@@ -293,7 +348,7 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         cancelMs + 1000,
         "Native cancellation did not settle",
       );
-      if (!["ok", "error", "aborted"].includes(terminal.status))
+      if (!isNativeCancelled(terminal) && !["ok", "error", "aborted"].includes(terminal.status))
         throw new NativeExecutionError(
           "Native task may still be running; cancellation unconfirmed",
           "unconfirmed",
@@ -307,7 +362,8 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
   const onAbort = () => notify();
   input.signal?.addEventListener("abort", onAbort, { once: true });
   try {
-    input.signal?.throwIfAborted();
+    if (!saved && input.signal?.aborted)
+      throw new NativeExecutionError("External task cancelled before dispatch", "cancelled");
     const connection: NativePeer = await bounded(
       options.connect(onEvent).then((value) => {
         if (closing) value.stop();
@@ -356,6 +412,8 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         }
       }
     } else if (!saved) {
+      if (input.signal?.aborted)
+        throw new NativeExecutionError("External task cancelled before dispatch", "cancelled");
       // Persist BEFORE dispatch. A process crash or lost ACK must never launch another task.
       await persist();
       const accepted = await connection.request<any>(
@@ -408,7 +466,7 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         { timeoutMs: Math.min(pollMs, 1000) + 5000 },
       );
       if (paused || record.status === "approval") continue;
-      if (terminal.stopReason === "aborted")
+      if (isNativeCancelled(terminal))
         throw new NativeExecutionError("Native task was cancelled", "cancelled");
       if (terminal.status === "error" || terminal.status === "aborted")
         throw new NativeExecutionError(
@@ -420,6 +478,44 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
               : "failed",
         );
       if (terminal.status === "ok") break;
+      if (!outcome && !input.signal?.aborted && input.claimSteering) {
+        const steering = await input.claimSteering(record.steeringIds ?? []);
+        for (const item of steering) {
+          if (input.signal?.aborted || outcome) break;
+          // /steer never starts a second business task if the active run just ended.
+          // A deterministic key protects a lost acknowledgement from duplicate delivery.
+          const steeringId = `rakazo-steer-${hash(`${input.key}:${item.id}`)}`;
+          steeringResults.set(steeringId, undefined);
+          await connection.request(
+            "chat.send",
+            {
+              sessionKey,
+              message: `/steer ${item.text}`,
+              idempotencyKey: steeringId,
+              deliver: false,
+              ...(item.attachments?.length ? { attachments: item.attachments } : {}),
+            },
+            { timeoutMs: options.connectMs ?? 15_000 },
+          );
+          const deadline = Date.now() + (options.connectMs ?? 15_000);
+          while (!steeringResults.get(steeringId) && Date.now() < deadline) {
+            if (input.signal?.aborted) return await cancel("External task cancelled");
+            await wait(Math.min(100, deadline - Date.now()));
+          }
+          const receipt = steeringResults.get(steeringId);
+          steeringResults.delete(steeringId);
+          // Dispatch ACKs precede command execution. Only the command's correlated
+          // final response proves the active agent accepted the instruction.
+          if (receipt?.state !== "final" || receipt.text.trim() !== "steered current session.")
+            throw new NativeExecutionError(
+              "追加指令尚未确认送达；请先终止当前任务，再重新发送追加内容。",
+              "unconfirmed",
+            );
+          record.steeringIds = [...(record.steeringIds ?? []), item.id];
+          await persist();
+          input.onSteered?.(item.fromRunUser !== false);
+        }
+      }
       // A timeout here means the status query is still pending, not a failed task.
       await wait(Math.min(pollMs, 1000));
     }

@@ -25,6 +25,18 @@ function stubSelectedSpace(id: string) {
 }
 
 describe("Speaker", () => {
+  it("stops a live reply while waiting for the next generated sentence", async () => {
+    const speaker = new Speaker();
+    const texts = {
+      [Symbol.asyncIterator]: () => ({
+        next: () => new Promise<IteratorResult<string>>(() => undefined),
+      }),
+    };
+    const pending = speaker.speakStream(texts);
+    speaker.stop();
+    await expect(pending).resolves.toBeUndefined();
+    expect(speaker.state.status).toBe("idle");
+  });
   it("interrupting before audio arrives leaves the speaker idle", async () => {
     const speaker = new Speaker();
     vi.spyOn(

@@ -43,7 +43,7 @@ const IDLE: DictationSnapshot = { status: "idle", transcript: "" };
  */
 const ENDPOINT_SILENCE_MS = 1200;
 const ENDPOINT_TICK_MS = 80;
-const SILENCE_RMS = 0.035;
+const SILENCE_RMS = 0.012;
 export const TRANSCRIPTION_RESPONSE_TIMEOUT_MS = 70_000;
 export const MAX_TRANSCRIPTION_RESPONSE_BYTES = 64 * 1024;
 /** Web Speech codes that mean the cloud recognizer cannot be used. */
@@ -180,6 +180,7 @@ export class Dictation {
   private transcribeAbort: AbortController | null = null;
   /** Realtime transcript tap; null whenever streaming is unavailable or already finished. */
   private streamTap: DictationStream | null = null;
+  private turnAt = 0;
   private audioContext: AudioContext | null = null;
   private vadTimer: ReturnType<typeof setInterval> | undefined;
   private onFinal: ((text: string) => void) | null = null;
@@ -461,12 +462,26 @@ export class Dictation {
     // Start the realtime tap before recording: interim text arriving while the user talks is
     // what makes stopping feel instant. A refusal here just means the old path stays in charge.
     const tap = new DictationStream();
+    this.turnAt = 0;
     this.streamTap = tap;
     void tap
-      .start(stream, withSpaceHeaders({}, spaceId), (text) => {
-        if (this.token !== mine || this.snapshot.status !== "listening") return;
-        this.set({ status: "listening", transcript: combineTranscript(keptText, text) });
-      })
+      .start(
+        stream,
+        withSpaceHeaders({}, spaceId),
+        (text) => {
+          if (this.token !== mine || this.snapshot.status !== "listening") return;
+          this.set({ status: "listening", transcript: combineTranscript(keptText, text) });
+        },
+        undefined,
+        (turn) => {
+          if (this.token !== mine || this.streamTap !== tap || mode !== "endpoint") return;
+          this.turnAt = Date.now();
+          if (turn.complete && this.media?.state === "recording") {
+            this.stopVad();
+            this.media.stop();
+          }
+        },
+      )
       .then((streaming) => {
         if (this.token !== mine || this.streamTap !== tap || !streaming) {
           tap.abort();
@@ -556,6 +571,11 @@ export class Dictation {
           sum += n * n;
         }
         const rms = Math.sqrt(sum / data.length);
+        // Local semantic inference owns endpointing while healthy. RMS is only a fallback.
+        if (Date.now() - this.turnAt < 2000) {
+          silentFor = 0;
+          return;
+        }
         if (rms > SILENCE_RMS) {
           heardSpeech = true;
           silentFor = 0;

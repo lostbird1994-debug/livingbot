@@ -76,6 +76,7 @@ import type {
   SemanticMemorySaveRequest,
   SnapshotRef,
   SpeechClip,
+  SpeechPcmChunk,
   StreamedPortableFile,
   TerminalRequest,
   TransactionalEmail,
@@ -504,6 +505,11 @@ export interface VoiceProvider {
   verify(apiKey: string, context: AdapterContext): Promise<VoiceVerifyResult>;
   listVoices(apiKey: string, context: AdapterContext): Promise<VoiceInfo[]>;
   synthesize(request: VoiceSynthesizeRequest, context: AdapterContext): Promise<SpeechClip>;
+  /** Optional mono signed PCM16 stream. A missing implementation uses complete clips. */
+  streamSpeech?(
+    request: VoiceSynthesizeRequest,
+    context: AdapterContext,
+  ): AsyncIterable<SpeechPcmChunk>;
   transcribe?(request: VoiceTranscribeRequest, context: AdapterContext): Promise<{ text: string }>;
 }
 

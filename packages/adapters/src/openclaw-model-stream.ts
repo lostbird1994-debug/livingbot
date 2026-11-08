@@ -1,5 +1,5 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { AssistantMessage, Context, ModelsSimpleStreamOptions } from "@earendil-works/pi-ai";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
@@ -10,16 +10,16 @@ import type {
   AgentUsage,
 } from "@rakazo/adapter-kit";
 import {
-  assertHttpsForKeyedOpenAiCompatibleUrl,
   assertAllowedOpenAiCompatibleUrl,
+  assertHttpsForKeyedOpenAiCompatibleUrl,
 } from "./openai-compatible-url.js";
-import { NativeExecutionError, runNativeAgent } from "./openclaw-native-driver.js";
 import type {
   NativeFrame,
   NativePeer,
   NativeRecord,
   NativeStore,
 } from "./openclaw-native-driver.js";
+import { NativeExecutionError, runNativeAgent } from "./openclaw-native-driver.js";
 
 export const isOpenClawModel = (model: AgentRunRequest["model"]) =>
   model.provider === "openai-compatible" && /^openclaw\/[a-zA-Z0-9_-]+$/.test(model.id);
@@ -276,6 +276,23 @@ export function openClawModelStream(
           attachments,
           signal: options?.signal ?? runtimeContext?.signal,
           answeredApproval: request.answeredApproval,
+          claimSteering: request.claimSteering
+            ? async (ids) =>
+                (await request.claimSteering!(ids)).map((item) => ({
+                  id: item.id,
+                  fromRunUser: item.origin === "user",
+                  text:
+                    item.origin === "user"
+                      ? item.text
+                      : `Message from ${item.origin}:\n${item.text}`,
+                  attachments: item.images?.map((image) => ({
+                    type: "image",
+                    mimeType: image.mimeType,
+                    content: Buffer.from(image.data).toString("base64"),
+                  })),
+                }))
+            : undefined,
+          onSteered: (fromRunUser) => emit({ type: "steered", fromRunUser }),
           onText,
           onUsage: (usage) => {
             nativeUsage = usage;

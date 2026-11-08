@@ -4,6 +4,11 @@ import { isEchoOfSpeech, SpokenMemory } from "./echo.js";
 const SPOKEN = "I'm here and hearing you…";
 
 describe("isEchoOfSpeech", () => {
+  it("recognizes Chinese playback fragments while preserving a new interruption", () => {
+    const spoken = "已经检查完成，接下来需要确认会议时间和参会人员。";
+    expect(isEchoOfSpeech("接下来需要确认会议时间", spoken)).toBe(true);
+    expect(isEchoOfSpeech("等一下先不要安排会议", spoken)).toBe(false);
+  });
   it("catches a fragment of the reply that just played", () => {
     expect(isEchoOfSpeech("I am here in", SPOKEN)).toBe(true);
   });

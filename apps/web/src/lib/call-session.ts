@@ -31,6 +31,7 @@ import { recheckSessionOnUnauthorized, rpc } from "./rpc.js";
 import { isThreadSnapshotEvent, reduceThreadSnapshot } from "./thread-events.js";
 import { speaker } from "./tts.js";
 import { errorText } from "./user-error";
+import { createSpeechFeed, stableSpeechPrefix } from "./voice-playback.js";
 
 /** `ringing` until the call picks up; the rest describe the conversation. */
 type CallPhase = "ringing" | "listening" | "thinking" | "speaking";
@@ -107,11 +108,28 @@ let micOpen = false;
 let bargedIn = false;
 /** A turn is in flight: its reply must be spoken even if the mic reopened meanwhile. */
 let awaitingReply = false;
+let liveReply: {
+  messageId: string;
+  raw: string;
+  finished: boolean;
+  text: ReturnType<typeof createSpeechFeed>;
+} | null = null;
+let interruptedPlayback: { messageId: string; heardText: string } | undefined;
+function rememberInterruptedPlayback() {
+  if (!liveReply) return;
+  interruptedPlayback = {
+    messageId: liveReply.messageId,
+    heardText: speaker.heardText.slice(0, 8000),
+  };
+}
 /** Counting down an interim phrase heard over the reply, before it counts as cutting in. */
 const interim = createInterimBargeIn(() => {
   if (state?.phase !== "speaking") return;
   // Never resume the cut-off message, and keep the idle it emits from reopening the mic.
   bargedIn = true;
+  rememberInterruptedPlayback();
+  liveReply?.text.close();
+  if (liveReply) liveReply.finished = true;
   speaker.stop();
   set({ phase: "listening", caption: "" });
 });
@@ -197,6 +215,7 @@ export function startCall(call: {
     if (!state || state.phase === "ringing") return;
     if (openingPending && speech.status === "idle") openingPending = false;
     if (speech.status === "speaking") {
+      if (speech.caption) spokenMemory.remember(speech.caption);
       bargedIn = false;
       set({ phase: "speaking", caption: speech.caption ?? "" });
       // The mic stays open through playback so the caller can talk over the reply.
@@ -297,6 +316,9 @@ function dropCall(): void {
   unsubSpeech = null;
   unsubDictation = null;
   dictation.stop("cancel");
+  liveReply?.text.close();
+  liveReply = null;
+  interruptedPlayback = undefined;
   speaker.stop();
   thread = null;
   spokenMessageIds.clear();
@@ -561,6 +583,7 @@ async function openMic() {
   try {
     await dictation.listen({
       mode: "endpoint",
+      endpointMs: 3000,
       transcribe,
       onFinal: (text) => void handleTranscript(text),
     });
@@ -597,6 +620,9 @@ async function handleTranscript(text: string, routeWake = true) {
     }
     // The caller talked over the reply: cut the audio, and never resume that message.
     bargedIn = true;
+    rememberInterruptedPlayback();
+    liveReply?.text.close();
+    if (liveReply) liveReply.finished = true;
     speaker.stop();
     set({ phase: "thinking", caption: "" });
   }
@@ -631,6 +657,7 @@ async function handleTranscript(text: string, routeWake = true) {
   let releasePendingSend: () => void = () => undefined;
   try {
     const clientNonce = callClientNonce(turnCallId);
+    const voicePlayback = interruptedPlayback;
     const sendRequest = askMessage
       ? rpc.threads.answer({
           botId,
@@ -640,10 +667,21 @@ async function handleTranscript(text: string, routeWake = true) {
           clientNonce,
         })
       : runActive(thread)
-        ? rpc.threads.followUp({ botId, text, clientNonce })
-        : rpc.threads.send({ botId, clientNonce, text });
+        ? rpc.threads.followUp({
+            botId,
+            text,
+            clientNonce,
+            ...(voicePlayback ? { voicePlayback } : {}),
+          })
+        : rpc.threads.send({
+            botId,
+            clientNonce,
+            text,
+            ...(voicePlayback ? { voicePlayback } : {}),
+          });
     releasePendingSend = callSends.track(turnCallId, sendRequest);
     await sendRequest;
+    if (interruptedPlayback === voicePlayback) interruptedPlayback = undefined;
   } catch (error) {
     if (!state || state.botId !== botId || callId !== turnCallId) return;
     awaitingReply = false;
@@ -656,6 +694,13 @@ async function handleTranscript(text: string, routeWake = true) {
   if (!state || state.botId !== botId || callId !== turnCallId) return;
   try {
     await callFeed?.load();
+    if (
+      state?.botId === botId &&
+      callId === turnCallId &&
+      callId.startsWith(VOICE_MODE_CALL_PREFIX) &&
+      state.phase === "thinking"
+    )
+      void openMic();
   } catch (error) {
     if (!state || state.botId !== botId || callId !== turnCallId) return;
     awaitingReply = false;
@@ -694,6 +739,56 @@ function reactToThread() {
   const { botId } = state;
   const messages = thread?.messages ?? [];
   const lastBot = [...messages].reverse().find((message) => message.role === "bot");
+  if (
+    callId.startsWith(VOICE_MODE_CALL_PREFIX) &&
+    lastBot &&
+    !lastBot.id.startsWith("progress:") &&
+    !lastBot.id.startsWith("subagent:") &&
+    !lastBot.blocks.some((block) => block.kind === "ask") &&
+    (!spokenMessageIds.has(lastBot.id) || liveReply?.messageId === lastBot.id)
+  ) {
+    if (liveReply?.messageId === lastBot.id && liveReply.finished) return;
+    const raw = lastBot.blocks
+      .filter((block) => block.kind === "text")
+      .map((block) => block.text)
+      .join("\n");
+    const final = replyFinished(lastBot);
+    const stable = stableSpeechPrefix(raw, final);
+    if (!stable.trim()) return;
+    if (liveReply?.messageId !== lastBot.id) {
+      liveReply?.text.close();
+      const current = { messageId: lastBot.id, raw: "", finished: false, text: createSpeechFeed() };
+      liveReply = current;
+      spokenMessageIds.add(lastBot.id);
+      void speaker.speakStream(current.text, { botId, messageId: lastBot.id }).then((failure) => {
+        if (!failure || liveReply !== current) return;
+        current.finished = true;
+        current.text.close();
+      });
+    }
+    const current = liveReply;
+    if (!current) return;
+    if (!stable.startsWith(current.raw)) {
+      // Published speech cannot be revised; retain the authoritative written reply.
+      current.finished = true;
+      current.text.close();
+      speaker.stop();
+      set({ caption: "回复已更新，请查看文字。" });
+      return;
+    }
+    const added = stable.slice(current.raw.length);
+    current.raw = stable;
+    if (added) {
+      current.text.append(added);
+    }
+    if (final) {
+      current.finished = true;
+      current.text.close();
+      awaitingReply = false;
+      set({ exchanges: [...state.exchanges, { role: "bot", text: raw }], heard: "" });
+    }
+    return;
+  }
   if (lastBot && !spokenMessageIds.has(lastBot.id) && replyFinished(lastBot)) {
     const text = speechFromBlocks(lastBot.blocks);
     const ask = lastBot.blocks.find((block) => block.kind === "ask" && block.status !== "answered");

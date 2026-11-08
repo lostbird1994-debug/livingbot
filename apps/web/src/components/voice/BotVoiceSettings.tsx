@@ -78,7 +78,7 @@ export function BotVoiceSettings({ bot }: { bot: Pick<Bot, "id" | "name"> }) {
           />
         </label>
         <p className="text-xs text-muted-foreground">
-          只通知新回复的首段结论，当前正在看的会话不播报。
+          AI 将新回复总结为 20 字内通知，当前正在看的会话不播报。
         </p>
         {error ? (
           <p role="alert" className="text-xs text-destructive">

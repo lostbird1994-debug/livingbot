@@ -1,14 +1,15 @@
 import { join } from "node:path";
-import { connectLocalAgentBridge } from "./local-agent-runtime.js";
 import { runAsTenant } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
-import type { NativePeer, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
-import { NativeRunJournal, connectOpenClawSdk } from "./openclaw-model-stream.js";
+import { connectLocalAgentBridge } from "./local-agent-runtime.js";
 import {
   assertAllowedOpenAiCompatibleUrl,
   assertHttpsForKeyedOpenAiCompatibleUrl,
 } from "./openai-compatible-url.js";
+import { connectOpenClawSdk, NativeRunJournal } from "./openclaw-model-stream.js";
+import type { NativePeer, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
+import { confirmsNativeAbort, isNativeCancelled } from "./openclaw-native-driver.js";
 import { resolveConnectedRunModel } from "./run-model.js";
 
 /** Status-only recovery: never dispatch a new agent run or automatically approve a request. */
@@ -21,17 +22,21 @@ export async function reconcileNativeExecution(input: {
 }): Promise<NativeRecord["status"]> {
   const { key, record, store, peer } = input;
   const params = { sessionKey: record.sessionKey, runId: record.runId };
-  if (input.cancel) await peer.request("chat.abort", params, { timeoutMs: 10_000 });
+  const abort = input.cancel
+    ? await peer.request("chat.abort", params, { timeoutMs: 10_000 })
+    : undefined;
   const result = await peer.request<{ status: string; stopReason?: string; unconfirmed?: boolean }>(
     "agent.wait",
     { runId: record.runId, timeoutMs: 1000 },
     { timeoutMs: 6000 },
   );
   const terminal =
-    result.unconfirmed !== true && ["ok", "error", "aborted"].includes(result.status);
+    confirmsNativeAbort(abort, record.runId) ||
+    (result.unconfirmed !== true && ["ok", "error", "aborted"].includes(result.status)) ||
+    isNativeCancelled(result);
   const status: NativeRecord["status"] = !terminal
     ? "unconfirmed"
-    : result.status === "aborted" || result.stopReason === "aborted"
+    : confirmsNativeAbort(abort, record.runId) || isNativeCancelled(result)
       ? "cancelled"
       : result.status === "error"
         ? "failed"
@@ -80,7 +85,7 @@ export function createOpenClawReconciler(
   } = {},
 ) {
   let cursor: string | undefined;
-  return async () => {
+  return async (selection?: { runIds: string[] }) => {
     if (deps.shutdownSignal?.aborted) return;
     const runs = await deps.prisma.run.findMany({
       where: {
@@ -92,13 +97,13 @@ export function createOpenClawReconciler(
           { modelId: { startsWith: "native/workbuddy/" } },
         ],
         status: { in: ["waiting_input", "cancelled", "failed"] },
-        ...(cursor ? { id: { gt: cursor } } : {}),
+        ...(selection ? { id: { in: selection.runIds } } : cursor ? { id: { gt: cursor } } : {}),
       },
       orderBy: { id: "asc" },
       take: 25,
       select: { id: true, userId: true, spaceId: true, status: true, error: true, modelId: true },
     });
-    cursor = runs.length === 25 ? runs.at(-1)!.id : undefined;
+    if (!selection) cursor = runs.length === 25 ? runs.at(-1)!.id : undefined;
 
     const scanDeadline = Date.now() + 25_000;
     for (const run of runs) {

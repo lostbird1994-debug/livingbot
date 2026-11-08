@@ -735,6 +735,7 @@ export async function sendThreadMessage(
   target: ThreadTarget,
   input: {
     text?: string;
+    voicePlayback?: { messageId: string; heardText: string };
     artifactIds?: string[];
     imageHandling?: "confirm" | "file";
     mentions?: MentionTargetInput[];
@@ -850,10 +851,14 @@ export async function sendThreadMessage(
             imageAdmission: deps.imageAdmission,
           });
         }
-        const blocks = buildUserMessageBlocks(
+        const blocks: MessageBlock[] = buildUserMessageBlocks(
           input.text,
           sendAttachmentBlocks(attachmentBlocks, artifacts, input.imageHandling),
         );
+        if (input.voicePlayback) {
+          const text = blocks.find((block) => block.kind === "text");
+          if (text?.kind === "text") text.voicePlayback = input.voicePlayback;
+        }
         const message = await createThreadMessageInTransaction(tx, {
           threadId: target.threadId,
           role: "user",
@@ -1052,10 +1057,14 @@ export async function sendThreadMessage(
           });
         }
       }
-      const blocks = buildUserMessageBlocks(
+      const blocks: MessageBlock[] = buildUserMessageBlocks(
         input.text,
         sendAttachmentBlocks(attachmentBlocks, artifacts, input.imageHandling),
       );
+      if (input.voicePlayback) {
+        const text = blocks.find((block) => block.kind === "text");
+        if (text?.kind === "text") text.voicePlayback = input.voicePlayback;
+      }
       const message = await createThreadMessageInTransaction(tx, {
         threadId: target.threadId,
         role: "user",
@@ -1444,6 +1453,7 @@ export async function stopThreadRuns(
     prisma: PrismaClient;
     sandbox: SandboxProvider;
     events: ThreadEvents;
+    cancelNativeRuns?: (runIds: string[]) => Promise<void>;
   },
   actor: Actor,
   target: ThreadTarget,
@@ -1526,6 +1536,12 @@ export async function stopThreadRuns(
     // The events are durable; subscribers refetch from their persisted cursor.
     await deps.events.notify(target.threadId, eventSeq).catch((error) => {
       getLogger().error("thread stop realtime notification", error);
+    });
+  }
+  if (runIds.length && deps.cancelNativeRuns) {
+    await deps.cancelNativeRuns(runIds).catch((error) => {
+      // The durable cancelled run remains for the elected reconciler to retry.
+      getLogger().error("native task cancellation", error);
     });
   }
   // Keep the DB lease until after teardown so a replacement run cannot claim the

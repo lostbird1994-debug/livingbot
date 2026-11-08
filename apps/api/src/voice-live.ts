@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
 import { dashscopeSocketConstructor } from "@rakazo/adapters";
+import type { TurnSnapshot } from "./voice-turn.js";
+import { createLocalTurnDetector } from "./voice-turn.js";
 
 /**
  * Realtime recognition held inside the API process, for providers whose live protocol the
@@ -43,12 +45,14 @@ export type LiveSnapshot = {
   ready: boolean;
   done: boolean;
   error: string | null;
+  turn?: TurnSnapshot | null;
 };
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export function createDashscopeLiveSessions() {
+export function createDashscopeLiveSessions(signal?: AbortSignal) {
   const sessions = new Map<string, Session>();
+  const detector = createLocalTurnDetector(signal);
 
   async function open(apiKey: string, owner: string): Promise<Session> {
     const id = crypto.randomUUID();
@@ -180,6 +184,7 @@ export function createDashscopeLiveSessions() {
 
   function close(session: Session) {
     sessions.delete(session.id);
+    detector.close(session.id);
     try {
       session.socket?.close();
     } catch {
@@ -194,6 +199,14 @@ export function createDashscopeLiveSessions() {
     }
   }, 10_000);
   sweeper.unref?.();
+  signal?.addEventListener(
+    "abort",
+    () => {
+      clearInterval(sweeper);
+      for (const session of [...sessions.values()]) close(session);
+    },
+    { once: true },
+  );
 
   return {
     async start(
@@ -204,16 +217,18 @@ export function createDashscopeLiveSessions() {
       return { id: session.id, model: MODEL, error: session.error };
     },
 
-    feed(id: string, pcm: Uint8Array, owner: string): LiveSnapshot | null {
+    async feed(id: string, pcm: Uint8Array, owner: string): Promise<LiveSnapshot | null> {
       const session = sessions.get(id);
       if (!session || session.owner !== owner) return null;
       feedSession(session, pcm);
+      const turn = await detector.feed(id, pcm);
       return {
         partial: session.partial,
         finals: session.finals.splice(0),
         ready: session.ready,
         done: session.done,
         error: session.error,
+        turn,
       };
     },
 

@@ -20,6 +20,7 @@ function words(text: string): string[] {
     .replace(/n['’]t\b/g, " not")
     .replace(/['’](m|re|s|ll|ve|d)\b/g, (_match, tail: string) => ` ${CONTRACTIONS[tail]}`)
     .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+    .replace(/(\p{Script=Han})/gu, " $1 ")
     .split(/\s+/)
     .filter(Boolean);
 }
@@ -41,7 +42,8 @@ export function isEchoOfSpeech(
 ): boolean {
   const heardWords = words(heard);
   const spokenWords = words(spoken);
-  if (heardWords.length > MAX_ECHO_WORDS || !spokenWords.length) return false;
+  const maxWords = /\p{Script=Han}/u.test(heard) ? 48 : MAX_ECHO_WORDS;
+  if (heardWords.length > maxWords || !spokenWords.length) return false;
   if (heardWords.length === 2) {
     return spokenWords.some(
       (word, i) => word === heardWords[0] && spokenWords[i + 1] === heardWords[1],

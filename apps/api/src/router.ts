@@ -112,6 +112,8 @@ export interface RouterDeps {
   email?: TransactionalEmailProvider;
   onEmailError?: (error: unknown) => void;
   speechSummary?: VoiceDeps["speechSummary"];
+  notificationSummary?: VoiceDeps["notificationSummary"];
+  cancelNativeRuns?: (runIds: string[]) => Promise<void>;
   env: {
     ticketBoardEnabled?: boolean;
     navLinks?: NavLink[];

@@ -67,7 +67,7 @@ it("opens recognition before speech and stays armed through silence and an unmat
   expect(ear.isRunning).toBe(true);
   fake.onText?.("今天天气不错");
   fake.finish.mockResolvedValueOnce("今天天气不错");
-  await vi.advanceTimersByTimeAsync(800);
+  await vi.advanceTimersByTimeAsync(3_200);
   expect(onWake).not.toHaveBeenCalled();
   expect(fake.start).toHaveBeenCalledTimes(2);
   expect(ear.isRunning).toBe(true);
@@ -81,12 +81,22 @@ it("waits for the final utterance so the command after the name is retained", as
   expect(onWake).not.toHaveBeenCalled();
   fake.onText?.("小雨帮我查邮件");
   fake.finish.mockResolvedValueOnce("小雨，帮我查邮件");
-  await vi.advanceTimersByTimeAsync(800);
+  await vi.advanceTimersByTimeAsync(3_200);
   expect(onWake).toHaveBeenCalledWith(
     expect.objectContaining({ bot: { id: "a", name: "小雨" }, rest: "帮我查邮件" }),
   );
   expect(ear.isRunning).toBe(false);
   expect(fake.trackStop).toHaveBeenCalled();
+});
+it("does not send just because partial text stops updating while the user is still talking", async () => {
+  const ear = listener(),
+    onWake = vi.fn();
+  await ear.start({ onWake }, [{ id: "a", name: "小雨" }]);
+  fake.sample = 138;
+  fake.onText?.("小雨帮我");
+  await vi.advanceTimersByTimeAsync(5_000);
+  expect(fake.finish).not.toHaveBeenCalled();
+  expect(onWake).not.toHaveBeenCalled();
 });
 
 it("does not open a delayed microphone after exiting mode", async () => {
@@ -113,6 +123,6 @@ it("flushes a lone name even when the recognizer sends no partial", async () => 
   await vi.advanceTimersByTimeAsync(200);
   fake.sample = 128;
   fake.finish.mockResolvedValueOnce("小雨");
-  await vi.advanceTimersByTimeAsync(1_400);
+  await vi.advanceTimersByTimeAsync(3_200);
   expect(onWake).toHaveBeenCalledWith(expect.objectContaining({ rest: "" }));
 });

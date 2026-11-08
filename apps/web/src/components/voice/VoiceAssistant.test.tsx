@@ -19,6 +19,7 @@ const fake = vi.hoisted(() => ({
   intercept: null as any,
   announce: vi.fn(() => true),
   get: vi.fn(),
+  prepare: vi.fn(),
   bridge: undefined as any,
 }));
 vi.mock("../../lib/call-session", () => ({
@@ -51,7 +52,7 @@ vi.mock("../../lib/announcer", async (original) => ({
   ...(await original<typeof import("../../lib/announcer")>()),
   announcer: { announce: fake.announce, clear: vi.fn(), setBlockedCheck: vi.fn() },
 }));
-const client = { threads: { get: fake.get } };
+const client = { threads: { get: fake.get }, voice: { prepare: fake.prepare } };
 let root: ReturnType<typeof createRoot>;
 let host: HTMLDivElement;
 const bot = (id = "a", patch: Partial<Bot> = {}) =>
@@ -86,6 +87,7 @@ beforeEach(() => {
   });
   fake.announce.mockReturnValue(true);
   fake.get.mockResolvedValue({ run: null, messages: [] });
+  fake.prepare.mockResolvedValue({ ready: true, utterances: ["检查完成，请查看结果"] });
   host = document.createElement("div");
   document.body.append(host);
   root = createRoot(host);
@@ -169,7 +171,7 @@ it("shows a microphone/recognition error and supports retry without changing bot
   expect(fake.start).toHaveBeenCalledTimes(2);
 });
 
-it("notifies a completed new reply once, using its full first paragraph instead of preview", async () => {
+it("notifies a completed reply once using the AI summary instead of the original text", async () => {
   prefs("a", false, true);
   const initial = bot();
   await render([initial]);
@@ -186,10 +188,15 @@ it("notifies a completed new reply once, using its full first paragraph instead 
   const final = bot("a", { preview: "错误的预览", updatedAt: "2" });
   await render([final]);
   expect(fake.announce).toHaveBeenCalledWith(
-    "收到Crying | 财务经理发来的消息：检查完成。无需修改。",
+    "收到Crying | 财务经理发来的消息：检查完成，请查看结果",
     "a",
     expect.any(Function),
   );
+  expect(fake.prepare).toHaveBeenCalledWith({
+    botId: "a",
+    text: "检查完成。无需修改。\n\n详细内容不播报。",
+    purpose: "notification",
+  });
   await render([bot("a", { ...final, updatedAt: "3" })]);
   expect(fake.announce).toHaveBeenCalledOnce();
 });
@@ -217,9 +224,10 @@ it("establishes a baseline when notifications are enabled during a running task"
     run: null,
     messages: [{ id: "new", role: "bot", blocks: [{ kind: "text", text: "新任务已完成。" }] }],
   });
+  fake.prepare.mockResolvedValue({ ready: true, utterances: ["新任务已完成"] });
   await render([bot("a", { updatedAt: "2" })]);
   expect(fake.announce).toHaveBeenCalledWith(
-    expect.stringContaining("新任务已完成。"),
+    expect.stringContaining("新任务已完成"),
     "a",
     expect.any(Function),
   );

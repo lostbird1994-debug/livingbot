@@ -1,5 +1,4 @@
 import { speakable } from "@rakazo/core";
-import { firstReplyParagraph } from "@rakazo/core/message-quote";
 import { speaker } from "./tts";
 
 /**
@@ -11,15 +10,15 @@ import { speaker } from "./tts";
 const MIN_GAP_MS = 6_000;
 const MAX_QUEUE = 3;
 /** Long enough for the point, short enough to stay a notification. */
-const MAX_CHARS = 90;
+const MAX_CHARS = 20;
 const CHIME_GAIN = 0.045;
 const CHIME_MS = 110;
 
-/** The bot's own name, then the first thing worth hearing from its message. */
+/** Only accepts the server's short notification, never a full chat reply. */
 export function announcementLine(botName: string, message: string): string {
-  const text = speakable(firstReplyParagraph(message));
+  const text = speakable(message);
   if (!text) return "";
-  const body = text.length > MAX_CHARS ? `${text.slice(0, MAX_CHARS - 1).trimEnd()}…` : text;
+  const body = Array.from(text).length <= MAX_CHARS ? text : "有新消息，请查看";
   return `收到${botName}发来的消息：${body}`;
 }
 

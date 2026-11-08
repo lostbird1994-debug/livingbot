@@ -1,5 +1,10 @@
 import { ORPCError } from "@orpc/server";
-import type { AdapterContext, SecretStore } from "@rakazo/adapter-kit";
+import type {
+  AdapterContext,
+  SecretStore,
+  VoiceProvider,
+  VoiceSynthesizeRequest,
+} from "@rakazo/adapter-kit";
 import { VoiceAccountError } from "@rakazo/adapter-kit";
 import {
   createOpenAiCompatibleFetch,
@@ -51,12 +56,14 @@ import type { SpeechSummarizer } from "./speech-summary.js";
 import { createDashscopeLiveSessions } from "./voice-live.js";
 
 export interface VoiceDeps {
+  shutdownSignal?: AbortSignal;
   prisma: PrismaClient;
   secrets: SecretStore;
   /** The instance flag (`MCP_ALLOW_PRIVATE_ENDPOINT`). */
   env?: { mcpAllowPrivateEndpoint?: boolean };
   /** Set only when `VOICE_SUMMARY_MIN_CHARS` turns spoken summaries on. */
   speechSummary?: { summarize: SpeechSummarizer; minChars: number };
+  notificationSummary?: SpeechSummarizer;
 }
 
 /** A self-hosted speech server on a private address is limited like model endpoints. */
@@ -491,6 +498,7 @@ export async function prepareVoice(
     botId?: string;
     scope?: SettingsScope;
     signal?: AbortSignal;
+    purpose?: "speech" | "notification";
   },
 ) {
   try {
@@ -500,6 +508,12 @@ export async function prepareVoice(
       return { ready: false, utterances: [] as string[] };
     }
     throw error;
+  }
+  if (input.purpose === "notification") {
+    const summary = input.botId
+      ? await deps.notificationSummary?.(actor, input.botId, input.text, input.signal)
+      : null;
+    return { ready: true, utterances: [summary || "有新消息，请查看"] };
   }
   return { ready: true, utterances: await spokenUtterances(deps, actor, input) };
 }
@@ -529,6 +543,21 @@ export async function synthesizeVoice(
     signal?: AbortSignal;
   },
 ) {
+  const { provider, request } = await speechRequest(deps, actor, input);
+  return provider.synthesize(request, voiceContext(actor, input.signal));
+}
+
+async function speechRequest(
+  deps: VoiceDeps,
+  actor: Actor,
+  input: {
+    text: string;
+    voiceId?: string;
+    botId?: string;
+    scope?: SettingsScope;
+    signal?: AbortSignal;
+  },
+): Promise<{ provider: VoiceProvider; request: VoiceSynthesizeRequest }> {
   const target = await resolveVoiceTarget(deps, actor, input);
   const text = input.text.trim();
   if (!text) throw new ORPCError("BAD_REQUEST", { message: "Nothing to speak." });
@@ -536,16 +565,16 @@ export async function synthesizeVoice(
     throw new ORPCError("BAD_REQUEST", { message: "That utterance is too long to speak." });
   }
   const provider = await voiceProviderFor(deps, actor, target.cred.provider);
-  return provider.synthesize(
-    {
+  return {
+    provider,
+    request: {
       text,
       voiceId: target.voiceId,
       apiKey: target.apiKey,
       model: target.cred.speechModel || undefined,
       signal: input.signal,
     },
-    voiceContext(actor, input.signal),
-  );
+  };
 }
 
 export async function transcribeVoice(
@@ -610,7 +639,72 @@ export function mountVoiceHttpRoutes(
   deps: VoiceDeps,
   authenticate: (c: Context) => Promise<Actor | null>,
 ) {
-  const liveSessions = createDashscopeLiveSessions();
+  const liveSessions = createDashscopeLiveSessions(deps.shutdownSignal);
+
+  app.post("/api/voice/speak-stream", async (c) => {
+    const actor = await authenticate(c);
+    if (!actor) return c.json({ error: "Unauthorized" }, 401);
+    const raw = await readBoundedBody(c.req.raw, MAX_SPEAK_REQUEST_BYTES);
+    if (raw === null) return c.json({ error: "Request body is too large." }, 413);
+    const body = parseVoiceRequestBody(raw) as Record<string, unknown>;
+    const controller = new AbortController();
+    const signal = AbortSignal.any([
+      controller.signal,
+      c.req.raw.signal,
+      AbortSignal.timeout(SPEAK_TIMEOUT_MS),
+    ]);
+    try {
+      const { provider, request } = await runAsTenant(actor, () =>
+        speechRequest(deps, actor, {
+          text: String(body.text ?? ""),
+          voiceId: optionalString(body.voiceId),
+          botId: optionalString(body.botId),
+          scope: SettingsScopeSchema.safeParse(body.scope).data,
+          signal,
+        }),
+      );
+      if (!provider.streamSpeech) return c.json({ error: "Streaming is unavailable" }, 409);
+      const iterator = provider
+        .streamSpeech(request, voiceContext(actor, signal))
+        [Symbol.asyncIterator]();
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream<Uint8Array>({
+        async pull(output) {
+          try {
+            const result = await iterator.next();
+            if (result.done) {
+              output.close();
+              return;
+            }
+            output.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  pcm: Buffer.from(result.value.bytes).toString("base64"),
+                  sampleRate: result.value.sampleRate,
+                }) + "\n",
+              ),
+            );
+          } catch {
+            output.error(new Error("语音连接中断，请查看文字回复。"));
+            controller.abort();
+          }
+        },
+        async cancel() {
+          controller.abort();
+          await iterator.return?.();
+        },
+      });
+      return new Response(stream, {
+        headers: {
+          "content-type": "application/x-ndjson",
+          "cache-control": "no-store",
+        },
+      });
+    } catch (error) {
+      controller.abort();
+      return voiceHttpError(c, error);
+    }
+  });
 
   app.post("/api/voice/speak", async (c) => {
     const actor = await authenticate(c);
@@ -696,7 +790,7 @@ export function mountVoiceHttpRoutes(
         if (!id) return c.json({ error: "Missing stream session." }, 400);
         if (action === "feed") {
           const pcm = Buffer.from(String((body as { pcm?: unknown }).pcm ?? ""), "base64");
-          const snapshot = liveSessions.feed(id, new Uint8Array(pcm), owner);
+          const snapshot = await liveSessions.feed(id, new Uint8Array(pcm), owner);
           if (!snapshot) return c.json({ error: "Stream session not found" }, 404);
           return c.json(snapshot);
         }

@@ -2,6 +2,10 @@ import * as adapters from "@rakazo/adapters";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createDashscopeLiveSessions } from "./voice-live.js";
 
+vi.mock("./voice-turn.js", () => ({
+  createLocalTurnDetector: () => ({ feed: async () => null, close: () => {} }),
+}));
+
 class FakeSocket {
   static instances: FakeSocket[] = [];
   listeners = new Map<string, Array<(event: { data?: unknown }) => void>>();
@@ -50,7 +54,7 @@ it("binds live recognition to its user and space, including cancellation", async
   const started = await sessions.start("test-key", "owner-space");
   const socket = FakeSocket.instances[0]!;
   expect(socket.options).toEqual({ headers: { Authorization: "bearer test-key" } });
-  expect(sessions.feed(started.id, new Uint8Array([1, 2]), "different-space")).toBeNull();
+  expect(await sessions.feed(started.id, new Uint8Array([1, 2]), "different-space")).toBeNull();
   expect(await sessions.flush(started.id, "different-space")).toBeNull();
   expect(sessions.abort(started.id, "different-user")).toBe(false);
   expect(socket.closed).toBe(false);
@@ -64,7 +68,7 @@ it("waits for the finished task, retaining every final sentence", async () => {
   socket.emit("open");
   socket.emit("message", JSON.stringify({ header: { event: "task-started" } }));
   socket.result("First sentence.", true);
-  sessions.feed(id, new Uint8Array([1, 2]), "owner");
+  await sessions.feed(id, new Uint8Array([1, 2]), "owner");
   let settled = false;
   const finishing = sessions.flush(id, "owner").then((result) => {
     settled = true;
@@ -90,6 +94,8 @@ it("falls back to the complete recording instead of returning incomplete text", 
 it("reports queue overflow instead of silently discarding audio", async () => {
   const sessions = createDashscopeLiveSessions();
   const { id } = await sessions.start("test-key", "owner");
-  expect(sessions.feed(id, new Uint8Array(48_001), "owner")?.error).toContain("complete recording");
+  expect((await sessions.feed(id, new Uint8Array(48_001), "owner"))?.error).toContain(
+    "complete recording",
+  );
   sessions.abort(id, "owner");
 });

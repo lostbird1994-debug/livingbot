@@ -3710,6 +3710,7 @@ describe("sendThreadMessage", () => {
 
 describe("stopThreadRuns", () => {
   it("snapshots every lease when group members share a team computer", async () => {
+    const cancelNativeRuns = vi.fn().mockResolvedValue(undefined);
     const releaseScreen = vi.fn().mockResolvedValue(undefined);
     const execute = vi.fn(async function* () {
       yield { type: "exit", code: 0 };
@@ -3794,6 +3795,7 @@ describe("stopThreadRuns", () => {
     await stopThreadRuns(
       {
         prisma,
+        cancelNativeRuns,
         sandbox: { releaseScreen, execute } as unknown as SandboxProvider,
         events: { notify: vi.fn().mockResolvedValue(undefined) } as never,
       },
@@ -3801,6 +3803,7 @@ describe("stopThreadRuns", () => {
       target,
     );
 
+    expect(cancelNativeRuns).toHaveBeenCalledExactlyOnceWith(["run-a", "run-b"]);
     expect(transaction.computerExecutionLease.findMany).toHaveBeenCalledWith({
       where: { runId: { in: ["run-a", "run-b"] } },
       select: { computerId: true, botId: true, runId: true, fence: true },

@@ -2,8 +2,6 @@ import { spokenMemory } from "./echo.js";
 
 /** Lower echo match while audio plays: most of what the mic hears is the speaker. */
 const PLAYBACK_ECHO_RATIO = 0.4;
-/** The only one-word turns worth cutting a reply short for. */
-const INTERRUPT_WORDS = new Set(["stop", "wait", "hold on", "pause", "no"]);
 
 /**
  * How long an interim phrase must stand before it cuts playback.
@@ -11,16 +9,18 @@ const INTERRUPT_WORDS = new Set(["stop", "wait", "hold on", "pause", "no"]);
  */
 export const INTERIM_BARGE_IN_MS = 300;
 
-/** A sentence, or one interruption word, that is not the reply leaking back into the mic. */
+/** Chinese counts by character; other languages count by spoken word. */
 export function isCallBargeIn(text: string): boolean {
   if (spokenMemory.isEcho(text, PLAYBACK_ECHO_RATIO)) return false;
   const cleaned = cleanWords(text);
-  return cleaned.includes(" ") || INTERRUPT_WORDS.has(cleaned);
+  const han = cleaned.match(/\p{Script=Han}/gu)?.length ?? 0;
+  const words = cleaned.replace(/\p{Script=Han}/gu, " ").match(/[\p{L}\p{N}]+/gu)?.length ?? 0;
+  return han + words >= 2;
 }
 
 /** An interim is revised word by word, so one stray word never cuts playback. */
 export function isInterimCallBargeIn(text: string): boolean {
-  return cleanWords(text).includes(" ") && !spokenMemory.isEcho(text, PLAYBACK_ECHO_RATIO);
+  return isCallBargeIn(text);
 }
 
 function cleanWords(text: string): string {

@@ -717,6 +717,10 @@ export interface SpeechClip {
   bytes: Uint8Array;
   mimeType: "audio/mpeg" | "audio/wav" | "audio/ogg";
 }
+export interface SpeechPcmChunk {
+  bytes: Uint8Array;
+  sampleRate: number;
+}
 
 export interface VoiceCapabilities {
   catalog: boolean;

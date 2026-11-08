@@ -145,7 +145,7 @@ import {
   VoiceInfoSchema,
   VoiceStatusSchema,
 } from "./domain.js";
-import { ComputerCommandSchema, ProductEventSchema } from "./events.js";
+import { ComputerCommandSchema, ProductEventSchema, VoicePlaybackReceiptSchema } from "./events.js";
 import { Id, IsoDate, RunStatus, ThinkingLevelSchema } from "./ids.js";
 import {
   IntegrationProviderConfigSchema,
@@ -195,6 +195,7 @@ const structuredMentionTarget = z.discriminatedUnion("kind", [
 ]);
 
 const threadSendFields = threadTarget.safeExtend({
+  voicePlayback: VoicePlaybackReceiptSchema.optional(),
   imageHandling: z.enum(["confirm", "file"]).optional(),
   text: z.string().optional(),
   artifactIds: z.array(Id).max(ATTACHMENT_COUNT_CEILING).optional(),
@@ -566,6 +567,7 @@ export const appContract = {
       .input(
         threadTarget.safeExtend({
           text: z.string().min(1),
+          voicePlayback: VoicePlaybackReceiptSchema.optional(),
           /** Carries the call id, so a turn taken mid-run stays in the call's card. */
           clientNonce: z.string().min(1).max(200).optional(),
         }),
@@ -1446,6 +1448,7 @@ export const appContract = {
           voiceId: z.string().max(120).optional(),
           botId: Id.optional(),
           scope: SettingsScopeSchema.optional(),
+          purpose: z.enum(["speech", "notification"]).optional(),
         }),
       )
       .output(z.object({ ready: z.boolean(), utterances: z.array(z.string()) })),

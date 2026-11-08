@@ -302,7 +302,7 @@ export function VoiceAssistant({
       requests.current.set(bot.id, request);
       void rpc.threads
         .get({ botId: bot.id })
-        .then((snapshot) => {
+        .then(async (snapshot) => {
           if (
             !alive.current ||
             requests.current.get(bot.id) !== request ||
@@ -327,7 +327,19 @@ export function VoiceAssistant({
             .filter((block) => block.kind === "text")
             .map((block) => block.text)
             .join("\n\n");
-          const line = announcementLine(bot.name, text);
+          const notification = await rpc.voice.prepare({
+            botId: bot.id,
+            text: text.slice(0, 20000),
+            purpose: "notification",
+          });
+          if (
+            !alive.current ||
+            requests.current.get(bot.id) !== request ||
+            !allowed() ||
+            !notification.ready
+          )
+            return;
+          const line = announcementLine(bot.name, notification.utterances.join(""));
           if (line) announcer.announce(line, bot.id, allowed);
         })
         .catch(() => {

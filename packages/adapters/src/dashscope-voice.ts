@@ -5,6 +5,7 @@ import type {
   AdapterContext,
   AdapterDescriptor,
   SpeechClip,
+  SpeechPcmChunk,
   VoiceCapabilities,
   VoiceInfo,
   VoiceProvider,
@@ -134,6 +135,7 @@ async function synthesizeOverSocket(
   voice: string,
   apiKey: string,
   signal: AbortSignal,
+  onChunk?: (chunk: Buffer) => void,
 ): Promise<Buffer> {
   const Ctor = await dashscopeSocketConstructor();
   return new Promise((resolve, reject) => {
@@ -202,7 +204,12 @@ async function synthesizeOverSocket(
     socket.addEventListener("message", (event) => {
       const data = event.data;
       if (typeof data !== "string") {
-        parts.push(asBuffer(data));
+        parts.push(
+          asBuffer(data).then((chunk) => {
+            onChunk?.(chunk);
+            return onChunk ? Buffer.alloc(0) : chunk;
+          }),
+        );
         return;
       }
       let msg: { header?: { event?: string; error_message?: string } };
@@ -232,6 +239,9 @@ async function synthesizeOverSocket(
 
     socket.addEventListener("error", () => {
       if (!settled) finish(new Error("The speech socket failed. Check the key and the network."));
+    });
+    socket.addEventListener("close", () => {
+      if (!settled) finish(new Error("The speech socket disconnected."));
     });
   });
 }
@@ -310,6 +320,60 @@ export class DashScopeVoiceProvider implements VoiceProvider {
 
   listVoices(_apiKey: string, _context: AdapterContext): Promise<VoiceInfo[]> {
     return Promise.resolve([...CLOUD_VOICES]);
+  }
+  async *streamSpeech(
+    request: VoiceSynthesizeRequest,
+    context: AdapterContext,
+  ): AsyncGenerator<SpeechPcmChunk> {
+    const text = request.text.trim();
+    if (!text || text.length > MAX_SPEAK_CHARS) throw new Error("Invalid speech length.");
+    const controller = new AbortController();
+    const signal = AbortSignal.any([
+      controller.signal,
+      context.signal,
+      ...(request.signal ? [request.signal] : []),
+      AbortSignal.timeout(TTS_TIMEOUT_MS),
+    ]);
+    const voice = CLOUD_VOICES.some((entry) => entry.id === request.voiceId)
+      ? request.voiceId
+      : DEFAULT_VOICE;
+    const queue: Buffer[] = [];
+    let queuedBytes = 0;
+    let done = false;
+    let failure: unknown;
+    let wake: (() => void) | undefined;
+    const work = synthesizeOverSocket(text, voice, request.apiKey, signal, (chunk) => {
+      queuedBytes += chunk.length;
+      if (queuedBytes > 4 * 1024 * 1024) {
+        controller.abort();
+        return;
+      }
+      queue.push(chunk);
+      wake?.();
+    })
+      .catch((error) => {
+        failure = error;
+      })
+      .finally(() => {
+        done = true;
+        wake?.();
+      });
+    try {
+      while (!done || queue.length) {
+        const chunk = queue.shift();
+        if (chunk) {
+          queuedBytes -= chunk.length;
+          yield { bytes: new Uint8Array(chunk), sampleRate: TTS_RATE };
+        } else if (!done)
+          await new Promise<void>((resolve) => {
+            wake = resolve;
+          });
+      }
+      if (failure) throw failure;
+    } finally {
+      controller.abort();
+      await work;
+    }
   }
 
   async synthesize(request: VoiceSynthesizeRequest, context: AdapterContext): Promise<SpeechClip> {

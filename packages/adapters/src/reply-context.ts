@@ -73,5 +73,11 @@ export async function loadReplyContext(
       replyTo: { select: selection },
     },
   });
-  return source ? replyContext(source, threadId) : undefined;
+  if (!source) return undefined;
+  const playback = messageBlocks(source)
+    .filter((block) => block.kind === "text" && block.voicePlayback)
+    .map((block) =>
+      block.kind === "text" ? blocksToAgentHistoryText([{ ...block, text: "" }]) : "",
+    );
+  return [replyContext(source, threadId), ...playback].filter(Boolean).join("\n\n") || undefined;
 }

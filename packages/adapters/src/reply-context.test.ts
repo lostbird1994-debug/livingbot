@@ -24,6 +24,25 @@ const target = {
 };
 
 describe("reply context", () => {
+  it("keeps interrupted playback as quoted context without changing the written reply", async () => {
+    const f = harness();
+    f.findFirst.mockResolvedValueOnce({
+      id: "user-reply",
+      threadId: "thread-1",
+      role: "user",
+      blocks: [
+        {
+          kind: "text",
+          text: "Please continue",
+          voicePlayback: { messageId: "assistant-reply", heardText: "Only this part" },
+        },
+      ],
+    } as never);
+    const context = await loadReplyContext(f.prisma, "thread-1", "user-reply");
+    expect(context).toContain("estimated portion was heard");
+    expect(context).toContain('"heardText":"Only this part"');
+    expect(context).not.toContain("Please continue");
+  });
   it("loads the selected message independently of recent conversation history", async () => {
     const { prisma, findFirst } = harness(target);
     const context = await loadReplyContext(prisma, "thread-1", "user-reply");

@@ -14,7 +14,7 @@ describe("call barge-in", () => {
     spokenMemory.clear();
   });
 
-  it.each(["stop", "Stop!", "WAIT", "hold on", "Hold on.", "pause", "no"])(
+  it.each(["hold on", "Hold on.", "等一下", "别讲了", "重新来", "小哭"])(
     "lets the interruption %j cut a reply short",
     (text) => {
       expect(isCallBargeIn(text)).toBe(true);
@@ -30,12 +30,20 @@ describe("call barge-in", () => {
     expect(isCallBargeIn("yeah")).toBe(false);
     expect(isInterimCallBargeIn("yeah")).toBe(false);
     expect(isInterimCallBargeIn("stop")).toBe(false);
+    expect(isCallBargeIn("停")).toBe(false);
+    expect(isInterimCallBargeIn("嗯")).toBe(false);
+    expect(isCallBargeIn("stop")).toBe(false);
   });
 
   it("ignores the reply leaking back at the playback threshold", () => {
     spokenMemory.remember(SPOKEN);
     expect(isCallBargeIn("I am here what about that")).toBe(false);
     expect(isInterimCallBargeIn("I am here and hearing")).toBe(false);
+  });
+  it("keeps Chinese speaker echo from interrupting itself", () => {
+    spokenMemory.remember("已经检查完今天的任务，还有两项需要你确认。");
+    expect(isInterimCallBargeIn("已经检查完今天的任务")).toBe(false);
+    expect(isCallBargeIn("等一下")).toBe(true);
   });
 
   it("ignores an empty transcript", () => {

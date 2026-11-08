@@ -399,7 +399,13 @@ export function threadsRoutes(ctx: RouterContext) {
             threadId: target.threadId,
             botId: target.botId,
             userId: context.actor.userId,
-            blocks: [{ kind: "text", text: input.text }],
+            blocks: [
+              {
+                kind: "text",
+                text: input.text,
+                ...(input.voicePlayback ? { voicePlayback: input.voicePlayback } : {}),
+              },
+            ],
             prompt: input.text,
             trigger: "follow_up",
             clientNonce: input.clientNonce,
@@ -431,7 +437,13 @@ export function threadsRoutes(ctx: RouterContext) {
           });
           const botId = group?.members[0]?.botId;
           if (!botId) throw new IsolationError();
-          const blocks = [{ kind: "text" as const, text: input.text }];
+          const blocks = [
+            {
+              kind: "text" as const,
+              text: input.text,
+              ...(input.voicePlayback ? { voicePlayback: input.voicePlayback } : {}),
+            },
+          ];
           const message = await createThreadMessageInTransaction(tx, {
             threadId: target.threadId,
             role: "user",

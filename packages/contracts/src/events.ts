@@ -104,8 +104,16 @@ export const BotSettingsValuesSchema = z.object({
 });
 export type BotSettingsValues = z.infer<typeof BotSettingsValuesSchema>;
 
+export const VoicePlaybackReceiptSchema = z.object({
+  messageId: Id,
+  heardText: z.string().max(8000),
+});
 export const MessageBlock = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("text"), text: z.string() }),
+  z.object({
+    kind: z.literal("text"),
+    text: z.string(),
+    voicePlayback: VoicePlaybackReceiptSchema.optional(),
+  }),
   z.object({
     kind: z.literal("card"),
     lines: z.array(z.object({ k: z.string(), v: z.string() })),

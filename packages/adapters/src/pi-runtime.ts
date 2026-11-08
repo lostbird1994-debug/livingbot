@@ -1,5 +1,3 @@
-import { isLocalAgentModel, runLocalAgent } from "./local-agent-runtime.js";
-import { isOpenClawModel, openClawModelStream } from "./openclaw-model-stream.js";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
 import { Agent } from "@earendil-works/pi-agent-core";
 import type {
@@ -31,6 +29,8 @@ import { getLogger } from "@rakazo/logging";
 import { uncertainEffectResult } from "./approval-effect.js";
 import { automated, withAutomatedLabels } from "./automated-messages.js";
 import { withCloudflareAuth } from "./cloudflare-ai-gateway.js";
+import { isLocalAgentModel, runLocalAgent } from "./local-agent-runtime.js";
+import { isOpenClawModel, openClawModelStream } from "./openclaw-model-stream.js";
 import { estimatePiImageTokens } from "./pi-image-context.js";
 import {
   assistantText,
@@ -272,7 +272,11 @@ export class PiAgentRuntime implements AgentRuntime {
         resumeHost = host;
         const tools = toAgentTools(toolDefs, host);
         const seenSteeringIds: string[] = [];
-        const initialSteering = request.claimSteering ? await request.claimSteering([]) : [];
+        // OpenClaw owns its live tool loop and claims follow-ups through its native bridge.
+        const initialSteering =
+          request.claimSteering && !isOpenClawModel(request.model)
+            ? await request.claimSteering([])
+            : [];
         let hasCurrentImages = Boolean(
           request.currentRunRequiresImageInput ||
             (request.currentTurnImages?.length && !request.currentTurnImageFileFallback) ||
@@ -453,7 +457,17 @@ export class PiAgentRuntime implements AgentRuntime {
           streamFn: (_m, ctx, options) =>
             isOpenClawModel(request.model)
               ? openClawModelStream(
-                  request,
+                  {
+                    ...request,
+                    claimSteering: request.claimSteering
+                      ? async (ids) => {
+                          seenSteeringIds.push(...ids);
+                          const items = await request.claimSteering!([...new Set(seenSteeringIds)]);
+                          seenSteeringIds.push(...items.map((item) => item.id));
+                          return items;
+                        }
+                      : undefined,
+                  },
                   ctx,
                   options,
                   context,

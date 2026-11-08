@@ -47,6 +47,7 @@ vi.mock("./dictation.js", () => ({
 vi.mock("./tts.js", () => ({
   speaker: {
     speak: vi.fn(async () => undefined),
+    speakStream: vi.fn(async () => undefined),
     stop: vi.fn(),
     isSpeaking: vi.fn(() => false),
     subscribe: vi.fn(() => () => undefined),
@@ -546,16 +547,16 @@ describe("call session", () => {
     expect(getSnapshot()?.phase).toBe("thinking");
   });
 
-  it("lets a one-word interruption cut the reply short", async () => {
+  it("lets a Chinese interruption cut the reply short", async () => {
     await answeredCall({ botId: "call-bot", botName: "Ada", transcribe: false });
     await speakingReply("Booked for Friday");
     send.mockClear();
     vi.mocked(speaker.stop).mockClear();
 
-    await heard("stop");
+    await heard("等一下");
 
     expect(speaker.stop).toHaveBeenCalled();
-    expect(send).toHaveBeenCalledWith(expect.objectContaining({ text: "stop" }));
+    expect(send).toHaveBeenCalledWith(expect.objectContaining({ text: "等一下" }));
   });
 
   it("keeps playing through a one-word backchannel", async () => {
@@ -853,6 +854,29 @@ describe("call session", () => {
       "Booked for Friday",
       expect.objectContaining({ messageId: "message-1" }),
     );
+  });
+  it("streams stable sentences in voice mode and releases the unfinished tail only at completion", async () => {
+    const chunks: string[] = [];
+    vi.mocked(speaker.speakStream).mockImplementationOnce(async (source) => {
+      for await (const text of source) chunks.push(text);
+      return undefined;
+    });
+    await answeredCall({ botId: "call-bot", botName: "Ada", transcribe: false, voiceMode: true });
+    const feed = vi.mocked(runThreadSubscription).mock.calls[0]?.[0];
+    getThread.mockResolvedValue(
+      snapshot([botMessage("message-1", "检查完成。还需要")], runningRun) as never,
+    );
+    await heard("帮我检查任务");
+    await flushMicrotasks();
+    expect(chunks).toEqual(["检查完成。"]);
+    expect(speak).not.toHaveBeenCalled();
+    getThread.mockResolvedValue(
+      snapshot([botMessage("message-1", "检查完成。还需要确认时间")]) as never,
+    );
+    await feed?.refresh();
+    await flushMicrotasks();
+    expect(chunks).toEqual(["检查完成。", "还需要确认时间"]);
+    expect(speaker.speakStream).toHaveBeenCalledTimes(1);
   });
 
   it("does not speak a message a refresh re-delivers", async () => {

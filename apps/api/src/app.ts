@@ -729,6 +729,20 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       : undefined;
 
   const router = createRouter({
+    cancelNativeRuns: (runIds) => executor.reconcileExternalAgents({ runIds }),
+    notificationSummary: createSpeechSummarizer(
+      {
+        prisma,
+        runtime,
+        resolveModel: async (scope) => {
+          const model = await executor.resolveModel(scope);
+          return model.provider === "openai-compatible" && /^(openclaw|native)\//.test(model.id)
+            ? executor.resolveModel({ userId: scope.userId, spaceId: scope.spaceId })
+            : model;
+        },
+      },
+      { notification: true },
+    ),
     speechSummary:
       env.voiceSummaryMinChars === undefined
         ? undefined
@@ -976,11 +990,15 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   });
   mountAccountExportRoute(app, { prisma, auth, artifacts, home });
   mountAuditExportRoute(app, { prisma, sessionActor });
-  mountVoiceHttpRoutes(app, { prisma, secrets, env }, async (c) => {
-    const actor = await sessionActor(c.req.raw);
-    if (actor) enrichLogContext({ "user.id": actor.userId, "space.id": actor.spaceId });
-    return actor;
-  });
+  mountVoiceHttpRoutes(
+    app,
+    { prisma, secrets, env, shutdownSignal: shutdown.signal },
+    async (c) => {
+      const actor = await sessionActor(c.req.raw);
+      if (actor) enrichLogContext({ "user.id": actor.userId, "space.id": actor.spaceId });
+      return actor;
+    },
+  );
   mountAccountImportRoute(
     app,
     {

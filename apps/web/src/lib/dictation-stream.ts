@@ -47,6 +47,12 @@ function toBase64(bytes: Uint8Array): string {
 }
 
 type AudioContextCtor = new () => AudioContext;
+export type VoiceTurn = {
+  available: boolean;
+  complete: boolean;
+  speechProbability: number;
+  silenceMs: number;
+};
 
 function contextCtor(): AudioContextCtor | undefined {
   if (typeof AudioContext === "function") return AudioContext;
@@ -64,6 +70,7 @@ export class DictationStream {
   private headers = new Headers({ "content-type": "application/json" });
   private onText: ((text: string) => void) | null = null;
   private onFailure: (() => void) | null = null;
+  private onTurn: ((turn: VoiceTurn) => void) | null = null;
   private pending: Float32Array[] = [];
   private pendingSamples = 0;
   private committed = "";
@@ -76,6 +83,7 @@ export class DictationStream {
     headers: Headers,
     onText: (text: string) => void,
     onFailure?: () => void,
+    onTurn?: (turn: VoiceTurn) => void,
   ): Promise<boolean> {
     const Ctor = contextCtor();
     if (!Ctor || typeof Ctor.prototype.createScriptProcessor !== "function") return false;
@@ -85,6 +93,7 @@ export class DictationStream {
     this.headers.set("content-type", "application/json");
     this.onText = onText;
     this.onFailure = onFailure ?? null;
+    this.onTurn = onTurn ?? null;
     // Capture before the network handshake, so a short name cannot disappear while
     // the recognition session opens. The bounded queue is sent when the id arrives.
     try {
@@ -192,6 +201,7 @@ export class DictationStream {
           partial?: string;
           finals?: string[];
           error?: string | null;
+          turn?: VoiceTurn | null;
         };
         if (data.error) {
           this.fail();
@@ -200,6 +210,7 @@ export class DictationStream {
         if (data.finals?.length) this.committed += data.finals.join("");
         const text = `${this.committed}${data.partial ?? ""}`;
         if (text) this.onText?.(text);
+        if (data.turn?.available && !this.failed) this.onTurn?.(data.turn);
       } catch {
         this.fail();
       }

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { nativeSessionKey, runNativeAgent } from "./openclaw-native-driver.js";
 import type {
   NativeFrame,
   NativeInput,
@@ -7,6 +6,7 @@ import type {
   NativeRecord,
   NativeStore,
 } from "./openclaw-native-driver.js";
+import { nativeSessionKey, runNativeAgent } from "./openclaw-native-driver.js";
 
 class MemoryStore implements NativeStore {
   records = new Map<string, NativeRecord>();
@@ -88,6 +88,14 @@ function fixture(overrides: Partial<NativeInput> = {}) {
 }
 
 describe("native external Agent lifecycle", () => {
+  it("records a pre-dispatch cancellation without opening a native connection", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const f = fixture({ signal: controller.signal });
+    await expect(runNativeAgent(f.input, f.options)).rejects.toMatchObject({ state: "cancelled" });
+    expect(f.calls).toEqual([]);
+    expect(f.store.records.get(f.input.key)?.status).toBe("cancelled");
+  });
   it("isolates sessions by user, bot and group while preserving stable identities", () => {
     expect(nativeSessionKey("u/b/group-1", "main")).toBe(nativeSessionKey("u/b/group-1", "main"));
     for (const scope of ["u/b/group-2", "u/b2/group-1", "u2/b/group-1"])
@@ -206,6 +214,121 @@ describe("native external Agent lifecycle", () => {
     });
     await expect(runNativeAgent(f.input, f.options)).rejects.toThrow("cancelled");
     expect(f.store.records.get(f.input.key)?.status).toBe("cancelled");
+  });
+  it("releases a session on an exact native abort even when the wait cache has no end record", async () => {
+    const controller = new AbortController();
+    const f = fixture({ signal: controller.signal });
+    let nativeId = "";
+    f.setHandler(async (method, params) => {
+      if (method === "agent") {
+        nativeId = params.idempotencyKey;
+        controller.abort();
+        return { runId: nativeId };
+      }
+      if (method === "chat.abort") return { aborted: true, runIds: [nativeId] };
+      return { status: "timeout" };
+    });
+    await expect(runNativeAgent(f.input, f.options)).rejects.toThrow("cancelled");
+    expect(
+      f.store.records.get(`session-owner:${nativeSessionKey(f.input.scope, f.input.agentId)}`)
+        ?.status,
+    ).toBe("cancelled");
+  });
+  it("does not turn a cancellation lifecycle event into a completed answer", async () => {
+    const f = fixture();
+    f.setHandler(async (method, params) => {
+      if (method === "agent") {
+        f.event({
+          event: "agent",
+          payload: {
+            runId: params.idempotencyKey,
+            stream: "lifecycle",
+            data: { phase: "end", status: "cancelled", aborted: true },
+          },
+        });
+        return { runId: params.idempotencyKey };
+      }
+      throw new Error("Must not read final history");
+    });
+    await expect(runNativeAgent(f.input, f.options)).rejects.toThrow("cancelled");
+  });
+  it("forwards new instructions while the native tool loop is running, once per message", async () => {
+    const seen: string[][] = [];
+    const f = fixture({
+      claimSteering: async (ids) => {
+        seen.push(ids);
+        return ids.includes("extra") ? [] : [{ id: "extra", text: "Also check the second file" }];
+      },
+    });
+    let polls = 0;
+    f.setHandler(async (method, params) => {
+      if (method === "agent") return { runId: params.idempotencyKey };
+      if (method === "chat.send") {
+        f.event({
+          event: "chat",
+          payload: {
+            runId: params.idempotencyKey,
+            state: "final",
+            message: { content: [{ type: "text", text: "steered current session." }] },
+          },
+        });
+        return { runId: params.idempotencyKey, status: "started" };
+      }
+      if (method === "agent.wait") return { status: ++polls < 3 ? "timeout" : "ok" };
+      return {
+        messages: [
+          {
+            role: "assistant",
+            timestamp: Date.now(),
+            content: [{ type: "text", text: "Both files checked" }],
+          },
+        ],
+      };
+    });
+    await expect(runNativeAgent(f.input, f.options)).resolves.toBe("Both files checked");
+    expect(f.calls.filter((c) => c.method === "agent")).toHaveLength(1);
+    expect(f.calls.filter((c) => c.method === "chat.send")).toEqual([
+      {
+        method: "chat.send",
+        params: expect.objectContaining({
+          message: "/steer Also check the second file",
+          sessionKey: nativeSessionKey(f.input.scope, f.input.agentId),
+        }),
+      },
+    ]);
+    expect(seen).toEqual([[], ["extra"]]);
+    expect(f.store.records.get(f.input.key)?.steeringIds).toEqual(["extra"]);
+  });
+  it("does not mark a dispatched but refused instruction as delivered", async () => {
+    let delivered = false;
+    const f = fixture({
+      claimSteering: async () => [{ id: "extra", text: "Additional instruction" }],
+      onSteered: () => {
+        delivered = true;
+      },
+    });
+    f.setHandler(async (method, params) => {
+      if (method === "agent") return { runId: params.idempotencyKey };
+      if (method === "agent.wait") return { status: "timeout" };
+      if (method === "chat.send") {
+        f.event({
+          event: "chat",
+          payload: {
+            runId: params.idempotencyKey,
+            state: "final",
+            message: {
+              content: [{ type: "text", text: "⚠️ No active run to steer in this session." }],
+            },
+          },
+        });
+        return { runId: params.idempotencyKey, status: "started" };
+      }
+      throw Error("Unexpected request");
+    });
+    await expect(runNativeAgent(f.input, f.options)).rejects.toThrow("追加指令尚未确认送达");
+    expect(delivered).toBe(false);
+    expect(f.store.records.get(f.input.key)?.steeringIds).toBeUndefined();
+    expect(f.store.records.get(f.input.key)?.status).toBe("unconfirmed");
   });
   it("does not mistake a long silent tool for a failed model stream", async () => {
     const f = fixture();
