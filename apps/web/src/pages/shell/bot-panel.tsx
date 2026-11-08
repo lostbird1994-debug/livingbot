@@ -56,8 +56,8 @@ const ScratchpadSection = lazyComponent(() =>
   import("../ScratchpadSection").then((module) => module.ScratchpadSection),
 );
 
-const KnowledgeSection = lazyComponent(() =>
-  import("../KnowledgeSection").then((module) => module.KnowledgeSection),
+const LoadedContextPanel = lazyComponent(() =>
+  import("../LoadedContextPanel").then((module) => module.LoadedContextPanel),
 );
 
 const rowLabelClass = "text-sm text-foreground";
@@ -100,7 +100,7 @@ export function ComputerModePicker({
   );
 }
 
-export type BotPanelTab = "computer" | "routines" | "settings";
+export type BotPanelTab = "computer" | "routines" | "loaded" | "settings";
 
 /** A bot's profile above its Computer, Routines and Advanced tabs. */
 export function BotSettings({
@@ -148,6 +148,10 @@ export function BotSettings({
   onClear: () => void;
 }) {
   const { t } = useLingui();
+  const [loadedOpened, setLoadedOpened] = useState(tab === "loaded");
+  useEffect(() => {
+    if (tab === "loaded") setLoadedOpened(true);
+  }, [tab]);
   const ids = useId();
   const modelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -545,6 +549,9 @@ export function BotSettings({
           <TabsTrigger value="computer" data-testid="bot-panel-tab-computer">
             <Trans>Files</Trans>
           </TabsTrigger>
+          <TabsTrigger value="loaded" data-testid="bot-panel-tab-loaded">
+            <Trans>Loaded context</Trans>
+          </TabsTrigger>
           <TabsTrigger value="routines" data-testid="bot-panel-tab-routines">
             <Trans>Routines</Trans>
           </TabsTrigger>
@@ -558,7 +565,16 @@ export function BotSettings({
         <TabsContent value="routines" className="pt-4">
           {routines}
         </TabsContent>
-        {/* Stays mounted so scratchpad and knowledge drafts survive a tab switch. */}
+        <TabsContent value="loaded" className="pt-4" keepMounted>
+          {loadedOpened ? (
+            <ErrorBoundary fallback={<SectionLoadFailed />}>
+              <Suspense fallback={null}>
+                <LoadedContextPanel key={bot.id} botId={bot.id} active={tab === "loaded"} />
+              </Suspense>
+            </ErrorBoundary>
+          ) : null}
+        </TabsContent>
+        {/* Keep editable drafts when switching between the bot's tabs. */}
         <TabsContent value="settings" keepMounted data-testid="bot-settings-advanced">
           <section className="mt-6">
             <SectionHeading variant="label" className="mb-2">
@@ -589,11 +605,6 @@ export function BotSettings({
           <ErrorBoundary fallback={<SectionLoadFailed />}>
             <Suspense fallback={null}>
               <ScratchpadSection botId={bot.id} />
-            </Suspense>
-          </ErrorBoundary>
-          <ErrorBoundary fallback={<SectionLoadFailed />}>
-            <Suspense fallback={null}>
-              <KnowledgeSection botId={bot.id} />
             </Suspense>
           </ErrorBoundary>
           <div className="space-y-6 pt-6">

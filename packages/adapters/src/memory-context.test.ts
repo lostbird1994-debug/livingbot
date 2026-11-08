@@ -4,6 +4,7 @@ import {
   loadAgentMemoryContext,
   MEMORY_DOCUMENT_MAX_CHARS,
   MEMORY_TOTAL_MAX_CHARS,
+  previewAgentMemoryContext,
 } from "./memory-context.js";
 import { charLength } from "./utf8.js";
 
@@ -18,6 +19,35 @@ const context: AdapterContext = {
 };
 
 describe("agent memory context", () => {
+  it("previews precisely the same capped text as the executor without inlining detailed notes", async () => {
+    const memory = storeWith(
+      readFrom([
+        document("summary", "MEMORY.md", `HEAD\n${"中🙂".repeat(500)}\nTAIL`, 4, "2026-11-07"),
+        document(
+          "detail",
+          "memory/workflow.md",
+          "Detailed source stays on demand",
+          2,
+          "2026-11-06",
+        ),
+        document("review", "memory/reviews/old.md", "Old proposal", 1, "2026-11-06"),
+      ]),
+    );
+    const budgets = { documentMaxChars: 200 };
+    const preview = await previewAgentMemoryContext(memory, "bot-1", context, budgets);
+    expect(preview.context).toBe(await loadAgentMemoryContext(memory, "bot-1", context, budgets));
+    expect(preview.context).toBe(preview.body + preview.index);
+    const summary = preview.documents.find((doc) => doc.path === "MEMORY.md")!;
+    expect(summary.shownChars).toBeLessThan(summary.totalChars);
+    expect(summary.excerpt).toContain("HEAD");
+    expect(summary.excerpt).toContain("TAIL");
+    expect(preview.body).toContain(summary.excerpt);
+    expect(preview.documents.find((doc) => doc.path === "memory/workflow.md")).toMatchObject({
+      shownChars: 0,
+      excerpt: "",
+    });
+    expect(preview.documents.some((doc) => doc.path.startsWith("memory/reviews/"))).toBe(false);
+  });
   it("keeps active notes visible ahead of newer automatic archives", async () => {
     const result = await loadAgentMemoryContext(
       storeWith(

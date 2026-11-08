@@ -729,6 +729,33 @@ export const appContract = {
     heartbeat: oc.input(botId).output(z.object({ ok: z.literal(true) })),
   },
   memory: {
+    loadedContext: oc.input(botId).output(
+      z.object({
+        identity: z.string(),
+        scratchpad: z.string(),
+        memory: z.object({
+          context: z.string(),
+          body: z.string(),
+          index: z.string(),
+          documents: z.array(
+            z.object({
+              scope: z.enum(["bot", "user"]),
+              path: z.string(),
+              revision: z.number().int(),
+              totalChars: z.number().int(),
+              shownChars: z.number().int(),
+              excerpt: z.string(),
+            }),
+          ),
+        }),
+        budgets: z.object({
+          document: z.number(),
+          body: z.number(),
+          shared: z.number(),
+          index: z.number(),
+        }),
+      }),
+    ),
     organizers: oc.output(
       z.object({
         sharedRoutineId: Id.nullable(),

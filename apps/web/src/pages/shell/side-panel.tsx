@@ -81,7 +81,9 @@ export function ShellSidePanel({
   const { t } = useLingui();
   const open = Boolean(panel && (active || activeGroup || panel === "import-agent"));
   const botTab =
-    panel === "computer" || panel === "routines" || panel === "settings" ? panel : null;
+    panel === "computer" || panel === "routines" || panel === "loaded" || panel === "settings"
+      ? panel
+      : null;
 
   async function createGroup(input: { name: string; botIds: string[] }) {
     const group = await rpc.groups.create(input);

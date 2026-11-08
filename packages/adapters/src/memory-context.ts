@@ -34,12 +34,36 @@ export interface MemoryContextBudgets {
   indexMaxChars?: number;
 }
 
+export interface MemoryContextPreview {
+  context: string;
+  body: string;
+  index: string;
+  documents: {
+    scope: "bot" | "user";
+    path: string;
+    revision: number;
+    totalChars: number;
+    shownChars: number;
+    excerpt: string;
+  }[];
+}
+
 export async function loadAgentMemoryContext(
   memory: MemoryStore,
   botId: string,
   context: AdapterContext,
   budgets: MemoryContextBudgets = {},
 ): Promise<string | undefined> {
+  return (await previewAgentMemoryContext(memory, botId, context, budgets)).context || undefined;
+}
+
+/** The settings preview and the executor use the very same selection and truncation pass. */
+export async function previewAgentMemoryContext(
+  memory: MemoryStore,
+  botId: string,
+  context: AdapterContext,
+  budgets: MemoryContextBudgets = {},
+): Promise<MemoryContextPreview> {
   const [botMemory, userMemory] = await Promise.all([
     memory.read({ scope: "bot", botId }, context),
     memory.read({ scope: "user" }, context),
@@ -48,7 +72,6 @@ export async function loadAgentMemoryContext(
     ...userMemory.documents.map((document) => ({ ...document, scope: "user" as const })),
     ...botMemory.documents.map((document) => ({ ...document, scope: "bot" as const })),
   ].filter((document) => !isMemoryReviewPath(document.path));
-  if (documents.length === 0) return undefined;
   documents.sort(sortForPrompt);
   return renderMemoryContext(documents, budgets);
 }
@@ -67,6 +90,7 @@ function renderMemoryContext(documents: ScopedMemoryDocument[], budgets: MemoryC
 
   const sections: string[] = [];
   const inlinedChars = new Map<string, number>();
+  const excerpts = new Map<string, string>();
   let remaining = Math.max(0, totalMaxChars - charLength(preamble + opening + closing));
   // Shared documents play the profile's role, and a team can write as many of them as it
   // likes. Capping their share keeps a bot's own summary from being crowded out by them, which
@@ -95,6 +119,7 @@ function renderMemoryContext(documents: ScopedMemoryDocument[], budgets: MemoryC
     remaining -= used;
     if (document.scope === "user") profileUsed += used;
     inlinedChars.set(keyOf(document), shown);
+    excerpts.set(keyOf(document), body + notice);
   }
 
   // Everything not fully inlined is listed, including a summary whose head or tail was cut:
@@ -154,7 +179,19 @@ function renderMemoryContext(documents: ScopedMemoryDocument[], budgets: MemoryC
   const indexBlock = lines.length
     ? `\n\n<memory_index>\nMore memory is stored than is inlined above. Read one with read_memory(path); find a term across all of them with search_memory(query).\n${lines.join("\n")}\n</memory_index>`
     : "";
-  return `${memoryBlock}${indexBlock}` || undefined;
+  return {
+    context: `${memoryBlock}${indexBlock}`,
+    body: memoryBlock,
+    index: indexBlock,
+    documents: documents.map((document) => ({
+      scope: document.scope,
+      path: document.path,
+      revision: document.revision,
+      totalChars: charLength(document.content),
+      shownChars: inlinedChars.get(keyOf(document)) ?? 0,
+      excerpt: excerpts.get(keyOf(document)) ?? "",
+    })),
+  };
 }
 
 /** User documents stand in for the user profile file, which the old harness loaded first. */

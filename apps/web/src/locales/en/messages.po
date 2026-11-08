@@ -100,6 +100,18 @@ msgstr "{0} (over {1})"
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
 
+#. placeholder {0}: doc.shownChars
+#. placeholder {1}: doc.totalChars
+#: src/pages/LoadedContextPanel.tsx
+msgid "{0} / {1} source characters loaded"
+msgstr "{0} / {1} source characters loaded"
+
+#. placeholder {0}: characters(data.identity)
+#. placeholder {0}: characters(data.scratchpad)
+#: src/pages/LoadedContextPanel.tsx
+msgid "{0} characters"
+msgstr "{0} characters"
+
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"
@@ -109,6 +121,11 @@ msgstr "{0} connection"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} default"
 msgstr "{0} default"
+
+#. placeholder {0}: onDemand.length
+#: src/pages/LoadedContextPanel.tsx
+msgid "{0} documents"
+msgstr "{0} documents"
 
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
@@ -962,9 +979,17 @@ msgstr "Automated senders"
 msgid "Automated senders will appear after they post here."
 msgstr "Automated senders will appear after they post here."
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Automatic inputs"
+msgstr "Automatic inputs"
+
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Automatic memory organization"
 msgstr "Automatic memory organization"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Automatically loaded memory"
+msgstr "Automatically loaded memory"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Available after the routine is saved"
@@ -1075,6 +1100,10 @@ msgstr "Bot"
 #: src/pages/shell/bot-files-panel.tsx
 msgid "Bot folder"
 msgstr "Bot folder"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Bot identity and instructions"
+msgstr "Bot identity and instructions"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
@@ -2466,6 +2495,10 @@ msgstr "Current"
 msgid "Current password"
 msgstr "Current password"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Current preview for a private chat. Not a record of a past model request."
+msgstr "Current preview for a private chat. Not a record of a past model request."
+
 #: src/components/VaultSettings.tsx
 msgid "Custom header"
 msgstr "Custom header"
@@ -2964,6 +2997,10 @@ msgstr "Every month"
 msgid "Every week"
 msgstr "Every week"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Exact assembled memory block"
+msgstr "Exact assembled memory block"
+
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Execution model"
 msgstr "Execution model"
@@ -3159,6 +3196,10 @@ msgstr "From {0}"
 #: src/pages/PluginsOverlay.tsx
 msgid "From GitHub"
 msgstr "From GitHub"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Full"
+msgstr "Full"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Full original archive"
@@ -3408,6 +3449,10 @@ msgstr "Inbox & email"
 msgid "Include API keys"
 msgstr "Include API keys"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Includes source headings and truncation notices. Directory entries have a separate budget."
+msgstr "Includes source headings and truncation notices. Directory entries have a separate budget."
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
 msgstr "Incoming call"
@@ -3644,9 +3689,17 @@ msgstr "Load older runs"
 msgid "Load web images automatically"
 msgstr "Load web images automatically"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Loaded context"
+msgstr "Loaded context"
+
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
 msgstr "Loading activity…"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Loading context…"
+msgstr "Loading context…"
 
 #: src/pages/shell/bot-files-panel.tsx
 msgid "Loading files…"
@@ -3853,6 +3906,12 @@ msgstr "Memory"
 #: src/pages/shell/agent-import.tsx
 msgid "Memory {position}"
 msgstr "Memory {position}"
+
+#. placeholder {0}: characters(data.memory.body)
+#. placeholder {1}: data.budgets.body
+#: src/pages/LoadedContextPanel.tsx
+msgid "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
+msgstr "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
 
 #: src/pages/shell/agent-import.tsx
 msgid "Memory for {title}"
@@ -4263,9 +4322,17 @@ msgstr "No matching models"
 msgid "No members yet"
 msgstr "No members yet"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "No memory context"
+msgstr "No memory context"
+
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "No memory organizer configured"
 msgstr "No memory organizer configured"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "No memory text is automatically loaded."
+msgstr "No memory text is automatically loaded."
 
 #: src/pages/PeerMessagesOverlay.tsx
 msgid "No messages with {peerBotName} yet."
@@ -4278,6 +4345,10 @@ msgstr "No model catalog is available."
 #: src/lib/model-connection-preflight.ts
 msgid "No models listed."
 msgstr "No models listed."
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "No open work is currently included."
+msgstr "No open work is currently included."
 
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
@@ -4329,6 +4400,10 @@ msgstr "No tickets yet"
 #: src/pages/RoutineEditor.tsx
 msgid "No trigger"
 msgstr "No trigger"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "None"
+msgstr "None"
 
 #: src/lib/ticket-priority.ts
 msgid "Normal"
@@ -4439,6 +4514,10 @@ msgstr "on day {day} at {time}"
 msgid "on the 1st at {0}"
 msgstr "on the 1st at {0}"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "On-demand memory directory"
+msgstr "On-demand memory directory"
+
 #: src/lib/cron.ts
 msgid "One-time"
 msgstr "One-time"
@@ -4508,6 +4587,7 @@ msgstr "Open in full window"
 msgid "Open navigation"
 msgstr "Open navigation"
 
+#: src/pages/LoadedContextPanel.tsx
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
 msgstr "Open work"
@@ -4565,6 +4645,10 @@ msgstr "Original"
 msgid "Original message unavailable"
 msgstr "Original message unavailable"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Other inputs depend on the conversation"
+msgstr "Other inputs depend on the conversation"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Other model…"
@@ -4594,6 +4678,10 @@ msgstr "PagerDuty incident"
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Panel opacity"
 msgstr "Panel opacity"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Partial"
+msgstr "Partial"
 
 #: src/components/PasskeySettings.tsx
 msgid "Passkey"
@@ -4791,6 +4879,7 @@ msgstr "Previous settings sections"
 msgid "Priority"
 msgstr "Priority"
 
+#: src/pages/LoadedContextPanel.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Private"
 msgstr "Private"
@@ -4836,6 +4925,10 @@ msgstr "Queued"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Rakazo"
 msgstr "Rakazo"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Rakazo also adds built-in behavior and safety rules, available tools, skills and environment information. Recent messages, attachments, group context and retrieved content depend on the task and model window. Working files such as README.md and TOOLS.md are not automatically included just because they exist. External messaging channels use different loading rules."
+msgstr "Rakazo also adds built-in behavior and safety rules, available tools, skills and environment information. Recent messages, attachments, group context and retrieved content depend on the task and model window. Working files such as README.md and TOOLS.md are not automatically included just because they exist. External messaging channels use different loading rules."
 
 #: src/components/ModelCredits.tsx
 #: src/pages/Onboarding.tsx
@@ -4979,6 +5072,14 @@ msgstr "Refresh"
 #: src/components/ModelCredits.tsx
 msgid "Refresh credits"
 msgstr "Refresh credits"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Refresh failed. Showing the previous preview."
+msgstr "Refresh failed. Showing the previous preview."
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Refresh loaded context"
+msgstr "Refresh loaded context"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refresh view"
@@ -5234,6 +5335,7 @@ msgstr "Restoring your workspace"
 #: src/components/PasskeySettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
+#: src/pages/LoadedContextPanel.tsx
 #: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -5636,6 +5738,7 @@ msgstr "Shape"
 msgid "Shape {0}"
 msgstr "Shape {0}"
 
+#: src/pages/LoadedContextPanel.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Shared"
@@ -6209,6 +6312,10 @@ msgstr "This conversation is too long for the model. Retrying won't help. Start 
 msgid "This deletes all {0} versions of this artifact. This can't be undone."
 msgstr "This deletes all {0} versions of this artifact. This can't be undone."
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "This directory is loaded automatically; the listed documents are not loaded in full."
+msgstr "This directory is loaded automatically; the listed documents are not loaded in full."
+
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "This file is not valid UTF-8 text."
@@ -6647,6 +6754,10 @@ msgstr "Versions"
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"
 msgstr "View all"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "View and edit all private memory"
+msgstr "View and edit all private memory"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "View organizer"

@@ -3,6 +3,7 @@ import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
 import { isScratchpadStatus, listScratchpadItems, mapScratchpadItem } from "@rakazo/adapters";
 import { isDeletableMemoryDocument } from "@rakazo/contracts";
 import { findSpaceMemoryConfig, IsolationError } from "@rakazo/db";
+import { loadedBotContext } from "../loaded-context.js";
 import { memoryOrganizationDiary } from "../memory-organization-diary.js";
 import {
   listMemoryOrganizers,
@@ -20,6 +21,9 @@ export function memoryRoutes(ctx: RouterContext) {
   const { deps, repos, taughtSkills, agentSkills, authed } = ctx;
   return {
     memory: {
+      loadedContext: authed.memory.loadedContext.handler(async ({ context, input }) =>
+        loadedBotContext(deps, context.actor, input.botId, context.signal),
+      ),
       organizers: authed.memory.organizers.handler(async ({ context }) =>
         listMemoryOrganizers(deps.prisma, context.actor),
       ),

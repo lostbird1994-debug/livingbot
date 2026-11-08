@@ -22,14 +22,14 @@ describe("right panel preferences", () => {
     writeRightPanelState("user-a:space-a:bot-a", null, "routine-a");
     expect(readRightPanelState("user-a:space-a:bot-a")).toEqual({ panel: null });
   });
-  it("remembers the Routines tab", () => {
+  it.each(["routines", "loaded"] as const)("remembers the %s tab", (panel) => {
     const entries = new Map<string, string>();
     vi.stubGlobal("localStorage", {
       getItem: (key: string) => entries.get(key) ?? null,
       setItem: (key: string, value: string) => entries.set(key, value),
     });
-    writeRightPanelState("state", "routines");
-    expect(readRightPanelState("state")).toEqual({ panel: "routines" });
+    writeRightPanelState("state", panel);
+    expect(readRightPanelState("state")).toEqual({ panel });
   });
   it.each([
     "not json",

@@ -100,6 +100,18 @@ msgstr "{0}（超过 {1}）"
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
 
+#. placeholder {0}: doc.shownChars
+#. placeholder {1}: doc.totalChars
+#: src/pages/LoadedContextPanel.tsx
+msgid "{0} / {1} source characters loaded"
+msgstr "已载入原文 {0} / {1} 字符"
+
+#. placeholder {0}: characters(data.identity)
+#. placeholder {0}: characters(data.scratchpad)
+#: src/pages/LoadedContextPanel.tsx
+msgid "{0} characters"
+msgstr "{0} 字符"
+
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"
@@ -109,6 +121,11 @@ msgstr "{0} 连接"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} default"
 msgstr "{0} 的默认"
+
+#. placeholder {0}: onDemand.length
+#: src/pages/LoadedContextPanel.tsx
+msgid "{0} documents"
+msgstr "{0} 份文档"
 
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
@@ -962,9 +979,17 @@ msgstr "自动发送者"
 msgid "Automated senders will appear after they post here."
 msgstr "自动发送者在这里发过消息后会出现。"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Automatic inputs"
+msgstr "自动加载的内容"
+
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Automatic memory organization"
 msgstr "自动整理记忆"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Automatically loaded memory"
+msgstr "自动加载的记忆"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Available after the routine is saved"
@@ -1075,6 +1100,10 @@ msgstr "Bot"
 #: src/pages/shell/bot-files-panel.tsx
 msgid "Bot folder"
 msgstr "Bot 文件夹"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Bot identity and instructions"
+msgstr "机器人身份与指令"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
@@ -2466,6 +2495,10 @@ msgstr "当前版本"
 msgid "Current password"
 msgstr "当前密码"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Current preview for a private chat. Not a record of a past model request."
+msgstr "按当前配置预览普通私聊的加载内容，不代表某次历史请求。"
+
 #: src/components/VaultSettings.tsx
 msgid "Custom header"
 msgstr "自定义请求头"
@@ -2964,6 +2997,10 @@ msgstr "每月"
 msgid "Every week"
 msgstr "每周"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Exact assembled memory block"
+msgstr "组装后的完整记忆块"
+
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Execution model"
 msgstr "执行模型"
@@ -3159,6 +3196,10 @@ msgstr "从 {0}"
 #: src/pages/PluginsOverlay.tsx
 msgid "From GitHub"
 msgstr "来自 GitHub"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Full"
+msgstr "完整载入"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Full original archive"
@@ -3408,6 +3449,10 @@ msgstr "收件箱和邮件"
 msgid "Include API keys"
 msgstr "包含 API 密钥"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Includes source headings and truncation notices. Directory entries have a separate budget."
+msgstr "包含来源标题及截断提示；按需目录使用单独的预算。"
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
 msgstr "来电"
@@ -3644,9 +3689,17 @@ msgstr "加载更早的运行记录"
 msgid "Load web images automatically"
 msgstr "自动加载网络图片"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Loaded context"
+msgstr "加载内容"
+
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
 msgstr "正在加载动态…"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Loading context…"
+msgstr "正在读取加载内容…"
 
 #: src/pages/shell/bot-files-panel.tsx
 msgid "Loading files…"
@@ -3853,6 +3906,12 @@ msgstr "记忆"
 #: src/pages/shell/agent-import.tsx
 msgid "Memory {position}"
 msgstr "记忆 {position}"
+
+#. placeholder {0}: characters(data.memory.body)
+#. placeholder {1}: data.budgets.body
+#: src/pages/LoadedContextPanel.tsx
+msgid "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
+msgstr "记忆正文块：{0} / {1} 字符，其中共享原文 {shared} 字符。"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Memory for {title}"
@@ -4263,9 +4322,17 @@ msgstr "没有匹配的模型"
 msgid "No members yet"
 msgstr "还没有成员"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "No memory context"
+msgstr "暂无记忆内容"
+
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "No memory organizer configured"
 msgstr "尚未配置记忆整理任务"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "No memory text is automatically loaded."
+msgstr "当前没有自动加载的记忆正文。"
 
 #: src/pages/PeerMessagesOverlay.tsx
 msgid "No messages with {peerBotName} yet."
@@ -4278,6 +4345,10 @@ msgstr "没有可用的模型目录。"
 #: src/lib/model-connection-preflight.ts
 msgid "No models listed."
 msgstr "未列出模型。"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "No open work is currently included."
+msgstr "当前没有载入未完成事项。"
 
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
@@ -4329,6 +4400,10 @@ msgstr "还没有工单"
 #: src/pages/RoutineEditor.tsx
 msgid "No trigger"
 msgstr "无触发器"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "None"
+msgstr "无"
 
 #: src/lib/ticket-priority.ts
 msgid "Normal"
@@ -4439,6 +4514,10 @@ msgstr "{day}日 {time}"
 msgid "on the 1st at {0}"
 msgstr "1 日 {0}"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "On-demand memory directory"
+msgstr "按需读取目录"
+
 #: src/lib/cron.ts
 msgid "One-time"
 msgstr "一次性"
@@ -4508,6 +4587,7 @@ msgstr "在完整窗口中打开"
 msgid "Open navigation"
 msgstr "打开导航"
 
+#: src/pages/LoadedContextPanel.tsx
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
 msgstr "待办"
@@ -4565,6 +4645,10 @@ msgstr "原始"
 msgid "Original message unavailable"
 msgstr "原消息不可用"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Other inputs depend on the conversation"
+msgstr "随对话变化的其他内容"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Other model…"
@@ -4594,6 +4678,10 @@ msgstr "PagerDuty 事件"
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Panel opacity"
 msgstr "面板不透明度"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Partial"
+msgstr "部分载入"
 
 #: src/components/PasskeySettings.tsx
 msgid "Passkey"
@@ -4791,6 +4879,7 @@ msgstr "上一组设置项"
 msgid "Priority"
 msgstr "优先级"
 
+#: src/pages/LoadedContextPanel.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Private"
 msgstr "私有"
@@ -4836,6 +4925,10 @@ msgstr "排队中"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Rakazo"
 msgstr "Rakazo"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Rakazo also adds built-in behavior and safety rules, available tools, skills and environment information. Recent messages, attachments, group context and retrieved content depend on the task and model window. Working files such as README.md and TOOLS.md are not automatically included just because they exist. External messaging channels use different loading rules."
+msgstr "Rakazo 还会加入内置行为与安全规则、可用工具、技能及环境信息。近期消息、附件、群聊背景和检索结果随任务及模型上下文容量变化。README.md、TOOLS.md 等工作文件不会仅因存在就自动载入。外部消息渠道采用不同的加载规则。"
 
 #: src/components/ModelCredits.tsx
 #: src/pages/Onboarding.tsx
@@ -4979,6 +5072,14 @@ msgstr "刷新"
 #: src/components/ModelCredits.tsx
 msgid "Refresh credits"
 msgstr "刷新额度"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Refresh failed. Showing the previous preview."
+msgstr "刷新失败，当前显示上一次预览。"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Refresh loaded context"
+msgstr "刷新加载内容"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refresh view"
@@ -5234,6 +5335,7 @@ msgstr "正在恢复工作区"
 #: src/components/PasskeySettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
+#: src/pages/LoadedContextPanel.tsx
 #: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -5636,6 +5738,7 @@ msgstr "形状"
 msgid "Shape {0}"
 msgstr "形状 {0}"
 
+#: src/pages/LoadedContextPanel.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Shared"
@@ -6209,6 +6312,10 @@ msgstr "此对话对模型来说太长了。重试无济于事。请开始新的
 msgid "This deletes all {0} versions of this artifact. This can't be undone."
 msgstr "会删除这个产物的全部 {0} 个版本，而且无法撤销。"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "This directory is loaded automatically; the listed documents are not loaded in full."
+msgstr "目录会自动载入；其中列出的文档并未全文载入。"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "这个文件不是有效的 UTF-8 文本。"
@@ -6647,6 +6754,10 @@ msgstr "版本"
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"
 msgstr "查看全部"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "View and edit all private memory"
+msgstr "查看与编辑全部私有记忆"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "View organizer"
