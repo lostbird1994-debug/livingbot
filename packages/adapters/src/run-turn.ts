@@ -33,6 +33,11 @@ import {
   shouldEnqueueCompaction,
 } from "./history-compaction.js";
 import {
+  MEMORY_ORGANIZATION_COOLDOWN_MS,
+  MEMORY_ORGANIZATION_VERSION,
+  nudgeMemoryOrganization,
+} from "./memory-organization.js";
+import {
   backOffRoutineAfterAccountError,
   clearRoutineBackoff,
   modelAccountRefusal,
@@ -634,6 +639,10 @@ async function publishSubagent(ctx: RunContext, event: RuntimeEvent<"subagent">)
 /** The turn ended: apply a scripted runtime's files and memory, then finalize the reply. */
 export async function completeRun(ctx: RunContext) {
   const { deps, run, runId, bot, thread, context } = ctx;
+  if (ctx.source.memoryOrganizationFailures?.size)
+    throw new Error(
+      "Memory organization did not finish; failed sources were preserved for a later retry.",
+    );
   const { reply } = ctx.state;
   recordExplicitNoResponse(reply, reply.assistantTurnText);
   ctx.computer.lazy.throwIfFailed();
@@ -839,6 +848,26 @@ export async function completeRun(ctx: RunContext) {
     }
   } catch (error) {
     getLogger().error("history.compact enqueue failed", error);
+  }
+  try {
+    const scope = { spaceId: run.spaceId, userId: run.userId, botId: bot.id };
+    if (ctx.source.memoryMaintenance && ctx.task.prompt.startsWith(MEMORY_ORGANIZATION_VERSION)) {
+      const nextAllowed = new Date(Date.now() + MEMORY_ORGANIZATION_COOLDOWN_MS);
+      await deps.prisma.routine.updateMany({
+        where: {
+          ...scope,
+          id: run.routineId ?? "",
+          active: true,
+          memoryMaintenance: true,
+          nextRunAt: { lt: nextAllowed },
+        },
+        data: { nextRunAt: nextAllowed },
+      });
+    } else if (["user", "follow_up"].includes(run.trigger) && ctx.source.ownerStartedRun) {
+      await nudgeMemoryOrganization(deps.prisma, scope);
+    }
+  } catch (error) {
+    getLogger().error("memory.organization scheduling failed", error);
   }
 }
 

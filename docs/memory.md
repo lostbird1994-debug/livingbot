@@ -44,7 +44,36 @@ heuristic, not provider usage.
 Open a document's **Versions** to preview or restore a previous version. Restoring creates a new
 version, and refuses to overwrite changes made since you opened the document.
 
-## Daily memory review
+## Automatic memory organization
+
+Operators can explicitly upgrade maintenance with `enable-auto`. Existing paused routines stay
+paused, and configured times and timezones are preserved. New routines default to 18:00 local.
+The upgrade checks once immediately, then checks daily. A completed direct human conversation
+can bring the next check forward after 30 distinct human source messages, or when a bot summary
+reaches 16,000 Unicode characters. Checks remain at least six hours apart. Unchanged memory is
+skipped before calling the model; the schedule still runs its lightweight check.
+
+The restricted model reviews summaries and detailed notes using rubric `memory-organization/1`.
+It selects exact original line ranges rather than rewriting facts. Before applying each change,
+the server saves the full original in `memory/archive/<document>.v<revision>.md`, reads it back
+and verifies its content. Only then does it update the source using its expected revision.
+The resulting note links to the readable archive. Existing version history is retained.
+The final reduction must save at least 512 Unicode characters including the archive pointer.
+Archives and review artifacts cannot be reorganized; ordinary agent writes cannot modify them.
+
+All bot notes are eligible. One active maintenance bot per account and space is assigned shared
+notes, so every bot does not rewrite the same shared profile. Source changes made concurrently
+by a user or another run are not overwritten, and changes during a check remain eligible for
+the next check. A failed backup verification, incomplete read, redacted source or version
+conflict leaves the source unchanged. A backup saved before a failed update remains available.
+No file or document is deleted or moved.
+
+Organization is selective: unchanged, small, or already useful notes may remain untouched.
+It preserves original text, but this is not proof that the model selected every semantically
+important passage for the current summary. Details stay retrievable in the full archive.
+This feature does not implement semantic search; see [future retrieval work](./memory-roadmap.md).
+
+## Legacy proposal-only memory review
 
 Operators can enable a **Daily memory review** routine, at 18:00 in the account's timezone
 (UTC if unset). Pause it in the bot's Routines list. It uses the bot's configured model.
@@ -58,7 +87,7 @@ versions and a complete source snapshot in `memory/reviews/`. Review these as or
 documents in the human interface. Agent tools cannot read or overwrite these reserved artifacts.
 Proposals must save at least 512 Unicode characters of source text; this is a usefulness threshold,
 not a semantic safety guarantee. Existing review artifacts are preserved.
-The task cannot overwrite the source, run commands, call integrations or create schedules.
+The proposal-only task cannot overwrite the source, run commands, call integrations or create schedules.
 No candidate, a missing model or a failed validation leaves the summary unchanged.
 
 The operator CLI is `apps/api/dist/cli/memory-maintenance.js`: `plan-nightly` previews setup,

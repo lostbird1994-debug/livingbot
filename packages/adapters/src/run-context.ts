@@ -184,6 +184,7 @@ export interface RunComputerContext {
 
 export interface RunSource {
   memoryMaintenance?: boolean;
+  memoryOrganizationFailures?: Set<string>;
   memoryReadCoverage?: Map<
     string,
     { revision: number; total: number; ranges: Array<[number, number]> }

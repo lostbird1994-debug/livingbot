@@ -762,6 +762,37 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "organize_memory",
+    description:
+      "Automatically organize a fully read memory document using exact original line ranges. Verifies a complete readable source archive before applying the version-checked update. Restricted maintenance only; one assigned bot handles shared documents.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: {
+          type: "string",
+          description: "Qualified bot: or user: document path read in full.",
+        },
+        expected_revision: { type: "integer", minimum: 1 },
+        keep_ranges: {
+          type: "array",
+          minItems: 1,
+          maxItems: 100,
+          items: {
+            type: "object",
+            properties: {
+              start_line: { type: "integer", minimum: 1 },
+              end_line: { type: "integer", minimum: 1 },
+            },
+            required: ["start_line", "end_line"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["path", "expected_revision", "keep_ranges"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "search_memory",
     description:
       "Find a normalized literal substring in memory when the path is not obvious. Spaces are literal; multiple terms are not ANDed. Review artifacts are excluded. Returns paths and snippets; follow with read_memory.",

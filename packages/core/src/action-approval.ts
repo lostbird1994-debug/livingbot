@@ -19,6 +19,7 @@ const APPROVAL_EXEMPT_TOOLS = new Set([
   "remember",
   "write_memory",
   "propose_memory_consolidation",
+  "organize_memory",
   "request_takeover",
   "request_secret",
   "generate_secret",
@@ -61,6 +62,7 @@ const EXPLICIT_APPROVAL_BUILTIN_TOOLS = new Set([
 
 const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
   "propose_memory_consolidation",
+  "organize_memory",
   "read_memory",
   "search_memory",
   "browser_snapshot",
@@ -216,6 +218,7 @@ export function unattendedTriggerToolRequiresApproval(
  */
 const OWN_STATE_RESULT_TOOLS = new Set([
   "propose_memory_consolidation",
+  "organize_memory",
   "read_memory",
   "search_memory",
   "write_memory",

@@ -18,6 +18,26 @@ const context: AdapterContext = {
 };
 
 describe("agent memory context", () => {
+  it("keeps active notes visible ahead of newer automatic archives", async () => {
+    const result = await loadAgentMemoryContext(
+      storeWith(
+        readFrom([
+          document("active", "memory/current.md", "active detail", 1, "2026-11-07"),
+          ...Array.from({ length: 25 }, (_, i) =>
+            document(`archive-${i}`, `memory/archive/${i}.md`, "old detail", 1, "2026-11-08"),
+          ),
+        ]),
+      ),
+      "bot-1",
+      context,
+    );
+    expect(result).toContain("- bot:memory/current.md");
+    expect(result).toContain("bot:memory/archive/");
+    expect(result!.indexOf("bot:memory/current.md")).toBeLessThan(
+      result!.indexOf("bot:memory/archive/"),
+    );
+    expect(result).not.toContain("active detail");
+  });
   it("keeps proposal snapshots out of agent context and directory counts", async () => {
     const result = await loadAgentMemoryContext(
       storeWith(

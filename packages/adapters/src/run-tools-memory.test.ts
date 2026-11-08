@@ -110,6 +110,89 @@ describe("save_shared_memory", () => {
 });
 
 describe("restricted consolidation", () => {
+  it("never offers automatic organization to an ordinary run, even if called directly", async () => {
+    const { context, call, commit } = setup();
+    expect(await memoryTools.organize_memory!(context, call("organize_memory", {}))).toHaveProperty(
+      "error",
+    );
+    expect(
+      await gateToolCall(context, { name: "organize_memory" } as ToolRequest, undefined),
+    ).toHaveProperty("result.error");
+    expect(commit).not.toHaveBeenCalled();
+  });
+  it.each(["remember", "write_memory", "save_shared_memory"])(
+    "prevents ordinary %s from modifying readable automatic archives",
+    async (name) => {
+      const { context, call, commit } = setup();
+      expect(
+        await memoryTools[name]!(
+          context,
+          call(name, {
+            path:
+              name === "save_shared_memory"
+                ? "user:memory/archive/old.md"
+                : "memory/archive/old.md",
+            content: "replacement",
+            expected_revision: 0,
+          }),
+        ),
+      ).toHaveProperty("error");
+      expect(commit).not.toHaveBeenCalled();
+    },
+  );
+  it("requires complete reading before automatic source updates", async () => {
+    const { context, call, read, commit } = setup();
+    context.source.memoryMaintenance = true;
+    const source = { ...documents[0]!, content: `Keep\n${"Old record ".repeat(100)}` };
+    read.mockResolvedValue({ documents: [source] });
+    expect(
+      await memoryTools.organize_memory!(
+        context,
+        call("organize_memory", {
+          path: source.path,
+          expected_revision: source.revision,
+          keep_ranges: [{ start_line: 1, end_line: 1 }],
+        }),
+      ),
+    ).toMatchObject({ error: expect.stringContaining("every page") });
+    expect(commit).not.toHaveBeenCalled();
+  });
+  it("refuses automatic line-range edits when secret redaction changed the model's view", async () => {
+    const { context, call, read, commit } = setup(["test-secret-value"]);
+    context.source.memoryMaintenance = true;
+    read.mockResolvedValue({
+      documents: [{ ...documents[0]!, content: "Keep\ntest-secret-value\nOld" }],
+    });
+    expect(
+      await memoryTools.organize_memory!(
+        context,
+        call("organize_memory", {
+          path: "MEMORY.md",
+          expected_revision: 3,
+          keep_ranges: [{ start_line: 1, end_line: 1 }],
+        }),
+      ),
+    ).toMatchObject({ error: expect.stringContaining("Redacted") });
+    expect(commit).not.toHaveBeenCalled();
+  });
+  it("refuses shared organization by a different maintenance bot", async () => {
+    const { context, call, commit } = setup();
+    context.source.memoryMaintenance = true;
+    context.deps.prisma = {
+      routine: { findFirst: vi.fn().mockResolvedValue({ botId: "another-bot" }) },
+    } as never;
+    expect(
+      await memoryTools.organize_memory!(
+        context,
+        call("organize_memory", {
+          path: "user:profile.md",
+          expected_revision: 1,
+          keep_ranges: [{ start_line: 1, end_line: 1 }],
+        }),
+      ),
+    ).toMatchObject({ error: expect.stringContaining("Another") });
+    expect(commit).not.toHaveBeenCalled();
+  });
   it.each(["memory/reviews/1.v3.md", "bot:./MEMORY/REVIEWS/1.v3.md"])(
     "reserves proposal writes and reads from ordinary agent tools: %s",
     async (path) => {

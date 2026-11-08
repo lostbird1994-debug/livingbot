@@ -109,7 +109,8 @@ export function selectBuiltinToolsForRun(options: {
     (tool) =>
       !disabled.has(tool.name) &&
       (!options.memoryMaintenance || MEMORY_MAINTENANCE_TOOL_NAMES.has(tool.name)) &&
-      (options.memoryMaintenance || tool.name !== "propose_memory_consolidation") &&
+      (options.memoryMaintenance ||
+        !["propose_memory_consolidation", "organize_memory"].includes(tool.name)) &&
       (options.trigger !== "created" || CREATED_RUN_TOOL_NAMES.has(tool.name)) &&
       (!FLEET_TOOL_NAMES_SET.has(tool.name) ||
         (Boolean(options.fleetManagement) && ownerStartedRun)) &&

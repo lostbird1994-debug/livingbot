@@ -11,12 +11,14 @@ export const PRIVATE_MEMORY_TOOL_NAMES: ReadonlySet<string> = new Set([
   "recall_memory",
   "forget_memory",
   "propose_memory_consolidation",
+  "organize_memory",
 ]);
 
 export const MEMORY_MAINTENANCE_TOOL_NAMES: ReadonlySet<string> = new Set([
   "read_memory",
   "search_memory",
   "propose_memory_consolidation",
+  "organize_memory",
 ]);
 
 /** Fleet management tools. Only list_fleet is read-only. */
@@ -69,6 +71,7 @@ export const BUILTIN_TOOL_NAMES = [
   "search_memory",
   "write_memory",
   "propose_memory_consolidation",
+  "organize_memory",
   "save_shared_memory",
   "web_search",
   "web_fetch",

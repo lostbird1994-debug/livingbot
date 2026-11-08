@@ -1,5 +1,5 @@
 import type { AdapterContext, MemorySnapshot, MemoryStore } from "@rakazo/adapter-kit";
-import { isMemoryReviewPath } from "@rakazo/contracts";
+import { isMemoryArchivePath, isMemoryReviewPath } from "@rakazo/contracts";
 import { charLength, truncateChars } from "./utf8.js";
 
 /**
@@ -104,6 +104,7 @@ function renderMemoryContext(documents: ScopedMemoryDocument[], budgets: MemoryC
     .filter((document) => (inlinedChars.get(keyOf(document)) ?? 0) < charLength(document.content))
     .sort(
       (left, right) =>
+        Number(isMemoryArchivePath(left.path)) - Number(isMemoryArchivePath(right.path)) ||
         memoryTimestamp(right.updatedAt) - memoryTimestamp(left.updatedAt) ||
         left.path.localeCompare(right.path),
     );

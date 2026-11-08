@@ -2,6 +2,7 @@ import type { AdapterContext } from "@rakazo/adapter-kit";
 import {
   configureMemoryMaintenance,
   contentKeyProviderFromEnv,
+  enableAutomaticMemoryOrganization,
   unwrapEnvFromKeyManager,
 } from "@rakazo/adapters";
 import { isMemoryReviewPath } from "@rakazo/contracts";
@@ -20,12 +21,17 @@ loadRootEnv();
 await unwrapEnvFromKeyManager();
 const command = process.argv[2];
 if (
-  !["backfill-search", "verify-search", "check-search", "plan-nightly", "enable-nightly"].includes(
-    command ?? "",
-  )
+  ![
+    "backfill-search",
+    "verify-search",
+    "check-search",
+    "plan-nightly",
+    "enable-nightly",
+    "enable-auto",
+  ].includes(command ?? "")
 )
   throw new Error(
-    "Use backfill-search, verify-search, check-search, plan-nightly or enable-nightly.",
+    "Use backfill-search, verify-search, check-search, plan-nightly, enable-nightly or enable-auto.",
   );
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required.");
 const { prisma, pool } = createDb(process.env.DATABASE_URL, {
@@ -33,6 +39,7 @@ const { prisma, pool } = createDb(process.env.DATABASE_URL, {
 });
 try {
   const result = await runAsSystem("explicit memory maintenance setup", async () => {
+    if (command === "enable-auto") return enableAutomaticMemoryOrganization(prisma);
     if (command === "backfill-search") return backfillMemorySearch(prisma);
     if (command === "verify-search") return verifySearch();
     if (command === "check-search") {

@@ -70,7 +70,7 @@ describe("memory maintenance proposals", () => {
       }),
     ).toThrow(/Source changed/);
   });
-  it("only offers the three maintenance tools", () => {
+  it("only offers the restricted maintenance tools", () => {
     const tools = selectBuiltinToolsForRun({
       graphicalToolsAllowed: true,
       groupId: null,
@@ -80,6 +80,7 @@ describe("memory maintenance proposals", () => {
       memoryMaintenance: true,
     });
     expect(tools.map((tool) => tool.name).sort()).toEqual([
+      "organize_memory",
       "propose_memory_consolidation",
       "read_memory",
       "search_memory",

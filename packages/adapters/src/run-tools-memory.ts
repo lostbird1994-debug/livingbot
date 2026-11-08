@@ -2,6 +2,7 @@ import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
 import {
   HistoryReadInputSchema,
   HistorySearchInputSchema,
+  isMemoryArchivePath,
   isMemoryReviewPath,
 } from "@rakazo/contracts";
 import { redactSecrets } from "@rakazo/core";
@@ -11,6 +12,7 @@ import { redactConnectorPayload } from "./connector-safety.js";
 import { MAX_RECALLED_MEMORIES } from "./history-compaction.js";
 import { normalizeMemoryPath } from "./memory-context.js";
 import { MemoryConsolidationDecision, renderMemoryProposal } from "./memory-maintenance.js";
+import { organizeMemoryDocument, ownsSharedMemoryOrganization } from "./memory-organization.js";
 import { appendMemoryFact } from "./memory-tools.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
@@ -75,6 +77,58 @@ async function readHistoryTool(ctx: RunContext, call: ToolCall) {
 
 /** Memory documents, semantic memory and thread history. */
 export const memoryTools: ToolHandlers = {
+  async organize_memory(ctx, call) {
+    if (!ctx.source.memoryMaintenance || ctx.source.messagingChannelRun)
+      return call.finish({ error: "Only a restricted maintenance run may organize memory." });
+    const parsed = MemoryConsolidationDecision.safeParse(call.args);
+    if (!parsed.success) return call.finish({ error: "Invalid source revision or line ranges." });
+    const wanted = scopedPath(parsed.data.path);
+    const scope = wanted.scope === "user" ? "user" : "bot";
+    if (
+      scope === "user" &&
+      !(await ownsSharedMemoryOrganization(ctx.deps.prisma, {
+        spaceId: ctx.context.spaceId,
+        userId: ctx.context.userId,
+        botId: ctx.bot.id,
+      }))
+    )
+      return call.finish({
+        error: "Another active maintenance bot owns shared memory organization.",
+      });
+    const source = await findMemoryDocument(ctx, `${scope}:${wanted.path}`);
+    if (!source) return call.finish({ error: "Read the source document first." });
+    if (redactSecrets(source.content, ctx.secrets) !== source.content)
+      return call.finish({ error: "Redacted source text cannot be automatically reorganized." });
+    const coverage = ctx.source.memoryReadCoverage?.get(source.id);
+    if (
+      !coverage ||
+      coverage.revision !== source.revision ||
+      coverage.ranges.length !== 1 ||
+      coverage.ranges[0]![0] !== 0 ||
+      coverage.ranges[0]![1] !== coverage.total
+    )
+      return call.finish({
+        error: "Read every page of the current source revision before organizing.",
+      });
+    try {
+      const result = await organizeMemoryDocument(
+        ctx.deps.memory,
+        source,
+        { ...parsed.data, path: source.path },
+        scope,
+        ctx.context,
+        { runId: ctx.runId, threadId: ctx.thread.id },
+      );
+      ctx.source.memoryOrganizationFailures?.delete(`${scope}:${source.path}`);
+      return call.finish(result);
+    } catch (error) {
+      ctx.source.memoryOrganizationFailures ??= new Set();
+      ctx.source.memoryOrganizationFailures.add(`${scope}:${source.path}`);
+      return call.finish({
+        error: error instanceof Error ? error.message : "Organization failed.",
+      });
+    }
+  },
   async propose_memory_consolidation(ctx, call) {
     if (!ctx.source.memoryMaintenance || ctx.source.messagingChannelRun)
       return call.finish({ error: "Only a restricted maintenance run may save proposals." });
@@ -236,7 +290,7 @@ export const memoryTools: ToolHandlers = {
       return call.finish({ error: "write_memory can only write bot memory." });
     }
     const path = qualified.path;
-    if (isMemoryReviewPath(path))
+    if (isMemoryReviewPath(path) || isMemoryArchivePath(path))
       return call.finish({
         error: "Review paths are reserved for the maintenance proposal writer.",
       });
@@ -305,6 +359,8 @@ export const memoryTools: ToolHandlers = {
     const { deps, runId, bot, thread, context } = ctx;
     const { args } = call;
     const path = String(args.path ?? "").trim() || "MEMORY.md";
+    if (isMemoryReviewPath(scopedPath(path).path) || isMemoryArchivePath(scopedPath(path).path))
+      return call.finish({ error: "Automatic archives and review artifacts are reserved." });
     // A fact is added to the document, never replaces it. A concurrent save
     // changes the revision, so re-read and append again.
     for (let attempt = 1; ; attempt += 1) {
@@ -338,7 +394,7 @@ export const memoryTools: ToolHandlers = {
     const invalid = sharedMemorySaveError(args);
     if (invalid) return call.finish({ error: invalid });
     const requested = scopedPath(String(args.path ?? ""));
-    if (isMemoryReviewPath(requested.path))
+    if (isMemoryReviewPath(requested.path) || isMemoryArchivePath(requested.path))
       return call.finish({
         error: "Review paths are reserved for the maintenance proposal writer.",
       });

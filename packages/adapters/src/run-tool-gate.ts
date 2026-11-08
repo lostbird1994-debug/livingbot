@@ -143,11 +143,16 @@ export async function gateToolCall(
 ): Promise<GateOutcome> {
   if (ctx.source.memoryMaintenance && !MEMORY_MAINTENANCE_TOOL_NAMES.has(request.name)) {
     return {
-      result: { error: "Memory maintenance may only read memory and save review proposals." },
+      result: {
+        error: "Memory maintenance may only read memory and organize versioned summaries.",
+      },
     };
   }
-  if (request.name === "propose_memory_consolidation" && !ctx.source.memoryMaintenance) {
-    return { result: { error: "Memory proposals require a restricted maintenance run." } };
+  if (
+    ["propose_memory_consolidation", "organize_memory"].includes(request.name) &&
+    !ctx.source.memoryMaintenance
+  ) {
+    return { result: { error: "Memory organization requires a restricted maintenance run." } };
   }
   if (ctx.source.messagingChannelRun && PRIVATE_MEMORY_TOOL_NAMES.has(request.name)) {
     return { result: { error: "Private memory is unavailable in messaging channels." } };

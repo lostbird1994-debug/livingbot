@@ -659,10 +659,11 @@ function fixture({
     setCalls(next: typeof calls) {
       calls = next;
     },
-    async run(allowFailure = false) {
+    async run(allowFailure = false, expectModel = true) {
       run.status = "queued";
       await executor.continueRun(run.id, "worker-1");
-      expect(runtimeRun).toHaveBeenCalled();
+      if (expectModel) expect(runtimeRun).toHaveBeenCalled();
+      else expect(runtimeRun).not.toHaveBeenCalled();
       expect(prisma.attempt.update).not.toHaveBeenCalled();
       if (!allowFailure)
         expect(finalizeRun).not.toHaveBeenCalledWith(
@@ -712,6 +713,7 @@ describe("connector read-only metadata and approval enforcement", () => {
     Object.assign(f.prisma.routine, { count: vi.fn(async () => 0) });
     await f.run();
     expect([...f.offeredTools()].sort()).toEqual([
+      "organize_memory",
       "propose_memory_consolidation",
       "read_memory",
       "search_memory",
@@ -721,6 +723,47 @@ describe("connector read-only metadata and approval enforcement", () => {
     expect(f.commit).not.toHaveBeenCalled();
     expect(f.pauseRunForInput).not.toHaveBeenCalled();
   });
+
+  it.each([false, true])(
+    "opens the automatic maintenance model only when memory changed: %s",
+    async (changed) => {
+      const f = fixture({
+        name: "shell",
+        trigger: "routine",
+        builtin: true,
+        prompt: "Memory organization v1.\nOrganize memory.",
+      });
+      const run = await f.prisma.run.findUnique();
+      Object.assign(run!, {
+        routineId: "maintenance-1",
+        routine: { memoryMaintenance: true, spaceId: "space-1", userId: "user-1", botId: "bot-1" },
+      });
+      Object.assign(f.prisma.run, { findFirst: vi.fn(async () => null) });
+      Object.assign(f.prisma.routine, {
+        count: vi.fn(async () => 0),
+        findFirst: vi.fn(async () => ({ botId: "bot-1" })),
+        updateMany: vi.fn(async () => ({ count: 1 })),
+      });
+      Object.assign(f.prisma, {
+        memoryDocument: {
+          findMany: vi.fn(async () =>
+            changed
+              ? [
+                  {
+                    path: "MEMORY.md",
+                    updatedAt: new Date(Date.now() - 60_000),
+                    revisions: [],
+                  },
+                ]
+              : [],
+          ),
+        },
+      });
+      await f.run(false, changed);
+      expect(f.commit).not.toHaveBeenCalled();
+      expect(f.pauseRunForInput).not.toHaveBeenCalled();
+    },
+  );
 
   it.each(["shell", "write_file"])(
     "forces owner approval for webhook-triggered %s despite an allow rule",

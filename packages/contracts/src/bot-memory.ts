@@ -16,6 +16,17 @@ export function isEmptyBotMemory(doc: Pick<MemoryDocument, "path" | "content">):
 }
 /** Reserved proposal artifacts remain available to human memory management, not agent recall. */
 export const MEMORY_REVIEW_DIRECTORY = "memory/reviews/";
+export const MEMORY_ARCHIVE_DIRECTORY = "memory/archive/";
+
+/** Automatic preimages are readable, but ordinary agents may not change them. */
+export function isMemoryArchivePath(path: string): boolean {
+  return path
+    .trim()
+    .normalize("NFKC")
+    .replace(/^\.?\//, "")
+    .toLowerCase()
+    .startsWith(MEMORY_ARCHIVE_DIRECTORY);
+}
 
 export function isMemoryReviewPath(path: string): boolean {
   return path

@@ -97,6 +97,7 @@ import {
 } from "./history-compaction.js";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
+import { MEMORY_ORGANIZATION_VERSION, memoryOrganizationStatus } from "./memory-organization.js";
 import { HostedModelCreditsRequiredError } from "./model-credit-observer.js";
 import {
   effectiveModelRole,
@@ -1561,6 +1562,19 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
 
         try {
           if (checkpointLoadError) throw checkpointLoadError;
+          if (memoryMaintenance && task.prompt.startsWith(MEMORY_ORGANIZATION_VERSION)) {
+            const status = await memoryOrganizationStatus(
+              deps.prisma,
+              { spaceId: run.spaceId, userId: run.userId, botId: bot.id },
+              runId,
+              run.startedAt ?? now,
+            );
+            if (!status.changed) {
+              ctx.state.reply.explicitNoResponse = true;
+              await completeRun(ctx);
+              return;
+            }
+          }
           // Read the latest card from the tenant-scoped content store. Never infer an
           // authorization from the model prompt or another Bot's conversational text.
           const approvalCard = await deps.prisma.message.findFirst({
