@@ -378,7 +378,7 @@ export function VoiceAssistant({
     <section
       data-testid="voice-wake-armed"
       aria-label="语音模式"
-      className="fixed bottom-4 start-4 z-40 flex max-w-96 items-center gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-sm backdrop-blur"
+      className="fixed bottom-4 start-4 z-[60] flex max-w-96 items-center gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-sm backdrop-blur"
     >
       {isMuted ? (
         <MicOff className="size-5 text-muted-foreground" />
