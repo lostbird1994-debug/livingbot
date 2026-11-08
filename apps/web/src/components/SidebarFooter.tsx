@@ -19,12 +19,15 @@ import {
   Plug,
   ScrollText,
   Settings,
+  ChevronRight,
   Smartphone,
   SquareKanban,
   UserPlus,
   UserRound,
 } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
+import type { SettingsPanel } from "../pages/settings-nav";
+import { SETTINGS_PANELS, useSettingsPanelLabels } from "../pages/settings-nav";
 import { useSidebarUpdate } from "./DesktopUpdates";
 import { IconTooltip } from "./IconTooltip";
 
@@ -43,7 +46,7 @@ type Props = {
   links?: NavLink[];
   onLink?: (link: NavLink) => void;
   onArtifacts: () => void;
-  onSettings: () => void;
+  onSettings: (panel: SettingsPanel) => void;
   onUsage: () => void;
   onInvite?: () => void;
   onLogOut: () => void;
@@ -79,7 +82,11 @@ export function SidebarFooter({
   logOutError,
 }: Props) {
   const { t } = useLingui();
+  const panelLabels = useSettingsPanelLabels();
   const update = useSidebarUpdate();
+  // The three panels live one level down from Settings, so the row opens on hover.
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsHoverTimer = useRef<number | undefined>(undefined);
   const [failedImage, setFailedImage] = useState<string | null>(null);
   const pillRef = useRef<HTMLButtonElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
@@ -154,15 +161,50 @@ export function SidebarFooter({
                 <Trans>Connect apps</Trans>
               </Button>
             ) : null}
-            <Button
-              variant="ghost"
-              className="h-9 w-full justify-start gap-2.5 font-normal"
-              aria-label={t`Settings`}
-              onClick={onSettings}
+            <div
+              data-testid="account-menu-settings"
+              onMouseEnter={() => {
+                window.clearTimeout(settingsHoverTimer.current);
+                setSettingsOpen(true);
+              }}
+              onMouseLeave={() => {
+                window.clearTimeout(settingsHoverTimer.current);
+                settingsHoverTimer.current = window.setTimeout(() => setSettingsOpen(false), 140);
+              }}
             >
-              <Settings className="text-muted-foreground" strokeWidth={1.75} />
-              <Trans>Settings</Trans>
-            </Button>
+              <Button
+                variant="ghost"
+                className="h-9 w-full justify-start gap-2.5 font-normal"
+                aria-label={t`Settings`}
+                aria-expanded={settingsOpen}
+                onClick={() => setSettingsOpen((open) => !open)}
+              >
+                <Settings className="text-muted-foreground" strokeWidth={1.75} />
+                <Trans>Settings</Trans>
+                <ChevronRight
+                  className={`ms-auto size-3.5 text-muted-foreground transition-transform ${settingsOpen ? "rotate-90" : ""}`}
+                  strokeWidth={1.75}
+                />
+              </Button>
+              {settingsOpen ? (
+                <div className="ms-4 border-s border-border ps-1.5" data-testid="settings-panels">
+                  {SETTINGS_PANELS.map((panel) => (
+                    <Button
+                      key={panel}
+                      variant="ghost"
+                      className="h-8 w-full justify-start gap-2 font-normal"
+                      data-testid={`settings-panel-${panel}`}
+                      onClick={() => {
+                        setSettingsOpen(false);
+                        onSettings(panel);
+                      }}
+                    >
+                      <span className="text-[13px]">{panelLabels[panel]}</span>
+                    </Button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
             <Button
               variant="ghost"
               className="h-9 w-full justify-start gap-2.5 font-normal"

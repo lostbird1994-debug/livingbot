@@ -844,3 +844,18 @@ describe("BotSettings cached data", () => {
     expect(patch).not.toHaveProperty("name");
   });
 });
+
+describe("bili-whale tab", () => {
+  it("is absent for a bot that does not carry the project", async () => {
+    await render();
+    expect(container.querySelector('[data-testid="bot-panel-tab-whale"]')).toBeNull();
+    expect(container.querySelector('[data-testid="bot-settings-whale"]')).toBeNull();
+  });
+
+  it("appears to the right of Advanced when the bot carries the project", async () => {
+    await render("Billing", { spawnKey: "bili-whale" });
+    const tabs = [...container.querySelectorAll('[role="tab"]')].map((tab) => tab.textContent);
+    expect(tabs).toEqual(["Files", "Context", "Task list", "Advanced", "养鱼"]);
+    expect(container.querySelector('[data-testid="bot-settings-whale"]')).not.toBeNull();
+  });
+});

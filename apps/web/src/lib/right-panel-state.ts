@@ -3,6 +3,7 @@ export type Panel =
   | "routines"
   | "loaded"
   | "settings"
+  | "whale"
   | "routine"
   | "create-group"
   | "group-settings"

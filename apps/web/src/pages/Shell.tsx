@@ -746,8 +746,12 @@ function SpaceShell() {
     writeBotsSidebarCollapsed(userId, collapsed);
   }
 
-  function openSettings(section: SettingsSection = "general", spaceId: string | null = null) {
-    setOverlay({ kind: "settings", section, spaceId });
+  function openSettings(
+    section: SettingsSection = "general",
+    spaceId: string | null = null,
+    botId: string | null = null,
+  ) {
+    setOverlay({ kind: "settings", section, spaceId, botId });
   }
 
   // Space-scoped sections bind their own rpc client to this space, so another
@@ -756,13 +760,19 @@ function SpaceShell() {
     openSettings("space", spaceId);
   }
 
-  const settingsNavItems = useSettingsNavItems({
+  const settingsAvailability = {
     messaging: messagingSurfaceEnabled,
     wallet: Boolean(bootstrapMe?.paymentWalletProvider),
     computer: computersAreUnavailable(bootstrapMe?.sandboxProvider),
     billing: bootstrapMe?.billingEnabled === true,
     updates: Boolean(desktopBridge()?.update),
-  });
+  };
+  // The palette reaches every panel's pages, so each one is listed.
+  const settingsNavItems = [
+    ...useSettingsNavItems("global", settingsAvailability),
+    ...useSettingsNavItems("workspace", settingsAvailability),
+    ...useSettingsNavItems("bot", settingsAvailability),
+  ];
   // Every appearance the settings pane offers, so the shortcut menu always shows which one
   // is on. A theme missing here used to leave the whole group unchecked.
   const appearanceLabel: Record<AppearancePreference, string> = {
@@ -1277,7 +1287,6 @@ function SpaceShell() {
           showSettings={settingsSpaceId === null || Boolean(settingsSpace)}
           spaces={spaces}
           renameSpace={renameSpace}
-          removeSpace={removeSpace}
           refreshSpaces={() => refreshBots()}
           openAgentImport={() => setPanel("import-agent")}
           alive={alive}
@@ -1286,7 +1295,6 @@ function SpaceShell() {
           bootstrapMe={bootstrapMe}
           setBootstrapMe={setBootstrapMe}
           messagingEnabled={messagingSurfaceEnabled}
-          memoryConfig={memoryProviderConfig}
           peerConversation={peerConversation}
           setPeerConversation={setPeerConversation}
           active={active}

@@ -1,23 +1,17 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Button, Input } from "@rakazo/ui-web";
+import { Input } from "@rakazo/ui-web";
 import { useEffect, useId, useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
-import { SpaceSettingOverrides } from "./SpaceSettingOverrides";
 import type { SettingsSpace } from "./shell/dialogs";
-import { DeleteSpaceDialog } from "./shell/dialogs";
 
-/** One space's page: its name, the account settings it customizes, and deletion for its owner. */
+/** One space's overview: its name. Deleting a space stays in the sidebar's own menu. */
 export function SpaceSettingsPanel({
   space,
   onRename,
-  onDelete,
-  onClose,
   onBusyChange,
 }: {
   space: SettingsSpace;
   onRename: (name: string) => Promise<void>;
-  onDelete: () => Promise<void>;
-  onClose: () => void;
   onBusyChange?: (busy: boolean) => void;
 }) {
   const { t } = useLingui();
@@ -25,13 +19,10 @@ export function SpaceSettingsPanel({
   const [draft, setDraft] = useState(space.name);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [overridesBusy, setOverridesBusy] = useState(false);
-  // A rename in flight holds the dialog open, so a failure is shown instead of lost on leaving.
-  const busy = pending || overridesBusy;
+
   useEffect(() => {
-    onBusyChange?.(busy);
-  }, [busy, onBusyChange]);
+    onBusyChange?.(pending);
+  }, [pending, onBusyChange]);
 
   async function save() {
     const trimmed = draft.trim();
@@ -100,23 +91,6 @@ export function SpaceSettingsPanel({
             ) : null}
           </SettingsRow>
         </SettingsGroup>
-      ) : null}
-      <SpaceSettingOverrides onClose={onClose} onBusyChange={setOverridesBusy} />
-      {space.canDelete ? (
-        <Button
-          variant="destructive"
-          className="rounded-full"
-          onClick={() => setConfirmingDelete(true)}
-        >
-          <Trans>Delete space</Trans>
-        </Button>
-      ) : null}
-      {confirmingDelete ? (
-        <DeleteSpaceDialog
-          space={space}
-          onCancel={() => setConfirmingDelete(false)}
-          onConfirm={onDelete}
-        />
       ) : null}
     </div>
   );

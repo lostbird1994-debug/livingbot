@@ -42,10 +42,6 @@ vi.mock("@rakazo/ui-web", () => {
   };
 });
 
-vi.mock("./SpaceSettingOverrides", () => ({
-  SpaceSettingOverrides: () => <div data-testid="space-setting-overrides" />,
-}));
-
 import { SpaceSettingsPanel } from "./SpaceSettingsPanel";
 
 let container: HTMLDivElement;
@@ -59,8 +55,6 @@ async function render(props: Partial<Props>) {
       <SpaceSettingsPanel
         space={{ id: "space-a", name: "Support", canRename: true, canDelete: true, botCount: 0 }}
         onRename={async () => undefined}
-        onDelete={async () => undefined}
-        onClose={() => undefined}
         {...props}
       />,
     );
@@ -200,37 +194,18 @@ describe("SpaceSettingsPanel", () => {
     expect(container.textContent).toContain("Could not rename space");
   });
 
-  it("shows neither rename nor delete to a space it cannot change", async () => {
+  it("shows no rename to a space it cannot change", async () => {
     await render({
       space: { id: "space-a", name: "Personal", canRename: false, canDelete: false },
     });
     expect(container.querySelector("input")).toBeNull();
-    // Every member can still customize their own settings for the space.
-    expect(container.querySelector('[data-testid="space-setting-overrides"]')).not.toBeNull();
-    expect(button("Delete space")).toBeUndefined();
   });
 
-  it("names the bots that go with the space before deleting it", async () => {
-    const onDelete = vi.fn(async () => undefined);
+  it("never offers deleting the space, which stays in the sidebar menu", async () => {
     await render({
-      space: {
-        id: "space-a",
-        name: "Support",
-        canRename: true,
-        canDelete: true,
-        botCount: 2,
-      },
-      onDelete,
+      space: { id: "space-a", name: "Support", canRename: true, canDelete: true, botCount: 2 },
     });
-    await click("Delete space");
-    expect(container.querySelector("h2")?.textContent).toBe("Delete Support and its 2 bots?");
-    await click("Delete");
-    expect(onDelete).toHaveBeenCalledTimes(1);
-  });
-
-  it("asks plainly when the space has no bots", async () => {
-    await render({});
-    await click("Delete space");
-    expect(container.querySelector("h2")?.textContent).toBe("Delete Support?");
+    expect(button("Delete space")).toBeUndefined();
+    expect(container.textContent).not.toContain("Delete");
   });
 });

@@ -26,13 +26,15 @@ import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
 import { VoiceSettingsOverlay } from "./VoiceSettingsOverlay";
 
 /**
- * Account settings the bound Space follows until the member customizes them here. A customized
- * setting shows the same panel as the account's section, editing the Space's own copy.
+ * One account setting the bound Space may keep its own copy of. Until it is customized the
+ * Space follows the account's; afterwards this page edits the Space's copy alone.
  */
-export function SpaceSettingOverrides({
+export function SpaceSettingSection({
+  setting,
   onClose,
   onBusyChange,
 }: {
+  setting: SpaceSetting;
   onClose: () => void;
   onBusyChange?: (busy: boolean) => void;
 }) {
@@ -41,54 +43,24 @@ export function SpaceSettingOverrides({
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
   const overrides = useQuery(queries.spaceSettings.overrides.queryOptions());
-  const [pending, setPending] = useState<SpaceSetting | null>(null);
+  const [pending, setPending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [confirmingReset, setConfirmingReset] = useState<SpaceSetting | null>(null);
+  const [confirmingReset, setConfirmingReset] = useState(false);
   // A credential still saving would land in the vault a reset is deleting.
   const [vaultBusy, setVaultBusy] = useState(false);
 
-  const settings: {
-    id: SpaceSetting;
-    label: string;
-    panel: () => ReactNode;
-    resetConfirmation?: string;
-    busy?: boolean;
-  }[] = [
-    {
-      id: "models",
-      label: t`Models`,
-      panel: () => <ModelSettingsOverlay embedded scope="space" onClose={onClose} />,
-    },
-    {
-      id: "voice",
-      label: t`Voice`,
-      panel: () => (
-        <VoiceSettingsOverlay
-          embedded
-          scope="space"
-          onClose={onClose}
-          onBusyChange={onBusyChange}
-        />
-      ),
-    },
-    {
-      id: "confirmations",
-      label: t`Approvals`,
-      panel: () => <ApprovalRulesSettings scope="space" />,
-    },
-    {
-      id: "credentials",
-      label: t`Vault`,
-      panel: () => <VaultSettings scope="space" onBusyChange={setVaultBusy} />,
-      busy: vaultBusy,
-      // Going back to the defaults deletes the Space's own credentials.
-      resetConfirmation: t`Delete this Space's credentials?`,
-    },
-  ];
+  const panels: Record<SpaceSetting, () => ReactNode> = {
+    models: () => <ModelSettingsOverlay embedded scope="space" onClose={onClose} />,
+    voice: () => (
+      <VoiceSettingsOverlay embedded scope="space" onClose={onClose} onBusyChange={onBusyChange} />
+    ),
+    confirmations: () => <ApprovalRulesSettings scope="space" />,
+    credentials: () => <VaultSettings scope="space" onBusyChange={setVaultBusy} />,
+  };
 
-  async function setOverride(setting: SpaceSetting, enabled: boolean) {
+  async function setOverride(enabled: boolean) {
     if (pending) return;
-    setPending(setting);
+    setPending(true);
     setActionError(null);
     try {
       const next = await rpc.spaceSettings.setOverride({ setting, enabled });
@@ -104,7 +76,7 @@ export function SpaceSettingOverrides({
     } catch (err) {
       setActionError(errorText(err));
     } finally {
-      setPending(null);
+      setPending(false);
     }
   }
 
@@ -118,72 +90,67 @@ export function SpaceSettingOverrides({
       </div>
     ) : null;
   }
-  const customized = overrides.data;
-  const confirmTitle = settings.find(({ id }) => id === confirmingReset)?.resetConfirmation;
+
+  const custom = overrides.data.includes(setting);
 
   return (
-    <div className="space-y-3">
-      <SettingsGroup data-testid="space-setting-overrides">
-        {settings.map(({ id, label, panel, resetConfirmation, busy }) => {
-          const custom = customized.includes(id);
-          return (
-            <div key={id} data-testid={`space-setting-${id}`}>
-              <SettingsRow
-                label={
-                  <>
-                    <p>{label}</p>
-                    {custom ? null : (
-                      <p className="text-[13px] text-muted-foreground">{t`Your defaults`}</p>
-                    )}
-                  </>
-                }
-                control={
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-full"
-                    aria-label={custom ? t`Use defaults for ${label}` : t`Customize ${label}`}
-                    disabled={pending !== null || busy}
-                    onClick={() =>
-                      custom && resetConfirmation
-                        ? setConfirmingReset(id)
-                        : void setOverride(id, !custom)
-                    }
-                  >
-                    {custom ? t`Use defaults` : t`Customize`}
-                  </Button>
-                }
-              >
-                {custom ? <div className="pt-3">{panel()}</div> : null}
-              </SettingsRow>
-            </div>
-          );
-        })}
+    <div className="space-y-3" data-testid={`space-setting-section-${setting}`}>
+      <SettingsGroup>
+        <SettingsRow
+          label={
+            <>
+              <p>{custom ? t`Only this workspace` : t`Following the global default`}</p>
+              <p className="text-[13px] text-muted-foreground">
+                {custom
+                  ? t`This workspace keeps its own copy; the global one is untouched.`
+                  : t`Customize to give this workspace its own copy.`}
+              </p>
+            </>
+          }
+          control={
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full"
+              aria-label={custom ? t`Use defaults` : t`Customize`}
+              disabled={pending || vaultBusy}
+              onClick={() => {
+                if (custom && setting === "credentials") setConfirmingReset(true);
+                else void setOverride(!custom);
+              }}
+            >
+              {custom ? t`Use default` : t`Customize`}
+            </Button>
+          }
+        />
       </SettingsGroup>
+      {custom ? (
+        <div data-testid={`space-setting-panel-${setting}`}>{panels[setting]()}</div>
+      ) : null}
       {actionError ? (
         <p role="alert" className="text-[12.5px] text-destructive">
           {actionError}
         </p>
       ) : null}
-      {confirmingReset && confirmTitle ? (
+      {confirmingReset ? (
         <AlertDialog
           open
           onOpenChange={(open) => {
-            if (!open && !pending) setConfirmingReset(null);
+            if (!open && !pending) setConfirmingReset(false);
           }}
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{confirmTitle}</AlertDialogTitle>
+              <AlertDialogTitle>{t`Delete this workspace's credentials?`}</AlertDialogTitle>
               <AlertDialogDescription>{t`This can't be undone.`}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={pending !== null}>{t`Cancel`}</AlertDialogCancel>
+              <AlertDialogCancel disabled={pending}>{t`Cancel`}</AlertDialogCancel>
               <AlertDialogAction
                 variant="destructive"
-                disabled={pending !== null}
+                disabled={pending}
                 onClick={() =>
-                  void setOverride(confirmingReset, false).then(() => setConfirmingReset(null))
+                  void setOverride(false).then(() => setConfirmingReset(false))
                 }
               >
                 {t`Delete`}

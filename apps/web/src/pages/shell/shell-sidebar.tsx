@@ -22,6 +22,7 @@ import type { Panel } from "../../lib/right-panel-state";
 import { useSignOut } from "../../lib/sign-out";
 import { ActivityList } from "../ActivityList";
 import { SpaceSearchResults } from "../SpaceSearch";
+import { SETTINGS_PANEL_DEFAULT } from "../settings-nav";
 import type { SettingsSection } from "../shell-overlay";
 import { SidebarHeader } from "./sidebar-header";
 import type { SidebarSearch } from "./use-sidebar-search";
@@ -367,9 +368,9 @@ function ShellSidebarFooter({
           closeMobileSidebar();
           navigate("/app/artifacts");
         }}
-        onSettings={() => {
+        onSettings={(panel) => {
           setMenuOpen(false);
-          openSettings("general");
+          openSettings(SETTINGS_PANEL_DEFAULT[panel]);
         }}
         onUsage={() => {
           setMenuOpen(false);

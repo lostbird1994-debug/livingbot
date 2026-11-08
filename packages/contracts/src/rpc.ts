@@ -19,6 +19,7 @@ import {
   ATTACHMENT_COUNT_CEILING,
 } from "./attachments.js";
 import { AuditEventListInputSchema, AuditEventPageSchema } from "./audit-events.js";
+import { BiliWhalePlanSchema, BiliWhaleSettingsSchema, BiliWhaleStatusSchema } from "./bili-whale.js";
 import {
   BoardEventSchema,
   BoardSchema,
@@ -1479,6 +1480,34 @@ export const appContract = {
     remove: oc
       .input(z.object({ botId: Id, name: StoredBotSecretName }))
       .output(z.object({ ok: z.literal(true) })),
+  },
+  /**
+   * B 站养鱼：某个 bot 的专属附加设置。配置与凭据都落在该 bot 自己的文件夹里，
+   * 工具链（命令行）与设置页读写同一份，不存在两套状态。
+   */
+  biliWhale: {
+    get: oc
+      .input(z.object({ botId: Id }))
+      .output(
+        z.object({ settings: BiliWhaleSettingsSchema, status: BiliWhaleStatusSchema }),
+      ),
+    save: oc
+      .input(z.object({ botId: Id, settings: BiliWhaleSettingsSchema }))
+      .output(z.object({ ok: z.literal(true) })),
+    saveCredentials: oc
+      .input(
+        z.object({
+          botId: Id,
+          sessdata: z.string().max(4000),
+          biliJct: z.string().max(400),
+          buvid3: z.string().max(4000),
+        }),
+      )
+      .output(z.object({ ok: z.literal(true) })),
+    /** 依赖体检：真的跑一次工具链，把结果原样返回。 */
+    deps: oc.input(z.object({ botId: Id })).output(z.object({ text: z.string() })),
+    /** 现在掷一次骰子，看看今晚几点醒 / 要不要看。 */
+    planNow: oc.input(z.object({ botId: Id })).output(BiliWhalePlanSchema),
   },
 };
 

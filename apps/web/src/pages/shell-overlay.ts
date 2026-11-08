@@ -12,19 +12,39 @@ const SETTINGS_SECTIONS = [
   "computer",
   "billing",
   "updates",
+  "space-models",
+  "space-voice",
+  "space-confirmations",
+  "space-vault",
+  "bot-role",
+  "bot-voice",
 ] as const;
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 /** The shell overlay a URL opens; the URL is its only source of truth so links and reloads keep it. */
 export type ShellOverlay =
-  | { kind: "settings"; section: SettingsSection; spaceId: string | null }
+  | {
+      kind: "settings";
+      section: SettingsSection;
+      spaceId: string | null;
+      /** The bot the Bot panel edits; null follows the open bot. */
+      botId?: string | null;
+    }
   | { kind: "integrations" }
   | { kind: "skills" }
   | { kind: "mcp"; serverId?: string }
   | null;
 
-const OVERLAY_KEYS = ["settings", "space", "integrations", "skills", "mcp", "messaging"] as const;
+const OVERLAY_KEYS = [
+  "settings",
+  "space",
+  "bot",
+  "integrations",
+  "skills",
+  "mcp",
+  "messaging",
+] as const;
 
 function isSettingsSection(value: string): value is SettingsSection {
   return (SETTINGS_SECTIONS as readonly string[]).includes(value);
@@ -37,6 +57,7 @@ export function readShellOverlay(params: URLSearchParams): ShellOverlay {
       kind: "settings",
       section: isSettingsSection(section) ? section : "general",
       spaceId: params.get("space") || null,
+      botId: params.get("bot") || null,
     };
   }
   if (params.has("integrations")) return { kind: "integrations" };
@@ -57,6 +78,7 @@ export function withShellOverlay(params: URLSearchParams, overlay: ShellOverlay)
   if (overlay?.kind === "settings") {
     next.set("settings", overlay.section);
     if (overlay.spaceId) next.set("space", overlay.spaceId);
+    if (overlay.botId) next.set("bot", overlay.botId);
   } else if (overlay?.kind === "mcp") {
     next.set("mcp", overlay.serverId ?? "");
   } else if (overlay) {

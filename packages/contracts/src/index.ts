@@ -6,6 +6,7 @@ export * from "./analytics.js";
 export * from "./attachments.js";
 export * from "./audit-events.js";
 export * from "./auth.js";
+export * from "./bili-whale.js";
 export * from "./board.js";
 export * from "./bot-avatar.js";
 export * from "./bot-memory.js";

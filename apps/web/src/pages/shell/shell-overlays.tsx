@@ -1,15 +1,5 @@
-import type {
-  Bot,
-  BotAvatarSet,
-  Me,
-  Space,
-  SpaceMemoryConfig,
-  UsageSummary,
-} from "@rakazo/contracts";
-import { writeSaved } from "@rakazo/core/query";
-import { useQuery } from "@tanstack/react-query";
+import type { Bot, BotAvatarSet, Me, Space } from "@rakazo/contracts";
 import type { RefObject } from "react";
-import { useCallback } from "react";
 import { lazyOverlay } from "../../components/ErrorBoundary";
 import type { connectedAppMarks } from "../../lib/connected-apps";
 import type { SpaceQueries } from "../../lib/query";
@@ -91,7 +81,6 @@ export function SettingsOverlays({
   showSettings,
   spaces,
   renameSpace,
-  removeSpace,
   refreshSpaces,
   openAgentImport,
   alive,
@@ -100,7 +89,6 @@ export function SettingsOverlays({
   bootstrapMe,
   setBootstrapMe,
   messagingEnabled,
-  memoryConfig,
   peerConversation,
   setPeerConversation,
   active,
@@ -114,7 +102,6 @@ export function SettingsOverlays({
   showSettings: boolean;
   spaces: Space[];
   renameSpace: (spaceId: string, name: string) => Promise<void>;
-  removeSpace: (spaceId: string) => Promise<void>;
   refreshSpaces: () => Promise<void>;
   openAgentImport: () => void;
   alive: RefObject<boolean>;
@@ -123,17 +110,12 @@ export function SettingsOverlays({
   bootstrapMe: Me | null | undefined;
   setBootstrapMe: (update: (prev: Me | null | undefined) => Me | null | undefined) => void;
   messagingEnabled: boolean;
-  memoryConfig: SpaceMemoryConfig | null | undefined;
   peerConversation: { peerBotId: string; peerBotName: string } | null;
   setPeerConversation: (peer: null) => void;
   active: Bot | undefined;
   peerBot: (botId: string) => { color: string; avatarSet?: BotAvatarSet } | undefined;
 }) {
-  // Read when Usage opens; a reopened Usage shows the last summary while it refreshes.
-  const usageQuery = useQuery({ ...queries.usage.summary.queryOptions(), enabled: false });
-  const usage: UsageSummary | null = usageQuery.data ?? null;
-  const refetchUsage = usageQuery.refetch;
-  const refreshUsage = useCallback(() => void refetchUsage(), [refetchUsage]);
+  // Shown while Usage's own query loads; each settings panel reads its own data.
   const voiceStatusKey = queries.voice.status.queryKey();
   return (
     <>
@@ -142,19 +124,15 @@ export function SettingsOverlays({
           space={settingsSpace}
           spaces={spaces}
           onRenameSpace={renameSpace}
-          onDeleteSpace={async (spaceId) => {
-            await removeSpace(spaceId);
-            if (alive.current) setOverlay(null);
-          }}
-          onOpenSpace={(spaceId) => setOverlay({ ...overlay, section: "space", spaceId })}
+          onSpaceChange={(spaceId) => setOverlay({ ...overlay, spaceId })}
+          botId={overlay.botId ?? null}
+          onBotChange={(botId) => setOverlay({ ...overlay, botId })}
           name={user?.name ?? ""}
           onNameSaved={async () => {
             await refetchSession();
           }}
           email={user?.email}
-          usage={usage}
-          onUsageOpen={refreshUsage}
-          section={overlay.section}
+          requestedSection={overlay.section}
           onSectionChange={(section) => setOverlay({ ...overlay, section })}
           billingEnabled={bootstrapMe?.billingEnabled === true}
           sandboxProvider={bootstrapMe?.sandboxProvider}
@@ -172,10 +150,6 @@ export function SettingsOverlays({
           onImportAgent={() => {
             setOverlay(null);
             openAgentImport();
-          }}
-          memoryConfig={memoryConfig}
-          onMemoryConfigChange={(config) => {
-            void writeSaved(queryClient, queries.memory.providerConfig.queryKey(), () => config);
           }}
           onVoiceStatusMaybeChanged={async () => {
             try {

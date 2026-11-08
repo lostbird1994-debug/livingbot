@@ -7275,3 +7275,51 @@ msgstr "你的语音提供方额度已用完。"
 #: src/lib/user-error.ts
 msgid "Your voice provider key was rejected."
 msgstr "你的语音提供方拒绝了该密钥。"
+
+msgid "Global settings"
+msgstr "全局设置"
+
+msgid "Workspace settings"
+msgstr "工作区设置"
+
+msgid "Bot settings"
+msgstr "Bot 设置"
+
+msgid "Account and preferences"
+msgstr "账户与偏好"
+
+msgid "Overview"
+msgstr "概况"
+
+msgid "Editing"
+msgstr "正在编辑"
+
+msgid "Applies to every workspace"
+msgstr "对所有工作区生效"
+
+msgid "Close settings"
+msgstr "关闭设置"
+
+msgid "No workspaces yet"
+msgstr "还没有工作区"
+
+msgid "No bots in this workspace yet"
+msgstr "这个工作区还没有 Bot"
+
+msgid "Create a bot in the sidebar to configure it here."
+msgstr "先在侧栏新建一个 Bot，再回来配置。"
+
+msgid "Only this workspace"
+msgstr "只对这个工作区生效"
+
+msgid "Following the global default"
+msgstr "正在跟随全局默认"
+
+msgid "This workspace keeps its own copy; the global one is untouched."
+msgstr "这个工作区用自己的一份，全局那份不受影响。"
+
+msgid "Customize to give this workspace its own copy."
+msgstr "点「自定义」给这个工作区单独存一份。"
+
+msgid "Delete this workspace's credentials?"
+msgstr "删除这个工作区的凭据？"

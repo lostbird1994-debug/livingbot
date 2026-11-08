@@ -32,76 +32,95 @@ vi.mock("@rakazo/ui-web", () => ({
     "children"
   >) => <div {...props}>{children}</div>,
   DialogTitle: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
+  NativeSelect: ({ children, ...props }: React.ComponentProps<"select">) => (
+    <select {...props}>{children}</select>
+  ),
+  NativeSelectOption: ({ children, ...props }: React.ComponentProps<"option">) => (
+    <option {...props}>{children}</option>
+  ),
 }));
 
 vi.mock("./AccountSettingsOverlay", () => ({
   ComputerSettingsPanel: () => null,
-  GeneralSettingsPanels: () => null,
+  GeneralSettingsPanels: () => <div data-testid="general-pages" />,
   UpdatesSettingsPanel: () => null,
-  UsageSettingsPanel: () => null,
+  UsageSettingsPanel: () => <div data-testid="usage-pages" />,
 }));
-const { memoryConfigs, memoryConfigChange, providerConfig, updaterStatus } = vi.hoisted(() => ({
-  memoryConfigs: [] as unknown[],
-  memoryConfigChange: { current: (_config: unknown) => {} },
-  providerConfig: vi.fn(async (_spaceId: string): Promise<unknown> => null),
-  updaterStatus: vi.fn(async (): Promise<unknown> => ({ installKind: "compose" })),
+vi.mock("./BillingSettingsPanel", () => ({
+  BillingSettingsPanel: () => <div data-testid="billing-pages" />,
 }));
-vi.mock("../lib/rpc", () => ({
-  rpc: { updater: { status: updaterStatus } },
-  createSpaceRpc: () => ({ memory: { providerConfig: () => providerConfig("") } }),
-  selectedSpaceId: () => null,
-  rpcForSpace: (spaceId: string) => ({
-    memory: { providerConfig: () => providerConfig(spaceId) },
-  }),
-}));
-vi.mock("./BillingSettingsPanel", () => ({ BillingSettingsPanel: () => null }));
 vi.mock("./PaymentWalletSettingsPanel", () => ({ PaymentWalletSettingsPanel: () => null }));
 vi.mock("./MemorySettingsOverlay", () => ({
-  MemorySettingsOverlay: ({
-    config,
-    onConfigChange,
-  }: {
-    config: unknown;
-    onConfigChange: (config: unknown) => void;
-  }) => {
-    memoryConfigs.push(config);
-    memoryConfigChange.current = onConfigChange;
-    return null;
-  },
+  MemorySettingsOverlay: () => <div data-testid="memory-pages" />,
 }));
 vi.mock("./SpaceSettingsPanel", () => ({
-  SpaceSettingsPanel: ({
-    space,
-    onDelete,
-  }: {
-    space: { name: string };
-    onDelete: () => Promise<void>;
-  }) => (
-    <button type="button" data-testid="space-settings" onClick={() => void onDelete()}>
-      {space.name}
-    </button>
+  SpaceSettingsPanel: ({ space }: { space: { name: string } }) => (
+    <div data-testid="space-pages">{space.name}</div>
   ),
 }));
-const { scopes, recordScope } = vi.hoisted(() => {
-  const scopes: string[] = [];
-  return {
-    scopes,
-    recordScope:
-      (name: string) =>
-      ({ scope }: { scope: string }) => {
-        scopes.push(`${name}:${scope}`);
-        return null;
-      },
-  };
-});
-vi.mock("./ModelSettingsOverlay", () => ({ ModelSettingsOverlay: recordScope("models") }));
-vi.mock("./VoiceSettingsOverlay", () => ({ VoiceSettingsOverlay: recordScope("voice") }));
-vi.mock("../components/ApprovalRulesSettings", () => ({
-  ApprovalRulesSettings: recordScope("confirmations"),
+vi.mock("./SpaceSettingSection", () => ({
+  SpaceSettingSection: ({ setting }: { setting: string }) => (
+    <div data-testid={`space-setting-${setting}`} />
+  ),
 }));
-vi.mock("../components/VaultSettings", () => ({ VaultSettings: recordScope("vault") }));
+vi.mock("./ModelSettingsOverlay", () => ({
+  ModelSettingsOverlay: ({ scope }: { scope: string }) => (
+    <div data-testid="models-pages">{scope}</div>
+  ),
+}));
+vi.mock("./VoiceSettingsOverlay", () => ({
+  VoiceSettingsOverlay: ({ scope }: { scope: string }) => (
+    <div data-testid="voice-pages">{scope}</div>
+  ),
+}));
+vi.mock("../components/ApprovalRulesSettings", () => ({
+  ApprovalRulesSettings: ({ scope }: { scope: string }) => (
+    <div data-testid="confirmations-pages">{scope}</div>
+  ),
+}));
+vi.mock("../components/VaultSettings", () => ({
+  VaultSettings: ({ scope }: { scope: string }) => <div data-testid="vault-pages">{scope}</div>,
+}));
+vi.mock("../components/InstructionSettings", () => ({
+  InstructionSettings: ({ bot }: { bot: { name: string } }) => (
+    <div data-testid="bot-role-pages">{bot.name}</div>
+  ),
+}));
+vi.mock("../components/voice/BotVoiceSettings", () => ({
+  BotVoiceSettings: ({ bot }: { bot: { name: string } }) => (
+    <div data-testid="bot-voice-pages">{bot.name}</div>
+  ),
+}));
+vi.mock("../components/SettingsRows", () => ({ SETTINGS_CONTENT_WIDTH: "" }));
 vi.mock("../components/ComputersUnavailableHint", () => ({
   computersAreUnavailable: () => false,
+}));
+vi.mock("../lib/desktop", () => ({
+  desktopBridge: () => (globalThis as { rakazoDesktop?: unknown }).rakazoDesktop,
+}));
+vi.mock("../lib/rpc", () => ({
+  rpc: {},
+  createSpaceRpc: () => ({}),
+  rpcForSpace: () => ({}),
+  selectedSpaceId: () => null,
+}));
+
+const { bots } = vi.hoisted(() => ({
+  bots: [
+    { id: "bot-1", name: "小K", archivedAt: null },
+    { id: "bot-2", name: "Scout", archivedAt: null },
+  ],
+}));
+
+vi.mock("../lib/query", () => ({
+  useSpaceQueries: () => ({
+    bots: { list: { queryOptions: () => ({ queryKey: ["bots"], queryFn: async () => bots }) } },
+    memory: {
+      providerConfig: { queryOptions: () => ({ queryKey: ["memory"], queryFn: async () => null }) },
+    },
+    usage: { summary: { queryOptions: () => ({ queryKey: ["usage"], queryFn: async () => null }) } },
+  }),
+  queryClient: { setQueryData: () => undefined, invalidateQueries: () => undefined },
 }));
 
 import { SettingsOverlay } from "./SettingsOverlay";
@@ -121,13 +140,10 @@ async function render(props: Partial<React.ComponentProps<typeof SettingsOverlay
         <QueryClientProvider client={queryClient}>
           <SettingsOverlay
             name="Jamie"
-            onUsageOpen={() => undefined}
             timezone={null}
             onTimezoneChange={async () => undefined}
-            memoryConfig={null}
-            onMemoryConfigChange={() => undefined}
             onClose={() => undefined}
-            section="general"
+            requestedSection="general"
             onSectionChange={() => undefined}
             {...next}
           />
@@ -147,173 +163,142 @@ async function render(props: Partial<React.ComponentProps<typeof SettingsOverlay
   };
 }
 
-function button(container: HTMLElement, label: string) {
-  const match = [...container.querySelectorAll("button")].find(
-    (item) => item.getAttribute("aria-label") === label,
-  );
-  if (!match) throw new Error(`Missing ${label}`);
-  return match;
-}
+/** Lets the bot list land before the panel is inspected. */
+const flush = () =>
+  act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
 
-it("lists the spaces under General and opens the one picked", async () => {
-  const onOpenSpace = vi.fn();
-  const { container, cleanup } = await render({ spaces, onOpenSpace });
+const shown = (container: HTMLElement) =>
+  container.querySelector("[data-settings-section]")?.getAttribute("data-settings-section");
+const panelOf = (container: HTMLElement) =>
+  container.querySelector("[data-settings-panel]")?.getAttribute("data-settings-panel");
+const nav = (container: HTMLElement, id: string) =>
+  container.querySelector(`[data-testid="settings-nav-${id}"]`);
+
+it("opens the global panel with only the account's own pages", async () => {
+  const { container, cleanup } = await render({ requestedSection: "models", space: acme, spaces });
   try {
-    const list = container.querySelector('[data-testid="settings-spaces"]');
-    expect(list?.textContent).toContain("Acme");
-    expect(list?.textContent).toContain("Beta");
-    await act(async () => button(container, "Manage Beta").click());
-    expect(onOpenSpace).toHaveBeenCalledWith("space-b");
-    // Spaces live under General, not in the nav.
-    expect(container.querySelector('[data-testid="settings-nav-space"]')).toBeNull();
+    expect(panelOf(container)).toBe("global");
+    expect(container.querySelector("h2")?.textContent).toBe("Global settings");
+    expect(nav(container, "models")).not.toBeNull();
+    // Workspace pages stay out of the account panel.
+    expect(nav(container, "usage")).toBeNull();
+    expect(nav(container, "space-models")).toBeNull();
+    // The account panel says it covers every workspace, and offers nothing to pick.
+    const scope = container.querySelector('[data-testid="settings-scope"]');
+    expect(scope?.textContent).toContain("Applies to every workspace");
+    expect(scope?.querySelector("select")).toBeNull();
+    expect(container.querySelector('[data-testid="models-pages"]')?.textContent).toBe("account");
   } finally {
     await cleanup();
   }
 });
 
-it("lists no spaces when there is only one", async () => {
-  const { container, cleanup } = await render({ spaces: [acme], onOpenSpace: vi.fn() });
+it("opens the workspace panel with that workspace's pages", async () => {
+  const { container, cleanup } = await render({ requestedSection: "space", space: acme, spaces });
   try {
-    expect(container.querySelector('[data-testid="settings-spaces"]')).toBeNull();
+    expect(panelOf(container)).toBe("workspace");
+    expect(container.querySelector("h2")?.textContent).toBe("Workspace settings");
+    for (const id of ["space", "space-models", "memory", "usage"]) {
+      expect(nav(container, id)).not.toBeNull();
+    }
+    // Account pages stay out of the workspace panel.
+    expect(nav(container, "general")).toBeNull();
+    expect(nav(container, "billing")).toBeNull();
+    expect(container.querySelector('[data-testid="settings-scope"]')?.textContent).toContain("Acme");
   } finally {
     await cleanup();
   }
 });
 
-it("titles a space's page with its name and leads back to General", async () => {
-  const onDeleteSpace = vi.fn(async () => undefined);
-  const onSectionChange = vi.fn();
+it("switches the workspace from inside the panel", async () => {
+  const onSpaceChange = vi.fn();
   const { container, cleanup } = await render({
-    space: { ...acme, canDelete: true },
+    requestedSection: "space-models",
+    space: acme,
     spaces,
-    onDeleteSpace,
-    onSectionChange,
-    section: "space",
+    onSpaceChange,
   });
   try {
-    expect(container.querySelector("h2")?.textContent).toBe("Acme");
-    expect(
-      container.querySelector('[data-testid="settings-nav-general"]')?.getAttribute("aria-current"),
-    ).toBe("page");
-    const panel = container.querySelector<HTMLButtonElement>('[data-testid="space-settings"]');
-    await act(async () => panel?.click());
-    expect(onDeleteSpace).toHaveBeenCalledWith("space-a");
-    await act(async () => button(container, "Back").click());
-    expect(onSectionChange).toHaveBeenCalledWith("general");
+    const select = container.querySelector<HTMLSelectElement>(
+      '[data-testid="settings-scope"] select',
+    );
+    if (!select) throw new Error("Missing workspace picker");
+    await act(async () => {
+      select.value = "space-b";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(onSpaceChange).toHaveBeenCalledWith("space-b");
+    // The workspace copy, not the account's.
+    expect(container.querySelector('[data-testid="space-setting-models"]')).not.toBeNull();
   } finally {
     await cleanup();
   }
 });
 
-it("reports a section picked in the nav so the shell can keep it in the URL", async () => {
-  const onSectionChange = vi.fn();
-  const { container, cleanup } = await render({ onSectionChange });
+it("opens the bot panel with a bot picker and that bot's pages", async () => {
+  const { container, cleanup } = await render({ requestedSection: "bot-role", space: acme, spaces });
   try {
-    const usage = container.querySelector<HTMLButtonElement>('[data-testid="settings-nav-usage"]');
-    if (!usage) throw new Error("Missing Usage nav item");
-    await act(async () => usage.click());
-    expect(onSectionChange).toHaveBeenCalledWith("usage");
+    await flush();
+    expect(panelOf(container)).toBe("bot");
+    expect(container.querySelector("h2")?.textContent).toBe("Bot settings");
+    expect(nav(container, "bot-role")).not.toBeNull();
+    expect(nav(container, "bot-voice")).not.toBeNull();
+    const options = [...container.querySelectorAll('[data-testid="settings-scope"] option')].map(
+      (option) => option.textContent,
+    );
+    expect(options).toEqual(["小K", "Scout"]);
+    expect(container.querySelector('[data-testid="bot-role-pages"]')?.textContent).toBe("小K");
   } finally {
     await cleanup();
   }
 });
 
-it("opens a linked billing section once billing turns out to be on", async () => {
+it("switches the bot from inside the panel", async () => {
+  const onBotChange = vi.fn();
+  const { container, cleanup } = await render({
+    requestedSection: "bot-voice",
+    space: acme,
+    spaces,
+    botId: "bot-1",
+    onBotChange,
+  });
+  try {
+    await flush();
+    const select = container.querySelector<HTMLSelectElement>(
+      '[data-testid="settings-scope"] select',
+    );
+    if (!select) throw new Error("Missing bot picker");
+    await act(async () => {
+      select.value = "bot-2";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(onBotChange).toHaveBeenCalledWith("bot-2");
+    expect(container.querySelector('[data-testid="bot-voice-pages"]')).not.toBeNull();
+  } finally {
+    await cleanup();
+  }
+});
+
+it("opens the panel's first page when the linked section is hidden", async () => {
   const { container, rerender, cleanup } = await render({
-    section: "billing",
+    requestedSection: "billing",
     billingEnabled: false,
   });
-  const shown = () =>
-    container.querySelector("[data-settings-section]")?.getAttribute("data-settings-section");
   try {
-    expect(shown()).toBe("general");
-    await rerender({ section: "billing", billingEnabled: true });
-    expect(shown()).toBe("billing");
+    expect(shown(container)).toBe("general");
+    await rerender({ requestedSection: "billing", billingEnabled: true });
+    expect(shown(container)).toBe("billing");
   } finally {
     await cleanup();
   }
 });
 
-it("edits the account's models, voice, confirmations, and vault", async () => {
-  scopes.length = 0;
-  const props = { space: acme, spaces };
-  const { container, rerender, cleanup } = await render({ ...props, section: "models" });
-  try {
-    for (const section of ["models", "voice", "confirmations", "vault"] as const) {
-      await rerender({ ...props, section });
-    }
-    const vaultNav = container.querySelector('[data-testid="settings-nav-vault"]');
-    expect(vaultNav?.textContent).toBe("Vault");
-    expect(vaultNav?.getAttribute("aria-current")).toBe("page");
-    expect(container.querySelector("h2")?.textContent).toBe("Vault");
-    expect(new Set(scopes)).toEqual(
-      new Set(["models:account", "voice:account", "confirmations:account", "vault:account"]),
-    );
-  } finally {
-    await cleanup();
-  }
-});
-
-it("edits the memory of the space the app is showing, even after another space's page", async () => {
-  memoryConfigs.length = 0;
-  providerConfig.mockReset();
-  const shown = {
-    provider: "mem0",
-    settings: {},
-    defaultMemoryScope: "shared" as const,
-    updatedAt: "2026-01-01T00:00:00.000Z",
-  };
-  const onMemoryConfigChange = vi.fn();
-  const { cleanup } = await render({
-    space: spaces[1],
-    spaces,
-    section: "memory",
-    memoryConfig: shown,
-    onMemoryConfigChange,
-  });
-  try {
-    expect(memoryConfigs.at(-1)).toBe(shown);
-    await act(async () => memoryConfigChange.current(null));
-    expect(onMemoryConfigChange).toHaveBeenCalledWith(null);
-    expect(providerConfig).not.toHaveBeenCalled();
-  } finally {
-    await cleanup();
-  }
-});
-
-const updatesNav = (container: HTMLElement) =>
-  container.querySelector('[data-testid="settings-nav-updates"]');
-
-it("hides server updates and never requests server authority", async () => {
+it("hides Updates outside the desktop app", async () => {
   const { container, cleanup } = await render({});
   try {
-    expect(updatesNav(container)).toBeNull();
-    expect(updaterStatus).not.toHaveBeenCalled();
-  } finally {
-    await cleanup();
-  }
-});
-
-it("shows Updates in the desktop app", async () => {
-  vi.stubGlobal("rakazoDesktop", { update: {} });
-  const { container, cleanup } = await render({});
-  try {
-    expect(updatesNav(container)).not.toBeNull();
-  } finally {
-    await cleanup();
-  }
-});
-
-it("offers Wallet only when the deployment has a wallet provider", async () => {
-  const { container, rerender, cleanup } = await render({ section: "wallet" });
-  const shown = () =>
-    container.querySelector("[data-settings-section]")?.getAttribute("data-settings-section");
-  try {
-    expect(container.querySelector('[data-testid="settings-nav-wallet"]')).toBeNull();
-    expect(shown()).toBe("general");
-    await rerender({ section: "wallet", paymentWalletProvider: { id: "link", name: "Link" } });
-    expect(container.querySelector('[data-testid="settings-nav-wallet"]')).not.toBeNull();
-    expect(shown()).toBe("wallet");
+    expect(nav(container, "updates")).toBeNull();
   } finally {
     await cleanup();
   }

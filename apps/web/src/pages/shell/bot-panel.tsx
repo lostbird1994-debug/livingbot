@@ -43,6 +43,7 @@ import { Download, Settings, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
 import { ChatBackgroundSection } from "../../components/ChatBackgroundSettings";
+import { BiliWhaleSection } from "./bili-whale-panel";
 import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary";
 import { BotVoiceSettings } from "../../components/voice/BotVoiceSettings";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
@@ -101,7 +102,7 @@ export function ComputerModePicker({
   );
 }
 
-export type BotPanelTab = "computer" | "routines" | "loaded" | "settings";
+export type BotPanelTab = "computer" | "routines" | "loaded" | "settings" | "whale";
 
 /** A bot's profile above its Computer, Routines and Advanced tabs. */
 export function BotSettings({
@@ -518,6 +519,9 @@ export function BotSettings({
     return saveQueueRef.current;
   }
 
+  // 养鱼设置只属于装了这个项目的 bot：建 bot 时用 spawnKey 打标，别的 bot 看不到这个标签页。
+  const hasWhale = bot.spawnKey === "bili-whale";
+
   return (
     <div data-testid="bot-settings">
       <Tabs value={tab} onValueChange={(next) => onTabChange?.(next as BotPanelTab)}>
@@ -578,6 +582,11 @@ export function BotSettings({
             <TabsTrigger value="settings" data-testid="bot-panel-tab-settings">
               <Trans>Advanced</Trans>
             </TabsTrigger>
+            {hasWhale ? (
+              <TabsTrigger value="whale" data-testid="bot-panel-tab-whale">
+                <Trans>养鱼</Trans>
+              </TabsTrigger>
+            ) : null}
           </TabsList>
         </div>
         <TabsContent value="computer" className="pt-4">
@@ -625,6 +634,11 @@ export function BotSettings({
             </ErrorBoundary>
           ) : null}
         </TabsContent>
+        {hasWhale ? (
+          <TabsContent value="whale" data-testid="bot-settings-whale">
+            <BiliWhaleSection bot={bot} active={tab === "whale"} />
+          </TabsContent>
+        ) : null}
         {/* Keep editable drafts when switching between the bot's tabs. */}
         <TabsContent value="settings" keepMounted data-testid="bot-settings-advanced">
           <div className="space-y-5 pt-5 [&>[data-slot=disclosure]]:border-t [&>[data-slot=disclosure]]:border-border/60 [&>[data-slot=disclosure]]:pt-4">
