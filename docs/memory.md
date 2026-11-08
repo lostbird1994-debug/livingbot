@@ -68,6 +68,17 @@ the next check. A failed backup verification, incomplete read, redacted source o
 conflict leaves the source unchanged. A backup saved before a failed update remains available.
 No file or document is deleted or moved.
 
+Settings → Memory shows the shared organizer and every bot's maintenance routine. The user can
+assign another organizer, inspect its actual restricted instructions, pause its routine, or
+select a separate connected execution model without changing the bot's conversational model.
+An explicit assignment persists per member and space; pausing that organizer does not silently
+transfer shared work. Until the user selects one, the first eligible active bot remains the default.
+
+The organization diary pages durable run records and tool receipts: date, status, actual model,
+unchanged checks, changed paths and revisions, characters saved, complete source archives, and
+application errors. A lightweight unchanged check is distinguished from a completed model review
+that found no useful reduction. Instructions are captured in each run's task as usual.
+
 Organization is selective: unchanged, small, or already useful notes may remain untouched.
 It preserves original text, but this is not proof that the model selected every semantically
 important passage for the current summary. Details stay retrievable in the full archive.

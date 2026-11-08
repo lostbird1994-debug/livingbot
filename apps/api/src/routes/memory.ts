@@ -3,6 +3,11 @@ import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
 import { isScratchpadStatus, listScratchpadItems, mapScratchpadItem } from "@rakazo/adapters";
 import { isDeletableMemoryDocument } from "@rakazo/contracts";
 import { findSpaceMemoryConfig, IsolationError } from "@rakazo/db";
+import { memoryOrganizationDiary } from "../memory-organization-diary.js";
+import {
+  listMemoryOrganizers,
+  selectSharedMemoryOrganizer,
+} from "../memory-organization-settings.js";
 import {
   disconnectMemoryProvider,
   persistMemoryProviderConfig,
@@ -15,6 +20,15 @@ export function memoryRoutes(ctx: RouterContext) {
   const { deps, repos, taughtSkills, agentSkills, authed } = ctx;
   return {
     memory: {
+      organizers: authed.memory.organizers.handler(async ({ context }) =>
+        listMemoryOrganizers(deps.prisma, context.actor),
+      ),
+      setSharedOrganizer: authed.memory.setSharedOrganizer.handler(async ({ context, input }) =>
+        selectSharedMemoryOrganizer(deps.prisma, context.actor, input.routineId),
+      ),
+      organizationDiary: authed.memory.organizationDiary.handler(async ({ context, input }) =>
+        memoryOrganizationDiary(deps.prisma, context.actor, input.routineId, input.before),
+      ),
       list: authed.memory.list.handler(async ({ context, input }) => {
         const docs = await deps.prisma.memoryDocument.findMany({
           where: {

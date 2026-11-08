@@ -13,6 +13,10 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid " (paused)"
+msgstr ""
+
 #: src/pages/shell/sidebar-roster.tsx
 msgid " (unread)"
 msgstr "（未読）"
@@ -958,6 +962,10 @@ msgstr "自動送信者"
 msgid "Automated senders will appear after they post here."
 msgstr "自動送信者は、ここに投稿すると表示されます。"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Automatic memory organization"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Available after the routine is saved"
 msgstr "ルーティンの保存後に利用可能"
@@ -1084,6 +1092,7 @@ msgstr "ボットの画面"
 msgid "Bot screen preview"
 msgstr "ボットの画面プレビュー"
 
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Bot's model"
 msgstr "ボットのモデル"
@@ -1340,6 +1349,10 @@ msgstr "新しいパスワードを設定"
 #: src/pages/Onboarding.tsx
 msgid "Choose a provider"
 msgstr "プロバイダーを選択"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Choose an organizer"
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose backup"
@@ -2009,6 +2022,10 @@ msgstr "承認ルールを読み込めませんでした"
 msgid "Could not load artifacts."
 msgstr "アーティファクトを読み込めませんでした。"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not load available models"
+msgstr ""
+
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Could not load billing"
 msgstr "請求情報を読み込めませんでした"
@@ -2030,9 +2047,17 @@ msgstr "連携を読み込めませんでした"
 msgid "Could not load MCP servers"
 msgstr "MCPサーバーを読み込めませんでした"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not load memory organization settings"
+msgstr ""
+
 #: src/pages/model-settings/use-model-settings.ts
 msgid "Could not load model settings"
 msgstr "モデル設定を読み込めませんでした"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not load organization diary"
+msgstr ""
 
 #: src/pages/RoutineRunHistory.tsx
 msgid "Could not load run history"
@@ -2189,6 +2214,10 @@ msgstr "自動レビューを保存できませんでした"
 #: src/pages/GroupPanel.tsx
 msgid "Could not save group"
 msgstr "グループを保存できませんでした"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not save memory organization settings"
+msgstr ""
 
 #: src/pages/Onboarding.tsx
 msgid "Could not save model"
@@ -2460,6 +2489,10 @@ msgstr "ボットのアバターをカスタマイズ"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
 msgid "Dai"
+msgstr ""
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Daily check, or earlier after 30 messages or a large summary. At least 6 hours between checks."
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
@@ -2824,6 +2857,10 @@ msgstr "メールアドレスの確認が必要です"
 msgid "Enable {0}"
 msgstr "{0}を有効にする"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Enable automatic organization"
+msgstr ""
+
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
 msgstr "{day}に終了"
@@ -2896,10 +2933,6 @@ msgstr "{intervalAmountSelect}{intervalUnitSelect}ごと"
 msgid "Every {n} hours at :{minute}"
 msgstr "{n}時間ごと、{minute}分"
 
-#: src/pages/KnowledgeSection.tsx
-msgid "Shared summaries load automatically. Other shared notes are read on demand."
-msgstr "共有の要約は自動で読み込まれます。その他の共有メモは必要に応じて読み取られます。"
-
 #: src/lib/cron.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -2930,6 +2963,10 @@ msgstr "毎月"
 #: src/pages/RoutineSchedule.tsx
 msgid "Every week"
 msgstr "毎週"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Execution model"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Executor token"
@@ -2986,6 +3023,7 @@ msgstr "失敗"
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 msgid "Failed"
 msgstr "失敗"
 
@@ -3120,6 +3158,10 @@ msgstr "{0}から"
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "From GitHub"
+msgstr ""
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Full original archive"
 msgstr ""
 
 #: src/pages/WindowChrome.tsx
@@ -3593,6 +3635,7 @@ msgstr "以前のメッセージを読み込む"
 msgid "Load more"
 msgstr "さらに読み込む"
 
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "Load older runs"
 msgstr "過去の実行を読み込む"
@@ -3640,6 +3683,7 @@ msgstr "音声プロバイダーを読み込み中…"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
@@ -4184,6 +4228,10 @@ msgstr ""
 msgid "No bots match"
 msgstr "一致するボットはありません"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "No changes; model was not called"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "No earlier versions"
 msgstr ""
@@ -4215,6 +4263,10 @@ msgstr "一致するモデルはありません"
 msgid "No members yet"
 msgstr "メンバーはまだいません"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "No memory organizer configured"
+msgstr ""
+
 #: src/pages/PeerMessagesOverlay.tsx
 msgid "No messages with {peerBotName} yet."
 msgstr "{peerBotName}とのメッセージはまだありません。"
@@ -4230,6 +4282,10 @@ msgstr "モデルが一覧にありません。"
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "OpenClaw、Hermes、またはエージェントのドキュメントが見つかりません。"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "No organization runs yet"
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
@@ -4489,6 +4545,18 @@ msgstr "またはAPIキーを貼り付け"
 msgid "Organization API key"
 msgstr "組織のAPIキー"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Organization diary"
+msgstr ""
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Organization instructions"
+msgstr ""
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Organizer settings"
+msgstr ""
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Original"
 msgstr ""
@@ -4697,6 +4765,7 @@ msgid "Preferences"
 msgstr "環境設定"
 
 #: src/components/integrations/skills-dialog.tsx
+#: src/pages/KnowledgeSection.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Preview"
 msgstr ""
@@ -5165,6 +5234,7 @@ msgstr "ワークスペースを復元中"
 #: src/components/PasskeySettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
@@ -5190,6 +5260,10 @@ msgstr "{0}との通話に戻る"
 #: src/pages/SlackInstallCallback.tsx
 msgid "Return to Rakazo"
 msgstr "Rakazoに戻る"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Review completed; no documents changed"
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
@@ -5287,6 +5361,7 @@ msgstr "土曜日"
 #: src/pages/GroupPanel.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -5318,6 +5393,11 @@ msgstr "保管庫に保存"
 msgid "Saved"
 msgstr "保存しました"
 
+#. placeholder {0}: change.savedCharacters ?? 0
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Saved {0} characters"
+msgstr ""
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
 msgstr "保存しましたが、一覧を更新できませんでした"
@@ -5343,6 +5423,7 @@ msgstr "保存中..."
 #: src/components/VaultSettings.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -5563,6 +5644,14 @@ msgstr "共有"
 #: src/pages/KnowledgeSection.tsx
 msgid "Shared memory"
 msgstr "共有メモリ"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Shared memory organizer"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Shared summaries load automatically. Other shared notes are read on demand."
+msgstr "共有の要約は自動で読み込まれます。その他の共有メモは必要に応じて読み取られます。"
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -6557,6 +6646,10 @@ msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"
+msgstr ""
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "View organizer"
 msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx

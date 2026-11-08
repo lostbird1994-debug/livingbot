@@ -8,6 +8,7 @@ import {
 } from "@rakazo/core";
 import { desktopBridge } from "./desktop.js";
 import { DesktopSpeechRecognition } from "./desktop-speech.js";
+import { DictationStream } from "./dictation-stream.js";
 import { getActiveUiLocale } from "./i18n.js";
 import { selectedSpaceId, withSpaceHeaders } from "./rpc.js";
 import { errorText, voiceAccountErrorText } from "./user-error.js";
@@ -177,6 +178,8 @@ export class Dictation {
   private silenceTimer: ReturnType<typeof setTimeout> | undefined;
   private restartTimer: ReturnType<typeof setTimeout> | undefined;
   private transcribeAbort: AbortController | null = null;
+  /** Realtime transcript tap; null whenever streaming is unavailable or already finished. */
+  private streamTap: DictationStream | null = null;
   private audioContext: AudioContext | null = null;
   private vadTimer: ReturnType<typeof setInterval> | undefined;
   private onFinal: ((text: string) => void) | null = null;
@@ -202,6 +205,8 @@ export class Dictation {
     this.token += 1;
     this.transcribeAbort?.abort();
     this.transcribeAbort = null;
+    this.streamTap?.abort();
+    this.streamTap = null;
     this.stopVad();
     clearTimeout(this.silenceTimer);
     this.silenceTimer = undefined;
@@ -451,7 +456,23 @@ export class Dictation {
       for (const track of stream.getTracks()) track.stop();
       return;
     }
-    const keptSpeech = this.snapshot.transcript.trim().length > 0;
+    const keptText = this.snapshot.transcript;
+    const keptSpeech = keptText.trim().length > 0;
+    // Start the realtime tap before recording: interim text arriving while the user talks is
+    // what makes stopping feel instant. A refusal here just means the old path stays in charge.
+    const tap = new DictationStream();
+    this.streamTap = tap;
+    void tap
+      .start(stream, withSpaceHeaders({}, spaceId), (text) => {
+        if (this.token !== mine || this.snapshot.status !== "listening") return;
+        this.set({ status: "listening", transcript: combineTranscript(keptText, text) });
+      })
+      .then((streaming) => {
+        if (this.token !== mine || this.streamTap !== tap || !streaming) {
+          tap.abort();
+          if (this.streamTap === tap) this.streamTap = null;
+        }
+      });
     if (mode === "endpoint" && !this.armSilence(stream, mine, endpointMs, keptSpeech)) {
       for (const track of stream.getTracks()) track.stop();
       this.failListening(
@@ -473,7 +494,24 @@ export class Dictation {
         for (const track of stream.getTracks()) track.stop();
         if (this.token !== mine) return;
         this.stopVad();
-        void this.transcribeChunks(mine, spaceId);
+        const open = this.streamTap;
+        this.streamTap = null;
+        // Interim stream text overlaps the recorded audio; only speech carried from an
+        // earlier recognizer belongs before a complete-recording fallback.
+        this.set({ status: "transcribing", transcript: keptText });
+        if (!open) {
+          void this.transcribeChunks(mine, spaceId);
+          return;
+        }
+        void open.finish().then((text) => {
+          if (this.token !== mine) return;
+          if (text.trim()) {
+            this.finish(combineTranscript(keptText, text), mine);
+            return;
+          }
+          // The realtime stream produced nothing usable: transcribe the recorded clip instead.
+          void this.transcribeChunks(mine, spaceId);
+        });
       };
       media.start(mode === "endpoint" ? 250 : undefined);
     } catch (error) {

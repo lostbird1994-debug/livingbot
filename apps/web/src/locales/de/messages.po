@@ -13,6 +13,10 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid " (paused)"
+msgstr ""
+
 #: src/pages/shell/sidebar-roster.tsx
 msgid " (unread)"
 msgstr " (ungelesen)"
@@ -958,6 +962,10 @@ msgstr ""
 msgid "Automated senders will appear after they post here."
 msgstr ""
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Automatic memory organization"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Available after the routine is saved"
 msgstr ""
@@ -1084,6 +1092,7 @@ msgstr "Bot-Bildschirm"
 msgid "Bot screen preview"
 msgstr "Bot-Bildschirmvorschau"
 
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Bot's model"
 msgstr "Modell des Bots"
@@ -1339,6 +1348,10 @@ msgstr "Wähle ein neues Passwort"
 
 #: src/pages/Onboarding.tsx
 msgid "Choose a provider"
+msgstr ""
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Choose an organizer"
 msgstr ""
 
 #: src/pages/shell/agent-import.tsx
@@ -2009,6 +2022,10 @@ msgstr "Bestätigungsregeln konnten nicht geladen werden"
 msgid "Could not load artifacts."
 msgstr ""
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not load available models"
+msgstr ""
+
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Could not load billing"
 msgstr ""
@@ -2030,9 +2047,17 @@ msgstr "Integrationen konnten nicht geladen werden"
 msgid "Could not load MCP servers"
 msgstr "MCP-Server konnten nicht geladen werden"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not load memory organization settings"
+msgstr ""
+
 #: src/pages/model-settings/use-model-settings.ts
 msgid "Could not load model settings"
 msgstr "Modelleinstellungen konnten nicht geladen werden"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not load organization diary"
+msgstr ""
 
 #: src/pages/RoutineRunHistory.tsx
 msgid "Could not load run history"
@@ -2189,6 +2214,10 @@ msgstr ""
 #: src/pages/GroupPanel.tsx
 msgid "Could not save group"
 msgstr "Gruppe konnte nicht gespeichert werden"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not save memory organization settings"
+msgstr ""
 
 #: src/pages/Onboarding.tsx
 msgid "Could not save model"
@@ -2460,6 +2489,10 @@ msgstr "Bot-Avatar anpassen"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
 msgid "Dai"
+msgstr ""
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Daily check, or earlier after 30 messages or a large summary. At least 6 hours between checks."
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
@@ -2824,6 +2857,10 @@ msgstr "E-Mail-Verifizierung erforderlich"
 msgid "Enable {0}"
 msgstr "{0} aktivieren"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Enable automatic organization"
+msgstr ""
+
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
 msgstr ""
@@ -2896,10 +2933,6 @@ msgstr "alle {intervalAmountSelect} {intervalUnitSelect}"
 msgid "Every {n} hours at :{minute}"
 msgstr "Alle {n} Stunden um :{minute}"
 
-#: src/pages/KnowledgeSection.tsx
-msgid "Shared summaries load automatically. Other shared notes are read on demand."
-msgstr "Geteilte Zusammenfassungen werden automatisch geladen. Andere geteilte Notizen werden bei Bedarf gelesen."
-
 #: src/lib/cron.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -2930,6 +2963,10 @@ msgstr "Jeden Monat"
 #: src/pages/RoutineSchedule.tsx
 msgid "Every week"
 msgstr "Jede Woche"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Execution model"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Executor token"
@@ -2986,6 +3023,7 @@ msgstr "fehlgeschlagen"
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 msgid "Failed"
 msgstr "Fehlgeschlagen"
 
@@ -3120,6 +3158,10 @@ msgstr ""
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "From GitHub"
+msgstr ""
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Full original archive"
 msgstr ""
 
 #: src/pages/WindowChrome.tsx
@@ -3593,6 +3635,7 @@ msgstr "Frühere Nachrichten laden"
 msgid "Load more"
 msgstr ""
 
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "Load older runs"
 msgstr "Ältere Ausführungen laden"
@@ -3640,6 +3683,7 @@ msgstr "Stimmanbieter werden geladen…"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
@@ -4184,6 +4228,10 @@ msgstr ""
 msgid "No bots match"
 msgstr ""
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "No changes; model was not called"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "No earlier versions"
 msgstr ""
@@ -4215,6 +4263,10 @@ msgstr "Keine passenden Modelle"
 msgid "No members yet"
 msgstr ""
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "No memory organizer configured"
+msgstr ""
+
 #: src/pages/PeerMessagesOverlay.tsx
 msgid "No messages with {peerBotName} yet."
 msgstr "Noch keine Nachrichten mit {peerBotName}."
@@ -4230,6 +4282,10 @@ msgstr "Keine Modelle aufgelistet."
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "Keine OpenClaw-, Hermes- oder Agent-Dateien gefunden."
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "No organization runs yet"
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
@@ -4489,6 +4545,18 @@ msgstr "Oder einen API-Schlüssel einfügen"
 msgid "Organization API key"
 msgstr "Organisations-API-Schlüssel"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Organization diary"
+msgstr ""
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Organization instructions"
+msgstr ""
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Organizer settings"
+msgstr ""
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Original"
 msgstr ""
@@ -4697,6 +4765,7 @@ msgid "Preferences"
 msgstr "Präferenzen"
 
 #: src/components/integrations/skills-dialog.tsx
+#: src/pages/KnowledgeSection.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Preview"
 msgstr ""
@@ -5165,6 +5234,7 @@ msgstr ""
 #: src/components/PasskeySettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
@@ -5190,6 +5260,10 @@ msgstr "Zurück zum Anruf mit {0}"
 #: src/pages/SlackInstallCallback.tsx
 msgid "Return to Rakazo"
 msgstr "Zurück zu Rakazo"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Review completed; no documents changed"
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
@@ -5287,6 +5361,7 @@ msgstr "Samstag"
 #: src/pages/GroupPanel.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -5318,6 +5393,11 @@ msgstr "Im Tresor speichern"
 msgid "Saved"
 msgstr "Gespeichert"
 
+#. placeholder {0}: change.savedCharacters ?? 0
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Saved {0} characters"
+msgstr ""
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
 msgstr "Gespeichert, aber die Liste konnte nicht aktualisiert werden"
@@ -5343,6 +5423,7 @@ msgstr ""
 #: src/components/VaultSettings.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -5563,6 +5644,14 @@ msgstr "Geteilt"
 #: src/pages/KnowledgeSection.tsx
 msgid "Shared memory"
 msgstr "Gemeinsame Erinnerungen"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Shared memory organizer"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Shared summaries load automatically. Other shared notes are read on demand."
+msgstr "Geteilte Zusammenfassungen werden automatisch geladen. Andere geteilte Notizen werden bei Bedarf gelesen."
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -6557,6 +6646,10 @@ msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"
+msgstr ""
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "View organizer"
 msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx

@@ -1124,8 +1124,10 @@ model Routine {
   timezone       String    @default("UTC")
   active         Boolean   @default(false)
   notify         Boolean   @default(true)
-  /// Restricted nightly review: can propose source-backed changes, never overwrite memory.
+  /// Restricted memory maintenance, including verified source-backed organization.
   memoryMaintenance Boolean @default(false)
+  /// One explicit shared-memory organizer per member and space (partial unique index in SQL).
+  sharedMemoryOrganizer Boolean @default(false)
   webhookEnabled Boolean   @default(false)
   githubEnabled  Boolean   @default(false)
   messageProvider String?

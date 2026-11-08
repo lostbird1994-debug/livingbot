@@ -63,10 +63,11 @@ function setup(secrets: string[] = []) {
     }),
   );
   const context = {
-    deps: { memory: { read, search, commit } },
+    deps: { memory: { read, search, commit }, events: { append: vi.fn() } },
     bot: { id: "bot-1" },
     thread: { id: "thread-1" },
     runId: "run-1",
+    run: { spaceId: "space", userId: "user" },
     context: {},
     secrets,
     source: { messagingChannelRun: false },

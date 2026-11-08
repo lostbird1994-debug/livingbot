@@ -8,6 +8,7 @@ import {
   webSpeechAvailable,
   webSpeechNeedsServerFallback,
 } from "./dictation.js";
+import { DictationStream } from "./dictation-stream.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -43,6 +44,46 @@ function stubRecorderFallback(fetchMock: ReturnType<typeof vi.fn>) {
 }
 
 describe("Dictation recorder fallback", () => {
+  it("does not duplicate streaming partial text when the complete recording takes over", async () => {
+    const fetchMock = vi.fn(async () => Response.json({ text: "complete recorded sentence" }));
+    stubRecorderFallback(fetchMock);
+    vi.spyOn(DictationStream.prototype, "start").mockImplementation(
+      async (_stream, _headers, onText) => {
+        queueMicrotask(() => onText("complete recorded"));
+        return true;
+      },
+    );
+    vi.spyOn(DictationStream.prototype, "finish").mockResolvedValue("");
+    const onFinal = vi.fn();
+    const dictation = new Dictation();
+    await dictation.listen({ mode: "hold", transcribe: true, onFinal });
+    await Promise.resolve();
+    dictation.submitHold();
+    await vi.waitFor(() =>
+      expect(onFinal).toHaveBeenCalledExactlyOnceWith("complete recorded sentence"),
+    );
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+  it("records immediately while a realtime connection is still opening", async () => {
+    const fetchMock = vi.fn(async () => Response.json({ text: "recorded during connection" }));
+    stubRecorderFallback(fetchMock);
+    let finishStart!: (value: boolean) => void;
+    vi.spyOn(DictationStream.prototype, "start").mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishStart = resolve;
+        }),
+    );
+    const onFinal = vi.fn();
+    const dictation = new Dictation();
+    await dictation.listen({ mode: "hold", transcribe: true, onFinal });
+    expect(dictation.state.status).toBe("listening");
+    dictation.submitHold();
+    finishStart(false);
+    await vi.waitFor(() =>
+      expect(onFinal).toHaveBeenCalledExactlyOnceWith("recorded during connection"),
+    );
+  });
   it("stops tracks if hold-to-talk is cancelled while the mic prompt is open", async () => {
     const track = { stop: vi.fn() };
     let grant!: (stream: { getTracks: () => Array<{ stop: () => void }> }) => void;

@@ -145,11 +145,12 @@ import {
   VoiceStatusSchema,
 } from "./domain.js";
 import { ComputerCommandSchema, ProductEventSchema } from "./events.js";
-import { Id, IsoDate, ThinkingLevelSchema } from "./ids.js";
+import { Id, IsoDate, RunStatus, ThinkingLevelSchema } from "./ids.js";
 import {
   IntegrationProviderConfigSchema,
   IntegrationSetupStateSchema,
 } from "./integration-settings.js";
+import { MemoryOrganizationChangeSchema } from "./memory-organization.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
 import { PaymentWalletStatusSchema } from "./payments.js";
@@ -728,6 +729,47 @@ export const appContract = {
     heartbeat: oc.input(botId).output(z.object({ ok: z.literal(true) })),
   },
   memory: {
+    organizers: oc.output(
+      z.object({
+        sharedRoutineId: Id.nullable(),
+        routines: z.array(
+          z.object({
+            routine: RoutineSchema,
+            botName: z.string(),
+            botModelId: z.string().nullable(),
+            canOrganize: z.boolean(),
+            shared: z.boolean(),
+          }),
+        ),
+      }),
+    ),
+    setSharedOrganizer: oc
+      .input(z.object({ routineId: Id }))
+      .output(z.object({ ok: z.literal(true) })),
+    organizationDiary: oc
+      .input(
+        z.object({
+          routineId: Id,
+          before: RoutineRunCursorSchema.optional(),
+        }),
+      )
+      .output(
+        z.object({
+          nextCursor: RoutineRunCursorSchema.nullable(),
+          runs: z.array(
+            z.object({
+              id: Id,
+              status: RunStatus,
+              error: z.string().nullable(),
+              createdAt: z.string(),
+              completedAt: z.string().nullable(),
+              modelId: z.string().nullable(),
+              unchanged: z.boolean(),
+              changes: z.array(MemoryOrganizationChangeSchema.omit({ tool: true })),
+            }),
+          ),
+        }),
+      ),
     list: oc
       .input(z.object({ botId: Id.optional(), scope: z.enum(["bot", "user"]).optional() }))
       .output(z.array(MemoryDocumentSchema)),

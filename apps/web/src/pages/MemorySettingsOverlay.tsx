@@ -19,6 +19,7 @@ import { SETTINGS_CONTENT_WIDTH } from "../components/SettingsRows";
 import { useSpaceRpc } from "../lib/space-rpc";
 import { errorText } from "../lib/user-error";
 import { SpaceMemorySection } from "./KnowledgeSection";
+import { MemoryOrganizationSettings } from "./MemoryOrganizationSettings";
 import type { MemoryProviderConnectionDraft } from "./memory-providers/registry";
 import {
   defaultMemoryProviderSettings,
@@ -181,6 +182,7 @@ export function MemorySettingsOverlay({
           {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
 
           <SpaceMemorySection />
+          <MemoryOrganizationSettings />
 
           {config === undefined ? (
             <p className="text-[13px] text-muted-foreground">

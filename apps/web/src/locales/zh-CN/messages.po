@@ -13,6 +13,10 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid " (paused)"
+msgstr "（已暂停）"
+
 #: src/pages/shell/sidebar-roster.tsx
 msgid " (unread)"
 msgstr "（未读）"
@@ -958,6 +962,10 @@ msgstr "自动发送者"
 msgid "Automated senders will appear after they post here."
 msgstr "自动发送者在这里发过消息后会出现。"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Automatic memory organization"
+msgstr "自动整理记忆"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Available after the routine is saved"
 msgstr "保存例行任务后可用"
@@ -1084,6 +1092,7 @@ msgstr "Bot 屏幕"
 msgid "Bot screen preview"
 msgstr "Bot 屏幕预览"
 
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Bot's model"
 msgstr "Bot 的模型"
@@ -1340,6 +1349,10 @@ msgstr "设置新密码"
 #: src/pages/Onboarding.tsx
 msgid "Choose a provider"
 msgstr "选择提供方"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Choose an organizer"
+msgstr "选择整理负责人"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose backup"
@@ -2009,6 +2022,10 @@ msgstr "无法加载审批规则"
 msgid "Could not load artifacts."
 msgstr "无法加载产物。"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not load available models"
+msgstr "无法加载可用模型"
+
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Could not load billing"
 msgstr "无法加载账单"
@@ -2030,9 +2047,17 @@ msgstr "无法加载集成"
 msgid "Could not load MCP servers"
 msgstr "无法加载 MCP 服务器"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not load memory organization settings"
+msgstr "无法加载记忆整理设置"
+
 #: src/pages/model-settings/use-model-settings.ts
 msgid "Could not load model settings"
 msgstr "无法加载模型设置"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not load organization diary"
+msgstr "无法加载整理日记"
 
 #: src/pages/RoutineRunHistory.tsx
 msgid "Could not load run history"
@@ -2189,6 +2214,10 @@ msgstr "无法保存自动审核"
 #: src/pages/GroupPanel.tsx
 msgid "Could not save group"
 msgstr "无法保存群组"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Could not save memory organization settings"
+msgstr "无法保存记忆整理设置"
 
 #: src/pages/Onboarding.tsx
 msgid "Could not save model"
@@ -2461,6 +2490,10 @@ msgstr "自定义机器人头像"
 #: src/pages/Shell.tsx
 msgid "Dai"
 msgstr "黛蓝"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Daily check, or earlier after 30 messages or a large summary. At least 6 hours between checks."
+msgstr "每天检查；累计 30 条用户消息或摘要过长时提前检查，两次检查至少间隔 6 小时。"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -2824,6 +2857,10 @@ msgstr "需要验证邮箱"
 msgid "Enable {0}"
 msgstr "启用 {0}"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Enable automatic organization"
+msgstr "启用自动整理"
+
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
 msgstr "将于 {day} 结束"
@@ -2896,10 +2933,6 @@ msgstr "每 {intervalAmountSelect} {intervalUnitSelect}"
 msgid "Every {n} hours at :{minute}"
 msgstr "每{n}小时{minute}分"
 
-#: src/pages/KnowledgeSection.tsx
-msgid "Shared summaries load automatically. Other shared notes are read on demand."
-msgstr "共享摘要自动加载，其他共享笔记按需读取。"
-
 #: src/lib/cron.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -2930,6 +2963,10 @@ msgstr "每月"
 #: src/pages/RoutineSchedule.tsx
 msgid "Every week"
 msgstr "每周"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Execution model"
+msgstr "执行模型"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Executor token"
@@ -2986,6 +3023,7 @@ msgstr "失败"
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 msgid "Failed"
 msgstr "失败"
 
@@ -3121,6 +3159,10 @@ msgstr "从 {0}"
 #: src/pages/PluginsOverlay.tsx
 msgid "From GitHub"
 msgstr "来自 GitHub"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Full original archive"
+msgstr "完整原文归档"
 
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
@@ -3593,6 +3635,7 @@ msgstr "加载更早的消息"
 msgid "Load more"
 msgstr "加载更多"
 
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "Load older runs"
 msgstr "加载更早的运行记录"
@@ -3640,6 +3683,7 @@ msgstr "正在加载语音提供方…"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
@@ -4184,6 +4228,10 @@ msgstr ""
 msgid "No bots match"
 msgstr "没有匹配的 Bot"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "No changes; model was not called"
+msgstr "记忆未变化，本次未调用模型"
+
 #: src/pages/KnowledgeSection.tsx
 msgid "No earlier versions"
 msgstr "没有更早的版本"
@@ -4215,6 +4263,10 @@ msgstr "没有匹配的模型"
 msgid "No members yet"
 msgstr "还没有成员"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "No memory organizer configured"
+msgstr "尚未配置记忆整理任务"
+
 #: src/pages/PeerMessagesOverlay.tsx
 msgid "No messages with {peerBotName} yet."
 msgstr "还没有与 {peerBotName} 的消息。"
@@ -4230,6 +4282,10 @@ msgstr "未列出模型。"
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "未找到 OpenClaw、Hermes 或 Agent 文档。"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "No organization runs yet"
+msgstr "暂无整理记录"
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
@@ -4489,6 +4545,18 @@ msgstr "或粘贴 API 密钥"
 msgid "Organization API key"
 msgstr "组织 API 密钥"
 
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Organization diary"
+msgstr "整理日记"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Organization instructions"
+msgstr "整理指令文档"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Organizer settings"
+msgstr "整理机器人设置"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Original"
 msgstr "原始"
@@ -4697,6 +4765,7 @@ msgid "Preferences"
 msgstr "偏好设置"
 
 #: src/components/integrations/skills-dialog.tsx
+#: src/pages/KnowledgeSection.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Preview"
 msgstr "预览"
@@ -5165,6 +5234,7 @@ msgstr "正在恢复工作区"
 #: src/components/PasskeySettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
@@ -5190,6 +5260,10 @@ msgstr "返回与 {0} 的通话"
 #: src/pages/SlackInstallCallback.tsx
 msgid "Return to Rakazo"
 msgstr "返回 Rakazo"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Review completed; no documents changed"
+msgstr "检查完成，本次未修改文档"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
@@ -5287,6 +5361,7 @@ msgstr "周六"
 #: src/pages/GroupPanel.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -5318,6 +5393,11 @@ msgstr "保存到保管库"
 msgid "Saved"
 msgstr "已保存"
 
+#. placeholder {0}: change.savedCharacters ?? 0
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Saved {0} characters"
+msgstr "减少 {0} 字符"
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
 msgstr "已保存，但列表刷新失败"
@@ -5343,6 +5423,7 @@ msgstr "正在保存…"
 #: src/components/VaultSettings.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/MemoryOrganizationSettings.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -5563,6 +5644,14 @@ msgstr "共享"
 #: src/pages/KnowledgeSection.tsx
 msgid "Shared memory"
 msgstr "共享记忆"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "Shared memory organizer"
+msgstr "共享记忆整理负责人"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Shared summaries load automatically. Other shared notes are read on demand."
+msgstr "共享摘要自动加载，其他共享笔记按需读取。"
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -6558,6 +6647,10 @@ msgstr "版本"
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"
 msgstr "查看全部"
+
+#: src/pages/MemoryOrganizationSettings.tsx
+msgid "View organizer"
+msgstr "查看整理机器人"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "View source"

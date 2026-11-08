@@ -171,14 +171,16 @@ function policyFixture() {
     },
     memoryDocument: { findMany: vi.fn().mockResolvedValue([document]) },
     routine: {
-      findFirst: vi.fn(async ({ select }) =>
-        select.botId
-          ? { botId: "bot" }
-          : {
-              id: "routine",
-              prompt: AUTOMATIC_MEMORY_PROMPT,
-              nextRunAt: new Date("2026-11-09T10:00:00Z"),
-            },
+      findFirst: vi.fn(async ({ select, where }) =>
+        where.sharedMemoryOrganizer
+          ? null
+          : select.botId
+            ? { botId: "bot" }
+            : {
+                id: "routine",
+                prompt: AUTOMATIC_MEMORY_PROMPT,
+                nextRunAt: new Date("2026-11-09T10:00:00Z"),
+              },
       ),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
@@ -266,6 +268,31 @@ describe("memory organization scheduling", () => {
         where: expect.objectContaining({ userId: "user", spaceId: "space", active: true }),
         orderBy: { botId: "asc" },
       }),
+    );
+  });
+  it("honors the explicitly chosen owner and does not replace a paused one", async () => {
+    const { prisma } = policyFixture();
+    const selected = {
+      botId: "chosen",
+      active: true,
+      memoryMaintenance: true,
+      bot: { archivedAt: null, disabledBuiltinTools: [] },
+    };
+    prisma.routine.findFirst.mockResolvedValue(selected as never);
+    expect(await ownsSharedMemoryOrganization(prisma as never, scope)).toBe(false);
+    expect(await ownsSharedMemoryOrganization(prisma as never, { ...scope, botId: "chosen" })).toBe(
+      true,
+    );
+    prisma.routine.findFirst.mockResolvedValue({ ...selected, active: false } as never);
+    expect(await ownsSharedMemoryOrganization(prisma as never, { ...scope, botId: "chosen" })).toBe(
+      false,
+    );
+    prisma.routine.findFirst.mockResolvedValue({
+      ...selected,
+      bot: { ...selected.bot, disabledBuiltinTools: ["organize_memory"] },
+    } as never);
+    expect(await ownsSharedMemoryOrganization(prisma as never, { ...scope, botId: "chosen" })).toBe(
+      false,
     );
   });
   it("does not reactivate a paused routine during explicit upgrade", async () => {

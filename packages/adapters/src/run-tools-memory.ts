@@ -120,10 +120,34 @@ export const memoryTools: ToolHandlers = {
         { runId: ctx.runId, threadId: ctx.thread.id },
       );
       ctx.source.memoryOrganizationFailures?.delete(`${scope}:${source.path}`);
+      await ctx.deps.events.append({
+        spaceId: ctx.run.spaceId,
+        threadId: ctx.thread.id,
+        botId: ctx.bot.id,
+        runId: ctx.runId,
+        type: "effect.recorded",
+        payload: { tool: "organize_memory", ...result },
+      });
       return call.finish(result);
     } catch (error) {
       ctx.source.memoryOrganizationFailures ??= new Set();
       ctx.source.memoryOrganizationFailures.add(`${scope}:${source.path}`);
+      await ctx.deps.events.append({
+        spaceId: ctx.run.spaceId,
+        threadId: ctx.thread.id,
+        botId: ctx.bot.id,
+        runId: ctx.runId,
+        type: "effect.recorded",
+        payload: {
+          tool: "organize_memory",
+          status: "failed",
+          path: `${scope}:${source.path}`,
+          error: redactSecrets(
+            error instanceof Error ? error.message : "Organization failed.",
+            ctx.secrets,
+          ),
+        },
+      });
       return call.finish({
         error: error instanceof Error ? error.message : "Organization failed.",
       });

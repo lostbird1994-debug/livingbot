@@ -1570,6 +1570,14 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               run.startedAt ?? now,
             );
             if (!status.changed) {
+              await deps.events.append({
+                spaceId: run.spaceId,
+                threadId: thread.id,
+                botId: bot.id,
+                runId,
+                type: "effect.recorded",
+                payload: { tool: "memory_organization", status: "unchanged" },
+              });
               ctx.state.reply.explicitNoResponse = true;
               await completeRun(ctx);
               return;

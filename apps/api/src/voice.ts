@@ -2,7 +2,9 @@ import { ORPCError } from "@orpc/server";
 import type { AdapterContext, SecretStore } from "@rakazo/adapter-kit";
 import { VoiceAccountError } from "@rakazo/adapter-kit";
 import {
+  createOpenAiCompatibleFetch,
   createVoiceProvider,
+  DASHSCOPE_VOICE_PROVIDER_ID,
   isFishSpeechModelId,
   isVoiceProviderId,
   listVoiceCatalog,
@@ -11,6 +13,7 @@ import {
   NoVoiceConfigured,
   OPENAI_COMPATIBLE_VOICE_PROVIDER_ID,
   openAiCompatibleVoiceServer,
+  parseOpenAiCompatibleVoiceSecret,
   serializeOpenAiCompatibleVoiceSecret,
   voiceCatalogEntry,
 } from "@rakazo/adapters";
@@ -22,7 +25,7 @@ import type {
   VoiceStatus,
 } from "@rakazo/contracts";
 import { SettingsScopeSchema } from "@rakazo/contracts";
-import { speakable, toUtterances } from "@rakazo/core";
+import { readBoundedJsonResponse, speakable, toUtterances } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import {
   deleteUnreferencedCredentialSecret,
@@ -45,6 +48,7 @@ import type { Context, Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
 import { withSerializableRetry } from "./serializable-retry.js";
 import type { SpeechSummarizer } from "./speech-summary.js";
+import { createDashscopeLiveSessions } from "./voice-live.js";
 
 export interface VoiceDeps {
   prisma: PrismaClient;
@@ -74,6 +78,10 @@ export { listVoiceCatalog };
 const SPEAK_TIMEOUT_MS = 60_000;
 export const MAX_SPEAK_REQUEST_BYTES = 16 * 1024;
 export const MAX_TRANSCRIBE_REQUEST_BYTES = 4 * Math.ceil(MAX_TRANSCRIBE_BYTES / 3) + 1024;
+/** One base64 audio chunk for streaming dictation, comfortably under a second of 16 kHz PCM. */
+export const MAX_STREAM_REQUEST_BYTES = 256 * 1024;
+const STREAM_TIMEOUT_MS = 20_000;
+const STREAM_ACTIONS = new Set(["start", "feed", "flush", "abort"]);
 
 export function voiceContext(actor: Actor, signal?: AbortSignal): AdapterContext {
   return {
@@ -568,11 +576,42 @@ export async function transcribeVoice(
   );
 }
 
+/**
+ * Where a streaming dictation session lives. Bailian keeps the socket in this process; a
+ * self-hosted speech server keeps it in its own, and its stored key is forwarded untouched.
+ */
+type VoiceStreamTarget =
+  | { kind: "dashscope"; apiKey: string }
+  | { kind: "bridge"; endpoint: string; authorization: string };
+
+async function voiceStreamTarget(deps: VoiceDeps, actor: Actor): Promise<VoiceStreamTarget> {
+  const loaded = await loadDefaultVoiceCredential(deps, actor);
+  if (!loaded) throw new NoVoiceConfigured("key");
+  if (loaded.cred.provider === DASHSCOPE_VOICE_PROVIDER_ID) {
+    if (!loaded.apiKey.trim()) throw new NoVoiceConfigured("key");
+    return { kind: "dashscope", apiKey: loaded.apiKey };
+  }
+  if (loaded.cred.provider !== OPENAI_COMPATIBLE_VOICE_PROVIDER_ID) {
+    throw new ORPCError("BAD_REQUEST", {
+      message: "Streaming dictation needs Bailian or a self-hosted speech server.",
+    });
+  }
+  const secret = parseOpenAiCompatibleVoiceSecret(loaded.apiKey);
+  if (!secret.apiKey) throw new NoVoiceConfigured("key");
+  return {
+    kind: "bridge",
+    endpoint: `${secret.baseUrl.replace(/\/+$/, "")}/audio/stream`,
+    authorization: `Bearer ${secret.apiKey}`,
+  };
+}
+
 export function mountVoiceHttpRoutes(
   app: Hono,
   deps: VoiceDeps,
   authenticate: (c: Context) => Promise<Actor | null>,
 ) {
+  const liveSessions = createDashscopeLiveSessions();
+
   app.post("/api/voice/speak", async (c) => {
     const actor = await authenticate(c);
     if (!actor) return c.json({ error: "Unauthorized" }, 401);
@@ -625,6 +664,69 @@ export function mountVoiceHttpRoutes(
         }),
       );
       return c.json({ text: result.text });
+    } catch (error) {
+      return voiceHttpError(c, error);
+    }
+  });
+
+  /**
+   * Streaming dictation: the browser posts raw PCM chunks while the user is still speaking and
+   * reads back interim text, so the transcript is mostly finished by the time they stop.
+   * Three thin forwards only — all protocol knowledge stays in the speech server.
+   */
+  app.post("/api/voice/stream/:action", async (c) => {
+    const action = c.req.param("action");
+    if (!STREAM_ACTIONS.has(action)) return c.json({ error: "Unknown stream action" }, 404);
+    const actor = await authenticate(c);
+    if (!actor) return c.json({ error: "Unauthorized" }, 401);
+    const raw = await readBoundedBody(c.req.raw, MAX_STREAM_REQUEST_BYTES);
+    if (raw === null) return c.json({ error: "Request body is too large." }, 413);
+    try {
+      const target = await runAsTenant(actor, () => voiceStreamTarget(deps, actor));
+      const body = parseVoiceRequestBody(raw);
+
+      if (target.kind === "dashscope") {
+        const owner = JSON.stringify([actor.spaceId, actor.userId]);
+        if (action === "start") {
+          const started = await liveSessions.start(target.apiKey, owner);
+          if (started.error) return c.json({ error: started.error }, 502);
+          return c.json({ id: started.id, model: started.model });
+        }
+        const id = String((body as { id?: unknown }).id ?? "");
+        if (!id) return c.json({ error: "Missing stream session." }, 400);
+        if (action === "feed") {
+          const pcm = Buffer.from(String((body as { pcm?: unknown }).pcm ?? ""), "base64");
+          const snapshot = liveSessions.feed(id, new Uint8Array(pcm), owner);
+          if (!snapshot) return c.json({ error: "Stream session not found" }, 404);
+          return c.json(snapshot);
+        }
+        if (action === "flush") {
+          const result = await liveSessions.flush(id, owner);
+          if (!result) return c.json({ error: "Stream session not found" }, 404);
+          return c.json({ text: result.text, error: result.error });
+        }
+        if (!liveSessions.abort(id, owner))
+          return c.json({ error: "Stream session not found" }, 404);
+        return c.json({ ok: true });
+      }
+
+      const guardedFetch = createOpenAiCompatibleFetch(undefined, undefined, {
+        allowPrivate: deps.env?.mcpAllowPrivateEndpoint === true,
+      });
+      const upstream = await guardedFetch(`${target.endpoint}/${action}`, {
+        method: "POST",
+        headers: { authorization: target.authorization, "content-type": "application/json" },
+        body: raw || "{}",
+        signal: AbortSignal.any(
+          [c.req.raw.signal, AbortSignal.timeout(STREAM_TIMEOUT_MS)].filter(
+            Boolean,
+          ) as AbortSignal[],
+        ),
+      });
+      return new Response(JSON.stringify(await readBoundedJsonResponse(upstream, 64 * 1024)), {
+        status: upstream.status,
+        headers: { "content-type": "application/json", "cache-control": "no-store" },
+      });
     } catch (error) {
       return voiceHttpError(c, error);
     }

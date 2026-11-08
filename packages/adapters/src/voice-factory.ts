@@ -1,6 +1,11 @@
 import type { VoiceProvider } from "@rakazo/adapter-kit";
 import type { VoiceCatalogEntry } from "@rakazo/contracts";
 import { CartesiaVoiceProvider } from "./cartesia-voice.js";
+import {
+  DASHSCOPE_VOICE_CATALOG_ENTRY,
+  DASHSCOPE_VOICE_PROVIDER_ID,
+  DashScopeVoiceProvider,
+} from "./dashscope-voice.js";
 import { ElevenLabsVoiceProvider } from "./elevenlabs-voice.js";
 import { FishAudioVoiceProvider } from "./fish-audio-voice.js";
 import {
@@ -40,6 +45,12 @@ export const VOICE_CATALOG = [
     id: "fish-audio",
     name: "Fish Audio",
     description: "Voice models, cloning, and expressive speech with optional transcription.",
+    transcribe: true,
+  },
+  {
+    id: DASHSCOPE_VOICE_PROVIDER_ID,
+    name: DASHSCOPE_VOICE_CATALOG_ENTRY.name,
+    description: DASHSCOPE_VOICE_CATALOG_ENTRY.description,
     transcribe: true,
   },
   {
@@ -100,6 +111,8 @@ export function createVoiceProvider(
       return new CartesiaVoiceProvider();
     case "fish-audio":
       return new FishAudioVoiceProvider();
+    case DASHSCOPE_VOICE_PROVIDER_ID:
+      return new DashScopeVoiceProvider();
     case OPENAI_COMPATIBLE_VOICE_PROVIDER_ID:
       return new OpenAiCompatibleVoiceProvider({
         allowPrivateEndpoint: options.allowPrivateEndpoint,
@@ -114,7 +127,7 @@ export function createVoiceProvider(
       break;
   }
   throw new Error(
-    `Unknown voice provider "${kind}". Use elevenlabs | openai | cartesia | fish-audio | openai-compatible.`,
+    `Unknown voice provider "${kind}". Use elevenlabs | openai | cartesia | fish-audio | dashscope | openai-compatible.`,
   );
 }
 
