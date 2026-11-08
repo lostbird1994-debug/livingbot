@@ -73,10 +73,13 @@ export function SpaceMemorySection() {
       data-testid="space-memory-documents"
     >
       <SettingsSectionHeading className="mb-0">
-        <Trans>Shared memory</Trans>
+        <Trans>Workspace-shared memory</Trans>
       </SettingsSectionHeading>
       <p className="mt-1 text-[13px] text-muted-foreground">
-        <Trans>Shared summaries load automatically. Other shared notes are read on demand.</Trans>
+        <Trans>
+          Shared by your bots in this workspace. Summaries load automatically; other notes are read
+          on demand.
+        </Trans>
       </p>
       <div className="mt-3">
         <MemoryDocumentList input={{ scope: "user" }} testId="space-memory-list" />

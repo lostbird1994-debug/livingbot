@@ -18,6 +18,13 @@ vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
 vi.mock("@rakazo/ui-web", () => ({
+  Disclosure: ({ summary, children }: { summary: ReactNode; children: ReactNode }) => (
+    <details>
+      <summary>{summary}</summary>
+      {children}
+    </details>
+  ),
+  SectionHeading: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
   Button: ({
     variant: _variant,
     size: _size,

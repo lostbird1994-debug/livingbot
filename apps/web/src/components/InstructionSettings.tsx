@@ -9,7 +9,15 @@ import { useId, useState } from "react";
 import { useSpaceRpc } from "../lib/space-rpc";
 import { errorText } from "../lib/user-error";
 
-export function InstructionSettings({ bot, onSaved }: { bot: Bot; onSaved?: () => void }) {
+export function InstructionSettings({
+  bot,
+  onSaved,
+  compact = false,
+}: {
+  bot: Bot;
+  onSaved?: (bot: Bot) => void;
+  compact?: boolean;
+}) {
   const rpc = useSpaceRpc();
   const { t } = useLingui();
   const id = useId();
@@ -37,7 +45,7 @@ export function InstructionSettings({ bot, onSaved }: { bot: Bot; onSaved?: () =
       setCurrent(updated);
       setInstructions(updated.instructions);
       setBaseline(updated.instructions);
-      onSaved?.();
+      onSaved?.(updated);
     } catch (err) {
       setError(errorText(err));
       setConflict((current) => current || (err instanceof ORPCError && err.code === "CONFLICT"));
@@ -101,7 +109,7 @@ export function InstructionSettings({ bot, onSaved }: { bot: Bot; onSaved?: () =
       </div>
       <Textarea
         id={`${id}-instructions`}
-        className="font-normal min-h-20 resize-none field-sizing-content text-foreground rounded-xl border-transparent bg-muted/50 p-4 shadow-none"
+        className={`font-normal min-h-20 text-foreground rounded-xl border-transparent bg-muted/50 p-4 shadow-none ${compact ? "h-64 max-h-[70vh] resize-y" : "resize-none field-sizing-content"}`}
         value={instructions}
         maxLength={BOT_INSTRUCTIONS_MAX_LENGTH}
         disabled={pending}
@@ -113,6 +121,11 @@ export function InstructionSettings({ bot, onSaved }: { bot: Bot; onSaved?: () =
             );
         }}
       />
+      {compact ? (
+        <p className="text-xs text-muted-foreground">
+          <Trans>Instructions save when you leave this field.</Trans>
+        </p>
+      ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       {conflict ? (
         <Button

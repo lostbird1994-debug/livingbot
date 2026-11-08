@@ -30,6 +30,12 @@ vi.mock("@lingui/react/macro", () => {
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
 vi.mock("@rakazo/ui-web", () => ({
+  Disclosure: ({ summary, children }: { summary: ReactNode; children: ReactNode }) => (
+    <details>
+      <summary>{summary}</summary>
+      {children}
+    </details>
+  ),
   SectionHeading: ({ variant, ...props }: ComponentProps<"h3"> & { variant?: string }) => (
     <h3 data-variant={variant} {...props} />
   ),
@@ -473,13 +479,12 @@ it("omits projected identity values on unrelated saves but commits explicit inli
   expect(onSave.mock.calls[1]?.[0]).toMatchObject({ name: "SupportBot2026" });
 });
 
-it("uses section headings without repeating notification or model row labels", async () => {
+it("groups notifications in a disclosure and keeps the model row label accessible", async () => {
   await renderSettings(vi.fn(async () => undefined));
-  const heading = [...container.querySelectorAll("h3")].find(
-    (node) => node.textContent === "Notifications",
+  const heading = [...container.querySelectorAll("summary")].find(
+    (node) => node.textContent === "Voice and notifications",
   );
   expect(heading).toBeDefined();
-  expect(heading?.dataset.variant).toBe("label");
   const notification = container.querySelector('label[id$="-notify-finish-label"]');
   expect(notification?.textContent?.trim()).toBe("When it finishes or needs input");
   const model = container.querySelector('label[for$="-model"]');

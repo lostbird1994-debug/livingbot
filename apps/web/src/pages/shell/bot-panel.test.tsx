@@ -33,6 +33,12 @@ vi.mock("@lingui/react/macro", () => {
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
 vi.mock("@rakazo/ui-web", () => ({
+  Disclosure: ({ summary, children }: { summary: ReactNode; children: ReactNode }) => (
+    <details>
+      <summary>{summary}</summary>
+      {children}
+    </details>
+  ),
   SectionHeading: ({
     variant: _variant,
     ...props
@@ -272,8 +278,8 @@ it("shows the profile and the Advanced tab's controls", async () => {
   expect(container.querySelector('input[aria-label="Name"]')).toBeNull();
   expect([...container.querySelectorAll('[role="tab"]')].map((tab) => tab.textContent)).toEqual([
     "Files",
-    "Loaded context",
-    "Routines",
+    "Context",
+    "Task list",
     "Advanced",
   ]);
   expect(
@@ -316,6 +322,31 @@ it("shows the profile and the Advanced tab's controls", async () => {
     "readAloud",
     "fleetManagement",
   ]);
+});
+
+it("places open work alongside routines rather than in Advanced", async () => {
+  await act(async () =>
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <BotSettings
+          tab="routines"
+          memoryProviderConfigured={false}
+          bot={bot("Billing")}
+          routines={<h3>Scheduled work</h3>}
+          onSave={onSave}
+          onExport={onExport}
+          onClear={() => undefined}
+        />
+      </QueryClientProvider>,
+    ),
+  );
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+  const tasks = container.querySelector('[data-testid="bot-task-list"]');
+  expect(tasks?.textContent).toContain("Scheduled work");
+  expect(tasks?.textContent).toContain("Open work");
+  expect(
+    container.querySelector('[data-testid="bot-settings-advanced"]')?.textContent,
+  ).not.toContain("Open work");
 });
 
 describe("BotSettings model choices", () => {

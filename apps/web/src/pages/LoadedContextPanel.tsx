@@ -23,8 +23,8 @@ function Content({
   children: ReactNode;
 }) {
   return (
-    <details className="rounded-xl border border-border px-3 py-3">
-      <summary className="cursor-pointer text-sm text-foreground">
+    <details className="rounded-xl border border-border/70 bg-card px-4 py-3 shadow-xs">
+      <summary className="cursor-pointer text-sm font-medium leading-relaxed text-foreground">
         {title}
         {detail ? <span className="ml-2 text-xs text-muted-foreground">{detail}</span> : null}
       </summary>
@@ -39,11 +39,13 @@ export function LoadedContextPanel({
   active = true,
   bot,
   publicProfile,
+  spaceName,
 }: {
   botId: string;
   active?: boolean;
   bot?: Bot;
   publicProfile?: ReactNode;
+  spaceName?: string;
 }) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
@@ -87,8 +89,11 @@ export function LoadedContextPanel({
             <RotateCw className="size-4" />
           </Button>
         </div>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          <Trans>Current preview for a private chat. Not a record of a past model request.</Trans>
+        <p
+          className="mt-1 text-xs leading-relaxed text-muted-foreground"
+          title={t`Current preview for a private chat. Not a record of a past model request.`}
+        >
+          <Trans>Preview for the current private-chat settings</Trans>
         </p>
         {query.isError ? (
           <p role="alert" className="mt-2 text-xs text-destructive">
@@ -105,62 +110,86 @@ export function LoadedContextPanel({
           }}
         />
       ) : null}
-      {data.sharedProfileExcluded ? (
-        <p className="text-xs text-muted-foreground">
-          <Trans>
-            Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs.
-          </Trans>
-        </p>
-      ) : null}
       <div className="space-y-2">
-        <Content
-          title={<Trans>Assembled identity and instructions</Trans>}
-          detail={t`${characters(data.identity)} characters`}
-        >
-          <pre className={textClass}>{data.identity}</pre>
-        </Content>
         <div>
           <SectionHeading variant="label">
             <Trans>Automatically loaded memory</Trans>
           </SectionHeading>
           <p className="my-2 text-xs leading-relaxed text-muted-foreground">
             <Trans>
-              Memory block: {characters(data.memory.body)} / {data.budgets.body} characters. Shared
-              source text: {shared} characters.
+              Memory block: {characters(data.memory.body)} / {data.budgets.body} characters.
+              Workspace-shared source text: {shared} characters.
             </Trans>
           </p>
           <div className="space-y-2">
-            {loaded.map((doc) => (
-              <Content
-                key={`${doc.scope}:${doc.path}`}
-                title={<span className="break-all">{doc.path}</span>}
-                detail={
-                  <>
-                    {doc.scope === "user" ? <Trans>Shared</Trans> : <Trans>Private</Trans>} · v
-                    {doc.revision} ·{" "}
-                    {doc.shownChars < doc.totalChars ? <Trans>Partial</Trans> : <Trans>Full</Trans>}
-                  </>
-                }
-              >
-                <p className="mt-2 text-xs text-muted-foreground">
-                  <Trans>
-                    {doc.shownChars} / {doc.totalChars} source characters loaded
-                  </Trans>
+            {(["bot", "user"] as const).map((scope) => (
+              <section key={scope} className="space-y-2 pt-2">
+                <SectionHeading variant="label">
+                  {scope === "bot" ? (
+                    <Trans>Bot private memory</Trans>
+                  ) : (
+                    <Trans>Workspace-shared memory</Trans>
+                  )}
+                </SectionHeading>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {scope === "bot"
+                    ? (bot?.name ?? t`This bot only`)
+                    : spaceName
+                      ? t`Workspace “${spaceName}” · shared by your bots`
+                      : t`Current workspace · shared by your bots`}
                 </p>
-                <pre className={textClass}>{doc.excerpt}</pre>
-                <LoadedMemoryEditor botId={botId} scope={doc.scope} path={doc.path} />
-              </Content>
+                {scope === "user" && data.sharedProfileExcluded ? (
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    <Trans>
+                      Not loaded: workspace-shared USER.md, MEMORY.md and profile.md. This bot has
+                      its own user identity or backstory enabled.
+                    </Trans>
+                  </p>
+                ) : null}
+                {loaded
+                  .filter((doc) => doc.scope === scope)
+                  .map((doc) => (
+                    <Content
+                      key={`${doc.scope}:${doc.path}`}
+                      title={<span className="break-all">{doc.path}</span>}
+                      detail={
+                        doc.shownChars < doc.totalChars ? (
+                          <Trans>Partial</Trans>
+                        ) : (
+                          <Trans>Full</Trans>
+                        )
+                      }
+                    >
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        v{doc.revision} ·{" "}
+                        <Trans>
+                          {doc.shownChars} / {doc.totalChars} source characters loaded
+                        </Trans>
+                      </p>
+                      <pre className={textClass}>{doc.excerpt}</pre>
+                      {scope === "user" ? (
+                        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                          <Trans>
+                            Edits affect your bots using this document in this workspace.
+                          </Trans>
+                        </p>
+                      ) : null}
+                      <LoadedMemoryEditor botId={botId} scope={doc.scope} path={doc.path} />
+                    </Content>
+                  ))}
+                {!loaded.some((doc) => doc.scope === scope) &&
+                !(scope === "user" && data.sharedProfileExcluded) ? (
+                  <p className="text-xs text-muted-foreground">
+                    <Trans>No memory text is automatically loaded.</Trans>
+                  </p>
+                ) : null}
+              </section>
             ))}
-            {!loaded.length ? (
-              <p className="text-sm text-muted-foreground">
-                <Trans>No memory text is automatically loaded.</Trans>
-              </p>
-            ) : null}
           </div>
         </div>
         {data.memory.index ? (
           <Content
-            title={<Trans>On-demand memory directory</Trans>}
+            title={<Trans>Memory files read on demand</Trans>}
             detail={t`${onDemand.length} documents`}
           >
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
@@ -183,26 +212,36 @@ export function LoadedContextPanel({
             </p>
           )}
         </Content>
-        <Content title={<Trans>Exact assembled memory block</Trans>}>
-          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-            <Trans>
-              Includes source headings and truncation notices. Directory entries have a separate
-              budget.
-            </Trans>
-          </p>
-          <pre className={textClass}>{data.memory.context || t`No memory context`}</pre>
-        </Content>
       </div>
-      <Content title={<Trans>Other inputs depend on the conversation</Trans>}>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          <Trans>
-            Rakazo also adds built-in behavior and safety rules, available tools, skills and
-            environment information. Recent messages, attachments, group context and retrieved
-            content depend on the task and model window. Working files such as README.md and
-            TOOLS.md are not automatically included just because they exist. External messaging
-            channels use different loading rules.
-          </Trans>
-        </p>
+      <Content title={<Trans>View assembled inputs</Trans>}>
+        <div className="mt-3 space-y-2">
+          <Content
+            title={<Trans>Assembled identity and instructions</Trans>}
+            detail={t`${characters(data.identity)} characters`}
+          >
+            <pre className={textClass}>{data.identity}</pre>
+          </Content>
+          <Content title={<Trans>Exact assembled memory block</Trans>}>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              <Trans>
+                Includes source headings and truncation notices. Directory entries have a separate
+                budget.
+              </Trans>
+            </p>
+            <pre className={textClass}>{data.memory.context || t`No memory context`}</pre>
+          </Content>
+          <Content title={<Trans>Other inputs depend on the conversation</Trans>}>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              <Trans>
+                Rakazo also adds built-in behavior and safety rules, available tools, skills and
+                environment information. Recent messages, attachments, group context and retrieved
+                content depend on the task and model window. Working files such as README.md and
+                TOOLS.md are not automatically included just because they exist. External messaging
+                channels use different loading rules.
+              </Trans>
+            </p>
+          </Content>
+        </div>
       </Content>
       <details className="border-t border-border pt-4">
         <summary className="cursor-pointer text-sm">

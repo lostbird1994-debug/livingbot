@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Button, SectionHeading } from "@rakazo/ui-web";
+import { Button, Disclosure, SectionHeading } from "@rakazo/ui-web";
 import { ImagePlus, RotateCcw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import {
@@ -101,7 +101,11 @@ function SliderGroup({ title, children }: { title: string; children: React.React
  */
 export function ChatBackgroundSection({ botId, botName }: { botId: string; botName: string }) {
   const { t } = useLingui();
-  const revision = useSyncExternalStore(subscribeChatBackground, getChatBackgroundRevision, () => 0);
+  const revision = useSyncExternalStore(
+    subscribeChatBackground,
+    getChatBackgroundRevision,
+    () => 0,
+  );
   const readSettings = useCallback(() => getChatBackgroundSettings(botId), [botId]);
   const settings = useSyncExternalStore(
     subscribeChatBackground,
@@ -216,57 +220,61 @@ export function ChatBackgroundSection({ botId, botName }: { botId: string; botNa
         )}
         {error ? <p className="text-xs text-destructive">{error}</p> : null}
 
-        <SliderGroup title={t`Picture`}>
-          {percentSlider("opacity", t`Picture opacity`)}
-          <BackdropSlider
-            label={t`Blur`}
-            value={settings.blur}
-            min={CHAT_BACKGROUND_LIMITS.blur.min}
-            max={CHAT_BACKGROUND_LIMITS.blur.max}
-            step={CHAT_BACKGROUND_LIMITS.blur.step}
-            display={`${Math.round(settings.blur)}px`}
-            onChange={(blur) => patch({ blur })}
-          />
-          {percentSlider("scrim", t`Dim`)}
-        </SliderGroup>
+        <Disclosure
+          summary={<Trans>Adjust appearance</Trans>}
+          summaryClassName="w-full justify-between text-sm"
+          contentClassName="space-y-4 pt-3"
+        >
+          <SliderGroup title={t`Picture`}>
+            {percentSlider("opacity", t`Picture opacity`)}
+            <BackdropSlider
+              label={t`Blur`}
+              value={settings.blur}
+              min={CHAT_BACKGROUND_LIMITS.blur.min}
+              max={CHAT_BACKGROUND_LIMITS.blur.max}
+              step={CHAT_BACKGROUND_LIMITS.blur.step}
+              display={`${Math.round(settings.blur)}px`}
+              onChange={(blur) => patch({ blur })}
+            />
+            {percentSlider("scrim", t`Dim`)}
+          </SliderGroup>
 
-        <SliderGroup title={t`Interface`}>
-          {percentSlider("panel", t`Panel opacity`)}
-          {percentSlider("sidebar", t`Sidebar opacity`)}
-          {percentSlider("dialog", t`Dialogs opacity`)}
-          {percentSlider("menu", t`Menus opacity`)}
-          {percentSlider("input", t`Input opacity`)}
-          {percentSlider("code", t`Code opacity`)}
-          {percentSlider("emphasis", t`Secondary text`)}
-          <BackdropSlider
-            label={t`Glass blur`}
-            value={settings.glass}
-            min={CHAT_BACKGROUND_LIMITS.glass.min}
-            max={CHAT_BACKGROUND_LIMITS.glass.max}
-            step={CHAT_BACKGROUND_LIMITS.glass.step}
-            display={`${Math.round(settings.glass)}px`}
-            onChange={(glass) => patch({ glass })}
-          />
-        </SliderGroup>
+          <SliderGroup title={t`Interface`}>
+            {percentSlider("panel", t`Panel opacity`)}
+            {percentSlider("sidebar", t`Sidebar opacity`)}
+            {percentSlider("dialog", t`Dialogs opacity`)}
+            {percentSlider("menu", t`Menus opacity`)}
+            {percentSlider("input", t`Input opacity`)}
+            {percentSlider("code", t`Code opacity`)}
+            {percentSlider("emphasis", t`Secondary text`)}
+            <BackdropSlider
+              label={t`Glass blur`}
+              value={settings.glass}
+              min={CHAT_BACKGROUND_LIMITS.glass.min}
+              max={CHAT_BACKGROUND_LIMITS.glass.max}
+              step={CHAT_BACKGROUND_LIMITS.glass.step}
+              display={`${Math.round(settings.glass)}px`}
+              onChange={(glass) => patch({ glass })}
+            />
+          </SliderGroup>
 
-        <SliderGroup title={t`Bubbles`}>
-          {percentSlider("bubble", t`Bubble opacity`)}
-        </SliderGroup>
+          <SliderGroup title={t`Bubbles`}>{percentSlider("bubble", t`Bubble opacity`)}</SliderGroup>
 
-        <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
-            <Trans>These settings and the picture stay on this device.</Trans>
-          </p>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => resetChatBackgroundSettings(botId)}
-          >
-            <RotateCcw size={14} aria-hidden="true" />
-            <Trans>Reset</Trans>
-          </Button>
-        </div>
+          <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+            <p className="text-[11px] leading-relaxed text-muted-foreground">
+              <Trans>These settings and the picture stay on this device.</Trans>
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => resetChatBackgroundSettings(botId)}
+            >
+              <RotateCcw size={14} aria-hidden="true" />
+              <Trans>Reset</Trans>
+            </Button>
+          </div>
+        </Disclosure>
       </div>
     </section>
   );

@@ -1169,6 +1169,7 @@ function SpaceShell() {
 
       <ShellSidePanel
         rpc={rpc}
+        spaceName={spaces.find((space) => space.id === active?.spaceId)?.name}
         panel={panel}
         setPanel={setPanel}
         active={active}

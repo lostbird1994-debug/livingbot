@@ -449,6 +449,10 @@ msgstr "1 个工作区"
 msgid "A bit of everything"
 msgstr "什么都做一点"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+#~ msgid "A bot you switched \"notify when finished\" on says one short line when its work is done or it needs you. Never during a call."
+#~ msgstr "勾选了「完成时通知」的机器人，在干完活或需要你回应时念一句简短提示；通话进行中绝不插话。"
+
 #: src/pages/RoutineEditor.tsx
 msgid "A command's output"
 msgstr "命令的输出"
@@ -517,6 +521,7 @@ msgstr "动态"
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/RoutineEditor.tsx
 #: src/pages/ScratchpadSection.tsx
 msgid "Add"
 msgstr "添加"
@@ -604,8 +609,8 @@ msgid "Add MCP server"
 msgstr "添加 MCP 服务器"
 
 #: src/pages/ScratchpadSection.tsx
-msgid "Add open work"
-msgstr "添加待办事项"
+#~ msgid "Add open work"
+#~ msgstr "添加待办事项"
 
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
@@ -632,6 +637,10 @@ msgstr "添加技能"
 msgid "Add to routine"
 msgstr "加入例行任务"
 
+#: src/pages/ScratchpadSection.tsx
+msgid "Add to-do"
+msgstr "新增待办"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Add trigger"
 msgstr "添加触发器"
@@ -651,6 +660,10 @@ msgstr "已添加"
 msgid "Adding…"
 msgstr "正在添加…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Adjust appearance"
+msgstr "调整外观"
+
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -665,9 +678,17 @@ msgstr "高级"
 msgid "Advanced..."
 msgstr "高级..."
 
+#: src/components/AskCard.tsx
+msgid "After"
+msgstr "修改后"
+
 #: src/pages/BotRoleCardEditor.tsx
-msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
-msgstr "保存后，不再自动加载共享 USER.md、MEMORY.md 和 profile.md。该机器人的私有记忆保留。"
+#~ msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+#~ msgstr "保存后，不再自动加载共享 USER.md、MEMORY.md 和 profile.md。该机器人的私有记忆保留。"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "After saving, workspace-shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+msgstr "保存后，将不再自动加载工作区共享的 USER.md、MEMORY.md 和 profile.md。此 Bot 的私有记忆仍会保留加载。"
 
 #: src/components/AccountDataSettings.tsx
 msgid "Agent from another app"
@@ -841,6 +862,10 @@ msgstr "API 密钥"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Appearance"
 msgstr "外观"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Appearance · this device"
+msgstr "外观 · 此设备"
 
 #. placeholder {0}: appearanceLabel[value]
 #: src/pages/Shell.tsx
@@ -1064,6 +1089,10 @@ msgstr "基本认证（{username}）"
 msgid "Bearer token"
 msgstr "Bearer token"
 
+#: src/components/AskCard.tsx
+msgid "Before"
+msgstr "修改前"
+
 #: src/pages/settings-nav.ts
 msgid "Billing"
 msgstr "账单"
@@ -1124,6 +1153,10 @@ msgstr "Bot 只看不操作"
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Bot models"
 msgstr "Bot 模型"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Bot private memory"
+msgstr "Bot 私有记忆"
 
 #: src/pages/shell/computer-overlay.tsx
 msgid "Bot screen"
@@ -1232,6 +1265,7 @@ msgstr "无法读取图像"
 #: src/pages/Onboarding.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/SpaceSettingOverrides.tsx
@@ -1491,6 +1525,7 @@ msgid "Close navigation"
 msgstr "关闭导航"
 
 #: src/pages/GroupPanel.tsx
+#: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/side-panel.tsx
 msgid "Close panel"
 msgstr "关闭面板"
@@ -1771,6 +1806,10 @@ msgstr "连接器"
 msgid "Contains code to run"
 msgstr "包含可运行的代码"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Context"
+msgstr "上下文"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Context limit"
@@ -1799,6 +1838,10 @@ msgstr "继续结账"
 #: src/pages/Auth.tsx
 msgid "Continue with {0}"
 msgstr "通过 {0} 继续"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Conversation data"
+msgstr "会话数据"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Conversations"
@@ -2114,6 +2157,10 @@ msgstr "无法加载登录选项"
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not load skill"
 msgstr "无法加载技能"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Could not load tasks"
+msgstr "待办加载失败"
 
 #: src/pages/Artifacts.tsx
 msgid "Could not load this artifact."
@@ -2512,6 +2559,10 @@ msgstr "当前密码"
 msgid "Current preview for a private chat. Not a record of a past model request."
 msgstr "按当前配置预览普通私聊的加载内容，不代表某次历史请求。"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Current workspace · shared by your bots"
+msgstr "当前工作区 · 你的 Bot 共享"
+
 #: src/components/VaultSettings.tsx
 msgid "Custom header"
 msgstr "自定义请求头"
@@ -2550,6 +2601,10 @@ msgstr "深色"
 #: src/pages/PluginsOverlay.tsx
 msgid "Data"
 msgstr "数据"
+
+#: src/pages/shell/bot-panel.tsx
+#~ msgid "Data and open work"
+#~ msgstr "数据与待办"
 
 #: src/lib/billing.ts
 #: src/lib/cron.ts
@@ -2884,6 +2939,10 @@ msgstr "编辑名称"
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
 msgstr "编辑资料"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Edits affect your bots using this document in this workspace."
+msgstr "修改会影响你在此工作区内使用这份记忆的 Bot。"
 
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
@@ -3344,6 +3403,10 @@ msgstr "隐藏"
 msgid "Hide"
 msgstr "隐藏"
 
+#: src/pages/ScratchpadSection.tsx
+msgid "Hide new to-do"
+msgstr "收起新增待办"
+
 #: src/components/I18nBootstrap.tsx
 msgid "Hide password"
 msgstr "隐藏密码"
@@ -3529,6 +3592,7 @@ msgstr "指令历史"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
+#: src/pages/BotRoleCardEditor.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions"
 msgstr "指令"
@@ -3541,6 +3605,10 @@ msgstr "指令 {position}"
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions are too long. Untick some files."
 msgstr "指令太长。请取消勾选部分文件。"
+
+#: src/components/InstructionSettings.tsx
+msgid "Instructions save when you leave this field."
+msgstr "离开此输入框时自动保存指令。"
 
 #: src/components/AskCard.tsx
 msgid "Instructions updated"
@@ -3688,10 +3756,22 @@ msgstr "列表视图"
 msgid "Listen"
 msgstr "全部消息"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+#~ msgid "Listen for a bot's name"
+#~ msgstr "喊名字唤起"
+
 #: src/components/call/CallCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Listening"
 msgstr "聆听"
+
+#: src/components/voice/VoiceAssistant.tsx
+#~ msgid "Listening for a name"
+#~ msgstr "正在听名字"
+
+#: src/components/voice/VoiceAssistant.tsx
+#~ msgid "Listening stopped: {trouble}"
+#~ msgstr "监听已停止：{trouble}"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Listening…"
@@ -3719,8 +3799,8 @@ msgid "Load web images automatically"
 msgstr "自动加载网络图片"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Loaded context"
-msgstr "加载内容"
+#~ msgid "Loaded context"
+#~ msgstr "加载内容"
 
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
@@ -3754,6 +3834,10 @@ msgstr "正在加载插件…"
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading preview…"
 msgstr "正在加载预览…"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Loading tasks…"
+msgstr "正在加载待办…"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
@@ -3939,8 +4023,18 @@ msgstr "记忆 {position}"
 #. placeholder {0}: characters(data.memory.body)
 #. placeholder {1}: data.budgets.body
 #: src/pages/LoadedContextPanel.tsx
-msgid "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
-msgstr "记忆正文块：{0} / {1} 字符，其中共享原文 {shared} 字符。"
+#~ msgid "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
+#~ msgstr "记忆正文块：{0} / {1} 字符，其中共享原文 {shared} 字符。"
+
+#. placeholder {0}: characters(data.memory.body)
+#. placeholder {1}: data.budgets.body
+#: src/pages/LoadedContextPanel.tsx
+msgid "Memory block: {0} / {1} characters. Workspace-shared source text: {shared} characters."
+msgstr "记忆正文块：{0} / {1} 字符，其中工作区共享内容 {shared} 字符。"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Memory files read on demand"
+msgstr "按需读取的记忆文件"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Memory for {title}"
@@ -4019,6 +4113,7 @@ msgstr "消息"
 
 #: src/lib/call-session.ts
 #: src/lib/dictation.ts
+#: src/lib/wake-listener.ts
 msgid "Microphone failed"
 msgstr "麦克风失败"
 
@@ -4253,8 +4348,8 @@ msgid "New messages"
 msgstr "新消息"
 
 #: src/pages/ScratchpadSection.tsx
-msgid "New open-work item"
-msgstr "新的待办"
+#~ msgid "New open-work item"
+#~ msgstr "新的待办"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -4282,6 +4377,10 @@ msgstr "新建工作区"
 #: src/pages/Board.tsx
 msgid "New ticket"
 msgstr "新建工单"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "New to-do"
+msgstr "新待办"
 
 #: src/components/markdown-copy.tsx
 msgid "Next page"
@@ -4402,6 +4501,10 @@ msgstr "未回复"
 msgid "No results"
 msgstr "无结果"
 
+#: src/pages/RoutineEditor.tsx
+msgid "No routines yet"
+msgstr "暂无例行任务"
+
 #: src/components/markdown-copy.tsx
 msgid "No rows"
 msgstr "无行"
@@ -4425,6 +4528,10 @@ msgstr "暂无提交"
 #: src/pages/Board.tsx
 msgid "No tickets yet"
 msgstr "还没有工单"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "No to-dos yet"
+msgstr "暂无待办"
 
 #: src/pages/RoutineEditor.tsx
 msgid "No trigger"
@@ -4451,6 +4558,10 @@ msgstr "未添加：{0}"
 msgid "Not checked yet"
 msgstr "尚未检查"
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Not filled in"
+msgstr "未填写"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "未导入"
@@ -4462,6 +4573,14 @@ msgstr "不在 Rakazo 目录中"
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
 msgstr "不在插件目录中"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Not loaded · disabled"
+msgstr "未加载 · 已关闭"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Not loaded: workspace-shared USER.md, MEMORY.md and profile.md. This bot has its own user identity or backstory enabled."
+msgstr "未加载工作区共享的 USER.md、MEMORY.md 和 profile.md：此 Bot 已启用专属用户身份或背景故事。"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
@@ -4485,8 +4604,8 @@ msgid "Nothing remembered yet"
 msgstr "暂无记忆"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Notifications"
-msgstr "通知"
+#~ msgid "Notifications"
+#~ msgstr "通知"
 
 #: src/pages/ActivityList.tsx
 msgid "Now"
@@ -4544,8 +4663,8 @@ msgid "on the 1st at {0}"
 msgstr "1 日 {0}"
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "On-demand memory directory"
-msgstr "按需读取目录"
+#~ msgid "On-demand memory directory"
+#~ msgstr "按需读取目录"
 
 #: src/lib/cron.ts
 msgid "One-time"
@@ -4617,7 +4736,6 @@ msgid "Open navigation"
 msgstr "打开导航"
 
 #: src/pages/LoadedContextPanel.tsx
-#: src/pages/ScratchpadSection.tsx
 msgid "Open work"
 msgstr "待办"
 
@@ -4790,6 +4908,10 @@ msgstr "待处理"
 msgid "Permissions"
 msgstr "权限"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Permissions and collaboration"
+msgstr "权限与协作"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Persona"
 msgstr "人设"
@@ -4885,6 +5007,10 @@ msgstr "POST 到"
 msgid "Preferences"
 msgstr "偏好设置"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+#~ msgid "Press ⌥ Space anywhere in the app to open the microphone for one try: say a bot's name and it calls you back. No microphone stays on in between."
+#~ msgstr "在应用里按 ⌥ 空格，麦克风只为这一次打开：说一遍机器人名字，它就来找你。中间不会一直开着麦克风。"
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -4895,6 +5021,10 @@ msgstr "预览"
 #: src/components/ArtifactFileCard.tsx
 msgid "Preview {0}"
 msgstr "预览 {0}"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Preview for the current private-chat settings"
+msgstr "当前私聊配置预览"
 
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
@@ -4912,7 +5042,6 @@ msgstr "上一组设置项"
 msgid "Priority"
 msgstr "优先级"
 
-#: src/pages/LoadedContextPanel.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Private"
 msgstr "私有"
@@ -4924,6 +5053,10 @@ msgstr "单独的工作区，有自己的 Bot 和群组。"
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
 msgstr "效率"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Profile shown to other bots"
+msgstr "对其他 Bot 展示的简介"
 
 #: src/pages/shell/import-status.ts
 msgid "Program: {name}"
@@ -4979,6 +5112,10 @@ msgstr "回应"
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Reactions"
 msgstr "表情回应"
+
+#: src/pages/VoiceSettingsOverlay.tsx
+#~ msgid "Read new messages aloud"
+#~ msgstr "语音播报新消息"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
@@ -5374,6 +5511,7 @@ msgstr "正在恢复工作区"
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "重试"
@@ -5415,6 +5553,10 @@ msgid "Revoked"
 msgstr ""
 
 #: src/pages/BotRoleCardEditor.tsx
+msgid "Role and instructions"
+msgstr "角色与指令"
+
+#: src/pages/BotRoleCardEditor.tsx
 msgid "Role settings changed elsewhere. Reload before saving."
 msgstr "角色设置已在别处更新，请重新载入后再编辑。"
 
@@ -5433,8 +5575,8 @@ msgstr "轮换密钥"
 msgid "Routine"
 msgstr "例行任务"
 
+#: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/bot-panel.tsx
 msgid "Routines"
 msgstr "例行任务"
 
@@ -5575,6 +5717,14 @@ msgstr "正在保存…"
 #: src/pages/shell/dialogs.tsx
 msgid "Saving…"
 msgstr "正在保存…"
+
+#: src/components/voice/VoiceAssistant.tsx
+#~ msgid "Say a bot's name to call it"
+#~ msgstr "喊机器人名字即可发起通话"
+
+#: src/pages/VoiceSettingsOverlay.tsx
+#~ msgid "Say a name to start the call. This browser keeps the microphone open, but only sends audio once someone speaks, and only to recognise the name."
+#~ msgstr "直接喊机器人名字就能开始通话。此浏览器会一直占用麦克风，但只有检测到有人说话才会上传音频，且只用于识别名字。"
 
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
@@ -5780,27 +5930,34 @@ msgstr "形状"
 msgid "Shape {0}"
 msgstr "形状 {0}"
 
-#: src/pages/LoadedContextPanel.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Shared"
 msgstr "共享"
 
 #: src/pages/KnowledgeSection.tsx
-msgid "Shared memory"
-msgstr "共享记忆"
+msgid "Shared by your bots in this workspace. Summaries load automatically; other notes are read on demand."
+msgstr "由你在此工作区内的 Bot 共享。摘要自动加载，其他笔记按需读取。"
+
+#: src/pages/KnowledgeSection.tsx
+#~ msgid "Shared memory"
+#~ msgstr "共享记忆"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Shared memory organizer"
 msgstr "共享记忆整理负责人"
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Shared profile loading rules"
+msgstr "工作区共享资料的加载规则"
+
 #: src/pages/KnowledgeSection.tsx
-msgid "Shared summaries load automatically. Other shared notes are read on demand."
-msgstr "共享摘要自动加载，其他共享笔记按需读取。"
+#~ msgid "Shared summaries load automatically. Other shared notes are read on demand."
+#~ msgstr "共享摘要自动加载，其他共享笔记按需读取。"
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
-msgstr "该机器人已停止自动加载共享 USER.md、MEMORY.md 和 profile.md。"
+#~ msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
+#~ msgstr "该机器人已停止自动加载共享 USER.md、MEMORY.md 和 profile.md。"
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -5817,6 +5974,10 @@ msgstr "显示 Bot"
 #: src/pages/shell/bot-files-panel.tsx
 msgid "Show in Finder"
 msgstr "在访达中显示"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Show less"
+msgstr "收起"
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -6169,6 +6330,10 @@ msgstr "表格"
 msgid "Take control"
 msgstr "接管控制权"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Task list"
+msgstr "任务清单"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "示范任务"
@@ -6233,6 +6398,10 @@ msgstr ""
 #: src/lib/model-connection-preflight.ts
 msgid "The connection timed out."
 msgstr "连接超时。"
+
+#: src/lib/wake-listener.ts
+msgid "The microphone was disconnected."
+msgstr "麦克风已断开。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6313,6 +6482,10 @@ msgstr "无法读取此备份。"
 msgid "This bot"
 msgstr "此 Bot"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "This bot only"
+msgstr "仅此 Bot"
+
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "此 Bot 运行在这台电脑上，而不是 Linux 桌面。Shell 和文件使用你的主目录。"
@@ -6320,6 +6493,10 @@ msgstr "此 Bot 运行在这台电脑上，而不是 Linux 桌面。Shell 和文
 #: src/lib/dictation.ts
 msgid "This browser can't detect when you stop talking. Use Chrome, the desktop app, or hold-to-talk in the composer."
 msgstr ""
+
+#: src/lib/wake-listener.ts
+msgid "This browser cannot listen in the background."
+msgstr "这个浏览器无法在后台持续监听。"
 
 #: src/lib/dictation.ts
 msgid "This browser has no on-device dictation. Connect a voice provider with transcription, or use Chrome / the desktop app."
@@ -6474,6 +6651,10 @@ msgstr "到 {0}"
 msgid "To do"
 msgstr "待办"
 
+#: src/pages/ScratchpadSection.tsx
+msgid "To-do list"
+msgstr "待办清单"
+
 #: src/pages/shell/bot-picker.tsx
 msgid "To:"
 msgstr "至:"
@@ -6598,6 +6779,10 @@ msgstr "取消静音"
 #: src/pages/BotContextMenu.tsx
 msgid "Unpin"
 msgstr "取消置顶"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Unsaved changes"
+msgstr "有未保存的修改"
 
 #. placeholder {0}: pending.file.name
 #: src/pages/shell/use-composer-actions.ts
@@ -6746,8 +6931,12 @@ msgid "User identity"
 msgstr "用户身份"
 
 #: src/pages/BotRoleCardEditor.tsx
-msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
-msgstr "用户身份和背景故事仅在各自开关开启时加载。关闭这两个开关后，共享记忆按原规则加载。"
+msgid "User identity and backstory load only when their switches are on. Both off: workspace-shared profiles load as usual."
+msgstr "用户身份和背景故事仅在各自开关开启并保存后加载。两项均关闭时，按原规则加载工作区共享资料。"
+
+#: src/pages/BotRoleCardEditor.tsx
+#~ msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
+#~ msgstr "用户身份和背景故事仅在各自开关开启时加载。关闭这两个开关后，共享记忆按原规则加载。"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
@@ -6813,6 +7002,10 @@ msgstr "查看全部"
 msgid "View and edit all private memory"
 msgstr "查看与编辑全部私有记忆"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "View assembled inputs"
+msgstr "查看实际拼装内容"
+
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "View organizer"
 msgstr "查看整理机器人"
@@ -6827,6 +7020,10 @@ msgstr "查看源代码"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "语音"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Voice and notifications"
+msgstr "语音与通知"
 
 #: src/components/composer/DictationInput.tsx
 msgid "Voice input"
@@ -6980,6 +7177,15 @@ msgstr "可使用你的 ChatGPT 或 Claude 套餐。"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Workspace"
 msgstr "工作区"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Workspace “{spaceName}” · shared by your bots"
+msgstr "工作区「{spaceName}」· 你的 Bot 共享"
+
+#: src/pages/KnowledgeSection.tsx
+#: src/pages/LoadedContextPanel.tsx
+msgid "Workspace-shared memory"
+msgstr "工作区共享记忆"
 
 #: src/lib/billing.ts
 msgid "year"

@@ -96,7 +96,7 @@ it("shows actual capped excerpts and distinguishes the directory from automatica
     await act(async () => {
       root.render(
         <QueryClientProvider client={client}>
-          <LoadedContextPanel botId="bot" />
+          <LoadedContextPanel botId="bot" spaceName="Example" />
         </QueryClientProvider>,
       );
     });
@@ -109,6 +109,12 @@ it("shows actual capped excerpts and distinguishes the directory from automatica
     expect(container.textContent).toContain("Partial");
     expect(container.textContent).toContain("HEAD [omitted] TAIL");
     expect(container.textContent).toContain("Shared");
+    expect(container.textContent).toContain("Bot private memory");
+    expect(container.textContent).toContain("Workspace-shared memory");
+    expect(container.textContent).toContain("Workspace “Example” · shared by your bots");
+    expect(container.textContent).toContain(
+      "Edits affect your bots using this document in this workspace.",
+    );
     expect(container.textContent).toContain("An unfinished task");
     expect(container.textContent).toContain("not loaded in full");
     const summaries = [...container.querySelectorAll("summary")].map((row) => row.textContent);

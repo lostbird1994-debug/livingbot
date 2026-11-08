@@ -25,6 +25,7 @@ import {
 } from "@rakazo/core";
 import {
   Button,
+  Disclosure,
   Input,
   NativeSelect,
   NativeSelectOption,
@@ -42,8 +43,8 @@ import { Download, Settings, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
 import { ChatBackgroundSection } from "../../components/ChatBackgroundSettings";
-import { BotVoiceSettings } from "../../components/voice/BotVoiceSettings";
 import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary";
+import { BotVoiceSettings } from "../../components/voice/BotVoiceSettings";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
 import { thinkingLevelLabel } from "../../lib/model-catalog";
 import { lazyComponent } from "../../lib/preload-recovery";
@@ -105,6 +106,7 @@ export type BotPanelTab = "computer" | "routines" | "loaded" | "settings";
 /** A bot's profile above its Computer, Routines and Advanced tabs. */
 export function BotSettings({
   bot,
+  spaceName,
   tab = "settings",
   onTabChange,
   computer,
@@ -115,14 +117,17 @@ export function BotSettings({
   onClear,
   focusModel = 0,
   onOpenConnections,
+  onClose,
 }: {
   bot: Bot;
+  spaceName?: string;
   tab?: BotPanelTab;
   onTabChange?: (tab: BotPanelTab) => void;
   computer?: ReactNode;
   routines?: ReactNode;
   focusModel?: number;
   onOpenConnections?: () => void;
+  onClose?: () => void;
   /** Unused: the skill sections read and save the shared cached skill list. */
   onSkillsChange?: (skills: AgentSkillCatalogEntry[]) => void;
   memoryProviderConfigured: boolean;
@@ -149,8 +154,10 @@ export function BotSettings({
 }) {
   const { t } = useLingui();
   const [loadedOpened, setLoadedOpened] = useState(tab === "loaded");
+  const [tasksOpened, setTasksOpened] = useState(tab === "routines");
   useEffect(() => {
     if (tab === "loaded") setLoadedOpened(true);
+    if (tab === "routines") setTasksOpened(true);
   }, [tab]);
   const ids = useId();
   const modelRef = useRef<HTMLDivElement>(null);
@@ -513,57 +520,80 @@ export function BotSettings({
 
   return (
     <div data-testid="bot-settings">
-      <div data-testid="bot-profile-header" className="flex flex-col items-center pb-5 text-center">
-        <div className="flex justify-center pb-4">
-          <AvatarStudioPopover
-            value={color}
-            identity={bot.id}
-            status={bot.status}
-            size={76}
-            avatarSet={avatarSet}
-            onChange={(newColor, nextAvatarSet) => {
-              setColor(newColor);
-              if (nextAvatarSet !== undefined) setAvatarSet(nextAvatarSet);
-              void enqueueSave({
-                color: newColor,
-                ...(nextAvatarSet !== undefined ? { avatarSet: nextAvatarSet } : {}),
-              });
-            }}
-          />
-        </div>
-        <InlineProfileField
-          label={t`Name`}
-          editLabel={t`Edit name`}
-          value={name}
-          maxLength={BOT_NAME_MAX_LENGTH}
-          className="text-xl font-semibold"
-          onCommit={(value) => {
-            if (!value.trim()) return;
-            setName(value.trim());
-            void enqueueSave({ name: value });
-          }}
-        />
-      </div>
       <Tabs value={tab} onValueChange={(next) => onTabChange?.(next as BotPanelTab)}>
-        <TabsList className="w-full">
-          <TabsTrigger value="computer" data-testid="bot-panel-tab-computer">
-            <Trans>Files</Trans>
-          </TabsTrigger>
-          <TabsTrigger value="loaded" data-testid="bot-panel-tab-loaded">
-            <Trans>Loaded context</Trans>
-          </TabsTrigger>
-          <TabsTrigger value="routines" data-testid="bot-panel-tab-routines">
-            <Trans>Routines</Trans>
-          </TabsTrigger>
-          <TabsTrigger value="settings" data-testid="bot-panel-tab-settings">
-            <Trans>Advanced</Trans>
-          </TabsTrigger>
-        </TabsList>
+        <div className="sticky top-0 z-10 -mx-5 border-b border-border/60 bg-background px-5 pb-3 pt-2">
+          <span aria-hidden="true" className="absolute inset-x-0 bottom-full h-5 bg-background" />
+          <div data-testid="bot-profile-header" className="flex items-center gap-3 pb-4">
+            <div className="shrink-0">
+              <AvatarStudioPopover
+                value={color}
+                identity={bot.id}
+                status={bot.status}
+                size={40}
+                avatarSet={avatarSet}
+                onChange={(newColor, nextAvatarSet) => {
+                  setColor(newColor);
+                  if (nextAvatarSet !== undefined) setAvatarSet(nextAvatarSet);
+                  void enqueueSave({
+                    color: newColor,
+                    ...(nextAvatarSet !== undefined ? { avatarSet: nextAvatarSet } : {}),
+                  });
+                }}
+              />
+            </div>
+            <InlineProfileField
+              label={t`Name`}
+              editLabel={t`Edit name`}
+              value={name}
+              maxLength={BOT_NAME_MAX_LENGTH}
+              className="text-start text-base font-semibold"
+              onCommit={(value) => {
+                if (!value.trim()) return;
+                setName(value.trim());
+                void enqueueSave({ name: value });
+              }}
+            />
+            {onClose ? (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="ml-auto shrink-0"
+                aria-label={t`Close panel`}
+                onClick={onClose}
+              >
+                <X size={16} strokeWidth={1.8} />
+              </Button>
+            ) : null}
+          </div>
+          <TabsList className="w-full rounded-xl bg-muted/60 p-1 [&>button]:transition-none">
+            <TabsTrigger value="computer" data-testid="bot-panel-tab-computer">
+              <Trans>Files</Trans>
+            </TabsTrigger>
+            <TabsTrigger value="loaded" data-testid="bot-panel-tab-loaded">
+              <Trans>Context</Trans>
+            </TabsTrigger>
+            <TabsTrigger value="routines" data-testid="bot-panel-tab-routines">
+              <Trans>Task list</Trans>
+            </TabsTrigger>
+            <TabsTrigger value="settings" data-testid="bot-panel-tab-settings">
+              <Trans>Advanced</Trans>
+            </TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent value="computer" className="pt-4">
           {computer}
         </TabsContent>
-        <TabsContent value="routines" className="pt-4">
-          {routines}
+        <TabsContent value="routines" className="pt-5" keepMounted>
+          {tasksOpened ? (
+            <div className="space-y-7" data-testid="bot-task-list">
+              {routines}
+              <ErrorBoundary fallback={<SectionLoadFailed />}>
+                <Suspense fallback={null}>
+                  <ScratchpadSection key={bot.id} botId={bot.id} active={tab === "routines"} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          ) : null}
         </TabsContent>
         <TabsContent value="loaded" className="pt-4" keepMounted>
           {loadedOpened ? (
@@ -572,6 +602,7 @@ export function BotSettings({
                 <LoadedContextPanel
                   key={bot.id}
                   botId={bot.id}
+                  spaceName={spaceName}
                   bot={bot}
                   active={tab === "loaded"}
                   publicProfile={
@@ -596,39 +627,7 @@ export function BotSettings({
         </TabsContent>
         {/* Keep editable drafts when switching between the bot's tabs. */}
         <TabsContent value="settings" keepMounted data-testid="bot-settings-advanced">
-          <section className="mt-6">
-            <SectionHeading variant="label" className="mb-2">
-              <Trans>Notifications</Trans>
-            </SectionHeading>
-            <div className="flex items-center justify-between gap-3 rounded-xl bg-muted/50 p-4">
-              <div>
-                <label
-                  htmlFor={`${ids}-notify-finish`}
-                  id={`${ids}-notify-finish-label`}
-                  className="text-sm"
-                >
-                  <Trans>When it finishes or needs input</Trans>
-                </label>
-              </div>
-              <Switch
-                id={`${ids}-notify-finish`}
-                checked={notifyOnFinish}
-                aria-labelledby={`${ids}-notify-finish-label`}
-                onCheckedChange={(checked) => {
-                  setNotifyOnFinish(checked);
-                  void enqueueSave({ notifyOnFinish: checked });
-                }}
-              />
-            </div>
-          </section>
-          <BotVoiceSettings key={bot.id} bot={bot} />
-          <ChatBackgroundSection botId={bot.id} botName={name} />
-          <ErrorBoundary fallback={<SectionLoadFailed />}>
-            <Suspense fallback={null}>
-              <ScratchpadSection botId={bot.id} />
-            </Suspense>
-          </ErrorBoundary>
-          <div className="space-y-6 pt-6">
+          <div className="space-y-5 pt-5 [&>[data-slot=disclosure]]:border-t [&>[data-slot=disclosure]]:border-border/60 [&>[data-slot=disclosure]]:pt-4">
             <div ref={modelRef}>
               <div className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground pe-1">
                 <Trans>Model</Trans>
@@ -715,138 +714,179 @@ export function BotSettings({
                 </div>
               ) : null}
             </SettingsGroup>
-            <SettingsGroup label={t`Voice`}>
+            <Disclosure
+              summary={<Trans>Voice and notifications</Trans>}
+              summaryClassName="w-full justify-between text-sm font-medium"
+              contentClassName="space-y-4 pt-3"
+            >
               <label
-                htmlFor={`${ids}-auto-speak`}
-                className="flex min-h-11 cursor-pointer items-center justify-between gap-3 text-sm text-foreground"
+                htmlFor={`${ids}-notify-finish`}
+                id={`${ids}-notify-finish-label`}
+                className="flex min-h-11 items-center justify-between gap-3 rounded-xl bg-muted/50 p-4 text-sm"
               >
-                <span className={rowLabelClass}>
-                  <Trans>Read replies aloud</Trans>
-                </span>
+                <Trans>When it finishes or needs input</Trans>
                 <Switch
-                  id={`${ids}-auto-speak`}
-                  checked={autoSpeak}
-                  onCheckedChange={(checked) => setAutoSpeak(checked)}
+                  id={`${ids}-notify-finish`}
+                  checked={notifyOnFinish}
+                  onCheckedChange={(checked) => {
+                    setNotifyOnFinish(checked);
+                    void enqueueSave({ notifyOnFinish: checked });
+                  }}
                 />
               </label>
-              {voices?.length ? (
+              <BotVoiceSettings key={bot.id} bot={bot} />
+              <SettingsGroup label={t`Voice`}>
                 <label
-                  htmlFor={`${ids}-voice`}
-                  className="flex min-h-11 items-center justify-between gap-3 text-sm text-foreground"
+                  htmlFor={`${ids}-auto-speak`}
+                  className="flex min-h-11 cursor-pointer items-center justify-between gap-3 text-sm text-foreground"
                 >
-                  <Trans>Voice</Trans>
-                  <NativeSelect
-                    id={`${ids}-voice`}
-                    className="max-w-2/3"
-                    value={voiceId}
-                    onChange={(event) => setVoiceId(event.target.value)}
+                  <span className={rowLabelClass}>
+                    <Trans>Read replies aloud</Trans>
+                  </span>
+                  <Switch
+                    id={`${ids}-auto-speak`}
+                    checked={autoSpeak}
+                    onCheckedChange={(checked) => setAutoSpeak(checked)}
+                  />
+                </label>
+                {voices?.length ? (
+                  <label
+                    htmlFor={`${ids}-voice`}
+                    className="flex min-h-11 items-center justify-between gap-3 text-sm text-foreground"
                   >
-                    <NativeSelectOption value="">{t`Account default`}</NativeSelectOption>
-                    {voices.map((voice) => (
-                      <NativeSelectOption key={voice.id} value={voice.id}>
-                        {voice.label}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                </label>
-              ) : null}
-            </SettingsGroup>
-            <SettingsGroup label={t`Permissions`}>
-              <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
-                <label htmlFor={`${ids}-cross-space`} className={rowLabelClass}>
-                  <Trans>Allow cross-space bot communication</Trans>
-                </label>
-                <Switch
-                  id={`${ids}-cross-space`}
-                  checked={crossSpaceCommunication}
-                  disabled={saving}
-                  onCheckedChange={(checked) => {
-                    setCrossSpaceCommunication(checked);
-                    void enqueueSave({ crossSpaceCommunication: checked });
-                  }}
-                />
-              </div>
-              <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
-                <label htmlFor={`${ids}-fleet-management`} className={rowLabelClass}>
-                  <Trans>Manage the bots it creates</Trans>
-                </label>
-                <Switch
-                  id={`${ids}-fleet-management`}
-                  checked={fleetManagement}
-                  disabled={saving}
-                  onCheckedChange={(checked) => {
-                    setFleetManagement(checked);
-                    void enqueueSave({ fleetManagement: checked });
-                  }}
-                />
-              </div>
-            </SettingsGroup>
-            <SettingsGroup label={t`Tools`} plain>
-              <section data-testid="bot-settings-tools">
-                <div className="space-y-2 [&>*]:mt-0">
-                  <div>
+                    <Trans>Voice</Trans>
                     <NativeSelect
-                      id={`${ids}-disabled-tools`}
-                      aria-label={t`Disable a tool`}
-                      value=""
-                      onChange={(event) => disableBuiltinTool(event.target.value)}
-                      className="w-full"
+                      id={`${ids}-voice`}
+                      className="max-w-2/3"
+                      value={voiceId}
+                      onChange={(event) => setVoiceId(event.target.value)}
                     >
-                      <NativeSelectOption value="">{t`Disable a tool`}</NativeSelectOption>
-                      {BUILTIN_TOOL_NAMES.filter(
-                        (name) => !disabledBuiltinTools.includes(name),
-                      ).map((name) => (
-                        <NativeSelectOption key={name} value={name}>
-                          {humanizeTool(name)}
+                      <NativeSelectOption value="">{t`Account default`}</NativeSelectOption>
+                      {voices.map((voice) => (
+                        <NativeSelectOption key={voice.id} value={voice.id}>
+                          {voice.label}
                         </NativeSelectOption>
                       ))}
                     </NativeSelect>
-                  </div>
-                  {disabledBuiltinTools.map((toolName) => (
-                    <div
-                      key={toolName}
-                      className="flex min-h-11 items-center justify-between gap-3 text-sm"
-                    >
-                      <span>{humanizeTool(toolName)}</span>
-                      <Button
-                        id={`${ids}-disabled-${toolName}`}
-                        variant="ghost"
-                        size="icon-xs"
-                        aria-label={t`Enable ${humanizeTool(toolName)}`}
-                        title={t`Enable ${humanizeTool(toolName)}`}
-                        onClick={() => {
-                          const next = disabledBuiltinTools.filter((entry) => entry !== toolName);
-                          setDisabledBuiltinTools(next);
-                          void enqueueSave({ disabledBuiltinTools: next });
-                        }}
-                      >
-                        <X className="size-4" />
-                      </Button>
-                    </div>
-                  ))}
+                  </label>
+                ) : null}
+              </SettingsGroup>
+            </Disclosure>
+            <Disclosure
+              summary={<Trans>Permissions and collaboration</Trans>}
+              summaryClassName="w-full justify-between text-sm font-medium"
+              contentClassName="space-y-4 pt-3"
+            >
+              <SettingsGroup label={t`Permissions`}>
+                <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
+                  <label htmlFor={`${ids}-cross-space`} className={rowLabelClass}>
+                    <Trans>Allow cross-space bot communication</Trans>
+                  </label>
+                  <Switch
+                    id={`${ids}-cross-space`}
+                    checked={crossSpaceCommunication}
+                    disabled={saving}
+                    onCheckedChange={(checked) => {
+                      setCrossSpaceCommunication(checked);
+                      void enqueueSave({ crossSpaceCommunication: checked });
+                    }}
+                  />
                 </div>
-              </section>
-            </SettingsGroup>
-            <div className="overflow-hidden rounded-xl bg-muted/50 px-4">
-              <button
-                type="button"
-                className="flex min-h-12 w-full items-center justify-between text-sm"
-                onClick={() => {
-                  setError(null);
-                  onExport().catch((err: unknown) => setError(errorText(err)));
-                }}
-              >
-                <Trans>Export</Trans>
-                <Download className="size-4 text-muted-foreground" />
-              </button>
-              <button
-                type="button"
-                className="min-h-12 w-full border-t border-border text-start text-sm text-destructive"
-                onClick={onClear}
-              >
-                <Trans>Clear conversation</Trans>
-              </button>
-            </div>
+                <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
+                  <label htmlFor={`${ids}-fleet-management`} className={rowLabelClass}>
+                    <Trans>Manage the bots it creates</Trans>
+                  </label>
+                  <Switch
+                    id={`${ids}-fleet-management`}
+                    checked={fleetManagement}
+                    disabled={saving}
+                    onCheckedChange={(checked) => {
+                      setFleetManagement(checked);
+                      void enqueueSave({ fleetManagement: checked });
+                    }}
+                  />
+                </div>
+              </SettingsGroup>
+              <SettingsGroup label={t`Tools`} plain>
+                <section data-testid="bot-settings-tools">
+                  <div className="space-y-2 [&>*]:mt-0">
+                    <div>
+                      <NativeSelect
+                        id={`${ids}-disabled-tools`}
+                        aria-label={t`Disable a tool`}
+                        value=""
+                        onChange={(event) => disableBuiltinTool(event.target.value)}
+                        className="w-full"
+                      >
+                        <NativeSelectOption value="">{t`Disable a tool`}</NativeSelectOption>
+                        {BUILTIN_TOOL_NAMES.filter(
+                          (name) => !disabledBuiltinTools.includes(name),
+                        ).map((name) => (
+                          <NativeSelectOption key={name} value={name}>
+                            {humanizeTool(name)}
+                          </NativeSelectOption>
+                        ))}
+                      </NativeSelect>
+                    </div>
+                    {disabledBuiltinTools.map((toolName) => (
+                      <div
+                        key={toolName}
+                        className="flex min-h-11 items-center justify-between gap-3 text-sm"
+                      >
+                        <span>{humanizeTool(toolName)}</span>
+                        <Button
+                          id={`${ids}-disabled-${toolName}`}
+                          variant="ghost"
+                          size="icon-xs"
+                          aria-label={t`Enable ${humanizeTool(toolName)}`}
+                          title={t`Enable ${humanizeTool(toolName)}`}
+                          onClick={() => {
+                            const next = disabledBuiltinTools.filter((entry) => entry !== toolName);
+                            setDisabledBuiltinTools(next);
+                            void enqueueSave({ disabledBuiltinTools: next });
+                          }}
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </SettingsGroup>
+            </Disclosure>
+            <Disclosure
+              summary={<Trans>Appearance · this device</Trans>}
+              summaryClassName="w-full justify-between text-sm font-medium"
+              contentClassName="pt-3 [&>section]:mt-0"
+            >
+              <ChatBackgroundSection botId={bot.id} botName={name} />
+            </Disclosure>
+            <Disclosure
+              summary={<Trans>Conversation data</Trans>}
+              summaryClassName="w-full justify-between text-sm font-medium"
+              contentClassName="space-y-4 pt-3"
+            >
+              <div className="overflow-hidden rounded-xl bg-muted/50 px-4">
+                <button
+                  type="button"
+                  className="flex min-h-12 w-full items-center justify-between text-sm"
+                  onClick={() => {
+                    setError(null);
+                    onExport().catch((err: unknown) => setError(errorText(err)));
+                  }}
+                >
+                  <Trans>Export</Trans>
+                  <Download className="size-4 text-muted-foreground" />
+                </button>
+                <button
+                  type="button"
+                  className="min-h-12 w-full border-t border-border text-start text-sm text-destructive"
+                  onClick={onClear}
+                >
+                  <Trans>Clear conversation</Trans>
+                </button>
+              </div>
+            </Disclosure>
           </div>
           {dirty ? (
             <Button

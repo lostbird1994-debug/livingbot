@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import { Button, Spinner } from "@rakazo/ui-web";
-import { ChevronRight, Folder, FolderOpen, RotateCw } from "lucide-react";
+import { ChevronRight, FileText, Folder, FolderOpen, RotateCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { rpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";
@@ -97,8 +97,8 @@ export function BotFilesPanel({ botId }: { botId: string }) {
   const current = relativeTo(root, path);
 
   return (
-    <div className="flex min-h-0 flex-col gap-2">
-      <div className="flex items-center gap-1">
+    <div className="flex min-h-0 flex-col gap-3">
+      <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-2 py-1">
         <Button
           type="button"
           variant="ghost"
@@ -122,7 +122,7 @@ export function BotFilesPanel({ botId }: { botId: string }) {
         </Button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-border">
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-border/70 bg-card shadow-xs">
         {state === "loading" ? (
           <div className="grid h-24 place-items-center">
             <Spinner aria-label={t`Loading files…`} />
@@ -132,29 +132,33 @@ export function BotFilesPanel({ botId }: { botId: string }) {
         ) : entries.length === 0 ? (
           <p className="px-3 py-4 text-xs text-muted-foreground">{t`No files yet.`}</p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-border/50 p-1.5">
             {entries.map((entry) => (
-              <li key={entry.path} className="flex min-w-0 items-center gap-1 px-2 py-1.5">
+              <li
+                key={entry.path}
+                className="group flex min-w-0 items-center gap-2 rounded-lg px-2.5 py-2 transition-colors hover:bg-muted/60 motion-reduce:transition-none"
+              >
                 {entry.kind === "dir" ? (
                   <button
                     type="button"
                     onClick={() => void load(entry.path)}
-                    className="flex min-w-0 flex-1 items-center gap-2 rounded-md text-left hover:bg-accent"
+                    className="flex min-h-8 min-w-0 flex-1 items-center gap-3 rounded-md text-left focus-visible:outline-2 focus-visible:outline-ring"
                   >
                     <Folder className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate text-[13px] text-foreground">
+                    <span className="min-w-0 flex-1 truncate text-sm text-foreground">
                       {entry.path.split("/").at(-1)}
                     </span>
                     <ChevronRight className="size-3.5 shrink-0 text-faint-foreground" />
                   </button>
                 ) : (
                   <>
+                    <FileText aria-hidden className="size-4 shrink-0 text-muted-foreground" />
                     <button
                       type="button"
                       disabled={busy === entry.path}
                       title={entry.path}
                       onClick={() => void act(entry, "open")}
-                      className="min-w-0 flex-1 truncate rounded-md text-left text-[13px] break-all text-link underline underline-offset-2 hover:no-underline disabled:opacity-60"
+                      className="min-h-8 min-w-0 flex-1 truncate rounded-md text-left text-sm text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-60"
                     >
                       {entry.path.split("/").at(-1)}
                     </button>

@@ -31,44 +31,46 @@ export function BotVoiceSettings({ bot }: { bot: Pick<Bot, "id" | "name"> }) {
             onCheckedChange={(wakeEnabled) => save({ ...prefs, wakeEnabled })}
           />
         </label>
-        <div className="space-y-2">
-          <label className="text-xs text-muted-foreground" htmlFor={`${id}-aliases`}>
-            唤醒别名
-          </label>
-          <Input
-            id={`${id}-aliases`}
-            value={aliases}
-            maxLength={200}
-            placeholder={defaultWakeName(bot.name)}
-            onChange={(event) => setAliases(event.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            默认可喊“{defaultWakeName(bot.name)}”；多个别名用顿号或逗号分隔。
-          </p>
-          {aliases !== prefs.aliases.join("、") ? (
-            <Button
-              size="sm"
-              onClick={() => {
-                const names = [
-                  ...new Set(
-                    aliases
-                      .split(/[、,，;\n；]/u)
-                      .map((s) => s.trim())
-                      .filter(Boolean),
-                  ),
-                ];
-                if (names.some((name) => [...name].length < 2)) {
-                  setError("唤醒别名至少需要两个字或字母。");
-                  return;
-                }
-                save({ ...prefs, aliases: names });
-                setAliases(names.join("、"));
-              }}
-            >
-              保存别名
-            </Button>
-          ) : null}
-        </div>
+        {prefs.wakeEnabled ? (
+          <div className="space-y-2">
+            <label className="text-xs text-muted-foreground" htmlFor={`${id}-aliases`}>
+              唤醒别名
+            </label>
+            <Input
+              id={`${id}-aliases`}
+              value={aliases}
+              maxLength={200}
+              placeholder={defaultWakeName(bot.name)}
+              onChange={(event) => setAliases(event.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              默认可喊“{defaultWakeName(bot.name)}”；多个别名用顿号或逗号分隔。
+            </p>
+            {aliases !== prefs.aliases.join("、") ? (
+              <Button
+                size="sm"
+                onClick={() => {
+                  const names = [
+                    ...new Set(
+                      aliases
+                        .split(/[、,，;\n；]/u)
+                        .map((s) => s.trim())
+                        .filter(Boolean),
+                    ),
+                  ];
+                  if (names.some((name) => [...name].length < 2)) {
+                    setError("唤醒别名至少需要两个字或字母。");
+                    return;
+                  }
+                  save({ ...prefs, aliases: names });
+                  setAliases(names.join("、"));
+                }}
+              >
+                保存别名
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
         <label className="flex items-center justify-between gap-3 text-sm" htmlFor={`${id}-notify`}>
           语音通知
           <Switch
@@ -77,9 +79,11 @@ export function BotVoiceSettings({ bot }: { bot: Pick<Bot, "id" | "name"> }) {
             onCheckedChange={(notifyEnabled) => save({ ...prefs, notifyEnabled })}
           />
         </label>
-        <p className="text-xs text-muted-foreground">
-          AI 将新回复总结为 20 字内通知，当前正在看的会话不播报。
-        </p>
+        {prefs.notifyEnabled ? (
+          <p className="text-xs text-muted-foreground">
+            AI 将新回复总结为 20 字内通知，当前正在看的会话不播报。
+          </p>
+        ) : null}
         {error ? (
           <p role="alert" className="text-xs text-destructive">
             {error}

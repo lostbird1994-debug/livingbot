@@ -58,17 +58,84 @@ function workItem(id: string, title: string): ScratchpadItem {
   };
 }
 
-it("hides the entire empty section", async () => {
+it("keeps the empty list and its create entry visible", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  rpcMock.scratchpad.list.mockResolvedValue([]);
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
   try {
     await mount(root, "bot-fixture");
-    expect(container.querySelector('[data-testid="bot-scratchpad"]')).toBeNull();
+    expect(container.textContent).toContain("No to-dos yet");
+    await act(async () =>
+      container.querySelector<HTMLButtonElement>('[aria-label="Add to-do"]')!.click(),
+    );
+    expect(container.querySelector('[aria-label="New to-do"]')).not.toBeNull();
+    const input = container.querySelector<HTMLInputElement>('[aria-label="New to-do"]')!;
+    await act(async () =>
+      input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
+    );
+    expect(container.querySelector('[aria-label="New to-do"]')).toBeNull();
+    expect(container.querySelector('[aria-label="Add to-do"]')).not.toBeNull();
   } finally {
     await act(async () => root.unmount());
     container.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("retains the input after a failed create and can retry successfully", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  rpcMock.scratchpad.list.mockResolvedValue([]);
+  rpcMock.scratchpad.create.mockRejectedValueOnce(new Error("offline"));
+  const host = document.createElement("div");
+  const root = createRoot(host);
+  try {
+    await mount(root, "bot-fixture");
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('[aria-label="Add to-do"]')!.click(),
+    );
+    const input = host.querySelector<HTMLInputElement>('[aria-label="New to-do"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
+        input,
+        "Review plan",
+      );
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => input.form!.requestSubmit());
+    expect(input.value).toBe("Review plan");
+    expect(host.querySelector('[role="alert"]')?.textContent).toBe("Could not add");
+    const saved = workItem("new", "Review plan");
+    rpcMock.scratchpad.create.mockResolvedValueOnce(saved);
+    rpcMock.scratchpad.list.mockResolvedValue([saved]);
+    await act(async () => input.form!.requestSubmit());
+    expect(host.querySelector('[aria-label="New to-do"]')).toBeNull();
+    expect(host.textContent).toContain("Review plan");
+    expect(host.querySelector('[role="alert"]')).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    vi.unstubAllGlobals();
+  }
+});
+
+it("shows a read error with a working retry", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  rpcMock.scratchpad.list.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce([]);
+  const host = document.createElement("div");
+  const root = createRoot(host);
+  try {
+    await mount(root, "bot-fixture");
+    expect(host.querySelector('[role="alert"]')?.textContent).toContain("Could not load tasks");
+    await act(async () =>
+      [...host.querySelectorAll("button")]
+        .find((button) => button.textContent === "Retry")!
+        .click(),
+    );
+    await vi.waitFor(() => expect(host.textContent).toContain("No to-dos yet"));
+    expect(host.querySelector('[role="alert"]')).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
     vi.unstubAllGlobals();
   }
 });
@@ -93,11 +160,11 @@ it("renders open and parked work without status chrome and removes a wrapped ite
   const root = createRoot(container);
   try {
     await mount(root, "bot-fixture");
-    expect(container.querySelector('[aria-label="New open-work item"]')).toBeNull();
+    expect(container.querySelector('[aria-label="New to-do"]')).toBeNull();
     await act(async () =>
-      container.querySelector<HTMLButtonElement>('[aria-label="Add open work"]')!.click(),
+      container.querySelector<HTMLButtonElement>('[aria-label="Add to-do"]')!.click(),
     );
-    expect(container.querySelector('[aria-label="New open-work item"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="New to-do"]')).not.toBeNull();
     expect(container.textContent).toContain(title);
     expect(container.textContent).toContain("Compare both themes");
     expect(container.textContent).not.toContain("parked");
@@ -194,9 +261,9 @@ it("keeps an added item when an older background read lands after it", async () 
     root = createRoot(host);
     await mount(root, "bot-fixture");
     await act(async () =>
-      host.querySelector<HTMLButtonElement>('[aria-label="Add open work"]')!.click(),
+      host.querySelector<HTMLButtonElement>('[aria-label="Add to-do"]')!.click(),
     );
-    const input = host.querySelector<HTMLInputElement>('[aria-label="New open-work item"]')!;
+    const input = host.querySelector<HTMLInputElement>('[aria-label="New to-do"]')!;
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
         input,

@@ -449,6 +449,10 @@ msgstr ""
 msgid "A bit of everything"
 msgstr ""
 
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "A bot you switched \"notify when finished\" on says one short line when its work is done or it needs you. Never during a call."
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "A command's output"
 msgstr "Bir komutun çıktısı"
@@ -3688,9 +3692,21 @@ msgstr ""
 msgid "Listen"
 msgstr ""
 
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Listen for a bot's name"
+msgstr ""
+
 #: src/components/call/CallCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Listening"
+msgstr ""
+
+#: src/components/voice/VoiceAssistant.tsx
+msgid "Listening for a name"
+msgstr ""
+
+#: src/components/voice/VoiceAssistant.tsx
+msgid "Listening stopped: {trouble}"
 msgstr ""
 
 #: src/components/composer/HoldToTalk.tsx
@@ -4019,6 +4035,7 @@ msgstr ""
 
 #: src/lib/call-session.ts
 #: src/lib/dictation.ts
+#: src/lib/wake-listener.ts
 msgid "Microphone failed"
 msgstr "Mikrofon hatası"
 
@@ -4885,6 +4902,10 @@ msgstr ""
 msgid "Preferences"
 msgstr "Tercihler"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Press ⌥ Space anywhere in the app to open the microphone for one try: say a bot's name and it calls you back. No microphone stays on in between."
+msgstr ""
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -4979,6 +5000,10 @@ msgstr "Tepki ver"
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Reactions"
 msgstr "Tepkiler"
+
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Read new messages aloud"
+msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
@@ -5575,6 +5600,14 @@ msgstr ""
 #: src/pages/shell/dialogs.tsx
 msgid "Saving…"
 msgstr "Kaydediliyor…"
+
+#: src/components/voice/VoiceAssistant.tsx
+msgid "Say a bot's name to call it"
+msgstr ""
+
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Say a name to start the call. This browser keeps the microphone open, but only sends audio once someone speaks, and only to recognise the name."
+msgstr ""
 
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
@@ -6234,6 +6267,10 @@ msgstr ""
 msgid "The connection timed out."
 msgstr "Bağlantı zaman aşımına uğradı."
 
+#: src/lib/wake-listener.ts
+msgid "The microphone was disconnected."
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
@@ -6319,6 +6356,10 @@ msgstr "Bu bot bir Linux masaüstünde değil, bu bilgisayarda çalışır. Kabu
 
 #: src/lib/dictation.ts
 msgid "This browser can't detect when you stop talking. Use Chrome, the desktop app, or hold-to-talk in the composer."
+msgstr ""
+
+#: src/lib/wake-listener.ts
+msgid "This browser cannot listen in the background."
 msgstr ""
 
 #: src/lib/dictation.ts

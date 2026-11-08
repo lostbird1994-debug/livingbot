@@ -450,6 +450,10 @@ msgstr ""
 msgid "A bit of everything"
 msgstr "什麼都做一點"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "A bot you switched \"notify when finished\" on says one short line when its work is done or it needs you. Never during a call."
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "A command's output"
 msgstr "命令的輸出"
@@ -3689,10 +3693,22 @@ msgstr "清單檢視"
 msgid "Listen"
 msgstr "聆聽"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Listen for a bot's name"
+msgstr ""
+
 #: src/components/call/CallCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Listening"
 msgstr "聆聽中"
+
+#: src/components/voice/VoiceAssistant.tsx
+msgid "Listening for a name"
+msgstr ""
+
+#: src/components/voice/VoiceAssistant.tsx
+msgid "Listening stopped: {trouble}"
+msgstr ""
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Listening…"
@@ -4020,6 +4036,7 @@ msgstr "訊息"
 
 #: src/lib/call-session.ts
 #: src/lib/dictation.ts
+#: src/lib/wake-listener.ts
 msgid "Microphone failed"
 msgstr "麥克風失敗"
 
@@ -4886,6 +4903,10 @@ msgstr "POST 到"
 msgid "Preferences"
 msgstr "偏好設定"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Press ⌥ Space anywhere in the app to open the microphone for one try: say a bot's name and it calls you back. No microphone stays on in between."
+msgstr ""
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -4980,6 +5001,10 @@ msgstr "回應"
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Reactions"
 msgstr "表情回應"
+
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Read new messages aloud"
+msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
@@ -5576,6 +5601,14 @@ msgstr "儲存中…"
 #: src/pages/shell/dialogs.tsx
 msgid "Saving…"
 msgstr "正在儲存…"
+
+#: src/components/voice/VoiceAssistant.tsx
+msgid "Say a bot's name to call it"
+msgstr ""
+
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Say a name to start the call. This browser keeps the microphone open, but only sends audio once someone speaks, and only to recognise the name."
+msgstr ""
 
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
@@ -6235,6 +6268,10 @@ msgstr ""
 msgid "The connection timed out."
 msgstr "連線超時。"
 
+#: src/lib/wake-listener.ts
+msgid "The microphone was disconnected."
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
@@ -6320,6 +6357,10 @@ msgstr "此機器人執行在這臺電腦上，而不是 Linux 桌面。Shell �
 
 #: src/lib/dictation.ts
 msgid "This browser can't detect when you stop talking. Use Chrome, the desktop app, or hold-to-talk in the composer."
+msgstr ""
+
+#: src/lib/wake-listener.ts
+msgid "This browser cannot listen in the background."
 msgstr ""
 
 #: src/lib/dictation.ts

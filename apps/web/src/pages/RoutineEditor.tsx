@@ -33,6 +33,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  SectionHeading,
   Switch,
   Textarea,
 } from "@rakazo/ui-web";
@@ -254,29 +255,43 @@ export function RoutineList({
 }) {
   const { t } = useLingui();
   return (
-    <div>
-      <div className="mb-2 flex justify-end">
+    <section>
+      <SectionHeading className="mb-3 flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2">
+          <Trans>Routines</Trans>
+          <span className="text-xs font-normal tabular-nums text-muted-foreground">
+            {routines.length}
+          </span>
+        </span>
         <Button
-          variant="secondary"
-          size="icon-sm"
+          variant="ghost"
+          size="xs"
           data-testid="routine-create-button"
           aria-label={t`Create Routine`}
           title={t`Create Routine`}
           onClick={onCreate}
         >
           <Plus strokeWidth={1.9} />
+          <Trans>Add</Trans>
         </Button>
+      </SectionHeading>
+      <div className="overflow-hidden rounded-xl border border-border/60 bg-background p-2">
+        {!routines.length ? (
+          <p className="px-3 py-5 text-sm text-muted-foreground">
+            <Trans>No routines yet</Trans>
+          </p>
+        ) : null}
+        {routines.map((routine) => (
+          <RoutineListRow
+            key={routine.id}
+            routine={routine}
+            running={runningRoutineId === routine.id}
+            onOpen={() => onEdit(routine)}
+            onStop={onStop}
+          />
+        ))}
       </div>
-      {routines.map((routine) => (
-        <RoutineListRow
-          key={routine.id}
-          routine={routine}
-          running={runningRoutineId === routine.id}
-          onOpen={() => onEdit(routine)}
-          onStop={onStop}
-        />
-      ))}
-    </div>
+    </section>
   );
 }
 
@@ -294,21 +309,24 @@ function RoutineListRow({
   const { i18n } = useLingui();
   const scheduleLabels = cronLabels(i18n.locale);
   return (
-    <div className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2.5 hover:bg-accent">
+    <div className="flex w-full items-center gap-2 rounded-lg px-3 py-3 transition-colors hover:bg-muted/60 motion-reduce:transition-none">
       <button
         type="button"
         onClick={onOpen}
-        className="flex min-w-0 flex-1 items-center gap-3 text-start"
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-md text-start focus-visible:outline-2 focus-visible:outline-ring"
       >
         <span className="grid h-5 w-5 place-items-center">
           {routine.active ? (
-            <Clock size={16} strokeWidth={1.6} className="text-success" aria-hidden />
+            <Clock size={16} strokeWidth={1.6} className="text-muted-foreground" aria-hidden />
           ) : (
             <Pause size={14} className="text-muted-foreground" />
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[14.5px] font-medium text-foreground" dir="auto">
+          <span
+            className="block break-words text-sm font-medium leading-relaxed text-foreground"
+            dir="auto"
+          >
             {routine.name}
           </span>
           <span className="flex min-w-0 gap-2 text-[12.5px] text-muted-foreground/80">

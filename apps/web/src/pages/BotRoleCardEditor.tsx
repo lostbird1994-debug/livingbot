@@ -2,7 +2,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { ORPCError } from "@orpc/client";
 import type { Bot, BotRoleCard } from "@rakazo/contracts";
 import { BOT_ROLE_TEXT_MAX_LENGTH, botRoleCard, excludesSharedProfile } from "@rakazo/contracts";
-import { Button, Switch, Textarea } from "@rakazo/ui-web";
+import { Button, Disclosure, SectionHeading, Switch, Textarea } from "@rakazo/ui-web";
 import type { ReactNode } from "react";
 import { useId, useState } from "react";
 import { InstructionSettings } from "../components/InstructionSettings";
@@ -28,6 +28,12 @@ export function BotRoleCardEditor({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [conflict, setConflict] = useState(false);
+  const [seenInstructions, setSeenInstructions] = useState(bot.instructions);
+  const [instructionPreview, setInstructionPreview] = useState(bot.instructions);
+  if (seenInstructions !== bot.instructions) {
+    setSeenInstructions(bot.instructions);
+    setInstructionPreview(bot.instructions);
+  }
   if (seen !== source) {
     setSeen(source);
     if (JSON.stringify(draft) === JSON.stringify(baseline)) {
@@ -78,18 +84,51 @@ export function BotRoleCardEditor({
     }
   }
   return (
-    <section className="space-y-4" data-testid="bot-role-card-editor">
+    <section className="space-y-2" data-testid="bot-role-card-editor">
+      <SectionHeading variant="label">
+        <Trans>Role and instructions</Trans>
+      </SectionHeading>
       {fields.map((field) => (
-        <div key={field.key} className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <label
-              htmlFor={`${id}-${field.key}`}
-              className="text-xs font-medium text-muted-foreground"
+        <div key={field.key}>
+          <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-card px-4 shadow-xs">
+            <Disclosure
+              className="min-w-0 flex-1"
+              summaryClassName="w-full justify-between py-3 text-sm"
+              contentClassName="pb-3"
+              summary={
+                <span className="min-w-0">
+                  <span className="flex flex-wrap items-center gap-x-2">
+                    <span className="font-medium">{field.title}</span>
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {"toggle" in field && !draft[field.toggle]
+                        ? t`Not loaded · disabled`
+                        : !draft[field.key].trim()
+                          ? t`Not filled in`
+                          : null}
+                    </span>
+                  </span>
+                  {draft[field.key].trim() ? (
+                    <span className="mt-1 line-clamp-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground group-data-panel-open/disclosure:hidden">
+                      {draft[field.key]}
+                    </span>
+                  ) : null}
+                </span>
+              }
             >
-              {field.title}
-            </label>
+              <Textarea
+                id={`${id}-${field.key}`}
+                aria-label={field.title}
+                value={draft[field.key]}
+                maxLength={BOT_ROLE_TEXT_MAX_LENGTH}
+                disabled={pending}
+                rows={6}
+                className="max-h-96 min-h-32 resize-y bg-muted/50 text-sm"
+                onChange={(event) => set(field.key, event.target.value)}
+              />
+            </Disclosure>
             {"toggle" in field ? (
               <Switch
+                className="mt-3 shrink-0"
                 aria-label={field.switchLabel}
                 checked={draft[field.toggle]}
                 disabled={pending}
@@ -97,81 +136,116 @@ export function BotRoleCardEditor({
               />
             ) : null}
           </div>
-          <Textarea
-            id={`${id}-${field.key}`}
-            aria-label={field.title}
-            value={draft[field.key]}
-            maxLength={BOT_ROLE_TEXT_MAX_LENGTH}
-            disabled={pending}
-            rows={3}
-            className="min-h-20 resize-y bg-muted/50 text-sm"
-            onChange={(event) => set(field.key, event.target.value)}
-          />
-          {field.key === "identity" ? <InstructionSettings bot={bot} onSaved={onSaved} /> : null}
+          {field.key === "identity" ? (
+            <Disclosure
+              className="mt-2 rounded-xl border border-border/70 bg-card px-4 shadow-xs"
+              summaryClassName="w-full justify-between py-3 text-sm"
+              contentClassName="pb-3"
+              summary={
+                <span className="min-w-0">
+                  <span className="block font-medium">
+                    <Trans>Instructions</Trans>
+                  </span>
+                  <span className="mt-1 line-clamp-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground group-data-panel-open/disclosure:hidden">
+                    {instructionPreview.trim() || t`Not filled in`}
+                  </span>
+                </span>
+              }
+            >
+              <InstructionSettings
+                bot={bot}
+                onSaved={(updated) => {
+                  setInstructionPreview(updated.instructions);
+                  onSaved();
+                }}
+                compact
+              />
+            </Disclosure>
+          ) : null}
         </div>
       ))}
-      <p className="text-xs leading-relaxed text-muted-foreground">
-        {excludesSharedProfile(draft) ? (
+      {excludesSharedProfile(draft) ? (
+        <p className="text-xs leading-relaxed text-muted-foreground">
           <Trans>
-            After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This
-            bot's own memory stays available.
+            After saving, workspace-shared USER.md, MEMORY.md and profile.md will not load
+            automatically. This bot's own memory stays available.
           </Trans>
-        ) : (
+        </p>
+      ) : (
+        <Disclosure
+          summary={<Trans>Shared profile loading rules</Trans>}
+          summaryClassName="text-xs text-muted-foreground"
+          contentClassName="pt-2 text-xs leading-relaxed text-muted-foreground"
+        >
           <Trans>
-            User identity and backstory load only when their switches are on. Shared memory follows
-            the usual loading rules.
+            User identity and backstory load only when their switches are on. Both off:
+            workspace-shared profiles load as usual.
           </Trans>
-        )}
-      </p>
-      <div className="flex items-center gap-2">
-        <Button size="sm" disabled={pending || conflict || !dirty} onClick={() => void save()}>
-          <Trans>Save role settings</Trans>
-        </Button>
-        {dirty ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={pending}
-            onClick={() => {
-              setDraft(baseline);
-              setError("");
-            }}
-          >
-            <Trans>Cancel</Trans>
+        </Disclosure>
+      )}
+      {dirty || conflict ? (
+        <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 bg-background py-2">
+          {dirty ? (
+            <span className="text-xs text-muted-foreground">
+              <Trans>Unsaved changes</Trans>
+            </span>
+          ) : null}
+          <Button size="sm" disabled={pending || conflict || !dirty} onClick={() => void save()}>
+            <Trans>Save role settings</Trans>
           </Button>
-        ) : null}
-        {conflict ? (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={pending}
-            onClick={async () => {
-              setPending(true);
-              try {
-                const latest = await rpc.bots.get({ botId: bot.id });
-                const card = botRoleCard(latest.roleCard);
-                setBaseline(card);
-                setDraft(card);
-                setConflict(false);
+          {dirty ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={pending}
+              onClick={() => {
+                setDraft(baseline);
                 setError("");
-                onSaved();
-              } catch (err) {
-                setError(errorText(err));
-              } finally {
-                setPending(false);
-              }
-            }}
-          >
-            <Trans>Reload</Trans>
-          </Button>
-        ) : null}
-      </div>
+              }}
+            >
+              <Trans>Cancel</Trans>
+            </Button>
+          ) : null}
+          {conflict ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={async () => {
+                setPending(true);
+                try {
+                  const latest = await rpc.bots.get({ botId: bot.id });
+                  const card = botRoleCard(latest.roleCard);
+                  setBaseline(card);
+                  setDraft(card);
+                  setConflict(false);
+                  setError("");
+                  onSaved();
+                } catch (err) {
+                  setError(errorText(err));
+                } finally {
+                  setPending(false);
+                }
+              }}
+            >
+              <Trans>Reload</Trans>
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
       {error ? (
         <p role="alert" className="text-sm text-destructive">
           {conflict ? t`Role settings changed elsewhere. Reload before saving.` : error}
         </p>
       ) : null}
-      {publicProfile}
+      <Disclosure
+        className="rounded-xl border border-border/70 bg-card px-4 shadow-xs"
+        summaryClassName="w-full justify-between py-3 text-sm"
+        contentClassName="pb-3"
+        summary={<Trans>Profile shown to other bots</Trans>}
+      >
+        {publicProfile}
+      </Disclosure>
     </section>
   );
 }

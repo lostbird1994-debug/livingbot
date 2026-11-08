@@ -449,6 +449,10 @@ msgstr "1 space"
 msgid "A bit of everything"
 msgstr "A bit of everything"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+#~ msgid "A bot you switched \"notify when finished\" on says one short line when its work is done or it needs you. Never during a call."
+#~ msgstr "A bot you switched \"notify when finished\" on says one short line when its work is done or it needs you. Never during a call."
+
 #: src/pages/RoutineEditor.tsx
 msgid "A command's output"
 msgstr "A command's output"
@@ -517,6 +521,7 @@ msgstr "Activity"
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/RoutineEditor.tsx
 #: src/pages/ScratchpadSection.tsx
 msgid "Add"
 msgstr "Add"
@@ -604,8 +609,8 @@ msgid "Add MCP server"
 msgstr "Add MCP server"
 
 #: src/pages/ScratchpadSection.tsx
-msgid "Add open work"
-msgstr "Add open work"
+#~ msgid "Add open work"
+#~ msgstr "Add open work"
 
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
@@ -632,6 +637,10 @@ msgstr "Add skills"
 msgid "Add to routine"
 msgstr "Add to routine"
 
+#: src/pages/ScratchpadSection.tsx
+msgid "Add to-do"
+msgstr "Add to-do"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Add trigger"
 msgstr "Add trigger"
@@ -651,6 +660,10 @@ msgstr "Added"
 msgid "Adding…"
 msgstr "Adding…"
 
+#: src/components/ChatBackgroundSettings.tsx
+msgid "Adjust appearance"
+msgstr "Adjust appearance"
+
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -665,9 +678,17 @@ msgstr "Advanced"
 msgid "Advanced..."
 msgstr "Advanced..."
 
+#: src/components/AskCard.tsx
+msgid "After"
+msgstr "After"
+
 #: src/pages/BotRoleCardEditor.tsx
-msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
-msgstr "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+#~ msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+#~ msgstr "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "After saving, workspace-shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
+msgstr "After saving, workspace-shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
 
 #: src/components/AccountDataSettings.tsx
 msgid "Agent from another app"
@@ -841,6 +862,10 @@ msgstr "API keys"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Appearance"
 msgstr "Appearance"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Appearance · this device"
+msgstr "Appearance · this device"
 
 #. placeholder {0}: appearanceLabel[value]
 #: src/pages/Shell.tsx
@@ -1064,6 +1089,10 @@ msgstr "Basic auth ({username})"
 msgid "Bearer token"
 msgstr "Bearer token"
 
+#: src/components/AskCard.tsx
+msgid "Before"
+msgstr "Before"
+
 #: src/pages/settings-nav.ts
 msgid "Billing"
 msgstr "Billing"
@@ -1124,6 +1153,10 @@ msgstr "Bot is watching, not acting"
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Bot models"
 msgstr "Bot models"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Bot private memory"
+msgstr "Bot private memory"
 
 #: src/pages/shell/computer-overlay.tsx
 msgid "Bot screen"
@@ -1232,6 +1265,7 @@ msgstr "Can't read images"
 #: src/pages/Onboarding.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/SpaceSettingOverrides.tsx
@@ -1491,6 +1525,7 @@ msgid "Close navigation"
 msgstr "Close navigation"
 
 #: src/pages/GroupPanel.tsx
+#: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/side-panel.tsx
 msgid "Close panel"
 msgstr "Close panel"
@@ -1771,6 +1806,10 @@ msgstr "Connector"
 msgid "Contains code to run"
 msgstr "Contains code to run"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Context"
+msgstr "Context"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Context limit"
@@ -1799,6 +1838,10 @@ msgstr "Continue to checkout"
 #: src/pages/Auth.tsx
 msgid "Continue with {0}"
 msgstr "Continue with {0}"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Conversation data"
+msgstr "Conversation data"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Conversations"
@@ -2114,6 +2157,10 @@ msgstr "Could not load sign-in options"
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not load skill"
 msgstr "Could not load skill"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Could not load tasks"
+msgstr "Could not load tasks"
 
 #: src/pages/Artifacts.tsx
 msgid "Could not load this artifact."
@@ -2512,6 +2559,10 @@ msgstr "Current password"
 msgid "Current preview for a private chat. Not a record of a past model request."
 msgstr "Current preview for a private chat. Not a record of a past model request."
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "Current workspace · shared by your bots"
+msgstr "Current workspace · shared by your bots"
+
 #: src/components/VaultSettings.tsx
 msgid "Custom header"
 msgstr "Custom header"
@@ -2550,6 +2601,10 @@ msgstr "Dark"
 #: src/pages/PluginsOverlay.tsx
 msgid "Data"
 msgstr "Data"
+
+#: src/pages/shell/bot-panel.tsx
+#~ msgid "Data and open work"
+#~ msgstr "Data and open work"
 
 #: src/lib/billing.ts
 #: src/lib/cron.ts
@@ -2884,6 +2939,10 @@ msgstr "Edit name"
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
 msgstr "Edit Profile"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Edits affect your bots using this document in this workspace."
+msgstr "Edits affect your bots using this document in this workspace."
 
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
@@ -3344,6 +3403,10 @@ msgstr "Hidden"
 msgid "Hide"
 msgstr "Hide"
 
+#: src/pages/ScratchpadSection.tsx
+msgid "Hide new to-do"
+msgstr "Hide new to-do"
+
 #: src/components/I18nBootstrap.tsx
 msgid "Hide password"
 msgstr "Hide password"
@@ -3529,6 +3592,7 @@ msgstr "Instruction history"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
+#: src/pages/BotRoleCardEditor.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions"
 msgstr "Instructions"
@@ -3541,6 +3605,10 @@ msgstr "Instructions {position}"
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions are too long. Untick some files."
 msgstr "Instructions are too long. Untick some files."
+
+#: src/components/InstructionSettings.tsx
+msgid "Instructions save when you leave this field."
+msgstr "Instructions save when you leave this field."
 
 #: src/components/AskCard.tsx
 msgid "Instructions updated"
@@ -3688,10 +3756,22 @@ msgstr "List view"
 msgid "Listen"
 msgstr "Listen"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+#~ msgid "Listen for a bot's name"
+#~ msgstr "Listen for a bot's name"
+
 #: src/components/call/CallCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Listening"
 msgstr "Listening"
+
+#: src/components/voice/VoiceAssistant.tsx
+#~ msgid "Listening for a name"
+#~ msgstr "Listening for a name"
+
+#: src/components/voice/VoiceAssistant.tsx
+#~ msgid "Listening stopped: {trouble}"
+#~ msgstr "Listening stopped: {trouble}"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Listening…"
@@ -3719,8 +3799,8 @@ msgid "Load web images automatically"
 msgstr "Load web images automatically"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Loaded context"
-msgstr "Loaded context"
+#~ msgid "Loaded context"
+#~ msgstr "Loaded context"
 
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
@@ -3754,6 +3834,10 @@ msgstr "Loading plugins…"
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading preview…"
 msgstr "Loading preview…"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Loading tasks…"
+msgstr "Loading tasks…"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
@@ -3939,8 +4023,18 @@ msgstr "Memory {position}"
 #. placeholder {0}: characters(data.memory.body)
 #. placeholder {1}: data.budgets.body
 #: src/pages/LoadedContextPanel.tsx
-msgid "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
-msgstr "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
+#~ msgid "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
+#~ msgstr "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
+
+#. placeholder {0}: characters(data.memory.body)
+#. placeholder {1}: data.budgets.body
+#: src/pages/LoadedContextPanel.tsx
+msgid "Memory block: {0} / {1} characters. Workspace-shared source text: {shared} characters."
+msgstr "Memory block: {0} / {1} characters. Workspace-shared source text: {shared} characters."
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Memory files read on demand"
+msgstr "Memory files read on demand"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Memory for {title}"
@@ -4019,6 +4113,7 @@ msgstr "Messaging"
 
 #: src/lib/call-session.ts
 #: src/lib/dictation.ts
+#: src/lib/wake-listener.ts
 msgid "Microphone failed"
 msgstr "Microphone failed"
 
@@ -4253,8 +4348,8 @@ msgid "New messages"
 msgstr "New messages"
 
 #: src/pages/ScratchpadSection.tsx
-msgid "New open-work item"
-msgstr "New open-work item"
+#~ msgid "New open-work item"
+#~ msgstr "New open-work item"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -4282,6 +4377,10 @@ msgstr "New space"
 #: src/pages/Board.tsx
 msgid "New ticket"
 msgstr "New ticket"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "New to-do"
+msgstr "New to-do"
 
 #: src/components/markdown-copy.tsx
 msgid "Next page"
@@ -4402,6 +4501,10 @@ msgstr "No reply"
 msgid "No results"
 msgstr "No results"
 
+#: src/pages/RoutineEditor.tsx
+msgid "No routines yet"
+msgstr "No routines yet"
+
 #: src/components/markdown-copy.tsx
 msgid "No rows"
 msgstr "No rows"
@@ -4425,6 +4528,10 @@ msgstr "No submissions"
 #: src/pages/Board.tsx
 msgid "No tickets yet"
 msgstr "No tickets yet"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "No to-dos yet"
+msgstr "No to-dos yet"
 
 #: src/pages/RoutineEditor.tsx
 msgid "No trigger"
@@ -4451,6 +4558,10 @@ msgstr "Not added: {0}"
 msgid "Not checked yet"
 msgstr "Not checked yet"
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Not filled in"
+msgstr "Not filled in"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "Not imported"
@@ -4462,6 +4573,14 @@ msgstr "Not in Rakazo's catalog"
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
 msgstr "Not in the plugin catalog"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Not loaded · disabled"
+msgstr "Not loaded · disabled"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Not loaded: workspace-shared USER.md, MEMORY.md and profile.md. This bot has its own user identity or backstory enabled."
+msgstr "Not loaded: workspace-shared USER.md, MEMORY.md and profile.md. This bot has its own user identity or backstory enabled."
 
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
@@ -4485,8 +4604,8 @@ msgid "Nothing remembered yet"
 msgstr "Nothing remembered yet"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Notifications"
-msgstr "Notifications"
+#~ msgid "Notifications"
+#~ msgstr "Notifications"
 
 #: src/pages/ActivityList.tsx
 msgid "Now"
@@ -4544,8 +4663,8 @@ msgid "on the 1st at {0}"
 msgstr "on the 1st at {0}"
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "On-demand memory directory"
-msgstr "On-demand memory directory"
+#~ msgid "On-demand memory directory"
+#~ msgstr "On-demand memory directory"
 
 #: src/lib/cron.ts
 msgid "One-time"
@@ -4617,7 +4736,6 @@ msgid "Open navigation"
 msgstr "Open navigation"
 
 #: src/pages/LoadedContextPanel.tsx
-#: src/pages/ScratchpadSection.tsx
 msgid "Open work"
 msgstr "Open work"
 
@@ -4790,6 +4908,10 @@ msgstr "Pending"
 msgid "Permissions"
 msgstr "Permissions"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Permissions and collaboration"
+msgstr "Permissions and collaboration"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Persona"
 msgstr "Persona"
@@ -4885,6 +5007,10 @@ msgstr "POST to"
 msgid "Preferences"
 msgstr "Preferences"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+#~ msgid "Press ⌥ Space anywhere in the app to open the microphone for one try: say a bot's name and it calls you back. No microphone stays on in between."
+#~ msgstr "Press ⌥ Space anywhere in the app to open the microphone for one try: say a bot's name and it calls you back. No microphone stays on in between."
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -4895,6 +5021,10 @@ msgstr "Preview"
 #: src/components/ArtifactFileCard.tsx
 msgid "Preview {0}"
 msgstr "Preview {0}"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Preview for the current private-chat settings"
+msgstr "Preview for the current private-chat settings"
 
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
@@ -4912,7 +5042,6 @@ msgstr "Previous settings sections"
 msgid "Priority"
 msgstr "Priority"
 
-#: src/pages/LoadedContextPanel.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Private"
 msgstr "Private"
@@ -4924,6 +5053,10 @@ msgstr "Private workspace with its own bots and groups."
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
 msgstr "Productivity"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Profile shown to other bots"
+msgstr "Profile shown to other bots"
 
 #: src/pages/shell/import-status.ts
 msgid "Program: {name}"
@@ -4979,6 +5112,10 @@ msgstr "React"
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Reactions"
 msgstr "Reactions"
+
+#: src/pages/VoiceSettingsOverlay.tsx
+#~ msgid "Read new messages aloud"
+#~ msgstr "Read new messages aloud"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
@@ -5374,6 +5511,7 @@ msgstr "Restoring your workspace"
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "Retry"
@@ -5415,6 +5553,10 @@ msgid "Revoked"
 msgstr "Revoked"
 
 #: src/pages/BotRoleCardEditor.tsx
+msgid "Role and instructions"
+msgstr "Role and instructions"
+
+#: src/pages/BotRoleCardEditor.tsx
 msgid "Role settings changed elsewhere. Reload before saving."
 msgstr "Role settings changed elsewhere. Reload before saving."
 
@@ -5433,8 +5575,8 @@ msgstr "Rotate key"
 msgid "Routine"
 msgstr "Routine"
 
+#: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/bot-panel.tsx
 msgid "Routines"
 msgstr "Routines"
 
@@ -5575,6 +5717,14 @@ msgstr "Saving..."
 #: src/pages/shell/dialogs.tsx
 msgid "Saving…"
 msgstr "Saving…"
+
+#: src/components/voice/VoiceAssistant.tsx
+#~ msgid "Say a bot's name to call it"
+#~ msgstr "Say a bot's name to call it"
+
+#: src/pages/VoiceSettingsOverlay.tsx
+#~ msgid "Say a name to start the call. This browser keeps the microphone open, but only sends audio once someone speaks, and only to recognise the name."
+#~ msgstr "Say a name to start the call. This browser keeps the microphone open, but only sends audio once someone speaks, and only to recognise the name."
 
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
@@ -5780,27 +5930,34 @@ msgstr "Shape"
 msgid "Shape {0}"
 msgstr "Shape {0}"
 
-#: src/pages/LoadedContextPanel.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Shared"
 msgstr "Shared"
 
 #: src/pages/KnowledgeSection.tsx
-msgid "Shared memory"
-msgstr "Shared memory"
+msgid "Shared by your bots in this workspace. Summaries load automatically; other notes are read on demand."
+msgstr "Shared by your bots in this workspace. Summaries load automatically; other notes are read on demand."
+
+#: src/pages/KnowledgeSection.tsx
+#~ msgid "Shared memory"
+#~ msgstr "Shared memory"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Shared memory organizer"
 msgstr "Shared memory organizer"
 
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Shared profile loading rules"
+msgstr "Shared profile loading rules"
+
 #: src/pages/KnowledgeSection.tsx
-msgid "Shared summaries load automatically. Other shared notes are read on demand."
-msgstr "Shared summaries load automatically. Other shared notes are read on demand."
+#~ msgid "Shared summaries load automatically. Other shared notes are read on demand."
+#~ msgstr "Shared summaries load automatically. Other shared notes are read on demand."
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
-msgstr "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
+#~ msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
+#~ msgstr "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -5817,6 +5974,10 @@ msgstr "Show bots"
 #: src/pages/shell/bot-files-panel.tsx
 msgid "Show in Finder"
 msgstr "Show in Finder"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Show less"
+msgstr "Show less"
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -6169,6 +6330,10 @@ msgstr "Table"
 msgid "Take control"
 msgstr "Take control"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Task list"
+msgstr "Task list"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "Teach a task"
@@ -6233,6 +6398,10 @@ msgstr "The browser keeps dropping the microphone. Start dictation again to retr
 #: src/lib/model-connection-preflight.ts
 msgid "The connection timed out."
 msgstr "The connection timed out."
+
+#: src/lib/wake-listener.ts
+msgid "The microphone was disconnected."
+msgstr "The microphone was disconnected."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6313,6 +6482,10 @@ msgstr "This backup could not be read."
 msgid "This bot"
 msgstr "This bot"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "This bot only"
+msgstr "This bot only"
+
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
@@ -6320,6 +6493,10 @@ msgstr "This bot runs on this computer, not a Linux desktop. Shell and files use
 #: src/lib/dictation.ts
 msgid "This browser can't detect when you stop talking. Use Chrome, the desktop app, or hold-to-talk in the composer."
 msgstr "This browser can't detect when you stop talking. Use Chrome, the desktop app, or hold-to-talk in the composer."
+
+#: src/lib/wake-listener.ts
+msgid "This browser cannot listen in the background."
+msgstr "This browser cannot listen in the background."
 
 #: src/lib/dictation.ts
 msgid "This browser has no on-device dictation. Connect a voice provider with transcription, or use Chrome / the desktop app."
@@ -6474,6 +6651,10 @@ msgstr "To {0}"
 msgid "To do"
 msgstr "To do"
 
+#: src/pages/ScratchpadSection.tsx
+msgid "To-do list"
+msgstr "To-do list"
+
 #: src/pages/shell/bot-picker.tsx
 msgid "To:"
 msgstr "To:"
@@ -6598,6 +6779,10 @@ msgstr "Unmute"
 #: src/pages/BotContextMenu.tsx
 msgid "Unpin"
 msgstr "Unpin"
+
+#: src/pages/BotRoleCardEditor.tsx
+msgid "Unsaved changes"
+msgstr "Unsaved changes"
 
 #. placeholder {0}: pending.file.name
 #: src/pages/shell/use-composer-actions.ts
@@ -6746,8 +6931,12 @@ msgid "User identity"
 msgstr "User identity"
 
 #: src/pages/BotRoleCardEditor.tsx
-msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
-msgstr "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
+msgid "User identity and backstory load only when their switches are on. Both off: workspace-shared profiles load as usual."
+msgstr "User identity and backstory load only when their switches are on. Both off: workspace-shared profiles load as usual."
+
+#: src/pages/BotRoleCardEditor.tsx
+#~ msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
+#~ msgstr "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
@@ -6813,6 +7002,10 @@ msgstr "View all"
 msgid "View and edit all private memory"
 msgstr "View and edit all private memory"
 
+#: src/pages/LoadedContextPanel.tsx
+msgid "View assembled inputs"
+msgstr "View assembled inputs"
+
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "View organizer"
 msgstr "View organizer"
@@ -6827,6 +7020,10 @@ msgstr "View source"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "Voice"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Voice and notifications"
+msgstr "Voice and notifications"
 
 #: src/components/composer/DictationInput.tsx
 msgid "Voice input"
@@ -6980,6 +7177,15 @@ msgstr "Works with your ChatGPT or Claude plan."
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Workspace"
 msgstr "Workspace"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "Workspace “{spaceName}” · shared by your bots"
+msgstr "Workspace “{spaceName}” · shared by your bots"
+
+#: src/pages/KnowledgeSection.tsx
+#: src/pages/LoadedContextPanel.tsx
+msgid "Workspace-shared memory"
+msgstr "Workspace-shared memory"
 
 #: src/lib/billing.ts
 msgid "year"

@@ -28,6 +28,7 @@ export function ShellSidePanel({
   panel,
   setPanel,
   active,
+  spaceName,
   activeGroup,
   bots,
   groups,
@@ -55,6 +56,7 @@ export function ShellSidePanel({
   panel: Panel;
   setPanel: (panel: Panel) => void;
   active: Bot | undefined;
+  spaceName?: string;
   activeGroup: Group | undefined;
   bots: Bot[];
   groups: Group[];
@@ -103,7 +105,13 @@ export function ShellSidePanel({
           panel !== "create-group" &&
           panel !== "group-settings" &&
           panel !== "import-agent" ? (
-            <div className="mb-4 flex items-center justify-between">
+            <div
+              className={
+                botTab && active
+                  ? "flex items-center justify-between"
+                  : "mb-4 flex items-center justify-between"
+              }
+            >
               {!active && panel !== "settings" ? (
                 <span className="text-[13.5px] text-muted-foreground">
                   <Trans>Group</Trans>
@@ -122,14 +130,16 @@ export function ShellSidePanel({
                     }}
                   />
                 ) : null}
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t`Close panel`}
-                  onClick={() => setPanel(null)}
-                >
-                  <X size={16} strokeWidth={1.8} />
-                </Button>
+                {!(botTab && active) ? (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={t`Close panel`}
+                    onClick={() => setPanel(null)}
+                  >
+                    <X size={16} strokeWidth={1.8} />
+                  </Button>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -184,6 +194,8 @@ export function ShellSidePanel({
             <BotSettings
               key={active.id}
               bot={active}
+              spaceName={spaceName}
+              onClose={() => setPanel(null)}
               tab={botTab}
               onTabChange={(tab: BotPanelTab) => {
                 setPanel(tab);
