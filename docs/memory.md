@@ -24,7 +24,7 @@ Find it in **Settings → Memory**.
 
 ## Search and history
 
-Summaries load within the selected model's context budget. Other documents are listed and read
+Summaries load within character limits. Other documents are listed and read
 on demand. Keyword search supports Chinese substrings, single characters and English fragments.
 Encrypted notes use a separate keyed search index; matching candidates are decrypted and checked
 before returning excerpts. Message-history indexing is unchanged.
@@ -32,9 +32,14 @@ Matching is a normalized literal substring, including spaces; several words are 
 with AND. Review artifacts under `memory/reviews/` are excluded from agent context, browsing,
 reads and ordinary search, while remaining available in human memory management.
 
-When the model window is unknown, memory uses an allowance of 1,024 estimated tokens. Known
-windows use one tenth of that window. Truncated summaries preserve their beginning and recent
-tail with the missing character range marked. Token counts are heuristic, not provider usage.
+Memory has a 20,000-character per-document ceiling and a 60,000-character inlined-block ceiling.
+There is no separate percentage of the model window or unknown-window token allowance for memory.
+Shared summaries retain their 10,000-character combined ceiling, and the on-demand index has its
+own 4,000-character ceiling. Truncated summaries preserve their beginning and recent tail with
+the missing character range marked. The model runtime budgets the complete request, including
+memory, instructions, tools, history and output. A small model may reject required context that
+does not fit; removing the memory quota does not enlarge the model window. Token counts remain
+heuristic, not provider usage.
 
 Open a document's **Versions** to preview or restore a previous version. Restoring creates a new
 version, and refuses to overwrite changes made since you opened the document.

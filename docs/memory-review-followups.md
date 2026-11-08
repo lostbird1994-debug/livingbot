@@ -5,8 +5,8 @@ commit preserves the working retrieval and proposal implementation before these 
 
 | Review | Decision | Status |
 |---|---|---|
-| Q1 | Use a conservative allowance when the model window is unknown. | Implemented: 1,024 estimated tokens; regression passed |
-| Q2 | Preserve document counts and summary entry points in tight-budget fallback. | Implemented within the available allowance; regression passed |
+| Q1 | Keep character ceilings without a separate memory token quota. | Revised: removed the 10% window quota and 1,024-token unknown-window fallback; the runtime budgets the complete request |
+| Q2 | Preserve document counts and summary entry points. | Character-budget index and navigation retained; token-only fallback removed with the separate quota |
 | Q3 | Retain both the beginning and recent tail of truncated summaries; mark the gap. | Implemented with explicit missing character offsets; regression passed |
 | Q4 | Do not claim tokenizer accuracy without reproducible target-model measurements. | Calibration deferred; estimate remains heuristic |
 | Q5 / B2 | Keep shared summaries in context and other shared notes available on demand; align copy. | Implemented in documentation and every interface locale |

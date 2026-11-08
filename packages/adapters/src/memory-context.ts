@@ -1,11 +1,10 @@
 import type { AdapterContext, MemorySnapshot, MemoryStore } from "@rakazo/adapter-kit";
 import { isMemoryReviewPath } from "@rakazo/contracts";
-import { estimateTextTokens } from "./context-selection.js";
 import { charLength, truncateChars } from "./utf8.js";
 
 /**
- * Character ceilings protect individual documents. The runtime must also fit memory to the
- * selected model's token window alongside instructions, tools, history and output.
+ * Memory uses character ceilings independently of the model window. The complete request,
+ * including instructions, tools, memory, history and output, is budgeted by the model runtime.
  */
 export const MEMORY_DOCUMENT_MAX_CHARS = 20_000;
 export const MEMORY_TOTAL_MAX_CHARS = 60_000;
@@ -16,12 +15,6 @@ export const MEMORY_INDEX_RECENT = 20;
 export const MEMORY_INDEX_MAX_FOLDERS = 8;
 /** Ceiling on what shared (user-scope) documents may take from the block. */
 export const MEMORY_PROFILE_MAX_CHARS = 10_000;
-
-export function memoryTokenAllowance(contextWindow: number | undefined): number {
-  return contextWindow !== undefined && Number.isFinite(contextWindow) && contextWindow > 0
-    ? Math.floor(contextWindow / 10)
-    : 1_024;
-}
 
 /**
  * Two tiers, the same split the older harness made between a distilled summary and daily notes:
@@ -39,7 +32,6 @@ export interface MemoryContextBudgets {
   documentMaxChars?: number;
   totalMaxChars?: number;
   indexMaxChars?: number;
-  maxTokens?: number;
 }
 
 export async function loadAgentMemoryContext(
@@ -58,35 +50,7 @@ export async function loadAgentMemoryContext(
   ].filter((document) => !isMemoryReviewPath(document.path));
   if (documents.length === 0) return undefined;
   documents.sort(sortForPrompt);
-  let fitted = { ...budgets };
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    const result = renderMemoryContext(documents, fitted);
-    if (!result) break;
-    if (budgets.maxTokens === undefined || estimateTextTokens(result) <= budgets.maxTokens)
-      return result;
-    const ratio = Math.min(0.8, (budgets.maxTokens / estimateTextTokens(result)) * 0.9);
-    fitted = {
-      ...fitted,
-      totalMaxChars: Math.floor((fitted.totalMaxChars ?? MEMORY_TOTAL_MAX_CHARS) * ratio),
-      documentMaxChars: Math.floor((fitted.documentMaxChars ?? MEMORY_DOCUMENT_MAX_CHARS) * ratio),
-      indexMaxChars: Math.floor((fitted.indexMaxChars ?? MEMORY_INDEX_MAX_CHARS) * ratio),
-    };
-  }
-  const navigation = 'Browse with read_memory(path="").';
-  const count = `${documents.length} stored memory documents.`;
-  const summaries = documents
-    .filter(isInlined)
-    .map((doc) => `${doc.scope}:${doc.path}`)
-    .filter((path) => charLength(path) <= 120)
-    .slice(0, 3)
-    .join(", ");
-  return [
-    `${count}${summaries ? ` Summaries: ${summaries}.` : ""} ${navigation}`,
-    `${count} ${navigation}`,
-    navigation,
-  ].find(
-    (value) => budgets.maxTokens !== undefined && estimateTextTokens(value) <= budgets.maxTokens,
-  );
+  return renderMemoryContext(documents, budgets);
 }
 
 function renderMemoryContext(documents: ScopedMemoryDocument[], budgets: MemoryContextBudgets) {

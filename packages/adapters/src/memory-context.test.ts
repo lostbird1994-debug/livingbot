@@ -1,11 +1,9 @@
 import type { AdapterContext, MemorySnapshot, MemoryStore } from "@rakazo/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
-import { estimateTextTokens } from "./context-selection.js";
 import {
   loadAgentMemoryContext,
   MEMORY_DOCUMENT_MAX_CHARS,
   MEMORY_TOTAL_MAX_CHARS,
-  memoryTokenAllowance,
 } from "./memory-context.js";
 import { charLength } from "./utf8.js";
 
@@ -119,25 +117,6 @@ describe("agent memory context", () => {
     expect(MEMORY_DOCUMENT_MAX_CHARS).toBe(20_000);
     expect(MEMORY_TOTAL_MAX_CHARS).toBe(60_000);
   });
-  it("uses a conservative unknown-window allowance and honors known small windows", () => {
-    for (const window of [undefined, NaN, Infinity, 0, -1])
-      expect(memoryTokenAllowance(window)).toBe(1_024);
-    expect(memoryTokenAllowance(8_192)).toBe(819);
-    expect(memoryTokenAllowance(16_384)).toBe(1_638);
-  });
-
-  it("preserves counts and summary entry points when a full block cannot fit", async () => {
-    const result = await loadAgentMemoryContext(
-      storeWith(readFrom([document("s", "MEMORY.md", "中".repeat(5_000), 1, "2026-11-07")])),
-      "bot-1",
-      context,
-      { maxTokens: 90 },
-    );
-    expect(result).toContain("1 stored memory documents");
-    expect(result).toContain("bot:MEMORY.md");
-    expect(result).toContain('read_memory(path="")');
-    expect(estimateTextTokens(result!)).toBeLessThanOrEqual(90);
-  });
 
   it("labels root documents explicitly when they are folded into directory counts", async () => {
     const docs = Array.from({ length: 24 }, (_, i) =>
@@ -220,15 +199,29 @@ describe("agent memory context", () => {
     expect(result).toContain("user:archive/workflow.md");
   });
 
-  it("fits multilingual memory to the model token allowance without rereading the store", async () => {
+  it("keeps a large Chinese summary intact within the character ceiling", async () => {
+    const body = `SUMMARY START\n${"中".repeat(15_543)}\nRECENT FACT`;
+    const result = await loadAgentMemoryContext(
+      storeWith(readFrom([document("summary", "MEMORY.md", body, 1, "2026-11-07")])),
+      "bot-1",
+      context,
+    );
+    expect(result).toContain(body);
+    expect(result).not.toContain("[Partial memory.");
+    expect(result).not.toContain("[Omitted chars ");
+  });
+
+  it("caps multilingual summaries by characters and reads each scope only once", async () => {
     const read = vi.fn(
       readFrom([document("summary", "MEMORY.md", "定义🙂".repeat(20_000), 1, "2026-11-07")]),
     );
-    const result = await loadAgentMemoryContext(storeWith(read), "bot-1", context, {
-      maxTokens: 700,
-    });
-    expect(result).toBeTruthy();
-    expect(estimateTextTokens(result!)).toBeLessThanOrEqual(700);
+    const result = await loadAgentMemoryContext(storeWith(read), "bot-1", context);
+    const body = result!
+      .split("## bot: MEMORY.md (revision 1)\n")[1]!
+      .split("\n[Partial memory.")[0]!;
+    expect(charLength(body)).toBeLessThanOrEqual(MEMORY_DOCUMENT_MAX_CHARS);
+    expect(charLength(body)).toBeGreaterThan(19_000);
+    expect(result).not.toContain("�");
     expect(read).toHaveBeenCalledTimes(2);
   });
 
