@@ -14,14 +14,14 @@ afterEach(() => {
 });
 
 describe("worker health", () => {
-  it("publishes reconciliation freshness and removes its heartbeat on shutdown", async () => {
+  it("publishes reconciliation freshness and preserves its heartbeat on shutdown", async () => {
     vi.useFakeTimers();
     const stop = startWorkerHealth(() => 123);
     await vi.advanceTimersByTimeAsync(30_000);
     const heartbeat = JSON.parse(files.writeFile.mock.calls.at(-1)![1] as string);
     expect(heartbeat.reconciled).toBe(123);
     await stop();
-    expect(files.unlink).toHaveBeenCalled();
+    expect(files.unlink).not.toHaveBeenCalled();
     const calls = files.writeFile.mock.calls.length;
     await vi.advanceTimersByTimeAsync(60_000);
     expect(files.writeFile).toHaveBeenCalledTimes(calls);

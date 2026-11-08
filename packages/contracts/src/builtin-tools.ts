@@ -1,5 +1,24 @@
 import * as z from "zod";
 
+/** Private state is unavailable to messaging-channel runs, including deferred calls. */
+export const PRIVATE_MEMORY_TOOL_NAMES: ReadonlySet<string> = new Set([
+  "remember",
+  "read_memory",
+  "search_memory",
+  "write_memory",
+  "save_shared_memory",
+  "save_memory",
+  "recall_memory",
+  "forget_memory",
+  "propose_memory_consolidation",
+]);
+
+export const MEMORY_MAINTENANCE_TOOL_NAMES: ReadonlySet<string> = new Set([
+  "read_memory",
+  "search_memory",
+  "propose_memory_consolidation",
+]);
+
 /** Fleet management tools. Only list_fleet is read-only. */
 export const FLEET_TOOL_NAMES = [
   "list_fleet",
@@ -46,6 +65,10 @@ export const BUILTIN_TOOL_NAMES = [
   "generate_video",
   "add_mcp_server",
   "remember",
+  "read_memory",
+  "search_memory",
+  "write_memory",
+  "propose_memory_consolidation",
   "save_shared_memory",
   "web_search",
   "web_fetch",

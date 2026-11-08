@@ -286,10 +286,10 @@ function toolUsageLine(parts: {
       : undefined,
     builtinOffered(disabled, "remember") ? "Use remember for durable facts." : undefined,
     builtinOffered(disabled, "read_memory") && builtinOffered(disabled, "search_memory")
-      ? "Your memory is two tiers. The prompt inlines the distilled summary and lists every other document under <memory_index>. When an answer depends on something only that list covers, read_memory(path) it, or search_memory(query) when the path is not obvious, instead of guessing or claiming you do not know. A partly inlined document continues from nextOffset. Do not read a document the prompt already contains in full."
+      ? 'Memory inlines summaries and indexes other documents. Use qualified paths with read_memory, search_memory for a term, or read_memory(path="") to browse omitted documents. A partial summary contains only its beginning: read the full document before rewriting. Page tool reads with nextOffset; offsets count the redacted text, not the inlined summary. Do not reread documents fully in context.'
       : undefined,
     builtinOffered(disabled, "write_memory")
-      ? "MEMORY.md holds what is still true: rules, definitions, red lines, entry points. What happened once belongs in memory/<topic>.md, which is read on demand. When the summary is long enough to crowd the prompt, read it, move the detail into a topic document with write_memory, and leave a short summary plus a pointer. Read before rewriting and pass the revision you saw; restoring an older revision is possible, so never rewrite by guess."
+      ? "Keep MEMORY.md a concise summary of current facts and pointers; put detailed records in memory/<topic>.md. Read every page before rewriting and pass the revision you read. Save topic documents before replacing the summary. Stop and reread on a revision conflict. Propose consolidation when the summary is truncated; never reconstruct missing text by guess."
       : undefined,
     scratchpadClause(disabled),
     builtinOffered(disabled, "request_takeover")

@@ -750,9 +750,19 @@ export const appContract = {
         }),
       ),
     ),
+    /** Preview one historical version without changing the editor or the current document. */
+    revision: oc
+      .input(z.object({ documentId: Id, revision: z.number().int().positive() }))
+      .output(z.object({ revision: z.number().int().positive(), content: z.string() })),
     /** Restores as a new revision: history is append-only, nothing is rewritten in place. */
     restore: oc
-      .input(z.object({ documentId: Id, revision: z.number().int().positive() }))
+      .input(
+        z.object({
+          documentId: Id,
+          revision: z.number().int().positive(),
+          expectedRevision: z.number().int().positive(),
+        }),
+      )
       .output(MemoryDocumentSchema),
     remove: oc.input(z.object({ documentId: Id })).output(z.object({ ok: z.literal(true) })),
     exportMarkdown: oc.input(z.object({ botId: Id.optional() })).output(z.string()),

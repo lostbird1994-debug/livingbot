@@ -1,4 +1,4 @@
-import { unlink, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { getHeapStatistics } from "node:v8";
 import { getLogger, logSinkHealth } from "@rakazo/logging";
 
@@ -33,7 +33,7 @@ export function startWorkerHealth(lastReconciled: () => number) {
     stopped = true;
     clearInterval(timer);
     await writing;
-    await unlink(WORKER_HEALTH_FILE).catch(() => undefined);
+    // Let the timestamp expire; the next worker overwrites its own heartbeat.
   };
 }
 

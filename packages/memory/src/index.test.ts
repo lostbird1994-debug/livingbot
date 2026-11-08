@@ -11,6 +11,89 @@ const context: AdapterContext = {
 };
 
 describe("memory store contract shape", () => {
+  it("filters indexed candidates in SQL, then rejects false candidates after decryption", async () => {
+    const $queryRaw = vi.fn().mockResolvedValue([
+      { id: "1", path: "notes.md", content: "月结导账流程" },
+      { id: "2", path: "collision.md", content: "unrelated" },
+      { id: "3", path: "导账.md", content: "path match" },
+    ]);
+    const findMany = vi.fn();
+    const encryption = {
+      memorySearchTokens: vi.fn().mockResolvedValue([
+        [1, 2],
+        [3, 4],
+      ]),
+      openRows: vi.fn(async (_model, rows) => rows),
+    };
+    const store = new MarkdownMemoryStore({
+      $queryRaw,
+      $contentEncryption: () => encryption,
+      memoryDocument: { findMany },
+    } as never);
+    const hits = await store.search({ query: "导账", scope: "bot", botId: "bot-1" }, context);
+    expect(hits.map((hit) => hit.path)).toEqual(["导账.md", "notes.md"]);
+    expect(findMany).not.toHaveBeenCalled();
+    const sql = $queryRaw.mock.calls[0]![0];
+    expect(sql.text).toContain('"searchTokens" @>');
+    expect(sql.text).toContain('"searchTokensVersion" <>');
+    expect(sql.text).toContain('m."userId" =');
+    expect(sql.text).toContain('m."spaceId" =');
+    expect(sql.values).toEqual(
+      expect.arrayContaining(["workspace-1", "user-1", "bot", "bot-1", [1, 2], [3, 4]]),
+    );
+    expect(encryption.memorySearchTokens).toHaveBeenCalledWith("workspace-1", "导账");
+  });
+
+  it("preserves original snippets when normalization changes character counts", async () => {
+    const content = `${"ﬀ".repeat(150)}项目导账流程😀`;
+    const store = new MarkdownMemoryStore({
+      memoryDocument: {
+        findMany: vi.fn().mockResolvedValue([{ id: "doc", path: "notes", content }]),
+      },
+    } as never);
+    const result = await store.search({ query: "导账", scope: "bot" }, context);
+    expect(result[0]!.snippet).toContain("项目导账流程😀");
+    expect(result[0]!.snippet).toContain("ﬀ");
+    expect(result[0]!.snippet.length).toBeLessThan(100);
+  });
+
+  it.each([false, true])(
+    "preserves an unrecorded preimage before replacing a document (recorded: %s)",
+    async (recorded) => {
+      const existing = { id: "doc", path: "MEMORY.md", content: "original", revision: 3 };
+      const create = vi.fn().mockResolvedValue({});
+      const update = vi.fn().mockResolvedValue({ ...existing, content: "new text", revision: 4 });
+      const tx = {
+        memoryDocument: { findFirst: vi.fn().mockResolvedValue(existing), update },
+        memoryRevision: {
+          findUnique: vi.fn().mockResolvedValue(recorded ? { id: "old-revision" } : null),
+          create,
+        },
+      };
+      const $transaction = vi.fn(async (body: (client: typeof tx) => unknown) => body(tx));
+      const store = new MarkdownMemoryStore({ $transaction } as never);
+      await store.commit(
+        {
+          scope: "bot",
+          botId: "bot-1",
+          path: "MEMORY.md",
+          content: "new text",
+          expectedRevision: 3,
+        },
+        context,
+      );
+      expect(create).toHaveBeenCalledTimes(recorded ? 1 : 2);
+      if (!recorded) {
+        expect(create.mock.calls[0]![0]).toEqual({
+          data: { documentId: "doc", revision: 3, content: "original" },
+        });
+        expect(create.mock.invocationCallOrder[0]).toBeLessThan(
+          update.mock.invocationCallOrder[0]!,
+        );
+      }
+      expect(create.mock.calls.at(-1)![0].data).toMatchObject({ revision: 4, content: "new text" });
+    },
+  );
   it("reads the most recently updated documents first", async () => {
     const updatedAt = new Date("2026-08-16T10:00:00.000Z");
     const findMany = vi

@@ -93,9 +93,25 @@ export function memoryRoutes(ctx: RouterContext) {
         });
         return rows.map((row) => ({
           revision: row.revision,
-          chars: row.content.length,
+          chars: Array.from(row.content).length,
           createdAt: row.createdAt.toISOString(),
         }));
+      }),
+      revision: authed.memory.revision.handler(async ({ context, input }) => {
+        const doc = await deps.prisma.memoryDocument.findFirst({
+          where: {
+            id: input.documentId,
+            spaceId: context.actor.spaceId,
+            userId: context.actor.userId,
+          },
+          select: { id: true },
+        });
+        if (!doc) throw new IsolationError();
+        const target = await deps.prisma.memoryRevision.findFirst({
+          where: { documentId: doc.id, revision: input.revision },
+        });
+        if (!target) throw new ORPCError("NOT_FOUND", { message: "That revision is gone." });
+        return { revision: target.revision, content: target.content };
       }),
       restore: authed.memory.restore.handler(async ({ context, input }) => {
         const doc = await deps.prisma.memoryDocument.findFirst({
@@ -106,6 +122,9 @@ export function memoryRoutes(ctx: RouterContext) {
           },
         });
         if (!doc) throw new IsolationError();
+        if (doc.revision !== input.expectedRevision) {
+          throw new ORPCError("CONFLICT", { message: MEMORY_REVISION_CONFLICT_ERROR });
+        }
         const target = await deps.prisma.memoryRevision.findFirst({
           where: { documentId: doc.id, revision: input.revision },
         });
@@ -119,7 +138,7 @@ export function memoryRoutes(ctx: RouterContext) {
               botId: doc.botId ?? undefined,
               path: doc.path,
               content: target.content,
-              expectedRevision: doc.revision,
+              expectedRevision: input.expectedRevision,
             },
             {
               operationId: "mem",

@@ -99,12 +99,21 @@ function MemoryDocumentList({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [history, setHistory] = useState<MemoryRevisionRow[] | null>(null);
   const [historyBusy, setHistoryBusy] = useState(false);
+  const [preview, setPreview] = useState<{ revision: number; content: string } | null>(null);
+  const selection = useRef(0);
+  useEffect(
+    () => () => {
+      selection.current += 1;
+    },
+    [],
+  );
 
   function setDocs(update: (current: MemoryDocument[]) => MemoryDocument[]) {
     return writeSaved(queryClient, list.queryKey, (current) => update(current ?? []));
   }
 
   function openDoc(doc: MemoryDocument) {
+    selection.current += 1;
     setLoadedRevision(doc.revision);
     setConflicted(false);
     setOpenId(doc.id);
@@ -112,37 +121,65 @@ function MemoryDocumentList({
     setError(null);
     setConfirmingDelete(false);
     setHistory(null);
+    setHistoryBusy(false);
+    setPreview(null);
   }
 
   function closeDoc() {
+    selection.current += 1;
     setOpenId(null);
     setConflicted(false);
     setConfirmingDelete(false);
+    setHistory(null);
+    setHistoryBusy(false);
+    setPreview(null);
   }
 
   async function loadHistory(doc: MemoryDocument) {
     if (historyBusy) return;
     if (history) {
       setHistory(null);
+      setPreview(null);
       return;
     }
     setHistoryBusy(true);
     setError(null);
+    const current = selection.current;
     try {
-      setHistory(await rpc.memory.revisions({ documentId: doc.id }));
+      const rows = await rpc.memory.revisions({ documentId: doc.id });
+      if (current === selection.current) setHistory(rows);
     } catch {
-      setError(t`Could not load versions`);
+      if (current === selection.current) setError(t`Could not load versions`);
     } finally {
-      setHistoryBusy(false);
+      if (current === selection.current) setHistoryBusy(false);
+    }
+  }
+
+  async function previewVersion(doc: MemoryDocument, revision: number) {
+    if (historyBusy || busy) return;
+    const current = selection.current;
+    setHistoryBusy(true);
+    setError(null);
+    try {
+      const version = await rpc.memory.revision({ documentId: doc.id, revision });
+      if (current === selection.current) setPreview(version);
+    } catch {
+      if (current === selection.current) setError(t`Could not load versions`);
+    } finally {
+      if (current === selection.current) setHistoryBusy(false);
     }
   }
 
   async function restore(doc: MemoryDocument, revision: number) {
-    if (busy) return;
+    if (busy || conflicted) return;
     setBusy(true);
     setError(null);
     try {
-      const restored = await rpc.memory.restore({ documentId: doc.id, revision });
+      const restored = await rpc.memory.restore({
+        documentId: doc.id,
+        revision,
+        expectedRevision: loadedRevision ?? doc.revision,
+      });
       await setDocs((current) =>
         current.map((entry) => (entry.id === restored.id ? restored : entry)),
       );
@@ -150,9 +187,24 @@ function MemoryDocumentList({
       setDraft(restored.content);
       setLoadedRevision(restored.revision);
       setConflicted(false);
-      setHistory(await rpc.memory.revisions({ documentId: doc.id }));
-    } catch {
-      setError(t`Could not restore that version`);
+      setPreview(null);
+      try {
+        setHistory(await rpc.memory.revisions({ documentId: doc.id }));
+      } catch {
+        setHistory(null);
+        setError(t`Could not load versions`);
+      }
+    } catch (err) {
+      if (err instanceof ORPCError && err.code === "CONFLICT") {
+        setConflicted(true);
+        try {
+          await fetchFresh(queryClient, list);
+        } catch {
+          /* Preserve conflict and draft. */
+        }
+      } else {
+        setError(t`Could not restore that version`);
+      }
     } finally {
       setBusy(false);
     }
@@ -358,6 +410,15 @@ function MemoryDocumentList({
                               {row.chars.toLocaleString()} chars ·{" "}
                               {new Date(row.createdAt).toLocaleString()}
                             </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              type="button"
+                              disabled={busy || historyBusy}
+                              onClick={() => void previewVersion(doc, row.revision)}
+                            >
+                              <Trans>Preview</Trans>
+                            </Button>
                             {row.revision === doc.revision ? (
                               <span className="text-[12px] text-muted-foreground">
                                 <Trans>Current</Trans>
@@ -367,7 +428,7 @@ function MemoryDocumentList({
                                 variant="ghost"
                                 size="sm"
                                 type="button"
-                                disabled={busy}
+                                disabled={busy || historyBusy || conflicted}
                                 onClick={() => void restore(doc, row.revision)}
                               >
                                 <Trans>Restore</Trans>
@@ -377,6 +438,16 @@ function MemoryDocumentList({
                         ))
                       )}
                     </div>
+                  ) : null}
+                  {preview ? (
+                    <Textarea
+                      aria-label={`${doc.path} v${preview.revision}`}
+                      readOnly
+                      value={preview.content}
+                      rows={8}
+                      className={fieldClass}
+                      dir="auto"
+                    />
                   ) : null}
                 </div>
               ) : null}

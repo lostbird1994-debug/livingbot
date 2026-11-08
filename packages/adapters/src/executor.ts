@@ -255,8 +255,21 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
       // A stopping process must not claim work it cannot finish. The row stays
       // queued or expired for a worker that is still running.
       if (deps.shutdownSignal?.aborted) return;
-      const run = await deps.prisma.run.findUnique({ where: { id: runId } });
+      const run = await deps.prisma.run.findUnique({
+        where: { id: runId },
+        include: {
+          routine: {
+            select: { memoryMaintenance: true, spaceId: true, userId: true, botId: true },
+          },
+        },
+      });
       if (!run) return;
+      const memoryMaintenance =
+        run.trigger === "routine" &&
+        run.routine?.memoryMaintenance === true &&
+        run.routine.spaceId === run.spaceId &&
+        run.routine.userId === run.userId &&
+        run.routine.botId === run.botId;
       // Logs and security events raised by this run's tools name its account and space.
       enrichLogContext({
         "run.id": runId,
@@ -624,9 +637,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           payload: { trigger: run.trigger, routineId: run.routineId },
         });
 
-        const discoveredPromise = deps.connector
-          ? deps.connector.discoverTools(context)
-          : Promise.resolve([]);
+        const discoveredPromise =
+          deps.connector && !memoryMaintenance
+            ? deps.connector.discoverTools(context)
+            : Promise.resolve([]);
         const threadContext = threadContextForRun(
           run.trigger,
           {
@@ -725,33 +739,24 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 context,
               )
             : Promise.resolve(null);
-        const [
-          discovered,
-          currentTurnImages,
-          memoryContext,
-          scratchpadContext,
-          ticketContext,
-          recalled,
-        ] = await Promise.all([
-          discoveredPromise,
-          loadCurrentTurnImages(deps, turnBlocks, context),
-          messagingChannelRun
-            ? Promise.resolve("")
-            : loadAgentMemoryContext(deps.memory, bot.id, context),
-          messagingChannelRun
-            ? Promise.resolve("")
-            : loadAgentScratchpadContext(deps, {
-                spaceId: run.spaceId,
-                botId: bot.id,
-              }),
-          messagingChannelRun || !deps.ticketBoardEnabled
-            ? Promise.resolve(undefined)
-            : loadAgentTicketContext(deps, {
-                spaceId: run.spaceId,
-                text: task.prompt,
-              }),
-          recallPromise,
-        ]);
+        const [discovered, currentTurnImages, scratchpadContext, ticketContext, recalled] =
+          await Promise.all([
+            discoveredPromise,
+            loadCurrentTurnImages(deps, turnBlocks, context),
+            messagingChannelRun
+              ? Promise.resolve("")
+              : loadAgentScratchpadContext(deps, {
+                  spaceId: run.spaceId,
+                  botId: bot.id,
+                }),
+            messagingChannelRun || !deps.ticketBoardEnabled
+              ? Promise.resolve(undefined)
+              : loadAgentTicketContext(deps, {
+                  spaceId: run.spaceId,
+                  text: task.prompt,
+                }),
+            recallPromise,
+          ]);
         const semanticMemoryEnabled = Boolean(semanticMemory) && !messagingChannelRun;
         let recalledMemory = "";
         let recallSucceeded = false;
@@ -927,6 +932,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           resolved,
         } = start;
         runSecrets.push(...resolved.redact);
+        const memoryContext = messagingChannelRun
+          ? undefined
+          : await loadAgentMemoryContext(deps.memory, bot.id, context, {
+              maxTokens: Math.floor((resolved.contextWindow ?? 40_960) / 10),
+            });
         // A pin stays as it was created. Unpinned runs still record the model they
         // used; modelPinned is what keeps that record from becoming the next choice.
         if (!run.modelPinned) {
@@ -1134,6 +1144,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             cloudAgentEnabled: cloudAgentsEnabled(cloudAgent, run.spaceId),
             paymentWalletEnabled,
             messagingChannelRun,
+            memoryMaintenance,
             voiceCall,
             disabledBuiltinTools: bot.disabledBuiltinTools,
             fleetManagement: bot.fleetManagement,
@@ -1142,7 +1153,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             userComputerScreen,
           }),
           // Cross-owner agent connections only exist for chat-linked bots.
-          ...(hasMessagingIdentity &&
+          ...(!memoryMaintenance &&
+          hasMessagingIdentity &&
           bot.crossSpaceCommunication === true &&
           !isBackgroundRunTrigger(run.trigger) &&
           run.trigger !== "created"
@@ -1182,7 +1194,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         // The creation intro only asks what the bot is for (see selectBuiltinToolsForRun),
         // so it gets no connector tools either.
         const tools =
-          run.trigger === "created" ? builtins : [...builtins, ...exposedConnectorTools];
+          run.trigger === "created" || memoryMaintenance
+            ? builtins
+            : [...builtins, ...exposedConnectorTools];
         const taskCatalogInstruction = tools.some((tool) => tool.name === "task_catalog")
           ? TASK_CATALOG_GUIDANCE
           : undefined;
@@ -1290,6 +1304,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           fleetRun,
           secrets: runSecrets,
           source: {
+            memoryMaintenance,
             ownerStartedRun,
             messagingChannelRun,
             channelId,

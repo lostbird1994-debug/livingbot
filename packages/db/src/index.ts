@@ -29,6 +29,8 @@ export * from "./external-conversations.js";
 export * from "./groups.js";
 export * from "./history-retrieval.js";
 export * from "./memory-config.js";
+export * from "./memory-search.js";
+export * from "./memory-search-backfill.js";
 export * from "./messages.js";
 export * from "./messaging.js";
 export * from "./model-credentials.js";

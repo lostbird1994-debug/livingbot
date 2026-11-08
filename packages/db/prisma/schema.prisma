@@ -1124,6 +1124,8 @@ model Routine {
   timezone       String    @default("UTC")
   active         Boolean   @default(false)
   notify         Boolean   @default(true)
+  /// Restricted nightly review: can propose source-backed changes, never overwrite memory.
+  memoryMaintenance Boolean @default(false)
   webhookEnabled Boolean   @default(false)
   githubEnabled  Boolean   @default(false)
   messageProvider String?
@@ -1293,6 +1295,8 @@ model MemoryDocument {
   scope     String
   path      String
   content   String
+  searchTokens Int[] @default([])
+  searchTokensVersion Int @default(0)
   revision  Int              @default(1)
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
@@ -1300,6 +1304,7 @@ model MemoryDocument {
 
   @@unique([spaceId, scope, botId, path])
   @@index([spaceId, userId])
+  @@index([searchTokens], type: Gin)
   @@map("memory_documents")
 }
 

@@ -48,7 +48,10 @@ function pendingTimerFixture(reuse = true) {
     computerExecutionLease: { findMany: vi.fn(async () => []) },
     computer: { findMany: vi.fn(async () => []) },
     routine: {
-      updateMany: vi.fn(async () => ({ count: 1 })),
+      updateMany: vi.fn(async (args: { data: { nextRunAt?: Date | null } }) => {
+        if (args.data.nextRunAt) routine.nextRunAt = args.data.nextRunAt;
+        return { count: 1 };
+      }),
       findUnique: vi.fn(async () => ({ modelProvider: null, modelId: null, thinkingLevel: null })),
     },
     run: {
@@ -76,10 +79,28 @@ function pendingTimerFixture(reuse = true) {
     jobs: { enqueue, cancel: vi.fn(), close: vi.fn() },
     events: { append },
   } as unknown as Parameters<typeof createRunExecutor>[0]);
-  return { executor, tx, enqueue, append, scheduledAt };
+  return { executor, tx, enqueue, append, scheduledAt, routine };
 }
 
 describe("recurring routine catch-up", () => {
+  it("catches up a daily review once after a week offline and returns to local 18:00", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-08T02:00:00Z"));
+    try {
+      const { executor, tx, routine } = pendingTimerFixture(false);
+      const missed = new Date("2026-11-01T10:00:00Z");
+      routine.crons = ["0 18 * * *"];
+      routine.timezone = "Asia/Shanghai";
+      routine.nextRunAt = missed;
+      await executor.wakeRoutine(routine.id, missed.toISOString());
+      expect(tx.run.create).toHaveBeenCalledOnce();
+      expect(routine.nextRunAt).toEqual(new Date("2026-11-08T10:00:00Z"));
+      await executor.wakeRoutine(routine.id, missed.toISOString());
+      expect(tx.run.create).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   it("keeps one pending run and advances the next tick without a duplicate firing event", async () => {
     const { executor, tx, enqueue, append, scheduledAt } = pendingTimerFixture();
     await executor.wakeRoutine("routine-1", scheduledAt.toISOString());

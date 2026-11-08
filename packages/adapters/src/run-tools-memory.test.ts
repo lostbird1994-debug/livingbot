@@ -1,7 +1,10 @@
 import type { MemorySnapshot } from "@rakazo/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
+import { serializeToolResult } from "./pi-runtime-tools.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolCall } from "./run-tool-gate.js";
+import { gateToolCall } from "./run-tool-gate.js";
+import type { ToolRequest } from "./run-tool-request.js";
 import { memoryTools } from "./run-tools-memory.js";
 
 const summary = "alpha ".repeat(10).trim();
@@ -66,6 +69,7 @@ function setup(secrets: string[] = []) {
     runId: "run-1",
     context: {},
     secrets,
+    source: { messagingChannelRun: false },
   } as unknown as RunContext;
   const call = (name: string, args: Record<string, unknown>) =>
     ({
@@ -75,6 +79,88 @@ function setup(secrets: string[] = []) {
     }) as unknown as ToolCall;
   return { context, call, read, search, commit };
 }
+
+describe("save_shared_memory", () => {
+  it.each([
+    { path: "user:profile.md", content: "new profile" },
+    { path: "profile.md", content: " \n ", expected_revision: 1 },
+  ])("rejects unsafe replacement arguments: %j", async (args) => {
+    const { context, call, commit } = setup();
+    await expect(
+      memoryTools.save_shared_memory!(context, call("save_shared_memory", args)),
+    ).resolves.toHaveProperty("error");
+    expect(commit).not.toHaveBeenCalled();
+  });
+
+  it("writes the canonical shared path with the revision the caller read", async () => {
+    const { context, call, commit } = setup();
+    await memoryTools.save_shared_memory!(
+      context,
+      call("save_shared_memory", {
+        path: "USER:PROFILE.MD",
+        content: "new profile",
+        expected_revision: 1,
+      }),
+    );
+    expect(commit).toHaveBeenCalledWith(
+      expect.objectContaining({ scope: "user", path: "profile.md", expectedRevision: 1 }),
+      expect.anything(),
+    );
+  });
+});
+
+describe("restricted consolidation", () => {
+  it("requires complete paginated reading before saving an immutable review document", async () => {
+    const { context, call, read, commit } = setup();
+    context.source.memoryMaintenance = true;
+    const source = {
+      ...documents[0]!,
+      content: "# Summary\nCurrent rule\nOld detail\nMore detail",
+    };
+    read.mockImplementation(async ({ scope, path }) => ({
+      documents: scope === "bot" && (!path || path === source.path) ? [source] : [],
+    }));
+    const args = {
+      path: source.path,
+      expected_revision: 3,
+      keep_ranges: [{ start_line: 1, end_line: 2 }],
+    };
+    await expect(
+      memoryTools.propose_memory_consolidation!(
+        context,
+        call("propose_memory_consolidation", args),
+      ),
+    ).resolves.toHaveProperty("error");
+    expect(commit).not.toHaveBeenCalled();
+    let offset: number | undefined = 0;
+    while (offset !== undefined) {
+      const page = (await memoryTools.read_memory!(
+        context,
+        call("read_memory", {
+          path: source.path,
+          offset,
+          max_chars: 10,
+        }),
+      )) as { nextOffset?: number };
+      offset = page.nextOffset;
+    }
+    await expect(
+      memoryTools.propose_memory_consolidation!(
+        context,
+        call("propose_memory_consolidation", args),
+      ),
+    ).resolves.toMatchObject({ status: "proposed", sourceUnchanged: true });
+    expect(commit).toHaveBeenCalledTimes(1);
+    expect(commit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "memory/reviews/1.v3.md",
+        expectedRevision: 0,
+        content: expect.stringContaining("> Old detail\n> More detail"),
+      }),
+      expect.anything(),
+    );
+  });
+});
 
 describe("read_memory", () => {
   it("returns one document and reports where to continue", async () => {
@@ -142,7 +228,7 @@ describe("read_memory", () => {
     )) as Record<string, unknown>;
 
     expect(result.error).toBe('No memory document at "nope.md".');
-    expect(result.paths).toEqual(["user:profile.md", "bot:MEMORY.md", "bot:memory/notes.md"]);
+    expect(result.hint).toContain('read_memory(path="")');
   });
 
   it("redacts a stored credential before returning text", async () => {
@@ -160,7 +246,129 @@ describe("read_memory", () => {
   });
 });
 
+describe("memory read boundaries", () => {
+  it("reads scope-qualified shared paths even when bot memory has the same name", async () => {
+    const { context, call, read } = setup();
+    read.mockImplementation(async ({ scope, path }) => ({
+      documents:
+        path === "MEMORY.md"
+          ? [
+              {
+                ...documents[0]!,
+                content: scope === "user" ? "shared text" : "private text",
+              },
+            ]
+          : [],
+    }));
+    const result = await memoryTools.read_memory!(
+      context,
+      call("read_memory", { path: "user:MEMORY.md" }),
+    );
+    expect(result).toMatchObject({ scope: "user", content: "shared text" });
+  });
+
+  it("browses omitted documents with a bounded, resumable directory listing", async () => {
+    const { context, call, read } = setup();
+    read.mockImplementation(async ({ scope }) => ({
+      documents:
+        scope === "user"
+          ? []
+          : Array.from({ length: 25 }, (_, index) => ({
+              ...documents[0]!,
+              path: `memory/${String(index).padStart(2, "0")}.md`,
+            })),
+    }));
+    const first = (await memoryTools.read_memory!(
+      context,
+      call("read_memory", { path: "bot:memory/" }),
+    )) as {
+      entries: unknown[];
+      nextOffset: number;
+    };
+    const next = (await memoryTools.read_memory!(
+      context,
+      call("read_memory", {
+        path: "bot:memory/",
+        offset: first.nextOffset,
+      }),
+    )) as { entries: unknown[] };
+    expect(first.entries).toHaveLength(20);
+    expect(next.entries).toHaveLength(5);
+  });
+
+  it.each(["current", "cache-aware"] as const)(
+    "delivers every redacted character through %s serialization",
+    async (strategy) => {
+      const { context, call, read } = setup(["super-secret"]);
+      const content = `${'中🙂\\"\n'.repeat(2_000)}super-secret${"z".repeat(15_000)}`;
+      read.mockResolvedValue({ documents: [{ ...documents[0]!, content }] });
+      let offset = 0;
+      let collected = "";
+      for (let page = 0; page < 50; page += 1) {
+        const result = await memoryTools.read_memory!(
+          context,
+          call("read_memory", {
+            path: "MEMORY.md",
+            offset,
+          }),
+        );
+        const serialized = serializeToolResult(result, strategy, "read_memory", {});
+        expect(Buffer.byteLength(serialized, "utf8")).toBeLessThanOrEqual(11_000);
+        const delivered = JSON.parse(serialized);
+        collected += delivered.content;
+        if (delivered.nextOffset === undefined) break;
+        expect(delivered.nextOffset).toBeGreaterThan(offset);
+        offset = delivered.nextOffset;
+      }
+      expect(collected).toBe(content.replace("super-secret", "[redacted]"));
+    },
+  );
+});
+
 describe("write_memory", () => {
+  it("requires the caller's revision for an existing document", async () => {
+    const { context, call, commit } = setup();
+    const result = await memoryTools.write_memory!(
+      context,
+      call("write_memory", {
+        path: "MEMORY.md",
+        content: "stale draft",
+      }),
+    );
+    expect(result).toHaveProperty("error");
+    expect(commit).not.toHaveBeenCalled();
+  });
+
+  it("does not create an alias when rewriting a normalized path", async () => {
+    const { context, call, commit } = setup();
+    await memoryTools.write_memory!(
+      context,
+      call("write_memory", {
+        path: "bot:./memory.md",
+        content: "updated",
+        expected_revision: 3,
+      }),
+    );
+    expect(commit).toHaveBeenCalledWith(
+      expect.objectContaining({ path: "MEMORY.md" }),
+      expect.anything(),
+    );
+  });
+
+  it("rejects writes to shared scope", async () => {
+    const { context, call, commit } = setup();
+    expect(
+      await memoryTools.write_memory!(
+        context,
+        call("write_memory", {
+          path: "user:MEMORY.md",
+          content: "wrong scope",
+          expected_revision: 3,
+        }),
+      ),
+    ).toHaveProperty("error");
+    expect(commit).not.toHaveBeenCalled();
+  });
   it("rewrites a document at the revision that was read", async () => {
     const { context, call, commit } = setup();
 
@@ -226,6 +434,19 @@ describe("write_memory", () => {
 
     expect(result).toMatchObject({ ok: true, path: "memory/2026-11.md", revision: 1 });
   });
+});
+
+describe("private memory execution gate", () => {
+  it.each(["read_memory", "search_memory", "write_memory", "remember", "save_shared_memory"])(
+    "rejects %s even if a channel calls it through a replay or deferred route",
+    async (name) => {
+      const context = { source: { messagingChannelRun: true } } as RunContext;
+      const result = await gateToolCall(context, { name } as ToolRequest, undefined);
+      expect(result).toMatchObject({
+        result: { error: expect.stringContaining("messaging channels") },
+      });
+    },
+  );
 });
 
 describe("search_memory", () => {

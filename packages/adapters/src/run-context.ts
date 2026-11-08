@@ -183,6 +183,11 @@ export interface RunComputerContext {
 }
 
 export interface RunSource {
+  memoryMaintenance?: boolean;
+  memoryReadCoverage?: Map<
+    string,
+    { revision: number; total: number; ranges: Array<[number, number]> }
+  >;
   ownerStartedRun: boolean;
   messagingChannelRun: boolean;
   channelId: string | undefined;

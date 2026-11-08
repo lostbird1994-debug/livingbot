@@ -9,12 +9,16 @@ const APPROVAL_EXEMPT_TOOLS = new Set([
   "list_files",
   "read_file",
   "read_history",
+  "read_memory",
+  "search_memory",
   "search_history",
   "write_file",
   "shell",
   "open_path",
   "launch_app",
   "remember",
+  "write_memory",
+  "propose_memory_consolidation",
   "request_takeover",
   "request_secret",
   "generate_secret",
@@ -56,6 +60,9 @@ const EXPLICIT_APPROVAL_BUILTIN_TOOLS = new Set([
 ]);
 
 const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
+  "propose_memory_consolidation",
+  "read_memory",
+  "search_memory",
   "browser_snapshot",
   "cloud_agent_status",
   "computer_observe",
@@ -208,6 +215,10 @@ export function unattendedTriggerToolRequiresApproval(
  * and taints the run. New tools taint by default.
  */
 const OWN_STATE_RESULT_TOOLS = new Set([
+  "propose_memory_consolidation",
+  "read_memory",
+  "search_memory",
+  "write_memory",
   "ask_user",
   "connect_app",
   "attach_file",

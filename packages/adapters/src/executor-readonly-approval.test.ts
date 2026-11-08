@@ -423,6 +423,7 @@ function fixture({
     },
     steeringMessage: {
       findFirst: vi.fn(async (_query: unknown) => (outsideSteering ? { id: "steer-1" } : null)),
+      findMany: vi.fn(async () => []),
     },
     externalEffect,
   };
@@ -678,6 +679,26 @@ describe("connector read-only metadata and approval enforcement", () => {
     reviewMock.mockReset();
   });
 
+  it("restricts a persisted maintenance routine throughout actual executor dispatch", async () => {
+    const f = fixture({ name: "shell", trigger: "routine", builtin: true });
+    const run = await f.prisma.run.findUnique();
+    Object.assign(run!, {
+      routineId: "maintenance-1",
+      routine: { memoryMaintenance: true, spaceId: "space-1", userId: "user-1", botId: "bot-1" },
+    });
+    Object.assign(f.prisma.routine, { count: vi.fn(async () => 0) });
+    await f.run();
+    expect([...f.offeredTools()].sort()).toEqual([
+      "propose_memory_consolidation",
+      "read_memory",
+      "search_memory",
+    ]);
+    expect(f.results[0]).toMatchObject({ error: expect.stringContaining("maintenance") });
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(f.commit).not.toHaveBeenCalled();
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+  });
+
   it.each(["shell", "write_file"])(
     "forces owner approval for webhook-triggered %s despite an allow rule",
     async (name) => {
@@ -719,13 +740,18 @@ describe("connector read-only metadata and approval enforcement", () => {
     expect(f.results.at(-1)).toEqual({ ok: true, path: "MEMORY.md", revision: 1 });
   });
 
-  it("replaces an existing shared document at the revision it just read", async () => {
+  it("replaces an existing shared document at the revision the caller read", async () => {
     const f = fixture({
       name: "save_shared_memory",
       builtin: true,
       existingSharedMemory: "Old rule",
     });
-    f.setCalls([{ args: { path: "MEMORY.md", content: "New rule" }, executionId: "call-1" }]);
+    f.setCalls([
+      {
+        args: { path: "MEMORY.md", content: "New rule", expected_revision: 1 },
+        executionId: "call-1",
+      },
+    ]);
     await f.run();
     expect(f.pauseRunForInput).not.toHaveBeenCalled();
     expect(f.commit).toHaveBeenCalledWith(
@@ -742,7 +768,12 @@ describe("connector read-only metadata and approval enforcement", () => {
       existingSharedMemory: "Old rule",
       advanceRevisionAfterRead: true,
     });
-    f.setCalls([{ args: { path: "MEMORY.md", content: "New rule" }, executionId: "call-1" }]);
+    f.setCalls([
+      {
+        args: { path: "MEMORY.md", content: "New rule", expected_revision: 1 },
+        executionId: "call-1",
+      },
+    ]);
     await f.run();
     expect(f.commit).toHaveBeenCalledWith(
       expect.objectContaining({ expectedRevision: 1 }),

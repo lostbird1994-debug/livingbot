@@ -6,6 +6,7 @@ import type {
   ToolBatch,
 } from "@rakazo/adapter-kit";
 import { runContinueJob } from "@rakazo/adapter-kit";
+import { MEMORY_MAINTENANCE_TOOL_NAMES, PRIVATE_MEMORY_TOOL_NAMES } from "@rakazo/contracts";
 import {
   applyJudgeDecision,
   approvalModeFromPreference,
@@ -138,6 +139,17 @@ export async function gateToolCall(
   request: ToolRequest,
   observer: AgentToolExecutionObserver | undefined,
 ): Promise<GateOutcome> {
+  if (ctx.source.memoryMaintenance && !MEMORY_MAINTENANCE_TOOL_NAMES.has(request.name)) {
+    return {
+      result: { error: "Memory maintenance may only read memory and save review proposals." },
+    };
+  }
+  if (request.name === "propose_memory_consolidation" && !ctx.source.memoryMaintenance) {
+    return { result: { error: "Memory proposals require a restricted maintenance run." } };
+  }
+  if (ctx.source.messagingChannelRun && PRIVATE_MEMORY_TOOL_NAMES.has(request.name)) {
+    return { result: { error: "Private memory is unavailable in messaging channels." } };
+  }
   const { deps, run, runId, context } = ctx;
   const { name, executionId, connectorCall, resolvedTool, nextApprovedTool, approvedEffectKey } =
     request;

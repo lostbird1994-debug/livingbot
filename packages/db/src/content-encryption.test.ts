@@ -121,6 +121,18 @@ describe("withContentEncryption with encryption off", () => {
     expect(writes).toEqual([{ blocks: [], searchTokens: { set: [] } }, { role: "bot" }]);
   });
 
+  it("invalidates the versioned memory index when rewriting in plaintext", async () => {
+    writes.length = 0;
+    await plain.memoryDocument.update({ where: { id: "d" }, data: { content: "new plaintext" } });
+    expect(writes).toEqual([
+      {
+        content: "new plaintext",
+        searchTokens: { set: [] },
+        searchTokensVersion: 0,
+      },
+    ]);
+  });
+
   it("still rejects writes that could not be encrypted once switched back on", async () => {
     await expect(
       plain.thread.create({

@@ -1,4 +1,5 @@
 import type { AgentToolExecutionObserver } from "@rakazo/adapter-kit";
+import { MEMORY_MAINTENANCE_TOOL_NAMES } from "@rakazo/contracts";
 import { toolResultTaintsRun } from "@rakazo/core";
 import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import type { RunContext } from "./run-context.js";
@@ -75,6 +76,9 @@ async function dispatchTool(
   observer: AgentToolExecutionObserver | undefined,
 ) {
   ctx.context.signal.throwIfAborted();
+  if (ctx.source.memoryMaintenance && !MEMORY_MAINTENANCE_TOOL_NAMES.has(name)) {
+    return { error: "Memory maintenance may only read memory and save review proposals." };
+  }
   if (ctx.state.handedOff) {
     return {
       error: "This stage was handed off. End the turn without more tool calls.",

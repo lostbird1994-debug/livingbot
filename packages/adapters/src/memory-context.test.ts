@@ -1,5 +1,6 @@
 import type { AdapterContext, MemorySnapshot, MemoryStore } from "@rakazo/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
+import { estimateTextTokens } from "./context-selection.js";
 import {
   loadAgentMemoryContext,
   MEMORY_DOCUMENT_MAX_CHARS,
@@ -52,10 +53,11 @@ describe("agent memory context", () => {
       { documentMaxChars: 200 },
     );
 
-    // A bot summary is append-only, so the newest facts sit at the end and survive the cut.
-    expect(result).toContain("NEWEST FACT");
-    expect(result).not.toContain("HEAD MARKER");
-    expect(result).toContain(`partly in context (200 of ${charLength(body)} chars)`);
+    expect(result).toContain("HEAD MARKER");
+    expect(result).not.toContain("NEWEST FACT");
+    expect(result).toContain(
+      `partly in context (200 of ${charLength(body)} chars, beginning only; read full text before rewriting)`,
+    );
     // The daily note is still listed instead of being dropped.
     expect(result).toContain("memory/notes.md");
   });
@@ -76,12 +78,12 @@ describe("agent memory context", () => {
 
     // The old reader stopped at the first document it had to cut, so everything after it was
     // lost without a word. A cut document must not end the pass.
-    expect(result).toContain("partly in context (200 of 5000 chars)");
+    expect(result).toContain("partly in context (200 of 5000 chars,");
     expect(result).toContain("## bot: USER.md (revision 1)\nuser fact");
   });
 
   it("counts characters, not bytes, so Chinese fits as well as English", async () => {
-    const body = `${"中".repeat(100)}${"🙂".repeat(100)}`;
+    const body = `${"🙂".repeat(100)}${"中".repeat(100)}`;
     const result = await loadAgentMemoryContext(
       storeWith(readFrom([document("bot", "MEMORY.md", body, 1, "2026-08-15T12:00:00.000Z")])),
       "bot-1",
@@ -91,7 +93,7 @@ describe("agent memory context", () => {
 
     const inlined = result!
       .split("## bot: MEMORY.md (revision 1)\n")[1]!
-      .split("\n</durable_memory>")[0]!;
+      .split("\n[Partial memory.")[0]!;
     expect(charLength(inlined)).toBe(60);
     expect(result).not.toContain("�");
   });
@@ -119,10 +121,11 @@ describe("agent memory context", () => {
     const lines = result!.split("\n").filter((line) => line.startsWith("- "));
 
     // 20 named lines plus one folder roll-up: a fixed count would hide the archive forever.
-    expect(lines).toHaveLength(21);
+    expect(lines).toHaveLength(22);
     expect(lines[0]).toContain("note-0.md");
     expect(lines[19]).toContain("note-19.md");
-    expect(lines[20]).toBe("- memory/ — 5 files, latest 2026-10-05");
+    expect(lines[20]).toBe("- bot:memory/ — 5 files, latest 2026-10-05");
+    expect(lines[21]).toContain('read_memory(path="")');
   });
 
   it("keeps the folder roll-up when the index budget is too tight for every name", async () => {
@@ -142,8 +145,46 @@ describe("agent memory context", () => {
     const lines = result!.split("\n").filter((line) => line.startsWith("- "));
 
     // Whole areas survive the trim; only individual names at the tail are dropped.
-    expect(result).toContain("— 2 files, latest");
+    expect(result).toContain('read_memory(path="")');
     expect(lines.length).toBeLessThan(20);
+  });
+
+  it("keeps omitted recent documents discoverable and tries shorter paths after a long one", async () => {
+    const docs = [
+      document("long", `memory/${"long-".repeat(900)}.md`, "detail", 1, "2026-11-07"),
+      document("short", "other/short.md", "detail", 1, "2026-11-06"),
+    ];
+    const result = await loadAgentMemoryContext(storeWith(readFrom(docs)), "bot-1", context);
+    expect(result).toContain("other/short.md");
+    expect(result).toContain("- bot:memory/ — 1 files");
+    expect(result).toContain(
+      '2 documents not fully in context; browse all with read_memory(path="")',
+    );
+  });
+
+  it("does not inline arbitrary shared archive documents", async () => {
+    const store = storeWith(async ({ scope }) =>
+      snapshot(
+        scope === "user"
+          ? [document("shared", "archive/workflow.md", "ARCHIVED DETAIL", 1, "2026-11-07")]
+          : [],
+      ),
+    );
+    const result = await loadAgentMemoryContext(store, "bot-1", context);
+    expect(result).not.toContain("ARCHIVED DETAIL");
+    expect(result).toContain("user:archive/workflow.md");
+  });
+
+  it("fits multilingual memory to the model token allowance without rereading the store", async () => {
+    const read = vi.fn(
+      readFrom([document("summary", "MEMORY.md", "定义🙂".repeat(20_000), 1, "2026-11-07")]),
+    );
+    const result = await loadAgentMemoryContext(storeWith(read), "bot-1", context, {
+      maxTokens: 700,
+    });
+    expect(result).toBeTruthy();
+    expect(estimateTextTokens(result!)).toBeLessThanOrEqual(700);
+    expect(read).toHaveBeenCalledTimes(2);
   });
 
   it("omits the memory block when neither scope has documents", async () => {

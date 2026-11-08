@@ -718,15 +718,47 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "read_memory",
     description:
-      "Read one stored memory document. Documents listed under <memory_index> are not inlined, so read one before answering from its detail. Continue with nextOffset.",
+      "Read stored memory by qualified path (bot: or user:). An empty path or directory ending / lists documents. Continue with nextOffset. Text offsets count Unicode characters in the redacted view.",
     inputSchema: {
       type: "object",
       properties: {
-        path: { type: "string", description: "Path as listed, for example MEMORY.md." },
+        path: { type: "string", description: "Path as listed; empty lists all documents." },
         offset: { type: "number", description: "Start offset; use nextOffset from a prior read." },
-        max_chars: { type: "number", description: "Characters to return. Defaults to 20000." },
+        max_chars: {
+          type: "integer",
+          minimum: 1,
+          description: "Text characters; at most 8000, bounded by serialized size.",
+        },
       },
       required: ["path"],
+    },
+  },
+  {
+    name: "propose_memory_consolidation",
+    description:
+      "Propose a smaller bot summary using exact original line ranges. Saves a review and full source snapshot without changing the source. Restricted maintenance only.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Bot summary path read in full." },
+        expected_revision: { type: "integer", minimum: 1 },
+        keep_ranges: {
+          type: "array",
+          minItems: 1,
+          maxItems: 100,
+          items: {
+            type: "object",
+            properties: {
+              start_line: { type: "integer", minimum: 1 },
+              end_line: { type: "integer", minimum: 1 },
+            },
+            required: ["start_line", "end_line"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["path", "expected_revision", "keep_ranges"],
+      additionalProperties: false,
     },
   },
   {
@@ -752,8 +784,9 @@ export const builtinAgentTools: ConnectorTool[] = [
         path: { type: "string", description: "Document path, for example MEMORY.md." },
         content: { type: "string", description: "The document's complete new content." },
         expected_revision: {
-          type: "number",
-          description: "The revision you read. Omit when creating a document.",
+          type: "integer",
+          minimum: 0,
+          description: "Required for existing documents. Use 0 or omit only when creating.",
         },
       },
       required: ["path", "content"],
@@ -762,12 +795,17 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_shared_memory",
     description:
-      "Save a Space shared memory document every bot reads. Replaces the full content, so include everything it should keep.",
+      "Save shared memory read by every bot. Read it first; replacing an existing document requires the expected_revision you read.",
     inputSchema: {
       type: "object",
       properties: {
         path: { type: "string", description: "Document name, for example MEMORY.md." },
         content: { type: "string", description: "The document's complete new content." },
+        expected_revision: {
+          type: "integer",
+          minimum: 0,
+          description: "Required for existing documents. Use 0 or omit only when creating.",
+        },
       },
       required: ["path", "content"],
     },
@@ -1789,6 +1827,7 @@ export function sharedMemorySaveError(args: Record<string, unknown>): string | u
   const path = String(args.path ?? "").trim();
   if (!path) return "path is required";
   const content = String(args.content ?? "");
+  if (!content.trim()) return "content must not be empty";
   if (content.length > MAX_SHARED_MEMORY_CHARS) {
     return `content exceeds ${MAX_SHARED_MEMORY_CHARS} characters`;
   }

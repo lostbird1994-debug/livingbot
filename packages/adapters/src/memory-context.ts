@@ -1,11 +1,10 @@
 import type { AdapterContext, MemorySnapshot, MemoryStore } from "@rakazo/adapter-kit";
+import { estimateTextTokens } from "./context-selection.js";
 import { charLength, truncateChars } from "./utf8.js";
 
 /**
- * Budgets follow the bootstrap limits of the harness this product replaces, and like them they
- * count characters rather than bytes: 20,000 for one document, 60,000 for the whole block.
- * Characters are the fair unit because the same Chinese text is three times as many bytes, so
- * a byte budget quietly shrinks to a third of its size once memory is not written in English.
+ * Character ceilings protect individual documents. The runtime must also fit memory to the
+ * selected model's token window alongside instructions, tools, history and output.
  */
 export const MEMORY_DOCUMENT_MAX_CHARS = 20_000;
 export const MEMORY_TOTAL_MAX_CHARS = 60_000;
@@ -33,6 +32,7 @@ export interface MemoryContextBudgets {
   documentMaxChars?: number;
   totalMaxChars?: number;
   indexMaxChars?: number;
+  maxTokens?: number;
 }
 
 export async function loadAgentMemoryContext(
@@ -41,10 +41,6 @@ export async function loadAgentMemoryContext(
   context: AdapterContext,
   budgets: MemoryContextBudgets = {},
 ): Promise<string | undefined> {
-  const documentMaxChars = budgets.documentMaxChars ?? MEMORY_DOCUMENT_MAX_CHARS;
-  const totalMaxChars = budgets.totalMaxChars ?? MEMORY_TOTAL_MAX_CHARS;
-  const indexMaxChars = budgets.indexMaxChars ?? MEMORY_INDEX_MAX_CHARS;
-
   const [botMemory, userMemory] = await Promise.all([
     memory.read({ scope: "bot", botId }, context),
     memory.read({ scope: "user" }, context),
@@ -55,6 +51,33 @@ export async function loadAgentMemoryContext(
   ];
   if (documents.length === 0) return undefined;
   documents.sort(sortForPrompt);
+  let fitted = { ...budgets };
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const result = renderMemoryContext(documents, fitted);
+    if (
+      !result ||
+      budgets.maxTokens === undefined ||
+      estimateTextTokens(result) <= budgets.maxTokens
+    )
+      return result;
+    const ratio = Math.min(0.8, (budgets.maxTokens / estimateTextTokens(result)) * 0.9);
+    fitted = {
+      ...fitted,
+      totalMaxChars: Math.floor((fitted.totalMaxChars ?? MEMORY_TOTAL_MAX_CHARS) * ratio),
+      documentMaxChars: Math.floor((fitted.documentMaxChars ?? MEMORY_DOCUMENT_MAX_CHARS) * ratio),
+      indexMaxChars: Math.floor((fitted.indexMaxChars ?? MEMORY_INDEX_MAX_CHARS) * ratio),
+    };
+  }
+  const navigation = 'Stored memory is available with read_memory(path="").';
+  return budgets.maxTokens !== undefined && estimateTextTokens(navigation) <= budgets.maxTokens
+    ? navigation
+    : undefined;
+}
+
+function renderMemoryContext(documents: ScopedMemoryDocument[], budgets: MemoryContextBudgets) {
+  const documentMaxChars = budgets.documentMaxChars ?? MEMORY_DOCUMENT_MAX_CHARS;
+  const totalMaxChars = budgets.totalMaxChars ?? MEMORY_TOTAL_MAX_CHARS;
+  const indexMaxChars = budgets.indexMaxChars ?? MEMORY_INDEX_MAX_CHARS;
 
   const inlined = documents.filter((document) => isInlined(document));
 
@@ -65,7 +88,7 @@ export async function loadAgentMemoryContext(
 
   const sections: string[] = [];
   const inlinedChars = new Map<string, number>();
-  let remaining = totalMaxChars;
+  let remaining = Math.max(0, totalMaxChars - charLength(preamble + opening + closing));
   // Shared documents play the profile's role, and a team can write as many of them as it
   // likes. Capping their share keeps a bot's own summary from being crowded out by them, which
   // is the failure this whole split exists to prevent.
@@ -73,21 +96,23 @@ export async function loadAgentMemoryContext(
   let profileUsed = 0;
 
   for (const document of inlined) {
-    const allowance = document.scope === "user" ? profileBudget - profileUsed : remaining;
+    const allowance =
+      document.scope === "user" ? Math.min(remaining, profileBudget - profileUsed) : remaining;
     const heading = `${sections.length === 0 ? "" : "\n\n"}## ${document.scope}: ${document.path} (revision ${document.revision})\n`;
     const headingChars = charLength(heading);
     // A heading with no room for even one character of body would only announce nothing.
     if (headingChars + 1 > allowance) continue;
-    const bodyLimit = Math.min(documentMaxChars, allowance - headingChars);
-    // A bot's summary is append-only, so its newest facts sit at the end; a profile reads
-    // top-down, so the user document keeps its beginning.
-    const body = truncateChars(
-      document.content,
-      bodyLimit,
-      document.scope === "bot" ? "end" : "start",
-    );
-    sections.push(heading, body);
-    const used = headingChars + charLength(body);
+    let bodyLimit = Math.min(documentMaxChars, allowance - headingChars);
+    const notice =
+      charLength(document.content) > bodyLimit
+        ? "\n[Partial memory. Read the full document before rewriting.]"
+        : "";
+    if (headingChars + charLength(notice) + 1 > allowance) continue;
+    bodyLimit = Math.min(bodyLimit, allowance - headingChars - charLength(notice));
+    // Summaries are curated documents, so retain their definitions at the beginning.
+    const body = truncateChars(document.content, bodyLimit);
+    sections.push(heading, body, notice);
+    const used = headingChars + charLength(body) + charLength(notice);
     remaining -= used;
     if (document.scope === "user") profileUsed += used;
     inlinedChars.set(keyOf(document), charLength(body));
@@ -103,51 +128,48 @@ export async function loadAgentMemoryContext(
         memoryTimestamp(right.updatedAt) - memoryTimestamp(left.updatedAt) ||
         left.path.localeCompare(right.path),
     );
-  const recent = listed.slice(0, MEMORY_INDEX_RECENT);
-  const older = listed.slice(MEMORY_INDEX_RECENT);
+  const detailLines: string[] = [];
+  const detailed = new Set<string>();
+  let detailChars = 0;
+  const discoveryLine = `- ${listed.length} documents not fully in context; browse all with read_memory(path="").`;
+  const navigationChars = charLength(discoveryLine) + 1;
+  // Reserve space for navigation first. Every omitted document remains enumerable, including
+  // recent documents whose paths cannot fit, and folders beyond the visible directory limit.
+  const folderReserve = Math.min(600, Math.floor(indexMaxChars / 3));
+  const detailBudget = Math.max(0, indexMaxChars - navigationChars - folderReserve);
+  for (const document of listed.slice(0, MEMORY_INDEX_RECENT)) {
+    const total = charLength(document.content);
+    const shown = inlinedChars.get(keyOf(document)) ?? 0;
+    const state =
+      shown > 0
+        ? `partly in context (${shown} of ${total} chars, beginning only; read full text before rewriting)`
+        : `${total} chars, not in context`;
+    const line = `- ${document.scope}:${document.path} — ${state}, updated ${dayOf(document.updatedAt)}`;
+    if (detailChars + charLength(line) + 1 > detailBudget) continue;
+    detailLines.push(line);
+    detailed.add(keyOf(document));
+    detailChars += charLength(line) + 1;
+  }
 
-  // A fixed number of name lines can never cover an archive that keeps growing, so everything
-  // past the recent list is folded into one line per folder: the model still learns that the
-  // material exists, how much of it there is, and how fresh it is, and can search or read on.
   const folders = new Map<string, { count: number; latest: number }>();
-  for (const document of older) {
-    const folder = folderOf(document.path);
+  for (const document of listed.filter((entry) => !detailed.has(keyOf(entry)))) {
+    const folder = `${document.scope}:${folderOf(document.path)}`;
     const entry = folders.get(folder) ?? { count: 0, latest: 0 };
     entry.count += 1;
     entry.latest = Math.max(entry.latest, memoryTimestamp(document.updatedAt));
     folders.set(folder, entry);
   }
-  const folderLines = [...folders.entries()]
-    .sort((left, right) => right[1].latest - left[1].latest || left[0].localeCompare(right[0]))
-    .slice(0, MEMORY_INDEX_MAX_FOLDERS)
-    .map(
-      ([folder, entry]) =>
-        `- ${folder} — ${entry.count} files, latest ${dayOfTimestamp(entry.latest)}`,
-    );
-  if (folders.size > MEMORY_INDEX_MAX_FOLDERS) {
-    folderLines.push(`- …and ${folders.size - MEMORY_INDEX_MAX_FOLDERS} other folders`);
+  const lines = [...detailLines];
+  let used = detailChars;
+  for (const [folder, entry] of [...folders.entries()]
+    .sort((a, b) => b[1].latest - a[1].latest || a[0].localeCompare(b[0]))
+    .slice(0, MEMORY_INDEX_MAX_FOLDERS)) {
+    const line = `- ${folder} — ${entry.count} files, latest ${dayOfTimestamp(entry.latest)}`;
+    if (used + charLength(line) + 1 + navigationChars > indexMaxChars) continue;
+    lines.push(line);
+    used += charLength(line) + 1;
   }
-
-  const detailLines: string[] = [];
-  let detailChars = 0;
-  // Folders are reserved first: trimming them would hide whole areas, while trimming the tail
-  // of the recent list only hides a few individual documents.
-  const folderChars = folderLines.reduce((sum, line) => sum + charLength(line) + 1, 0);
-  const detailBudget = Math.max(0, indexMaxChars - folderChars);
-  for (const document of recent) {
-    const total = charLength(document.content);
-    const shown = inlinedChars.get(keyOf(document)) ?? 0;
-    const state =
-      shown > 0
-        ? `partly in context (${shown} of ${total} chars)`
-        : `${total} chars, not in context`;
-    const line = `- ${document.scope}:${document.path} — ${state}, updated ${dayOf(document.updatedAt)}`;
-    if (detailChars + charLength(line) + 1 > detailBudget) break;
-    detailLines.push(line);
-    detailChars += charLength(line) + 1;
-  }
-
-  const lines = [...detailLines, ...folderLines];
+  if (listed.length && used + navigationChars <= indexMaxChars) lines.push(discoveryLine);
   const memoryBlock = sections.length ? `${preamble}${opening}${sections.join("")}${closing}` : "";
   const indexBlock = lines.length
     ? `\n\n<memory_index>\nMore memory is stored than is inlined above. Read one with read_memory(path); find a term across all of them with search_memory(query).\n${lines.join("\n")}\n</memory_index>`
@@ -157,7 +179,8 @@ export async function loadAgentMemoryContext(
 
 /** User documents stand in for the user profile file, which the old harness loaded first. */
 function isInlined(document: ScopedMemoryDocument): boolean {
-  return document.scope === "user" || INLINED_PATHS.has(normalizeMemoryPath(document.path));
+  const path = normalizeMemoryPath(document.path);
+  return INLINED_PATHS.has(path) || (document.scope === "user" && path === "profile.md");
 }
 
 function sortForPrompt(left: ScopedMemoryDocument, right: ScopedMemoryDocument): number {
@@ -192,8 +215,8 @@ function dayOfTimestamp(timestamp: number): string {
 /** `memory/2026-11.md` -> `memory/`; a document at the root has no folder of its own. */
 function folderOf(path: string): string {
   const clean = path.trim().replace(/^\.?\//, "");
-  const slash = clean.lastIndexOf("/");
-  return slash === -1 ? "(root)" : `${clean.slice(0, slash)}/`;
+  const slash = clean.indexOf("/");
+  return slash === -1 ? "" : `${clean.slice(0, slash)}/`;
 }
 
 function memoryTimestamp(updatedAt: string | undefined): number {

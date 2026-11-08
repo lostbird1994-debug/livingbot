@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { ORPCError } from "@orpc/client";
 import type { AgentSkillCatalogEntry } from "@rakazo/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ComponentProps, ReactNode } from "react";
@@ -14,6 +15,7 @@ const memoryApi = vi.hoisted(() => ({
   remove: vi.fn(),
   update: vi.fn(),
   revisions: vi.fn(async () => []),
+  revision: vi.fn(),
   restore: vi.fn(),
 }));
 // One space, so no "Available in" choice appears.
@@ -457,6 +459,7 @@ it("lists earlier versions and restores one as a new revision", async () => {
     { revision: 2, chars: 9, createdAt: "2026-11-06T10:00:00.000Z" },
   ] as never);
   memoryApi.restore.mockResolvedValue({ ...saved, content: "older text", revision: 4 } as never);
+  memoryApi.revision.mockResolvedValue({ revision: 2, content: "preview text" } as never);
 
   const container = document.createElement("div");
   document.body.append(container);
@@ -475,8 +478,121 @@ it("lists earlier versions and restores one as a new revision", async () => {
     expect(container.textContent).toContain("v2");
     expect(container.textContent).toContain("Current");
 
+    await act(async () => {
+      const previews = [...container.querySelectorAll("button")].filter(
+        (entry) => entry.textContent === "Preview",
+      );
+      previews.at(-1)!.click();
+    });
+    expect(memoryApi.revision).toHaveBeenCalledWith({ documentId: "memory-doc", revision: 2 });
+    expect(
+      container.querySelector<HTMLTextAreaElement>('textarea[aria-label="MEMORY.md v2"]')?.value,
+    ).toBe("preview text");
+    expect(
+      container.querySelector<HTMLTextAreaElement>('textarea[aria-label="MEMORY.md"]')?.value,
+    ).toBe("current text");
+
     await act(async () => button("Restore")!.click());
-    expect(memoryApi.restore).toHaveBeenCalledWith({ documentId: "memory-doc", revision: 2 });
+    expect(memoryApi.restore).toHaveBeenCalledWith({
+      documentId: "memory-doc",
+      revision: 2,
+      expectedRevision: 3,
+    });
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+it.each(["conflict", "history unavailable"])(
+  "preserves the right editor state when restore encounters %s",
+  async (failure) => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    const saved = {
+      id: "memory-doc",
+      scope: "bot",
+      botId: "bot-fixture",
+      path: "MEMORY.md",
+      content: "current text",
+      revision: 3,
+      updatedAt: "",
+    };
+    memoryApi.list.mockReset().mockResolvedValue([saved] as never);
+    memoryApi.revisions
+      .mockReset()
+      .mockResolvedValueOnce([
+        { revision: 2, chars: 9, createdAt: "2026-11-06T10:00:00.000Z" },
+      ] as never);
+    memoryApi.restore.mockReset();
+    if (failure === "conflict") {
+      memoryApi.restore.mockRejectedValueOnce(new ORPCError("CONFLICT"));
+    } else {
+      memoryApi.restore.mockResolvedValueOnce({
+        ...saved,
+        content: "older text",
+        revision: 4,
+      } as never);
+      memoryApi.revisions.mockRejectedValueOnce(new Error("offline"));
+    }
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    const button = (text: string) =>
+      [...host.querySelectorAll("button")].find((node) => node.textContent === text)!;
+    try {
+      await show(root, <KnowledgeSection botId="bot-fixture" />);
+      await act(async () => button("MEMORY.md").click());
+      await act(async () => button("Versions").click());
+      await act(async () => button("Restore").click());
+      expect(host.querySelector("textarea")?.value).toBe(
+        failure === "conflict" ? "current text" : "older text",
+      );
+      if (failure === "conflict") {
+        expect(host.textContent).toContain("Document changed. Reopen");
+        expect(button("Restore").disabled).toBe(true);
+      } else {
+        expect(host.textContent).toContain("Could not load versions");
+        expect(host.textContent).not.toContain("Could not restore");
+      }
+    } finally {
+      await act(async () => root.unmount());
+      vi.unstubAllGlobals();
+    }
+  },
+);
+
+it("ignores an old version-list response after switching documents", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const base = { scope: "bot", botId: "bot-fixture", content: "body", revision: 3, updatedAt: "" };
+  memoryApi.list.mockReset();
+  memoryApi.list.mockResolvedValue([
+    { ...base, id: "a", path: "a.md" },
+    { ...base, id: "b", path: "b.md" },
+  ] as never);
+  let finish!: (value: unknown) => void;
+  memoryApi.revisions.mockReset();
+  memoryApi.revisions
+    .mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      }) as never,
+    )
+    .mockResolvedValueOnce([{ revision: 2, chars: 4, createdAt: "2026-11-07" }] as never);
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const button = (label: string) =>
+    [...container.querySelectorAll("button")].find((entry) => entry.textContent === label)!;
+  try {
+    await show(root, <KnowledgeSection botId="bot-fixture" />);
+    await act(async () => button("a.md").click());
+    await act(async () => button("Versions").click());
+    await act(async () => button("b.md").click());
+    await act(async () => finish([{ revision: 99, chars: 10, createdAt: "2026-11-07" }]));
+    expect(container.textContent).not.toContain("v99");
+    await act(async () => button("Versions").click());
+    expect(memoryApi.revisions).toHaveBeenLastCalledWith({ documentId: "b" });
+    expect(container.textContent).toContain("v2");
   } finally {
     await act(async () => root.unmount());
     container.remove();

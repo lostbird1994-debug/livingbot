@@ -15,6 +15,7 @@ import { ROW_OWNER } from "./content-keys.js";
 import type { PrismaClient } from "./generated/prisma/client.js";
 import { Prisma } from "./generated/prisma/client.js";
 import { historyMessageText } from "./history-text.js";
+import { MEMORY_SEARCH_VERSION, memorySearchTokens } from "./memory-search.js";
 import { createRowId } from "./row-id.js";
 
 /**
@@ -67,6 +68,7 @@ export const ENCRYPTED_MODELS: Record<string, ModelSpec> = {
     fields: { content: {} },
     space: { column: "spaceId" },
     ownerRelation: "user",
+    searchTokens: true,
   },
   MemoryRevision: {
     table: "memory_revisions",
@@ -148,6 +150,8 @@ export interface ContentEncryption {
     query: string,
     domain: SearchTokenDomain,
   ): Promise<number[][]>;
+  memorySearchTokens(spaceId: string, query: string): Promise<number[][]>;
+  memoryIndexTokens(spaceId: string, content: string): Promise<number[]>;
 }
 
 /** Undefined for clients built without content encryption (fakes and temp-table tests). */
@@ -360,8 +364,13 @@ export function withContentEncryption(prisma: PrismaClient, ring: ContentKeyRing
             strings: stringsIn(value),
           });
         next[field] = sealJson(value, plainKeys, encrypt);
-      } else if (typeof value === "string") next[field] = encrypt(value);
-      else throw new Error(`Unsupported write to encrypted ${spec.table}.${field}`);
+      } else if (typeof value === "string") {
+        if (spec.table === "memory_documents") {
+          next.searchTokens = memorySearchTokens(key, value);
+          next.searchTokensVersion = MEMORY_SEARCH_VERSION;
+        }
+        next[field] = encrypt(value);
+      } else throw new Error(`Unsupported write to encrypted ${spec.table}.${field}`);
     }
     ring.remember(spec.table, rowId, context);
     return next;
@@ -432,7 +441,14 @@ export function withContentEncryption(prisma: PrismaClient, ring: ContentKeyRing
       ["update", "updateMany", "updateManyAndReturn"].includes(operation) &&
       touches(spec, args.data)
     )
-      return { ...args, data: { ...(args.data as RecordValue), searchTokens: { set: [] } } };
+      return {
+        ...args,
+        data: {
+          ...(args.data as RecordValue),
+          searchTokens: { set: [] },
+          ...(spec.table === "memory_documents" ? { searchTokensVersion: 0 } : {}),
+        },
+      };
     return args;
   }
 
@@ -495,6 +511,12 @@ export function withContentEncryption(prisma: PrismaClient, ring: ContentKeyRing
     async messageSearchTokens(spaceId, query, domain) {
       const keys = await ring.allFresh(spaceId);
       return keys.map((key) => querySearchTokens(key, query, domain));
+    },
+    async memorySearchTokens(spaceId, query) {
+      return (await ring.allFresh(spaceId)).map((key) => memorySearchTokens(key, query, true));
+    },
+    async memoryIndexTokens(spaceId, content) {
+      return memorySearchTokens(await ring.current(spaceId), content);
     },
   };
 

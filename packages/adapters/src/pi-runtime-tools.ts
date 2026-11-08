@@ -316,7 +316,10 @@ function toAgentTool(
     // creates a routine and lists routines can read the list before the row
     // exists. Pi runs the whole batch in order when any call in it is
     // sequential. Remember also needs this to avoid competing revision writes.
-    ...(SCHEDULE_TOOL_NAMES.has(tool.name) || tool.name === "remember"
+    ...(SCHEDULE_TOOL_NAMES.has(tool.name) ||
+    ["remember", "write_memory", "save_shared_memory", "propose_memory_consolidation"].includes(
+      tool.name,
+    )
       ? { executionMode: "sequential" as const }
       : {}),
     parameters: parametersFor(tool),

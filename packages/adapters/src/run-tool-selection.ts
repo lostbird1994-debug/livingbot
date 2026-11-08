@@ -2,6 +2,8 @@ import {
   disabledBuiltinToolSet,
   FLEET_TOOL_NAMES,
   FLEET_WRITE_TOOL_NAMES,
+  MEMORY_MAINTENANCE_TOOL_NAMES,
+  PRIVATE_MEMORY_TOOL_NAMES,
 } from "@rakazo/contracts";
 import { isBackgroundRunTrigger, isOwnerStartedRun } from "@rakazo/core";
 import { builtinAgentTools } from "./builtin-tools.js";
@@ -72,6 +74,7 @@ export function selectBuiltinToolsForRun(options: {
   mediaImagesEnabled?: boolean;
   mediaVideoEnabled?: boolean;
   messagingChannelRun: boolean;
+  memoryMaintenance?: boolean;
   /** Hanging up is only offered to a turn the caller spoke on a live call. */
   voiceCall?: boolean;
   /** Built-in names this bot turned off. Unknown names are ignored. */
@@ -105,6 +108,8 @@ export function selectBuiltinToolsForRun(options: {
   ).filter(
     (tool) =>
       !disabled.has(tool.name) &&
+      (!options.memoryMaintenance || MEMORY_MAINTENANCE_TOOL_NAMES.has(tool.name)) &&
+      (options.memoryMaintenance || tool.name !== "propose_memory_consolidation") &&
       (options.trigger !== "created" || CREATED_RUN_TOOL_NAMES.has(tool.name)) &&
       (!FLEET_TOOL_NAMES_SET.has(tool.name) ||
         (Boolean(options.fleetManagement) && ownerStartedRun)) &&
@@ -137,15 +142,8 @@ export function selectBuiltinToolsForRun(options: {
       (options.historyRetrievalEnabled ||
         !["search_history", "read_history"].includes(tool.name)) &&
       (!options.messagingChannelRun ||
-        (![
-          "remember",
-          "save_shared_memory",
-          "save_memory",
-          "recall_memory",
-          "forget_memory",
-          "task_catalog",
-          "board_tickets",
-        ].includes(tool.name) &&
+        (!PRIVATE_MEMORY_TOOL_NAMES.has(tool.name) &&
+          !["task_catalog", "board_tickets"].includes(tool.name) &&
           !tool.name.startsWith("scratchpad_") &&
           !tool.name.startsWith("ticket_"))),
   );
