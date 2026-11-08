@@ -5,6 +5,7 @@ import {
   loadAgentMemoryContext,
   MEMORY_DOCUMENT_MAX_CHARS,
   MEMORY_TOTAL_MAX_CHARS,
+  memoryTokenAllowance,
 } from "./memory-context.js";
 import { charLength } from "./utf8.js";
 
@@ -69,10 +70,9 @@ describe("agent memory context", () => {
     );
 
     expect(result).toContain("HEAD MARKER");
-    expect(result).not.toContain("NEWEST FACT");
-    expect(result).toContain(
-      `partly in context (200 of ${charLength(body)} chars, beginning only; read full text before rewriting)`,
-    );
+    expect(result).toContain("NEWEST FACT");
+    expect(result).toContain("[Omitted chars ");
+    expect(result).toContain(`of ${charLength(body)} chars, beginning and recent tail;`);
     // The daily note is still listed instead of being dropped.
     expect(result).toContain("memory/notes.md");
   });
@@ -93,7 +93,7 @@ describe("agent memory context", () => {
 
     // The old reader stopped at the first document it had to cut, so everything after it was
     // lost without a word. A cut document must not end the pass.
-    expect(result).toContain("partly in context (200 of 5000 chars,");
+    expect(result).toContain("of 5000 chars,");
     expect(result).toContain("## bot: USER.md (revision 1)\nuser fact");
   });
 
@@ -103,19 +103,49 @@ describe("agent memory context", () => {
       storeWith(readFrom([document("bot", "MEMORY.md", body, 1, "2026-08-15T12:00:00.000Z")])),
       "bot-1",
       context,
-      { documentMaxChars: 60 },
+      { documentMaxChars: 160 },
     );
 
     const inlined = result!
       .split("## bot: MEMORY.md (revision 1)\n")[1]!
       .split("\n[Partial memory.")[0]!;
-    expect(charLength(inlined)).toBe(60);
+    expect(charLength(inlined)).toBeLessThanOrEqual(160);
+    expect(inlined).toContain("🙂");
+    expect(inlined).toContain("中");
     expect(result).not.toContain("�");
   });
 
   it("carries the budgets the prompt specification names", () => {
     expect(MEMORY_DOCUMENT_MAX_CHARS).toBe(20_000);
     expect(MEMORY_TOTAL_MAX_CHARS).toBe(60_000);
+  });
+  it("uses a conservative unknown-window allowance and honors known small windows", () => {
+    for (const window of [undefined, NaN, Infinity, 0, -1])
+      expect(memoryTokenAllowance(window)).toBe(1_024);
+    expect(memoryTokenAllowance(8_192)).toBe(819);
+    expect(memoryTokenAllowance(16_384)).toBe(1_638);
+  });
+
+  it("preserves counts and summary entry points when a full block cannot fit", async () => {
+    const result = await loadAgentMemoryContext(
+      storeWith(readFrom([document("s", "MEMORY.md", "中".repeat(5_000), 1, "2026-11-07")])),
+      "bot-1",
+      context,
+      { maxTokens: 90 },
+    );
+    expect(result).toContain("1 stored memory documents");
+    expect(result).toContain("bot:MEMORY.md");
+    expect(result).toContain('read_memory(path="")');
+    expect(estimateTextTokens(result!)).toBeLessThanOrEqual(90);
+  });
+
+  it("labels root documents explicitly when they are folded into directory counts", async () => {
+    const docs = Array.from({ length: 24 }, (_, i) =>
+      document(String(i), `note-${i}.md`, "fact", 1, "2026-11-07"),
+    );
+    const result = await loadAgentMemoryContext(storeWith(readFrom(docs)), "bot-1", context);
+    expect(result).toContain("bot:(root)");
+    expect(result).not.toContain("bot: —");
   });
 
   it("folds the documents past the recent list into one line per folder", async () => {

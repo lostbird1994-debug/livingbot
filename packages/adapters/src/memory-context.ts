@@ -17,6 +17,12 @@ export const MEMORY_INDEX_MAX_FOLDERS = 8;
 /** Ceiling on what shared (user-scope) documents may take from the block. */
 export const MEMORY_PROFILE_MAX_CHARS = 10_000;
 
+export function memoryTokenAllowance(contextWindow: number | undefined): number {
+  return contextWindow !== undefined && Number.isFinite(contextWindow) && contextWindow > 0
+    ? Math.floor(contextWindow / 10)
+    : 1_024;
+}
+
 /**
  * Two tiers, the same split the older harness made between a distilled summary and daily notes:
  * the summary and the profile are inlined, and every other document is only listed. Inlining
@@ -55,11 +61,8 @@ export async function loadAgentMemoryContext(
   let fitted = { ...budgets };
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const result = renderMemoryContext(documents, fitted);
-    if (
-      !result ||
-      budgets.maxTokens === undefined ||
-      estimateTextTokens(result) <= budgets.maxTokens
-    )
+    if (!result) break;
+    if (budgets.maxTokens === undefined || estimateTextTokens(result) <= budgets.maxTokens)
       return result;
     const ratio = Math.min(0.8, (budgets.maxTokens / estimateTextTokens(result)) * 0.9);
     fitted = {
@@ -69,10 +72,21 @@ export async function loadAgentMemoryContext(
       indexMaxChars: Math.floor((fitted.indexMaxChars ?? MEMORY_INDEX_MAX_CHARS) * ratio),
     };
   }
-  const navigation = 'Stored memory is available with read_memory(path="").';
-  return budgets.maxTokens !== undefined && estimateTextTokens(navigation) <= budgets.maxTokens
-    ? navigation
-    : undefined;
+  const navigation = 'Browse with read_memory(path="").';
+  const count = `${documents.length} stored memory documents.`;
+  const summaries = documents
+    .filter(isInlined)
+    .map((doc) => `${doc.scope}:${doc.path}`)
+    .filter((path) => charLength(path) <= 120)
+    .slice(0, 3)
+    .join(", ");
+  return [
+    `${count}${summaries ? ` Summaries: ${summaries}.` : ""} ${navigation}`,
+    `${count} ${navigation}`,
+    navigation,
+  ].find(
+    (value) => budgets.maxTokens !== undefined && estimateTextTokens(value) <= budgets.maxTokens,
+  );
 }
 
 function renderMemoryContext(documents: ScopedMemoryDocument[], budgets: MemoryContextBudgets) {
@@ -106,17 +120,17 @@ function renderMemoryContext(documents: ScopedMemoryDocument[], budgets: MemoryC
     let bodyLimit = Math.min(documentMaxChars, allowance - headingChars);
     const notice =
       charLength(document.content) > bodyLimit
-        ? "\n[Partial memory. Read the full document before rewriting.]"
+        ? "\n[Partial memory. Beginning and recent tail only; read all pages before rewriting.]"
         : "";
     if (headingChars + charLength(notice) + 1 > allowance) continue;
     bodyLimit = Math.min(bodyLimit, allowance - headingChars - charLength(notice));
-    // Summaries are curated documents, so retain their definitions at the beginning.
-    const body = truncateChars(document.content, bodyLimit);
+    const { body, shown } = summaryExcerpt(document.content, bodyLimit);
+    if (!shown) continue;
     sections.push(heading, body, notice);
     const used = headingChars + charLength(body) + charLength(notice);
     remaining -= used;
     if (document.scope === "user") profileUsed += used;
-    inlinedChars.set(keyOf(document), charLength(body));
+    inlinedChars.set(keyOf(document), shown);
   }
 
   // Everything not fully inlined is listed, including a summary whose head or tail was cut:
@@ -143,7 +157,7 @@ function renderMemoryContext(documents: ScopedMemoryDocument[], budgets: MemoryC
     const shown = inlinedChars.get(keyOf(document)) ?? 0;
     const state =
       shown > 0
-        ? `partly in context (${shown} of ${total} chars, beginning only; read full text before rewriting)`
+        ? `partly in context (${shown} of ${total} chars, beginning and recent tail; read full text before rewriting)`
         : `${total} chars, not in context`;
     const line = `- ${document.scope}:${document.path} — ${state}, updated ${dayOf(document.updatedAt)}`;
     if (detailChars + charLength(line) + 1 > detailBudget) continue;
@@ -217,7 +231,25 @@ function dayOfTimestamp(timestamp: number): string {
 function folderOf(path: string): string {
   const clean = path.trim().replace(/^\.?\//, "");
   const slash = clean.indexOf("/");
-  return slash === -1 ? "" : `${clean.slice(0, slash)}/`;
+  return slash === -1 ? "(root)" : `${clean.slice(0, slash)}/`;
+}
+
+function summaryExcerpt(content: string, maxChars: number): { body: string; shown: number } {
+  const total = charLength(content);
+  if (total <= maxChars) return { body: content, shown: total };
+  // Include the gap marker in the character budget. Reduce retained text until the
+  // marker and both source segments fit, even when offset digit widths change.
+  let shown = maxChars;
+  while (shown >= 2) {
+    const head = Math.ceil(shown / 2);
+    const tail = shown - head;
+    const gap = `\n[Omitted chars ${head}–${total - tail}, 0-based; read full text.]\n`;
+    const body = truncateChars(content, head) + gap + truncateChars(content, tail, "end");
+    const over = charLength(body) - maxChars;
+    if (over <= 0) return { body, shown };
+    shown -= over;
+  }
+  return { body: "", shown: 0 };
 }
 
 function memoryTimestamp(updatedAt: string | undefined): number {

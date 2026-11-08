@@ -96,7 +96,7 @@ import {
   selectCompactedHistory,
 } from "./history-compaction.js";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
-import { loadAgentMemoryContext } from "./memory-context.js";
+import { loadAgentMemoryContext, memoryTokenAllowance } from "./memory-context.js";
 import { HostedModelCreditsRequiredError } from "./model-credit-observer.js";
 import {
   effectiveModelRole,
@@ -935,7 +935,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const memoryContext = messagingChannelRun
           ? undefined
           : await loadAgentMemoryContext(deps.memory, bot.id, context, {
-              maxTokens: Math.floor((resolved.contextWindow ?? 40_960) / 10),
+              maxTokens: memoryTokenAllowance(resolved.contextWindow),
             });
         // A pin stays as it was created. Unpinned runs still record the model they
         // used; modelPinned is what keeps that record from becoming the next choice.

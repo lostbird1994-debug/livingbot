@@ -286,7 +286,7 @@ function toolUsageLine(parts: {
       : undefined,
     builtinOffered(disabled, "remember") ? "Use remember for durable facts." : undefined,
     builtinOffered(disabled, "read_memory") && builtinOffered(disabled, "search_memory")
-      ? 'Memory inlines summaries and indexes other documents. Use qualified paths with read_memory, search_memory for a term, or read_memory(path="") to browse omitted documents. A partial summary contains only its beginning: read the full document before rewriting. Page tool reads with nextOffset; offsets count the redacted text, not the inlined summary. Do not reread documents fully in context.'
+      ? 'Memory inlines summaries and indexes other documents. Use qualified paths with read_memory, search_memory for a literal phrase, or read_memory(path="") to browse omitted documents. A partial summary keeps its beginning and recent tail, with the missing middle marked: read all pages before rewriting. Page tool reads with nextOffset; offsets count the redacted text, not the inlined summary. Do not reread documents fully in context.'
       : undefined,
     builtinOffered(disabled, "write_memory")
       ? "Keep MEMORY.md a concise summary of current facts and pointers; put detailed records in memory/<topic>.md. Read every page before rewriting and pass the revision you read. Save topic documents before replacing the summary. Stop and reread on a revision conflict. Propose consolidation when the summary is truncated; never reconstruct missing text by guess."
