@@ -18,7 +18,8 @@ import {
   updateComposerMentionBindings,
 } from "@rakazo/core";
 import { Button } from "@rakazo/ui-web";
-import { ArrowUp, Box, Paperclip, Plus, Settings, Square, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowUp, Box, Paperclip, Plug, Plus, Settings, Square, X } from "lucide-react";
 import type { ClipboardEvent, DragEvent, RefObject } from "react";
 import { memo, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
@@ -28,6 +29,8 @@ import {
 } from "../../components/composer/DictationInput";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { attachmentPickerAccept } from "../../lib/attachment-picker-accept";
+import { scopeKeyForTarget, useConnectorScope } from "../../lib/connector-scope";
+import { useSpaceQueries } from "../../lib/query";
 import { useCallSession } from "../../lib/call-session";
 import {
   beginComposerDraftSubmission,
@@ -191,6 +194,26 @@ export const Composer = memo(function Composer({
     onText: insertDictation,
   });
   const [selectedSkill, setSelectedSkill] = useState<AgentSkillCatalogEntry | null>(null);
+  // Connectors are opt-in per message: nothing is attached until picked here.
+  const scopeKey = scopeKeyForTarget(artifactTarget);
+  const [connectorScope, setConnectorScope] = useConnectorScope(scopeKey);
+  const [connectorPickerOpen, setConnectorPickerOpen] = useState(false);
+  const spaceQueries = useSpaceQueries();
+  const installsQuery = useQuery(spaceQueries.capabilities.list.queryOptions());
+  const connectorOptions = useMemo(
+    () =>
+      (installsQuery.data ?? []).filter(
+        (install) =>
+          install.kind === "api" || install.kind === "mcp" || install.kind === "graphql",
+      ),
+    [installsQuery.data],
+  );
+  const toggleConnector = (id: string) =>
+    setConnectorScope(
+      connectorScope.includes(id)
+        ? connectorScope.filter((current) => current !== id)
+        : [...connectorScope, id],
+    );
   const editRevision = useRef(0);
   useEffect(
     () =>
@@ -747,6 +770,57 @@ export const Composer = memo(function Composer({
           })}
         </div>
       ) : null}
+      {connectorPickerOpen ? (
+        <div
+          data-testid="connector-picker"
+          className="mb-2 overflow-hidden rounded-[14px] border border-border bg-muted animate-in fade-in-0 slide-in-from-bottom-1 duration-150 motion-reduce:animate-none"
+        >
+          <div className="px-4 pb-1 pt-3 text-[12.5px] text-muted-foreground">
+            {t`Only the connectors you turn on here are visible to this message`}
+          </div>
+          {connectorOptions.length === 0 ? (
+            <div className="px-4 pb-3 text-[13px] text-muted-foreground">
+              {t`No connectors installed yet`}
+            </div>
+          ) : (
+            connectorOptions.map((install) => {
+              const on = connectorScope.includes(install.id);
+              return (
+                <button
+                  key={install.id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggleConnector(install.id)}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-start hover:bg-accent"
+                >
+                  <Plug
+                    size={15}
+                    strokeWidth={1.7}
+                    className={`shrink-0 ${on ? "text-foreground" : "text-muted-foreground"}`}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span dir="auto" className="block truncate text-[14px] text-foreground">
+                      {install.name}
+                    </span>
+                    <span className="block truncate text-[12px] text-muted-foreground">
+                      {install.kind.toUpperCase()}
+                    </span>
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11.5px] ${
+                      on
+                        ? "bg-primary/10 text-foreground"
+                        : "bg-transparent text-muted-foreground"
+                    }`}
+                  >
+                    {on ? t`On` : t`Off`}
+                  </span>
+                </button>
+              );
+            })
+          )}
+        </div>
+      ) : null}
       <div
         ref={composerBarRef}
         data-testid="composer-bar"
@@ -794,6 +868,21 @@ export const Composer = memo(function Composer({
               onRemove={removeSkill}
             />
           ) : null}
+          {connectorScope.map((id) => {
+            const install = connectorOptions.find((option) => option.id === id);
+            return (
+              <ComposerChip
+                key={id}
+                data-testid="connector-chip"
+                icon={
+                  <Plug size={13} strokeWidth={1.7} className="shrink-0 text-muted-foreground/70" />
+                }
+                label={install?.name ?? id}
+                removeLabel={t`Remove connector ${install?.name ?? id}`}
+                onRemove={() => toggleConnector(id)}
+              />
+            );
+          })}
           <DictationStrip talk={talk} />
           <div className="relative min-w-[8rem] flex-1" hidden={talk.recording !== null}>
             <textarea
@@ -929,6 +1018,23 @@ export const Composer = memo(function Composer({
             expanded ? "row-start-2" : ""
           }`}
         >
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={t`Connectors`}
+            aria-pressed={connectorPickerOpen}
+            data-testid="connector-button"
+            disabled={disabled}
+            onClick={() => setConnectorPickerOpen((open) => !open)}
+            className={`size-8 shrink-0 rounded-full border border-border transition-colors hover:bg-accent ${
+              connectorScope.length
+                ? "bg-primary/10 text-foreground"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Plug size={15} strokeWidth={1.8} />
+          </Button>
           {talk.recording?.locked ? (
             <DictationControls talk={talk} />
           ) : running ? (

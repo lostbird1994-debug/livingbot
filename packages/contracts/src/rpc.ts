@@ -212,6 +212,11 @@ const threadSendFields = threadTarget.safeExtend({
     .array(z.union([Id, structuredMentionTarget]))
     .max(64)
     .optional(),
+  /**
+   * Installed connectors this message may use. Omitted or empty means none: a
+   * connector that is installed is not therefore in the model's context.
+   */
+  connectorScope: z.array(Id).max(64).optional(),
   replyToMessageId: Id.optional(),
   replyQuote: z.string().trim().min(1).max(REPLY_QUOTE_MAX_LENGTH).optional(),
   clientNonce: z.string().min(1).max(200).optional(),

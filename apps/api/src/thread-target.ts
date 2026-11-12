@@ -33,6 +33,7 @@ import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
 import {
   answerWaitingRunWithTextInTransaction,
   appendEventInTransaction,
+  availableInSpace,
   clearEndedRunState,
   createGroupRepos,
   createRepos,
@@ -143,6 +144,30 @@ async function resolveOwnedConnectorDisplayNames(
   if (rows.length !== connectionIds.length) throw new IsolationError();
   const byId = new Map(rows.map((row) => [row.id, row.displayName]));
   return connectionIds.map((id) => byId.get(id) ?? "connector");
+}
+
+/**
+ * The connectors this message asked for, checked against what the space may reach.
+ * Installing a connector no longer puts it in every bot's context, so the composer
+ * sends the ids it turned on and this decides whether they are ours.
+ */
+async function resolveConnectorScope(
+  tx: Prisma.TransactionClient,
+  actor: Actor,
+  requested: string[] | undefined,
+): Promise<string[]> {
+  const ids = [...new Set(requested ?? [])];
+  if (ids.length === 0) return [];
+  const rows = await tx.capabilityInstall.findMany({
+    where: {
+      id: { in: ids },
+      ...availableInSpace({ spaceId: actor.spaceId, userId: actor.userId }),
+      kind: { in: ["mcp", "api", "graphql"] },
+    },
+    select: { id: true },
+  });
+  if (rows.length !== ids.length) throw new IsolationError();
+  return ids;
 }
 
 function sendRunClientNonce(
@@ -740,6 +765,7 @@ export async function sendThreadMessage(
     artifactIds?: string[];
     imageHandling?: "confirm" | "file";
     mentions?: MentionTargetInput[];
+    connectorScope?: string[];
     replyToMessageId?: string;
     replyQuote?: string;
     clientNonce?: string;
@@ -825,6 +851,7 @@ export async function sendThreadMessage(
           actor,
           mentionTargets.connectorMentionIds,
         );
+        const connectorScope = await resolveConnectorScope(tx, actor, input.connectorScope);
         // Match message counter locking before inspecting runs, without changing counters on rejection.
         await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
         routineRuns = (await startRoutines?.(tx)) ?? [];
@@ -983,6 +1010,7 @@ export async function sendThreadMessage(
             trigger: "user",
             clientNonce: sendRunClientNonce(input.clientNonce, message.id),
             sourceMessageId: message.id,
+            connectorScope,
           },
         });
         await tx.message.update({ where: { id: message.id }, data: { runId: run.id } });
@@ -1028,6 +1056,7 @@ export async function sendThreadMessage(
         actor,
         mentionTargets.connectorMentionIds,
       );
+      const connectorScope = await resolveConnectorScope(tx, actor, input.connectorScope);
       // Group ownership is locked first, then the thread, as in the normal write path.
       await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
       routineRuns = (await startRoutines?.(tx)) ?? [];
@@ -1156,6 +1185,7 @@ export async function sendThreadMessage(
             trigger: "user",
             clientNonce: sendRunClientNonce(input.clientNonce, message.id, botId),
             sourceMessageId: message.id,
+            connectorScope,
           },
         });
         runs.push(run);

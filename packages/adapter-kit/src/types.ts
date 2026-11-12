@@ -20,6 +20,11 @@ export interface AdapterContext {
   /** When releasing a screen after cancel, also stop orphaned browser work on that screen. */
   cancelRunWork?: boolean;
   signal: AbortSignal;
+  /**
+   * Installed connectors this run may use, chosen per message. Absent or empty
+   * means none: a connector stays in the registry without reaching the model.
+   */
+  connectorScope?: string[];
   /** Connected external accounts available to this run, including their owning connector. */
   connectedConnections?: ConnectedConnector[];
   /** @deprecated Prefer connectedConnections so providers with the same app slug cannot collide. */

@@ -145,9 +145,15 @@ export class InstalledConnectorProvider implements ConnectorProvider {
   }
 
   private async authorizedTools(context: AdapterContext): Promise<ConnectorTool[]> {
+    // Installed is not the same as in context: only the connectors this run asked
+    // for are discovered. No scope means none, so a new install reaches no bot
+    // until someone turns it on for a message.
+    const scope = context.connectorScope ?? [];
+    if (scope.length === 0) return [];
     const installs = await this.prisma.capabilityInstall.findMany({
       where: {
         ...availableInSpace(context),
+        id: { in: scope },
         kind: { in: ["mcp", "api", "graphql"] },
       },
       orderBy: { createdAt: "asc" },

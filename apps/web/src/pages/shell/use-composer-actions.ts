@@ -22,6 +22,11 @@ import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { requestBrowserNotificationPermission } from "../../lib/browser-notifications";
 import { setComposerUnsavedWork } from "../../lib/composer-draft";
+import {
+  clearConnectorScope,
+  readConnectorScope,
+  scopeKeyForTarget,
+} from "../../lib/connector-scope";
 import { scheduleFocusPrompt } from "../../lib/focus-prompt";
 import {
   readFileAsBase64,
@@ -410,12 +415,18 @@ export function useComposerActions({
           uploaded.set(pending.file, artifact.id);
           artifactIds.push(artifact.id);
         }
+        // Read once, before the send: the composer clears the scope on acceptance.
+        const sendScopeKey = scopeKeyForTarget(
+          groupTarget ? { groupId: groupTarget } : { botId: botTarget! },
+        );
+        const sentConnectorScope = readConnectorScope(sendScopeKey);
         const payload = {
           ...(groupTarget ? { groupId: groupTarget } : { botId: botTarget! }),
           clientNonce,
           imageHandling: imageHandling ?? "confirm",
           text: trimmed || undefined,
           mentions: plan.mentionPayload.length ? plan.mentionPayload : undefined,
+          connectorScope: sentConnectorScope.length ? sentConnectorScope : undefined,
           artifactIds: artifactIds.length ? artifactIds : undefined,
           replyToMessageId: reroutedToGroup ? undefined : activeReplyTarget?.id,
           replyQuote: reroutedToGroup ? undefined : (activeReplyQuote ?? undefined),
@@ -425,6 +436,7 @@ export function useComposerActions({
           ? (await rpc.threads.sendWithRoutines({ ...payload, routineIds: plan.routineIds })).send
           : await rpc.threads.send(payload);
         accepted = true;
+        clearConnectorScope(sendScopeKey);
         if (sent && botTarget && activeBotId.current === botTarget) {
           updateSnapshot((current) =>
             applyThreadSendReceipt(

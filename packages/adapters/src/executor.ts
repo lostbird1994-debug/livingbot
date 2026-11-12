@@ -632,6 +632,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           runId,
           screenLeaseId: screenLeaseIdForRun(computerLease, runId, fence),
           signal: runAbortController.signal,
+          connectorScope: run.connectorScope ?? [],
           ...connectedContext(connectedPlugins),
           connectedProviders: connectedComposio.map((row) => row.provider),
         };

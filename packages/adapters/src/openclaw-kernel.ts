@@ -20,10 +20,15 @@ export interface OpenClawKernelOptions {
 
 export const nativeKernelScope = (
   request: Pick<AgentRunRequest, "botId" | "threadId" | "conversationScope" | "routineId">,
-  context: Pick<Partial<AdapterContext>, "spaceId" | "userId">,
+  context: Pick<Partial<AdapterContext>, "spaceId" | "userId" | "connectorScope">,
 ) => JSON.stringify([context.spaceId, context.userId, request.botId, request.threadId,
   ...(request.conversationScope ? [request.conversationScope] : []),
-  ...(request.routineId ? [["routine", request.routineId]] : [])]);
+  ...(request.routineId ? [["routine", request.routineId]] : []),
+  // A kernel session keeps the tool list it was opened with, so a different set
+  // of connectors has to reach a different session.
+  ...(context.connectorScope?.length
+    ? [["connectors", [...context.connectorScope].sort()]]
+    : [])]);
 
 /** OpenClaw owns model calls, tools, transcript, compaction and workspace memory. */
 export class OpenClawAgentRuntime implements AgentRuntime {

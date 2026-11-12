@@ -918,6 +918,9 @@ model Run {
   clientNonce          String?
   sourceMessageId      String?
   sourceMessage        Message?          @relation("RunSourceMessage", fields: [sourceMessageId], references: [id], onDelete: SetNull)
+  // Connectors this run may reach, chosen in the composer. Empty means none: an
+  // installed connector stays in the registry without entering any model's context.
+  connectorScope       String[]          @default([])
   routineId            String?
   routine              Routine?          @relation(fields: [routineId], references: [id], onDelete: SetNull)
   // The failed routine run this run retries. Unique, so a run is retried at most once.
