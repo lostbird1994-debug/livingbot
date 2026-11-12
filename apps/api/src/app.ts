@@ -50,6 +50,7 @@ import {
   createMessagingTeamChatHistory,
   createMessagingTeamChatSender,
   createModelCreditReconciler,
+  createOpenClawKernelHost,
   createPaymentWalletProvider,
   createProductAnalytics,
   createRunExecutor,
@@ -178,6 +179,7 @@ import { monitoringRoutes } from "./monitoring.js";
 import { pluginSubmissionRoutes } from "./plugin-submissions.js";
 import { sendReferralEmails, startReferralEmails } from "./referral-email.js";
 import { mountApiRequestBodyLimits } from "./request-body-limit.js";
+import { createRequestSessions } from "./session-response.js";
 import { createRouter } from "./router.js";
 import { mountScreenTarget } from "./screen-proxy.js";
 import { createAuthResponseAudit } from "./security-audit.js";
@@ -409,7 +411,13 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const home = createAgentHomeStore(env.dataDir, prisma);
   void home.removeStaleStaging().catch((error) => getLogger().error("home staging cleanup", error));
   const artifacts = createArtifactStore(env.dataDir, prisma);
-  const memory = new MarkdownMemoryStore(prisma);
+  const memoryMirror = new MarkdownMemoryStore(prisma);
+  const nativeKernel = env.agentRuntime === "openclaw" && !runtimeOverride
+    ? createOpenClawKernelHost({
+        dataDir: env.dataDir, encryptionKey: env.encryptionKey, prisma, mirror: memoryMirror,
+        notify: (threadId, seq) => events.notify(threadId, seq),
+      }) : undefined;
+  const memory = nativeKernel?.memory ?? memoryMirror;
   const mcp = new McpConnector(
     prisma,
     secrets,
@@ -503,6 +511,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   integrationSettings.warmDirectories();
   const runtime =
     runtimeOverride ??
+    nativeKernel?.runtime ??
     (env.agentRuntime === "scripted"
       ? new ScriptedAgentRuntime()
       : new PiAgentRuntime({
@@ -623,6 +632,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     codexCatalog,
     sandbox,
     memory,
+    botWorkspace: nativeKernel?.botWorkspace,
+    nativeWorkspaceFile: nativeKernel?.readWorkspaceFile,
+    nativeExecution: nativeKernel?.recovery,
     memoryProviders,
     home,
     artifacts,
@@ -730,6 +742,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
 
   const router = createRouter({
     cancelNativeRuns: (runIds) => executor.reconcileExternalAgents({ runIds }),
+    stopNativeOrphans: nativeKernel?.stopNativeOrphans,
     notificationSummary: createSpeechSummarizer(
       {
         prisma,
@@ -769,6 +782,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     jobs,
     sandbox,
     memory,
+    botWorkspace: nativeKernel?.botWorkspace,
+    nativeContextPreview: nativeKernel?.nativeContextPreview,
     memoryProviders,
     home,
     secrets,
@@ -781,7 +796,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     remoteConnectors,
     modelConnectionFetch,
     // The scripted runtime never calls a provider, so neither does its connect.
-    modelConnectionCheck: env.agentRuntime === "pi" ? verifyModelServesAgents : undefined,
+    modelConnectionCheck: env.agentRuntime === "pi" || env.agentRuntime === "openclaw" ? verifyModelServesAgents : undefined,
     artifacts,
     email,
     onEmailError,
@@ -829,6 +844,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     clientInterceptors: [onError((error, { path, signal }) => handleRpcError(error, path, signal))],
   });
   const app = new Hono();
+  const requestSessions = createRequestSessions((input) => auth.api.getSession(input));
+  app.use("*", requestSessions.middleware);
   app.use("*", requestLogging(logger));
   app.use("*", clientIpMiddleware(clientIp, env.clientIpHeader));
   app.use(
@@ -882,7 +899,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     monitoringRoutes(
       env.browserMonitoring,
       fetch,
-      async (request) => (await auth.api.getSession({ headers: request.headers }))?.user.id,
+      async (request) => (await requestSessions.getSession(request))?.user.id,
     ),
   );
   app.route("/", cspReportRoutes(requestClientIp));
@@ -929,7 +946,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   });
   const requestSession = async (request: Request) => {
     // The bearer plugin turns a signed `Authorization: Bearer` into the session cookie.
-    const session = await auth.api.getSession({ headers: request.headers });
+    const session = await requestSessions.getSession(request);
     if (!session?.user) return null;
     const actor = await actorFromMembership(
       requireMembership(prisma, session.user.id, request.headers.get("x-rakazo-space-id")),
@@ -944,7 +961,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       devices: userDevices,
       forwardSecret: userDeviceSecret,
       sessionUserId: async (request) =>
-        (await auth.api.getSession({ headers: request.headers }))?.user.id ?? null,
+        (await requestSessions.getSession(request))?.user.id ?? null,
       trustedOrigin: (origin) => isTrustedOrigin(origin, env),
     });
   }

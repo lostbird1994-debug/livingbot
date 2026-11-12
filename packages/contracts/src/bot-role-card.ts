@@ -5,18 +5,18 @@ export const BotRoleCardSchema = z.object({
   identity: z.string().max(BOT_ROLE_TEXT_MAX_LENGTH).default(""),
   personality: z.string().max(BOT_ROLE_TEXT_MAX_LENGTH).default(""),
   userIdentity: z.string().max(BOT_ROLE_TEXT_MAX_LENGTH).default(""),
+  /** Retained only so existing saved material survives migration. Not an editable module. */
   backstory: z.string().max(BOT_ROLE_TEXT_MAX_LENGTH).default(""),
   userIdentityEnabled: z.boolean().default(false),
   backstoryEnabled: z.boolean().default(false),
 });
 export type BotRoleCard = z.infer<typeof BotRoleCardSchema>;
 
-/** Legacy bots have no role card. Switches, rather than text presence, control loading. */
+/** Legacy fields remain readable until their contents have been migrated to native memory. */
 export function botRoleCard(value: unknown): BotRoleCard {
   return BotRoleCardSchema.parse(value ?? {});
 }
 
-export function excludesSharedProfile(value: unknown): boolean {
-  const card = botRoleCard(value);
-  return card.userIdentityEnabled || card.backstoryEnabled;
+export function excludesSharedProfile(_value: unknown): boolean {
+  return false;
 }

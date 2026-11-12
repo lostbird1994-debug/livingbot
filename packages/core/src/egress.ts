@@ -51,10 +51,30 @@ const EMAIL_IN_TEXT =
   /(?:"(?:[^"\\\r\n]|\\.)*"|(?<![^\s<>()[\]\\,;:"@，；、！？])[^\s<>()[\]\\,;:"@，；、！？]+)@(?:\[[^\]\r\n]+\]|[^\s<>()[\]\\,;:"@，；、！？]+)/g;
 const DOMAIN_IN_TEXT =
   /(?<![\p{L}\p{N}\p{M}_@./\\-])(?:[\p{L}\p{N}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?\.)+\p{L}[\p{L}\p{N}\p{M}-]{0,62}[\p{L}\p{N}\p{M}](?![\p{L}\p{N}\p{M}_-])/gu;
+// Suffixes that are ordinary file extensions as well as real TLDs. These only read as a site in
+// ASCII: `example.md` may be one, while a non-ASCII label in front of them is a file name.
+const FILE_LIKE_SUFFIXES = new Set([
+  "md",
+  "sh",
+  "py",
+  "rs",
+  "so",
+  "pl",
+  "ts",
+  "ml",
+  "ps",
+  "tex",
+  "ai",
+  "app",
+  "cc",
+  "zip",
+  "mov",
+]);
 
 /**
  * The sites a person named in their own words: http(s) links and bare domain names on a known
- * public suffix. Email addresses and filename segments of local paths do not name sites.
+ * public suffix. Email addresses and filename segments of local paths do not name sites, and
+ * neither does a non-ASCII file name in front of a suffix that is also a file extension.
  * Explicit http(s) links are extracted first, including valid .py and .md destinations.
  */
 export function sitesInText(text: string): Set<string> {
@@ -67,6 +87,12 @@ export function sitesInText(text: string): Set<string> {
   // A domain-shaped email local part does not name a site either.
   const withoutLinksOrEmails = text.replace(URL_IN_TEXT, " ").replace(EMAIL_IN_TEXT, " ");
   for (const [match] of withoutLinksOrEmails.matchAll(DOMAIN_IN_TEXT)) {
+    // A file name is not a site: `其他损益明细表工作流.md` names a local document, so a label that
+    // is not plain ASCII in front of a file extension suffix never names a site to fetch.
+    const lastDot = match.lastIndexOf(".");
+    const suffix = match.slice(lastDot + 1).toLowerCase();
+    const label = match.slice(0, lastDot);
+    if (FILE_LIKE_SUFFIXES.has(suffix) && /[^\x00-\x7F]/.test(label)) continue;
     // Internationalized names are compared in the ASCII form a fetched URL's host takes.
     const hostname = httpUrl(`http://${match}`)?.hostname;
     if (!hostname) continue;

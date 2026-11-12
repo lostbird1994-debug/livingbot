@@ -2,16 +2,37 @@ import { describe, expect, it } from "vitest";
 import {
   AttachmentValidationError,
   attachmentExtensionForMimeType,
+  attachmentFileName,
   attachmentsForBot,
   blocksToAgentHistoryText,
   decodeAttachmentBase64,
   inferAttachmentMimeType,
+  messageBlockForArtifact,
   promptTextForAttachments,
   userTurnMessageForRun,
   validateAttachmentMimeType,
 } from "./attachments.js";
 
 describe("attachment helpers", () => {
+  it("adds a file extension to display titles without changing explicit extensions", () => {
+    const excel = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    expect(attachmentFileName("报表", excel)).toBe("报表.xlsx");
+    expect(attachmentFileName("报表.xlsx", excel)).toBe("报表.xlsx");
+    expect(attachmentFileName("installer.command", excel)).toBe("installer.command");
+    expect(attachmentFileName("unknown", "application/unknown")).toBe("unknown");
+    expect(attachmentFileName("a".repeat(500), excel)).toMatch(/\.xlsx$/);
+    expect(attachmentFileName(`${"a".repeat(500)}.xlsx`, excel)).toMatch(/\.xlsx$/);
+  });
+  it("keeps the durable attachment ID when repairing a legacy display title", () => {
+    expect(
+      messageBlockForArtifact({
+        id: "stored-report",
+        name: "报表",
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        size: 4,
+      }),
+    ).toMatchObject({ kind: "file", artifactId: "stored-report", name: "报表.xlsx" });
+  });
   it.each([
     ["xls", "application/vnd.ms-excel"],
     ["xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],

@@ -498,7 +498,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
     const bubbleStyle = {
       maxWidth: "100%",
       borderRadius: 20,
-      backgroundColor: message.role === "user" ? tokens.chatUser : tokens.muted,
+      backgroundColor: message.role === "user" ? tokens.chatUser : message.routine ? tokens.chatRoutine : tokens.muted,
       paddingHorizontal: 14,
       paddingVertical: 12,
       gap: 8,
@@ -748,7 +748,7 @@ function MessageTextCard({
         flexShrink: 1,
         minWidth: 0,
         maxWidth: "100%",
-        backgroundColor: message.role === "user" ? tokens.chatUser : tokens.muted,
+        backgroundColor: message.role === "user" ? tokens.chatUser : message.routine ? tokens.chatRoutine : tokens.muted,
         paddingHorizontal: 14,
         paddingVertical: 9,
         borderRadius: 20,

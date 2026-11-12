@@ -1602,6 +1602,83 @@ describe("Pi connector tool dispatch", () => {
     expect(events.at(-1)).toEqual({ type: "done" });
   });
 
+  it("asks once for a final result after routine tools without rerunning them", async () => {
+    fakeAgentState.mode = "silent-continuation";
+    const executeTool = vi.fn(async () => ({ ok: true }));
+    const runtime = new PiAgentRuntime();
+    const events: unknown[] = [];
+
+    for await (const event of runtime.run(
+      {
+        botId: "b",
+        threadId: "t",
+        runId: "routine-required-result",
+        prompt: "Collect the report and summarize it.",
+        instructions: "Return a result.",
+        history: [],
+        tools: [destinationTool],
+        model: { provider: "test", id: "dispatch-test-model" },
+        requireFinalResponse: true,
+        executeTool,
+      },
+      {
+        operationId: "routine-required-result",
+        traceId: "routine-required-result",
+        spaceId: "w",
+        userId: "u",
+        signal: new AbortController().signal,
+      },
+    )) {
+      events.push(event);
+    }
+
+    expect(fakeAgentState.followUpMessages).toHaveLength(1);
+    expect(executeTool).toHaveBeenCalledTimes(1);
+    expect(events.at(-1)).toEqual({
+      type: "done",
+      text: "I will check the destination first.The final answer.",
+    });
+  });
+
+  it("fails a required-result routine after one unanswered continuation", async () => {
+    fakeAgentState.mode = "silent-continuation";
+    fakeAgentState.emitFinalAfterFollowUp = false;
+    const executeTool = vi.fn(async () => ({ ok: true }));
+    const runtime = new PiAgentRuntime();
+    const events: unknown[] = [];
+
+    const consume = async () => {
+      for await (const event of runtime.run(
+        {
+          botId: "b",
+          threadId: "t",
+          runId: "routine-missing-result",
+          prompt: "Collect the report and summarize it.",
+          instructions: "Return a result.",
+          history: [],
+          tools: [destinationTool],
+          model: { provider: "test", id: "dispatch-test-model" },
+          requireFinalResponse: true,
+          executeTool,
+        },
+        {
+          operationId: "routine-missing-result",
+          traceId: "routine-missing-result",
+          spaceId: "w",
+          userId: "u",
+          signal: new AbortController().signal,
+        },
+      )) {
+        events.push(event);
+      }
+    };
+
+    await expect(consume()).rejects.toThrow(MISSING_TOOL_FINAL_RESPONSE_ERROR);
+    expect(fakeAgentState.followUpMessages).toHaveLength(1);
+    expect(executeTool).toHaveBeenCalledTimes(1);
+    expect(events.at(-1)).not.toEqual(expect.objectContaining({ type: "done" }));
+  });
+
   it("keeps FYI bot-message wakes silent when the model produces nothing", async () => {
     fakeAgentState.mode = "empty";
     const runtime = new PiAgentRuntime();

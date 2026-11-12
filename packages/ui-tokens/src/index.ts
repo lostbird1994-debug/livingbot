@@ -38,6 +38,8 @@ export type ColorTokens = {
   chatUser: string;
   /** White in both themes: the user bubble is a solid fill (light grey in dark, near-black in light). */
   chatUserForeground: string;
+  /** Distinct backing for scheduled routine replies. */
+  chatRoutine: string;
   muted: string;
   mutedForeground: string;
   /** Tertiary text: placeholders, list markers, quote bars, timestamps. */
@@ -88,6 +90,7 @@ export const darkTokens = {
   secondaryForeground: "#FFFFFF",
   chatUser: "#5C5C5C",
   chatUserForeground: "#FFFFFF",
+  chatRoutine: "#393322",
   muted: "#202020",
   mutedForeground: "#EBEBF599",
   faintForeground: "#EBEBF573",
@@ -132,6 +135,7 @@ export const lightTokens = {
   secondaryForeground: "#000000",
   chatUser: "#0B0B0B",
   chatUserForeground: "#FFFFFF",
+  chatRoutine: "#FFF0CC",
   muted: "#F2F2F1",
   mutedForeground: "#3C3C43B3",
   faintForeground: "#3C3C4394",
@@ -306,6 +310,7 @@ export const webPorcelainTokens: WebThemeColorTokens = {
  */
 
 export const webIndigoTokens: WebColorTokens = {
+  chatRoutine: darkTokens.chatRoutine,
   background: "#0C5670",
   dialog: "#2C6476",
   foreground: "#F2ECE6",
@@ -352,6 +357,7 @@ export const webIndigoTokens: WebColorTokens = {
 };
 
 export const webMalachiteTokens: WebColorTokens = {
+  chatRoutine: darkTokens.chatRoutine,
   background: "#1B6A67",
   dialog: "#3A7978",
   foreground: "#FFFFFF",
@@ -398,6 +404,7 @@ export const webMalachiteTokens: WebColorTokens = {
 };
 
 export const webDaiTokens: WebColorTokens = {
+  chatRoutine: darkTokens.chatRoutine,
   background: "#425066",
   dialog: "#596175",
   foreground: "#F2ECE6",

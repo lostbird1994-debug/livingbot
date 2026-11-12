@@ -523,6 +523,14 @@ msgstr "工作区操作"
 msgid "Active"
 msgstr "启用"
 
+#: src/pages/RoutineEditor.tsx
+msgid "Require a result"
+msgstr "必须交付结果"
+
+#: src/pages/RoutineEditor.tsx
+msgid "Empty runs are marked as failed."
+msgstr "没有结果时会标记为失败。"
+
 #: src/pages/shell/sidebar-header.tsx
 msgid "Activity"
 msgstr "动态"
@@ -2790,6 +2798,7 @@ msgid "Desktop update"
 msgstr "桌面更新"
 
 #: src/pages/RoutineRunHistory.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Details"
 msgstr "详情"
@@ -4559,6 +4568,10 @@ msgstr "没有找到远程 MCP 服务器"
 msgid "No reply"
 msgstr "未回复"
 
+#: src/pages/RoutineRunHistory.tsx
+msgid "Finished, no update"
+msgstr "已完成，无新内容"
+
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/command-palette.tsx
@@ -5972,8 +5985,8 @@ msgid "Server URL"
 msgstr "服务器 URL"
 
 #: src/pages/shell/bili-whale-panel.tsx
-msgid "SESSDATA 不能为空"
-msgstr "SESSDATA 不能为空"
+#~ msgid "SESSDATA 不能为空"
+#~ msgstr "SESSDATA 不能为空"
 
 #: src/components/InheritanceBadge.tsx
 msgid "Set here"
@@ -7479,8 +7492,12 @@ msgid "养鱼"
 msgstr "养鱼"
 
 #: src/pages/shell/bili-whale-panel.tsx
-msgid "凭据只写不读，保存后不再显示"
-msgstr "凭据只写不读，保存后不再显示"
+#~ msgid "凭据只写不读，保存后不再显示"
+#~ msgstr "凭据只写不读，保存后不再显示"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "凭据只写不读，留空保留原值"
+msgstr "凭据只写不读，留空保留原值"
 
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "凭据已保存（内容不会回显）"
@@ -7599,6 +7616,10 @@ msgid "评论区监听"
 msgstr "评论区监听"
 
 #: src/pages/shell/bili-whale-panel.tsx
+msgid "请至少填写一项需要更新的凭据"
+msgstr "请至少填写一项需要更新的凭据"
+
+#: src/pages/shell/bili-whale-panel.tsx
 msgid "读不到设置。她可能还没有自己的文件夹。"
 msgstr "读不到设置。她可能还没有自己的文件夹。"
 
@@ -7613,3 +7634,92 @@ msgstr "重掷今晚计划"
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "重试"
 msgstr "重试"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "首次配置请同时填写 SESSDATA 和 bili_jct"
+msgstr "首次配置请同时填写 SESSDATA 和 bili_jct"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Not reported"
+msgstr "未提供"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Conversation usage details"
+msgstr "查看会话用量明细"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Usage unavailable"
+msgstr "用量暂不可用"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Loading usage…"
+msgstr "正在读取用量…"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest"
+msgstr "本次"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Cache hit"
+msgstr "缓存命中"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Conversation"
+msgstr "会话累计"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "At least {0} tok"
+msgstr "至少 {0} tok"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Context ≈"
+msgstr "上下文 ≈"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Conversation usage"
+msgstr "会话用量"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Stopped this conversation and cancelled {count} pending messages."
+msgstr "已停止当前会话的任务，并取消 {count} 条待处理消息。"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest model calls"
+msgstr "本次模型调用"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest input (including cache)"
+msgstr "本次输入（含缓存）"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest output (including reasoning)"
+msgstr "本次输出（含推理）"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest cache read"
+msgstr "本次缓存读取"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest model time"
+msgstr "本次模型耗时"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Reported calls / all calls"
+msgstr "已提供用量 / 总调用"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Estimated context / window"
+msgstr "估算上下文 / 窗口"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Includes model calls during tool use and subagents. Speed excludes tool and approval waits. Missing provider data stays unknown. Context is the last prepared input estimate."
+msgstr "含工具调用期间和子任务的模型用量。速度不含工具执行及审批等待；服务未提供的数据保留为空。上下文为最近一次准备发送的输入估算。"
+
+msgid "The local engine connection lacks required permissions."
+msgstr "本地执行引擎连接权限不足。"
+
+msgid "The previous task is unresolved. Check its status before continuing."
+msgstr "上一项任务的状态尚未确认，请先核实后再继续。"
+
+msgid "Workspace files"
+msgstr "工作区文件"

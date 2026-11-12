@@ -10,9 +10,9 @@ describe("bot role card", () => {
     ).toBe(false);
   });
   it.each(["userIdentityEnabled", "backstoryEnabled"])(
-    "excludes shared profiles when %s alone is on",
+    "ignores the retired %s switch for shared loading",
     (flag) => {
-      expect(excludesSharedProfile({ [flag]: true })).toBe(true);
+      expect(excludesSharedProfile({ [flag]: true })).toBe(false);
     },
   );
   it("requires the saved baseline for updates, including empty text and switches", () => {

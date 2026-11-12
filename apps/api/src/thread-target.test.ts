@@ -3721,6 +3721,7 @@ describe("stopThreadRuns", () => {
       $queryRaw: vi.fn(),
       thread: {
         update: vi.fn(async () => ({ nextEventSeq: ++nextEventSeq })),
+        findUniqueOrThrow: vi.fn(async () => ({ nextMessageSeq: 3 })),
       },
       message: { findMany: vi.fn(async () => []) },
       run: {
@@ -3731,7 +3732,10 @@ describe("stopThreadRuns", () => {
         ]),
         findUnique: vi.fn().mockResolvedValue({ status: "cancelled" }),
       },
-      steeringMessage: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      steeringMessage: {
+        findMany: vi.fn(async () => []),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
       secret: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
       computer: {
         // Production team ownership is lease-only: Computer.executionRunId stays null.
@@ -3866,6 +3870,7 @@ describe("stopThreadRuns", () => {
       $queryRaw: vi.fn(),
       thread: {
         update: vi.fn().mockResolvedValue({ nextEventSeq: 5 }),
+        findUniqueOrThrow: vi.fn(async () => ({ nextMessageSeq: 3 })),
       },
       message: { findMany: vi.fn(async () => []) },
       run: {
@@ -3873,7 +3878,10 @@ describe("stopThreadRuns", () => {
         updateManyAndReturn: vi.fn().mockResolvedValue([{ id: "run-a", botId: "bot-a" }]),
         findUnique: vi.fn().mockResolvedValue({ status: "cancelled" }),
       },
-      steeringMessage: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      steeringMessage: {
+        findMany: vi.fn(async () => []),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
       secret: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
       computer: {
         // Selected via lease for cancelled run A, but legacy columns still name
@@ -3977,6 +3985,7 @@ describe("stopThreadRuns", () => {
       $queryRaw: vi.fn(),
       thread: {
         update: vi.fn(async () => ({ nextEventSeq: ++nextEventSeq })),
+        findUniqueOrThrow: vi.fn(async () => ({ nextMessageSeq: 3 })),
       },
       message: { findMany: vi.fn(async () => []) },
       run: {
@@ -3991,7 +4000,10 @@ describe("stopThreadRuns", () => {
         // appendEventInTransaction re-reads the run after the flip.
         findUnique: vi.fn().mockResolvedValue({ status: "cancelled" }),
       },
-      steeringMessage: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      steeringMessage: {
+        findMany: vi.fn(async () => []),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
       secret: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
       computer: { findMany: vi.fn().mockResolvedValue([]) },
       computerExecutionLease: { findMany: vi.fn().mockResolvedValue([]) },
@@ -4039,7 +4051,7 @@ describe("stopThreadRuns", () => {
       target,
     );
 
-    expect(created).toEqual([
+    expect(created.filter((event) => event.type === "run.cancelled")).toEqual([
       expect.objectContaining({
         spaceId: "workspace-1",
         threadId: "thread-1",
@@ -4073,7 +4085,7 @@ describe("stopThreadRuns", () => {
         runId: { in: ["run-a", "run-b"] },
       },
     });
-    expect(notify).toHaveBeenCalledWith("thread-1", 3);
+    expect(notify).toHaveBeenCalledWith("thread-1", 5);
     // A stopped run never resumes to read a waiting secret answer.
     expect(transaction.secret.deleteMany).toHaveBeenCalledWith({
       where: {
@@ -4096,7 +4108,10 @@ describe("stopThreadRuns", () => {
         updateManyAndReturn: vi.fn().mockResolvedValue([]),
         findUnique: vi.fn(),
       },
-      steeringMessage: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      steeringMessage: {
+        findMany: vi.fn(async () => []),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
       secret: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
       computer: { findMany: vi.fn() },
       computerExecutionLease: { findMany: vi.fn() },

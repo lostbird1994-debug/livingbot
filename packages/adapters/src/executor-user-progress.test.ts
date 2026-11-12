@@ -60,6 +60,8 @@ async function runTurn(
     runtime?: (request: AgentRunRequest) => AsyncGenerator<AgentRuntimeEvent>;
     /** Lets a test hold an event write open, to land runtime events while it waits. */
     appendGate?: (event: AppendEventInput) => Promise<void> | undefined;
+    requireRoutineOutput?: boolean;
+    expectOutputFailure?: boolean;
   } = {},
 ) {
   vi.mocked(loadBotMessageContext).mockResolvedValue({
@@ -82,6 +84,9 @@ async function runTurn(
     trigger: options.trigger ?? (silent ? "bot_message" : "user"),
     sourceMessageId: "source-1",
     leaseFence: 0,
+    ...(options.requireRoutineOutput === undefined ? {} : { routine: {
+      requireOutput: options.requireRoutineOutput, spaceId: "space-1", userId: "user-1", botId: "bot-1",
+    } }),
     ...(options.startedAt ? { startedAt: options.startedAt } : {}),
   };
   const runtimeRun = vi.fn(async function* (request: AgentRunRequest) {
@@ -171,6 +176,7 @@ async function runTurn(
       })),
     },
     event: {
+      findMany: vi.fn(async () => []),
       create: vi.fn(async ({ data }: { data: AppendEventInput }) => {
         if (
           data.type === "thread.subagent" &&
@@ -309,7 +315,7 @@ async function runTurn(
 
   await executor.continueRun(run.id, "worker-1");
   expect(runtimeRun).toHaveBeenCalled();
-  if (!options.runtimeFailure)
+  if (!options.runtimeFailure && !options.expectOutputFailure)
     expect(finalizeRun).not.toHaveBeenCalledWith(expect.objectContaining({ outcome: "failed" }));
   return { finalizeRun, append, pauseRunForInput, messages, savedEvents, prisma, runtimeRun };
 }
@@ -1409,4 +1415,28 @@ it("terminal cancellation wins over a runtime's open thinking marker", async () 
   expect(result.finalizeRun).not.toHaveBeenCalledWith(
     expect.objectContaining({ outcome: "failed" }),
   );
+});
+
+describe("routine silence versus required output", () => {
+  it("finishes an unchanged monitor without a text bubble or silence token", async () => {
+    const { finalizeRun } = await runTurn("", true, undefined, [], "fyi", {
+      trigger: "routine", requireRoutineOutput: false,
+      runtimeEvents: [
+        { type: "tool", name: "read_file", args: {}, executionId: "scan" },
+        { type: "text", text: "NO_RESPONSE" },
+        { type: "done", text: "NO_RESPONSE" },
+      ],
+    });
+    expect(finalizeRun).toHaveBeenCalledWith(expect.objectContaining({ outcome: "completed" }));
+    expect(finalizeRun.mock.calls[0]![0].blocks.filter(b => b.kind === "text")).toEqual([]);
+  });
+  it("does not accept a silence token as the result of a required-output routine", async () => {
+    const { finalizeRun } = await runTurn("", true, undefined, [], "fyi", {
+      trigger: "routine", requireRoutineOutput: true, expectOutputFailure: true,
+      runtimeEvents: [{ type: "text", text: "NO_RESPONSE" }, { type: "done", text: "NO_RESPONSE" }],
+    });
+    expect(finalizeRun).not.toHaveBeenCalledWith(expect.objectContaining({ outcome: "completed" }));
+    expect(finalizeRun).toHaveBeenCalledWith(expect.objectContaining({ outcome: "failed" }));
+    expect(JSON.stringify(finalizeRun.mock.calls)).not.toContain('"text":"NO_RESPONSE"');
+  });
 });

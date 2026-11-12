@@ -523,6 +523,14 @@ msgstr "Actions for space"
 msgid "Active"
 msgstr "Active"
 
+#: src/pages/RoutineEditor.tsx
+msgid "Require a result"
+msgstr "Require a result"
+
+#: src/pages/RoutineEditor.tsx
+msgid "Empty runs are marked as failed."
+msgstr "Empty runs are marked as failed."
+
 #: src/pages/shell/sidebar-header.tsx
 msgid "Activity"
 msgstr "Activity"
@@ -2790,6 +2798,7 @@ msgid "Desktop update"
 msgstr "Desktop update"
 
 #: src/pages/RoutineRunHistory.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Details"
 msgstr "Details"
@@ -5969,8 +5978,8 @@ msgid "Server URL"
 msgstr "Server URL"
 
 #: src/pages/shell/bili-whale-panel.tsx
-msgid "SESSDATA 不能为空"
-msgstr "SESSDATA cannot be empty"
+#~ msgid "SESSDATA 不能为空"
+#~ msgstr "SESSDATA cannot be empty"
 
 #: src/components/InheritanceBadge.tsx
 msgid "Set here"
@@ -7476,8 +7485,12 @@ msgid "养鱼"
 msgstr "Fish"
 
 #: src/pages/shell/bili-whale-panel.tsx
-msgid "凭据只写不读，保存后不再显示"
-msgstr "Credentials are write-only; they are never shown again"
+#~ msgid "凭据只写不读，保存后不再显示"
+#~ msgstr "Credentials are write-only; they are never shown again"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "凭据只写不读，留空保留原值"
+msgstr "Credentials are write-only; leave blank to keep existing values"
 
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "凭据已保存（内容不会回显）"
@@ -7596,6 +7609,10 @@ msgid "评论区监听"
 msgstr "Comment listening"
 
 #: src/pages/shell/bili-whale-panel.tsx
+msgid "请至少填写一项需要更新的凭据"
+msgstr "Enter at least one credential to update"
+
+#: src/pages/shell/bili-whale-panel.tsx
 msgid "读不到设置。她可能还没有自己的文件夹。"
 msgstr "Could not read the settings. She may not have her own folder yet."
 
@@ -7610,3 +7627,74 @@ msgstr "Roll tonight's plan again"
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "重试"
 msgstr "Retry"
+
+#: src/pages/shell/bili-whale-panel.tsx
+msgid "首次配置请同时填写 SESSDATA 和 bili_jct"
+msgstr "Enter both SESSDATA and bili_jct for first-time setup"
+
+msgid "Not reported"
+msgstr "Not reported"
+
+msgid "Conversation usage details"
+msgstr "Conversation usage details"
+
+msgid "Usage unavailable"
+msgstr "Usage unavailable"
+
+msgid "Loading usage…"
+msgstr "Loading usage…"
+
+msgid "Latest"
+msgstr "Latest"
+
+msgid "Cache hit"
+msgstr "Cache hit"
+
+msgid "Conversation"
+msgstr "Conversation"
+
+msgid "At least {0} tok"
+msgstr "At least {0} tok"
+
+msgid "Context ≈"
+msgstr "Context ≈"
+
+msgid "Conversation usage"
+msgstr "Conversation usage"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Stopped this conversation and cancelled {count} pending messages."
+msgstr "Stopped this conversation and cancelled {count} pending messages."
+
+msgid "Latest model calls"
+msgstr "Latest model calls"
+
+msgid "Latest input (including cache)"
+msgstr "Latest input (including cache)"
+
+msgid "Latest output (including reasoning)"
+msgstr "Latest output (including reasoning)"
+
+msgid "Latest cache read"
+msgstr "Latest cache read"
+
+msgid "Latest model time"
+msgstr "Latest model time"
+
+msgid "Reported calls / all calls"
+msgstr "Reported calls / all calls"
+
+msgid "Estimated context / window"
+msgstr "Estimated context / window"
+
+msgid "Includes model calls during tool use and subagents. Speed excludes tool and approval waits. Missing provider data stays unknown. Context is the last prepared input estimate."
+msgstr "Includes model calls during tool use and subagents. Speed excludes tool and approval waits. Missing provider data stays unknown. Context is the last prepared input estimate."
+
+msgid "The local engine connection lacks required permissions."
+msgstr "The local engine connection lacks required permissions."
+
+msgid "The previous task is unresolved. Check its status before continuing."
+msgstr "The previous task is unresolved. Check its status before continuing."
+
+msgid "Workspace files"
+msgstr "Workspace files"

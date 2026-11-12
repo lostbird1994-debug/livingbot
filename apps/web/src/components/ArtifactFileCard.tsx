@@ -3,7 +3,7 @@ import { t as translate } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { ChatMarkdown } from "@rakazo/chat-ui/web";
 import { isAttachmentAudioMimeType } from "@rakazo/contracts";
-import { fileSizeParts } from "@rakazo/core";
+import { attachmentFileName, fileSizeParts } from "@rakazo/core";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle, Spinner } from "@rakazo/ui-web";
 import { Code2, Download, FileText, FolderOpen, Play, X } from "lucide-react";
 import type { RefObject } from "react";
@@ -12,6 +12,7 @@ import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
+import { DeliveryFileCard } from "./DeliveryFileCard";
 import { BuiCard } from "./ai/primitives";
 import { IconTooltip } from "./IconTooltip";
 import { PdfViewer } from "./PdfViewer";
@@ -22,7 +23,12 @@ type ArtifactFileCardProps = {
   artifactId: string;
   name: string;
   mimeType: string;
-  size: number;
+  size?: number;
+  compact?: boolean;
+  sourceAvailable?: boolean;
+  preferPreview?: boolean;
+  nameHighlight?: string;
+  wrapName?: boolean;
 };
 
 const PREVIEWABLE_MIME_TYPES = new Set([
@@ -35,7 +41,8 @@ const TEXT_MIME_TYPES = new Set(["text/markdown", "text/html"]);
 
 export function ArtifactFileCard(props: ArtifactFileCardProps) {
   const { t } = useLingui();
-  const previewable = PREVIEWABLE_MIME_TYPES.has(props.mimeType);
+  const fileName = attachmentFileName(props.name, props.mimeType);
+  const previewable = PREVIEWABLE_MIME_TYPES.has(props.mimeType) || props.mimeType.startsWith("image/");
   const previewButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -48,7 +55,7 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
   async function startDownload() {
     setDownloadError(null);
     try {
-      await downloadArtifact(props.target, props.artifactId, props.name, props.mimeType);
+      await downloadArtifact(props.target, props.artifactId, fileName, props.mimeType);
     } catch {
       setDownloadError(t`Could not download ${props.name}. Try again.`);
     }
@@ -59,13 +66,28 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
     setFileBusy(true);
     setFileError("");
     try {
-      await rpc.artifacts.fileAction({ artifactId: props.artifactId, action });
+      await rpc.artifacts.fileAction({ artifactId: props.artifactId, action,
+        ...(props.preferPreview && action === "open" ? { version: "attachment" as const } : {}),
+      });
     } catch (error) {
       setFileError(errorText(error));
     } finally {
       setFileBusy(false);
     }
   }
+
+  if (props.compact) return <>
+    <DeliveryFileCard name={fileName} size={props.size} nameHighlight={props.nameHighlight} wrapName={props.wrapName}
+      onOpen={async () => { if (props.preferPreview && previewable) setPreviewOpen(true); else await openOnThisMac("open"); }}
+      onReveal={props.sourceAvailable === false ? undefined : () => openOnThisMac("reveal")}
+      onDownload={startDownload} error={fileError || downloadError || undefined} />
+    <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+      <DialogContent showCloseButton={false} initialFocus={closeButton}
+        className="flex h-[min(88vh,900px)] w-[min(960px,94vw)] flex-col gap-0 overflow-hidden p-0 sm:max-w-none">
+        <FilePreview {...props} closeButtonRef={closeButton} />
+      </DialogContent>
+    </Dialog>
+  </>;
 
   if (isAttachmentAudioMimeType(props.mimeType)) {
     return (
@@ -89,10 +111,10 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
               type="button"
               disabled={fileBusy}
               onClick={() => void openOnThisMac("open")}
-              title={props.name}
+              title={fileName}
               className="max-w-full break-all text-left text-link underline underline-offset-2 hover:no-underline disabled:opacity-60"
             >
-              {props.name}
+              {fileName}
             </button>
             <Button
               type="button"
@@ -281,6 +303,8 @@ function FilePreview({
           </div>
         ) : mimeType === "text/html" && state.text !== undefined ? (
           <SandboxedHtmlViewer html={state.text} title={name} />
+        ) : mimeType.startsWith("image/") ? (
+          <ImagePreview bytes={state.bytes} name={name} mimeType={mimeType} />
         ) : mimeType === "video/mp4" ? (
           <VideoPreview bytes={state.bytes} name={name} />
         ) : mimeType === "application/pdf" ? (
@@ -414,7 +438,8 @@ function DownloadError({ message }: { message: string }) {
   );
 }
 
-function formatSize(bytes: number): string {
+function formatSize(bytes: number | undefined): string {
+  if (bytes === undefined) return "";
   const parts = fileSizeParts(bytes, i18n.locale || "en");
   if (!parts) return "";
   const size = parts.amount;
@@ -430,4 +455,11 @@ function formatSize(bytes: number): string {
     case "TB":
       return translate`${parts.amount} TB`;
   }
+}
+
+function ImagePreview({ bytes, name, mimeType }: { bytes: Uint8Array; name: string; mimeType: string }) {
+  const [src, setSrc] = useState<string>();
+  useEffect(() => { const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: mimeType }));
+    setSrc(url); return () => URL.revokeObjectURL(url); }, [bytes, mimeType]);
+  return <img src={src} alt={name} className="mx-auto h-full max-w-full object-contain p-4" />;
 }

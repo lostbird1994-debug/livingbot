@@ -119,8 +119,8 @@ it("shows loading, then the latest runs as rows that open their chat", async () 
     const links = view.container.querySelectorAll("a");
     expect(links).toHaveLength(1);
     expect(links[0]?.getAttribute("href")).toBe("/app/bot-1?m=reply-1");
-    expect(view.rows()[0]?.textContent).not.toContain("No reply");
-    expect(view.rows()[1]?.textContent).toContain("No reply");
+    expect(view.rows()[0]?.textContent).not.toContain("Finished, no update");
+    expect(view.rows()[1]?.textContent).toContain("Finished, no update");
     expect(view.button("Load older runs")).toBeUndefined();
   } finally {
     await view.close();

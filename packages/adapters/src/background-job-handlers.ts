@@ -222,6 +222,7 @@ export function createBackgroundJobHandlers(deps: {
       // Retrieval policies use stored context without paid message-count compaction.
       // Skip legacy backlog work after a policy change.
       if (deps.executor.contextStrategy && deps.executor.contextStrategy !== "current") return;
+      if (deps.runtime.describe().capabilities.workspaceContext === true) return;
       await compactHistory(
         {
           prisma: deps.prisma,

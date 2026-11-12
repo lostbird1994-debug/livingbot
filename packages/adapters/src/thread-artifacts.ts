@@ -9,13 +9,13 @@ import type {
 import type { ComputerMode, MessageBlock } from "@rakazo/contracts";
 import {
   ARTIFACT_DESCRIPTION_MAX_LENGTH,
-  ARTIFACT_NAME_MAX_LENGTH,
   ATTACHMENT_MAX_BYTES,
   ATTACHMENT_MAX_COUNT,
   attachmentSizeLabel,
 } from "@rakazo/contracts";
 import {
   attachmentExtensionForMimeType,
+  attachmentFileName,
   inferAttachmentMimeType,
   messageBlockForArtifact,
   validateAttachmentMimeType,
@@ -58,7 +58,7 @@ export async function attachWorkspaceFileToThread(
   if (!mimeType) {
     throw new Error(`Unsupported attachment type for ${fileName}`);
   }
-  const name = (input.name?.trim() || fileName).slice(0, ARTIFACT_NAME_MAX_LENGTH);
+  const name = attachmentFileName(input.name?.trim() || fileName, mimeType);
   validateAttachmentMimeType(mimeType);
   if (input.bytes.byteLength > (deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES)) {
     throw new Error(

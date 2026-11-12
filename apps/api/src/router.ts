@@ -11,6 +11,8 @@ import type {
 } from "@rakazo/adapter-kit";
 import type {
   CloudAgentConnection,
+  BotWorkspaceProfiles,
+  NativeBootstrapPreview,
   CodexLiveCatalog,
   ComposioProvider,
   ConnectorRegistry,
@@ -71,6 +73,10 @@ export interface RouterDeps {
   jobs: JobPublisher;
   sandbox: SandboxProvider;
   memory: MemoryStore;
+  botWorkspace?: BotWorkspaceProfiles;
+  nativeContextPreview?: (
+    actor: { spaceId: string; userId: string }, botId: string,
+  ) => Promise<NativeBootstrapPreview>;
   memoryProviders: MemoryProviderResolver;
   home: AgentHomeStore;
   secrets: SecretStore;
@@ -115,6 +121,9 @@ export interface RouterDeps {
   speechSummary?: VoiceDeps["speechSummary"];
   notificationSummary?: VoiceDeps["notificationSummary"];
   cancelNativeRuns?: (runIds: string[]) => Promise<void>;
+  stopNativeOrphans?: (
+    actor: { spaceId: string; userId: string }, botId: string, threadId: string, before: number,
+  ) => Promise<void>;
   env: {
     ticketBoardEnabled?: boolean;
     navLinks?: NavLink[];

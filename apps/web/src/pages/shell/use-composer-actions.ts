@@ -17,6 +17,7 @@ import {
   newClientId,
   resolveComposerSendPlan,
 } from "@rakazo/core";
+import { toast } from "@rakazo/ui-web";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { requestBrowserNotificationPermission } from "../../lib/browser-notifications";
@@ -503,7 +504,11 @@ export function useComposerActions({
       if (groupTarget) {
         setSendError(null);
         try {
-          await rpc.threads.stop({ groupId: groupTarget });
+          const stopped = await rpc.threads.stop({ groupId: groupTarget });
+          if (stopped.cancelledPendingMessageCount) {
+            const count = stopped.cancelledPendingMessageCount;
+            toast.success(t`Stopped this conversation and cancelled ${count} pending messages.`);
+          }
         } catch (error) {
           if (activeGroupId.current === groupTarget) {
             setSendError(errorText(error, t`Failed to stop`));
@@ -522,7 +527,11 @@ export function useComposerActions({
       if (!botTarget) return;
       setSendError(null);
       try {
-        await rpc.threads.stop({ botId: botTarget });
+        const stopped = await rpc.threads.stop({ botId: botTarget });
+        if (stopped.cancelledPendingMessageCount) {
+          const count = stopped.cancelledPendingMessageCount;
+          toast.success(t`Stopped this conversation and cancelled ${count} pending messages.`);
+        }
       } catch (error) {
         if (activeBotId.current === botTarget) {
           setSendError(errorText(error, t`Failed to stop`));

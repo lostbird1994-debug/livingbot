@@ -18,6 +18,7 @@
   --secondary-foreground: #f5f5f5;
   --chat-user: #3e3e3e;
   --chat-user-foreground: #f5f5f5;
+  --chat-routine: #393322;
   --muted: #1f1f1f;
   --muted-foreground: #f5f5f5a8;
   --faint-foreground: #f5f5f58a;
@@ -66,6 +67,7 @@
   --secondary-foreground: #1c1c1c;
   --chat-user: #1c1c1c;
   --chat-user-foreground: #ffffff;
+  --chat-routine: #fff0cc;
   --muted: #f2f2f2;
   --muted-foreground: #1c1c1cad;
   --faint-foreground: #1c1c1c8f;
@@ -114,6 +116,7 @@
   --secondary-foreground: #1c1c1c;
   --chat-user: #c7e1fa;
   --chat-user-foreground: #1c1c1c;
+  --chat-routine: #fff0cc;
   --muted: #f2f2f2;
   --muted-foreground: #1c1c1cad;
   --faint-foreground: #1c1c1c8f;
@@ -151,6 +154,7 @@
 
 [data-theme="indigo"] {
   color-scheme: dark;
+  --chat-routine: #393322;
   --background: #0c5670;
   --dialog: #2c6476;
   --foreground: #f2ece6;
@@ -199,6 +203,7 @@
 
 [data-theme="malachite"] {
   color-scheme: dark;
+  --chat-routine: #393322;
   --background: #1b6a67;
   --dialog: #3a7978;
   --foreground: #ffffff;
@@ -247,6 +252,7 @@
 
 [data-theme="dai"] {
   color-scheme: dark;
+  --chat-routine: #393322;
   --background: #425066;
   --dialog: #596175;
   --foreground: #f2ece6;

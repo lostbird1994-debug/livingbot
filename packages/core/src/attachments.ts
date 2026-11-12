@@ -1,5 +1,6 @@
 import type { AttachmentMimeType, MessageBlock } from "@rakazo/contracts";
 import {
+  ARTIFACT_NAME_MAX_LENGTH,
   ATTACHMENT_COUNT_CEILING,
   ATTACHMENT_MAX_BYTES,
   ATTACHMENT_MAX_COUNT,
@@ -114,14 +115,14 @@ export function messageBlockForArtifact(artifact: {
       kind: "image",
       artifactId: artifact.id,
       mimeType: artifact.mimeType,
-      name: artifact.name,
+      name: attachmentFileName(artifact.name, artifact.mimeType),
     };
   }
   return {
     kind: "file",
     artifactId: artifact.id,
     mimeType: artifact.mimeType,
-    name: artifact.name,
+    name: attachmentFileName(artifact.name, artifact.mimeType),
     size: artifact.size,
   };
 }
@@ -270,6 +271,21 @@ export function inferAttachmentMimeType(
 
 export function attachmentExtensionForMimeType(mimeType: string): string {
   return isAllowedAttachmentMimeType(mimeType) ? MIME_TYPE_EXTENSIONS[mimeType] : "";
+}
+
+/** Preserve explicit extensions; a display title without one inherits its file type. */
+export function attachmentFileName(name: string, mimeType: string): string {
+  const title = name.trim() || "attachment";
+  const base = title.split(/[/\\]/).at(-1) ?? title;
+  const dot = base.lastIndexOf(".");
+  if (dot >= 0) {
+    const extension = base.slice(dot);
+    return title.length <= ARTIFACT_NAME_MAX_LENGTH || extension.length > 16
+      ? title.slice(0, ARTIFACT_NAME_MAX_LENGTH)
+      : title.slice(0, ARTIFACT_NAME_MAX_LENGTH - extension.length) + extension;
+  }
+  const extension = attachmentExtensionForMimeType(mimeType);
+  return title.slice(0, ARTIFACT_NAME_MAX_LENGTH - extension.length) + extension;
 }
 
 export function attachmentsForThread<T extends { threadKey: string }>(

@@ -1,3 +1,4 @@
+import { ConversationFindPanel } from "./shell/conversation-find-panel";
 import { Trans, useLingui } from "@lingui/react/macro";
 import type {
   AgentSkillCatalogEntry,
@@ -78,6 +79,7 @@ import { RoutineList } from "./RoutineEditor";
 import { useSettingsNavItems } from "./settings-nav";
 import { ArchivedChats } from "./shell/archived-chats";
 import { ChatContextMenu } from "./shell/chat-context-menu";
+import { ComposerUsage } from "./shell/composer-usage";
 import { ChatHeader } from "./shell/chat-header";
 import { FALLBACK_BOT_COLOR } from "./shell/chat-shared";
 import type { CommandPaletteAction } from "./shell/command-palette";
@@ -496,6 +498,16 @@ function SpaceShell() {
   const workingRuns = currentRuns.filter((run) => isRunWorking(run.status));
   const transcriptRunning = workingRuns.length > 0;
   const composerRunning = currentRuns.some((run) => isActive(run.status));
+  const conversationUsageQuery = useQuery({
+    ...queries.usage.thread.queryOptions({
+      input: inGroup ? { groupId: groupId ?? "" } : { botId: active?.id ?? "" },
+    }),
+    enabled: Boolean(activeSnapshot?.threadId),
+    refetchInterval: composerRunning ? 5_000 : 30_000,
+  });
+  useEffect(() => {
+    if (activeSnapshot?.threadId) void conversationUsageQuery.refetch();
+  }, [composerRunning, activeSnapshot?.run?.id, activeSnapshot?.threadId]);
   const transcript = useMemo(
     () => foldPeerReplies(activeSnapshot?.messages ?? [], { includePeerReceipts: true }),
     [activeSnapshot?.messages],
@@ -559,7 +571,7 @@ function SpaceShell() {
     }
   }, [active, initialBotsLoaded, shellReady, snapshot?.botId]);
 
-  const { scrollRequest, clearScrollRequest, jumpToReplyMessage } = useMessageJump({
+  const { scrollRequest, clearScrollRequest, jumpToReplyMessage, jumpToHistoryMessage } = useMessageJump({
     rpc,
     queries,
     thread,
@@ -1021,6 +1033,7 @@ function SpaceShell() {
             phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
             inCall={Boolean(active) && call?.botId === active?.id}
             panelOpen={chatPanelOpen}
+            onFind={() => setPanel(panel === "find" ? null : "find")}
             onOpenNavigation={() => setMobileSidebarOpen(true)}
             onTogglePanel={() => {
               if (chatPanelOpen) setPanel(null);
@@ -1159,6 +1172,7 @@ function SpaceShell() {
                 }
               }}
             />
+            <ComposerUsage usage={conversationUsageQuery.data} failed={conversationUsageQuery.isError} />
           </div>
         ) : null}
       </main>
@@ -1178,6 +1192,9 @@ function SpaceShell() {
       />
 
       <ShellSidePanel
+        findPanel={active || activeGroup ? <ConversationFindPanel key={`${bootstrapMe?.spaceId}:${activeGroup?.id ?? active?.id}`}
+          rpc={rpc} target={activeGroup ? { groupId: activeGroup.id } : { botId: active!.id }} open={panel === "find"}
+          onClose={() => setPanel(null)} onJump={jumpToHistoryMessage} /> : null}
         rpc={rpc}
         spaceName={spaces.find((space) => space.id === active?.spaceId)?.name}
         panel={panel}

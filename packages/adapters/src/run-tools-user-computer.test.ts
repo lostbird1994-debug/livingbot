@@ -35,8 +35,10 @@ function setup(execute: (signal: AbortSignal) => AsyncIterable<unknown>, secrets
     },
   };
   const ctx = {
-    deps: { userDevices: gateway },
+    deps: { userDevices: gateway, events: { append: vi.fn(async () => undefined) } },
     bot: { id: "bot-1" },
+    run: { spaceId: "space-1" },
+    thread: { id: "thread-1" },
     runId: "run-1",
     source: { userComputerOwner: "user-1" },
     context: { signal: controller.signal },
@@ -46,6 +48,7 @@ function setup(execute: (signal: AbortSignal) => AsyncIterable<unknown>, secrets
   const call = (args: Record<string, unknown>) =>
     ({
       name: "user_computer_shell",
+      executionId: "command-1",
       args,
       observer: { onShellStillRunning },
       finish: async (result: unknown) => result,
@@ -175,6 +178,15 @@ describe("userComputerShell", () => {
       expect(onShellStillRunning).toHaveBeenCalledOnce();
       finish();
       await expect(onShellStillRunning.mock.calls[0]![0]).resolves.toMatchObject({ code: 0 });
+      expect(vi.mocked(ctx.deps.events.append).mock.calls.at(-1)?.[0]).toMatchObject({
+        type: "computer.command",
+        payload: {
+          executionId: "command-1",
+          status: "done",
+          exitCode: 0,
+          output: "Enter code ABCD\n",
+        },
+      });
     } finally {
       vi.useRealTimers();
     }

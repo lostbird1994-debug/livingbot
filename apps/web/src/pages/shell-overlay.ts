@@ -56,11 +56,13 @@ function isSettingsSection(value: string): value is SettingsSection {
 export function readShellOverlay(params: URLSearchParams): ShellOverlay {
   const section = params.get("settings");
   if (section !== null) {
+    const botId = params.get("bot");
     return {
       kind: "settings",
       section: isSettingsSection(section) ? section : "general",
       spaceId: params.get("space") || null,
-      botId: params.get("bot") || null,
+      // Only a link that names a bot carries one, so a round trip keeps the same shape.
+      ...(botId ? { botId } : {}),
     };
   }
   if (params.has("integrations")) return { kind: "integrations" };

@@ -257,6 +257,7 @@ export interface RunContext {
   scripted: boolean;
   script: ReturnType<typeof inferScript> | undefined;
   allowSilentEmptyRun: boolean;
+  routineRequiresOutput: boolean;
   emptyResponseText: string | undefined;
   state: RunState;
   settleRunningHelpers: () => Promise<void>;

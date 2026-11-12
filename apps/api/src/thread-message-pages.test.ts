@@ -515,6 +515,7 @@ describe("thread message pages", () => {
     ]);
     const prisma = {
       message: { findMany, count: vi.fn(async () => 0) },
+      run: { findMany: vi.fn().mockResolvedValue([]) },
     } as unknown as PrismaClient;
 
     const page = await loadMessagePage(
@@ -557,6 +558,7 @@ describe("thread message pages", () => {
       run: {
         findMany: vi
           .fn()
+          .mockResolvedValue([])
           .mockResolvedValueOnce([{ id: "run-peer" }])
           .mockResolvedValueOnce([]),
       },
@@ -637,6 +639,7 @@ describe("thread message pages", () => {
       run: {
         findMany: vi
           .fn()
+          .mockResolvedValue([])
           .mockResolvedValueOnce([{ id: "run-peer" }])
           .mockResolvedValueOnce([]),
       },
@@ -1002,4 +1005,36 @@ it("derives attachment metadata from a validated parent outside the loaded page"
   } as unknown as PrismaClient;
   const page = await loadMessagePage(prisma, "thread", undefined, 1);
   expect(page.messages[0]?.replyPreview).toEqual({ role: "user", text: "", attachment: image });
+});
+
+it("identifies historical routine replies from their run while ordinary messages remain ordinary", async () => {
+  const base = {
+    threadId: "thread",
+    role: "bot",
+    blocks: [{ kind: "text", text: "Done" }],
+    botId: "bot",
+    createdAt: new Date(),
+    replyToMessageId: null,
+    replyQuote: null,
+  };
+  const prisma = {
+    run: { findMany: vi.fn().mockResolvedValue([{ id: "routine-run", trigger: "routine" }]) },
+    message: {
+      findMany: vi.fn().mockResolvedValue([
+        {
+          ...base,
+          id: "routine-message",
+          seq: 2,
+          runId: "routine-run",
+          run: { trigger: "routine" },
+        },
+        { ...base, id: "ordinary-message", seq: 1, runId: "user-run", run: { trigger: "message" } },
+      ]),
+    },
+  } as unknown as PrismaClient;
+  const page = await loadMessagePage(prisma, "thread", undefined, 10, undefined, true);
+  expect(page.messages.map((message) => [message.id, message.routine])).toEqual([
+    ["ordinary-message", false],
+    ["routine-message", true],
+  ]);
 });

@@ -71,7 +71,7 @@ vi.mock("@rakazo/ui-web", () => ({
     />
   ),
   Toggle: ({
-    onPressedChange: _onPressedChange,
+    onPressedChange,
     pressed,
     variant: _variant,
     size: _size,
@@ -82,7 +82,12 @@ vi.mock("@rakazo/ui-web", () => ({
     pressed?: boolean;
     onPressedChange?: (pressed: boolean) => void;
   }) => (
-    <button type="button" aria-pressed={pressed} {...props}>
+    <button
+      type="button"
+      aria-pressed={pressed}
+      {...props}
+      onClick={() => onPressedChange?.(!pressed)}
+    >
       {props.children}
     </button>
   ),
@@ -199,11 +204,13 @@ async function render(
   overrides: Partial<Bot> = {},
   memoryProviderConfigured = false,
   focusModel = 0,
+  page?: ComponentProps<typeof BotSettings>["page"],
 ) {
   await act(async () => {
     root.render(
       <QueryClientProvider client={queryClient}>
         <BotSettings
+          page={page}
           tab={focusModel ? "settings" : "loaded"}
           onOpenConnections={() => undefined}
           focusModel={focusModel}
@@ -258,6 +265,77 @@ beforeEach(() => {
   document.body.append(container);
   root = createRoot(container);
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+});
+
+describe("Bot settings dialog pages", () => {
+  it("keeps a model draft across pages and explicitly saves the selected model", async () => {
+    vi.mocked(rpc.models.credentials).mockResolvedValue([
+      {
+        id: "fixture-connection",
+        provider: "openai-compatible",
+        label: "Fixture",
+        hasKey: true,
+        isDefault: true,
+        modelId: "fixture-model",
+      },
+    ]);
+    vi.mocked(rpc.models.list).mockResolvedValue([
+      {
+        provider: "openai-compatible",
+        providerName: "Fixture",
+        id: "fixture-model",
+        label: "Fixture model",
+        billing: "",
+      },
+    ]);
+    await render("Billing", {}, true, 0, "model");
+    const model = container.querySelector<HTMLSelectElement>('[id$="-model"]')!;
+    await act(async () => {
+      model.value = "openai-compatible::fixture-model";
+      model.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(onSave).not.toHaveBeenCalled();
+    await render("Billing", {}, true, 0, "memory");
+    await render("Billing", {}, true, 0, "model");
+    expect(container.querySelector<HTMLSelectElement>('[id$="-model"]')?.value).toBe(
+      "openai-compatible::fixture-model",
+    );
+    await clickSave();
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelProvider: "openai-compatible",
+        modelId: "fixture-model",
+      }),
+    );
+  });
+
+  it("saves memory scope from its own page", async () => {
+    await render("Billing", {}, true, 0, "memory");
+    await act(async () => {
+      [...container.querySelectorAll("button")]
+        .find((button) => button.textContent === "Isolated")!
+        .click();
+    });
+    await clickSave();
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ memoryScope: "isolated" }));
+  });
+
+  it("keeps a voice edit and its Save action when saving fails", async () => {
+    await render("Billing", {}, true, 0, "voice");
+    await act(async () =>
+      container.querySelector<HTMLButtonElement>('[id$="-auto-speak"]')!.click(),
+    );
+    onSave.mockRejectedValueOnce(new Error("Fixture save failed"));
+    await clickSave();
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ autoSpeak: true }));
+    expect(container.querySelector('[id$="-auto-speak"]')?.getAttribute("aria-checked")).toBe(
+      "true",
+    );
+    expect(container.textContent).toContain("Fixture save failed");
+    expect(
+      [...container.querySelectorAll("button")].some((button) => button.textContent === "Save"),
+    ).toBe(true);
+  });
 });
 
 afterEach(async () => {

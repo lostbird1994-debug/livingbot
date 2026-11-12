@@ -7,6 +7,7 @@ import { McpTransportSchema } from "./mcp.js";
 export const ProductEventType = z.enum([
   "thread.message.created",
   "thread.cleared",
+  "thread.stopped",
   "thread.message.updated",
   "thread.message.reaction",
   "thread.progress",
@@ -54,6 +55,16 @@ export const ProductEventType = z.enum([
   "heartbeat",
 ]);
 export type ProductEventType = z.infer<typeof ProductEventType>;
+
+/** Durable stop boundary, saved before the transient steering queue is cleared. */
+export const ThreadStoppedPayloadSchema = z.object({
+  version: z.literal(1),
+  throughMessageSeq: z.number().int().min(-1),
+  runIds: z.array(Id),
+  messageIds: z.array(Id),
+  pendingMessageIds: z.array(Id),
+});
+export type ThreadStoppedPayload = z.infer<typeof ThreadStoppedPayloadSchema>;
 
 export const MessageRole = z.enum(["user", "bot", "system"]);
 export const BotMessageIntent = z.enum(["request", "result", "question", "status", "fyi"]);
@@ -488,6 +499,7 @@ export const ThreadMessageSchema = z.object({
   replyQuote: z.string().optional(),
   replyPreview: ReplyPreviewSchema.nullable().optional(),
   runId: Id.optional(),
+  routine: z.boolean().optional(),
   /** Set when the message was sent from a live voice call; groups one call's transcript. */
   callId: z.string().optional(),
   createdAt: z.string(),

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { NativePeer, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
 import { nativeRunIndexKey } from "./openclaw-native-driver.js";
-import { createOpenClawReconciler, reconcileNativeExecution } from "./openclaw-reconciler.js";
+import { createOpenClawReconciler, reconcileNativeExecution, stopOrphanedNativeSession } from "./openclaw-reconciler.js";
 
 class Store implements NativeStore {
   rows = new Map<string, NativeRecord>();
@@ -70,6 +70,40 @@ function fixture() {
   };
 }
 describe("durable native cancellation reconciliation", () => {
+  it("kills and verifies owned background commands before releasing a cancelled session", async () => {
+    const f = fixture();
+    f.record.backgroundProcesses = ["owned-process"];
+    const actions: string[] = [];
+    const peer: NativePeer = {
+      async request<T>(method: string, params: any) {
+        if (method === "chat.abort") return { aborted: true, runIds: [f.record.runId] } as T;
+        if (method === "rakazo.process.control") {
+          actions.push(params.action);
+          expect(params).toMatchObject({ sessionId: "owned-process", sessionKey: f.record.sessionKey, runId: f.record.runId });
+          return { status: params.action === "poll" ? "failed" : "running" } as T;
+        }
+        if (method === "agent.wait") return { status: "aborted" } as T;
+        throw new Error(method);
+      },
+      stop() {},
+    };
+    expect(await reconcileNativeExecution({ ...f, peer, key: "key", cancel: true })).toBe("cancelled");
+    expect(actions).toEqual(["kill", "poll"]);
+    expect(f.store.rows.get("key")?.backgroundProcesses).toEqual([]);
+  });
+  it("does not release the session when background process control cannot confirm ownership", async () => {
+    const f = fixture();
+    f.record.backgroundProcesses = ["unconfirmed-process"];
+    const peer: NativePeer = {
+      async request<T>(method: string) {
+        if (method === "chat.abort") return { aborted: true, runIds: [f.record.runId] } as T;
+        throw new Error("Native process ownership is not confirmed");
+      },
+      stop() {},
+    };
+    await expect(reconcileNativeExecution({ ...f, peer, key: "key", cancel: true })).rejects.toThrow("ownership");
+    expect(f.store.rows.get(`session-owner:${f.record.sessionKey}`)?.status).toBe("approval");
+  });
   it.each(["timeout", "unexpected"])(
     "does not mistake an abort ACK for termination (%s)",
     async (state) => {
@@ -78,7 +112,7 @@ describe("durable native cancellation reconciliation", () => {
       expect(await reconcileNativeExecution({ ...f, key: "key", cancel: true })).toBe(
         "unconfirmed",
       );
-      expect(f.store.rows.get("key")?.status).toBe("unconfirmed");
+      expect(f.store.rows.get("key")?.status).toBe("approval");
       expect(f.calls).toEqual(["chat.abort", "agent.wait"]);
     },
   );
@@ -203,4 +237,135 @@ it("does not treat an unconfirmed status response as a terminal error", async ()
     await reconcileNativeExecution({ key: "key", record: row, cancel: false, store, peer }),
   ).toBe("unconfirmed");
   expect(store.rows.get("session-owner:s")?.status).toBe("unconfirmed");
+});
+
+it("recovers kernel results by run identity without consulting the lifecycle cache or session history", async () => {
+  const f = fixture();
+  f.record.toolMode = "kernel";
+  const calls: string[] = [];
+  const peer: NativePeer = { stop() {}, request: async <T>(method: string): Promise<T> => {
+    calls.push(method);
+    if (method === "rakazo.run.status") return { status: "ok" } as T;
+    if (method === "rakazo.run.result") return { result: { text: "Recovered reply", provider: "test", model: "test" } } as T;
+    if (method === "rakazo.tools.close") return {} as T;
+    throw Error(method);
+  } };
+  await expect(reconcileNativeExecution({ key: "key", record: f.record, store: f.store, peer, cancel: false })).resolves.toBe("done");
+  expect((await f.store.read("key"))?.text).toBe("Recovered reply");
+  expect(calls).toEqual(["rakazo.run.status", "rakazo.run.result", "rakazo.tools.close"]);
+});
+
+it("releases a permission-interrupted kernel session only after a terminal receipt, without replay", async () => {
+  const f = fixture();
+  f.record.status = "unconfirmed";
+  f.record.toolMode = "kernel";
+  f.record.error = "missing scope: operator.admin";
+  f.store.rows.set("key", f.record);
+  f.store.rows.set(`session-owner:${f.record.sessionKey}`, f.record);
+  const calls: string[] = [];
+  const peer: NativePeer = {
+    async request<T>(method: string) {
+      calls.push(method);
+      if (method === "chat.abort") return { aborted: true, runIds: [f.record.runId] } as T;
+      if (method === "rakazo.run.status") return { status: "aborted" } as T;
+      if (method === "rakazo.tools.close") return {} as T;
+      throw Error(`Unexpected dispatch: ${method}`);
+    },
+    stop() {},
+  };
+  expect(await reconcileNativeExecution({ ...f, peer, key: "key", cancel: true })).toBe("cancelled");
+  expect(f.store.rows.get(`session-owner:${f.record.sessionKey}`)?.status).toBe("cancelled");
+  expect(calls).toEqual(["chat.abort", "rakazo.run.status", "rakazo.tools.close"]);
+});
+
+it("settles a restarted invocation and its indexes without replay or claiming success", async () => {
+  const f = fixture(); f.record.toolMode = "kernel"; f.record.status = "unconfirmed";
+  f.record.engineInstanceId = "previous-engine";
+  const key = JSON.stringify(["old-run", 0]);
+  f.store.rows.set(key, f.record);
+  f.store.rows.set(nativeRunIndexKey("old-run"), { ...f.record, executionKey: key });
+  const requests: Array<{ method: string; params: any }> = [];
+  const peer: NativePeer = { stop() {}, async request<T>(method: string, params: any) {
+    requests.push({ method, params });
+    if (method === "rakazo.run.status") return { status: "error", reason: "engine_restarted", error: "Interrupted after engine restart" } as T;
+    if (method === "rakazo.tools.close") return {} as T;
+    throw Error(`Unexpected side effect: ${method}`);
+  } };
+  expect(await reconcileNativeExecution({ key, record: f.record, cancel: false, store: f.store, peer })).toBe("failed");
+  expect(requests[0]?.params).toMatchObject({ startedAt: 1, engineInstanceId: "previous-engine" });
+  expect(f.store.rows.get(key)).toMatchObject({ status: "failed", error: "Interrupted after engine restart" });
+  expect(f.store.rows.get(nativeRunIndexKey("old-run"))?.status).toBe("failed");
+  expect(f.store.rows.get(`session-owner:${f.record.sessionKey}`)?.status).toBe("failed");
+  expect(requests.map(r => r.method)).toEqual(["rakazo.run.status", "rakazo.tools.close"]);
+});
+
+it("does not lock a confirmed-ended invocation forever when its final reply is missing", async () => {
+  const f = fixture(); f.record.toolMode = "kernel";
+  const peer: NativePeer = { stop() {}, async request<T>(method: string) {
+    if (method === "rakazo.run.status") return { status: "ok" } as T;
+    if (method === "rakazo.run.result") return { result: null } as T;
+    if (method === "rakazo.tools.close") return {} as T;
+    throw Error(method);
+  } };
+  expect(await reconcileNativeExecution({ ...f, peer, key: "key", cancel: false })).toBe("failed");
+  expect(f.store.rows.get("key")?.error).toContain("最终回复无法恢复");
+  expect(f.store.rows.get(`session-owner:${f.record.sessionKey}`)?.status).toBe("failed");
+});
+
+describe("explicitly stopping an orphaned native session", () => {
+  it("stops the exact old invocation even after the product run has already failed", async () => {
+    const f = fixture(); f.record.status = "unconfirmed";
+    f.store.rows.set(`session-owner:${f.record.sessionKey}`, { ...f.record, executionKey: "key" });
+    f.store.rows.set("key", f.record);
+    expect(await stopOrphanedNativeSession({ sessionKey: f.record.sessionKey, before: Date.now(), store: f.store, peer: f.peer }))
+      .toBe("cancelled");
+    expect(f.calls).toEqual(["chat.abort", "agent.wait"]);
+    expect(f.store.rows.get("key")?.status).toBe("cancelled");
+  });
+  it("does not stop a replacement invocation that started after the stop request", async () => {
+    const f = fixture();
+    const before = Date.now();
+    f.store.rows.set(`session-owner:${f.record.sessionKey}`, { ...f.record, runId: "replacement", startedAt: before + 1 });
+    expect(await stopOrphanedNativeSession({ sessionKey: f.record.sessionKey, before, store: f.store, peer: f.peer }))
+      .toBeUndefined();
+    expect(f.calls).toEqual([]);
+    expect(f.store.rows.get(`session-owner:${f.record.sessionKey}`)?.runId).toBe("replacement");
+  });
+  it("rejects an execution-key mismatch without cancelling another task", async () => {
+    const f = fixture();
+    f.store.rows.set(`session-owner:${f.record.sessionKey}`, { ...f.record, executionKey: "other-key" });
+    f.store.rows.set("other-key", { ...f.record, runId: "unrelated" });
+    await expect(stopOrphanedNativeSession({ sessionKey: f.record.sessionKey, before: Date.now(), store: f.store, peer: f.peer }))
+      .rejects.toThrow("identity changed");
+    expect(f.calls).toEqual([]);
+  });
+});
+
+it("never downgrades a terminal record when a stale status poll returns inconclusive", async () => {
+  const f = fixture();
+  const peer: NativePeer = { stop() {}, async request<T>() {
+    f.store.rows.set("key", { ...f.record, status: "done", text: "Already recovered" });
+    f.store.rows.set(`session-owner:${f.record.sessionKey}`, { ...f.record, status: "done" });
+    return { status: "running" } as T;
+  } };
+  expect(await reconcileNativeExecution({ ...f, peer, key: "key", cancel: false })).toBe("unconfirmed");
+  expect(f.store.rows.get("key")?.status).toBe("done");
+  expect(f.store.rows.get(`session-owner:${f.record.sessionKey}`)?.status).toBe("done");
+});
+
+
+it("does not release a kernel owner on an abort acknowledgement alone", async () => {
+  const f = fixture();
+  f.record.toolMode = "kernel";
+  f.record.text = "Partial work";
+  const peer: NativePeer = {
+    async request<T>(method: string) {
+      if (method === "chat.abort") return { aborted: true, runIds: [f.record.runId] } as T;
+      if (method === "rakazo.run.status") return { status: "running" } as T;
+      throw Error(`Unexpected mutation: ${method}`);
+    }, stop() {},
+  };
+  expect(await reconcileNativeExecution({ ...f, key: "key", peer, cancel: true, cancelWaitMs: 1 })).toBe("unconfirmed");
+  expect(f.store.rows.get("key")).toEqual(f.record);
+  expect(f.store.rows.get(`session-owner:${f.record.sessionKey}`)?.status).toBe("approval");
 });

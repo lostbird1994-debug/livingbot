@@ -92,7 +92,7 @@ export const Transcript = memo(function Transcript({
   onOpenImportSetup,
 }: {
   scrollRef: RefObject<HTMLDivElement | null>;
-  scrollRequest: { messageId: string; nonce: number } | null;
+  scrollRequest: { messageId: string; nonce: number; alignment?: "start" | "center" } | null;
   onScrollRequestHandled: () => void;
   /** Changes when you send: the view moves to the end and follows the reply. */
   followRequest: number;
@@ -363,7 +363,7 @@ export const Transcript = memo(function Transcript({
     jumpScrollTimer.current = window.setTimeout(endJumpScroll, 2_000);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Streaming layout updates can interrupt a smooth jump before it reaches the row.
-    row.scrollIntoView({ behavior: "auto", block: "center" });
+    row.scrollIntoView({ behavior: "auto", block: scrollRequest.alignment ?? "center" });
     row.animate(
       reducedMotion
         ? [{ backgroundColor: "var(--muted)" }, { backgroundColor: "var(--muted)" }]

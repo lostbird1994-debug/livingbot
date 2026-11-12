@@ -59,6 +59,48 @@ async function run(usage?: object) {
 }
 
 describe("Pi usage accounting", () => {
+  it("records per-call timing and the prepared input without counting reservation time", async () => {
+    const result = await run({ prompt_tokens: 10, completion_tokens: 2, total_tokens: 12 });
+    const event = result.events.find((entry) => entry.type === "usage");
+    expect(event).toMatchObject({
+      modelDurationMs: expect.any(Number),
+      generationDurationMs: expect.any(Number),
+      contextTokens: expect.any(Number),
+      contextWindow: model.contextWindow,
+    });
+    if (event?.type !== "usage") throw new Error("Missing usage");
+    expect(event.modelDurationMs).toBeGreaterThanOrEqual(0);
+    expect(event.generationDurationMs).toBeGreaterThan(0);
+    expect(event.contextTokens).toBeGreaterThan(0);
+  });
+  it("starts timing after reservations and includes reasoning deltas in generation time", async () => {
+    const { result: message } = await run({ prompt_tokens: 10, completion_tokens: 2, total_tokens: 12 });
+    let clock = 0;
+    const now = vi.spyOn(performance, "now").mockImplementation(() => clock);
+    const events: AgentRuntimeEvent[] = [];
+    const models = {
+      streamSimple: () => ({
+        async *[Symbol.asyncIterator]() {
+          clock = 5100;
+          yield { type: "thinking_delta", delta: "fixture", partial: message };
+          clock = 6100;
+          yield { type: "done", reason: "stop", message };
+        },
+        result: async () => message,
+      }),
+    } as unknown as Parameters<typeof observedPiStream>[0];
+    try {
+      const stream = observedPiStream(models, model, { messages: [] }, undefined,
+        (event) => events.push(event), {
+          beforeCall: () => { clock = 5000; return "reservation"; },
+          afterCall: () => { clock = 20000; },
+        });
+      for await (const _event of stream) {}
+      expect(events.find((event) => event.type === "usage")).toMatchObject({
+        modelDurationMs: 1100, generationDurationMs: 1000,
+      });
+    } finally { now.mockRestore(); }
+  });
   it.each([false, true])(
     "acknowledges a producer sink only after successful accounting (fails=%s)",
     async (fails) => {

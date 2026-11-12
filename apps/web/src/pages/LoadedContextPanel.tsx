@@ -2,10 +2,11 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type { Bot } from "@rakazo/contracts";
 import { Button, SectionHeading, Spinner } from "@rakazo/ui-web";
 import { useQuery } from "@tanstack/react-query";
-import { RotateCw } from "lucide-react";
+import { ChevronRight, RotateCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { useSpaceQueries } from "../lib/query";
 import { errorText } from "../lib/user-error";
+import { NativeContextDocument, contextDocumentLabel } from "./NativeContextDocument";
 import { BotRoleCardEditor } from "./BotRoleCardEditor";
 import { KnowledgeSection, LoadedMemoryEditor } from "./KnowledgeSection";
 
@@ -23,10 +24,11 @@ function Content({
   children: ReactNode;
 }) {
   return (
-    <details className="rounded-xl border border-border/70 bg-card px-4 py-3 shadow-xs">
-      <summary className="cursor-pointer text-sm font-medium leading-relaxed text-foreground">
-        {title}
-        {detail ? <span className="ml-2 text-xs text-muted-foreground">{detail}</span> : null}
+    <details className="group/context-document rounded-xl border border-border/70 bg-card px-4 py-3 shadow-xs">
+      <summary className="flex cursor-pointer list-none items-start gap-2 text-sm font-medium leading-relaxed text-foreground [&::-webkit-details-marker]:hidden">
+        <ChevronRight aria-hidden="true" className="mt-1 size-3.5 shrink-0 transition-transform group-open/context-document:rotate-90" />
+        <span className="min-w-0 flex-1 break-words">{title}</span>
+        {detail ? <span className="pt-0.5 text-xs font-normal text-muted-foreground">{detail}</span> : null}
       </summary>
       {children}
     </details>
@@ -67,6 +69,64 @@ export function LoadedContextPanel({
       </div>
     );
   if (!data) return null;
+  if (data.nativeContext) {
+    const native = data.nativeContext;
+    const total = native.documents.reduce((sum, doc) => sum + doc.shownChars, 0);
+    return (
+      <div className="space-y-5" data-testid="loaded-context-panel">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              下次对话加载 · {total.toLocaleString()} / {native.budgets.total.toLocaleString()} 字符
+            </p>
+          </div>
+          <Button variant="ghost" size="icon-sm" disabled={query.isFetching}
+            aria-label={t`Refresh loaded context`} onClick={() => void query.refetch()}>
+            <RotateCw className="size-4" />
+          </Button>
+        </div>
+        {query.isError ? <p role="alert" className="text-xs text-destructive">刷新失败，当前显示上次预览。</p> : null}
+        {(["bot", "user"] as const).map(scope => {
+          const documents = native.documents.filter(doc => doc.scope === scope);
+          if (!documents.length) return null;
+          return (
+            <section key={scope} className="space-y-2">
+              <SectionHeading variant="label">
+                {scope === "bot" ? "Bot 私有上下文" : "工作区共享上下文"}
+              </SectionHeading>
+              <div className="space-y-2">
+                {documents.map(doc => (
+                  <Content key={doc.path} title={contextDocumentLabel(doc.name)}
+                    detail={`${doc.totalChars.toLocaleString()} 字符`}>
+                    <NativeContextDocument botId={botId} document={doc} onSaved={() => query.refetch()} />
+                  </Content>
+                ))}
+                {scope === "bot" ? (
+                  <Content title="待办">
+                    <pre className={textClass}>{data.scratchpad || "暂无待办"}</pre>
+                  </Content>
+                ) : null}
+              </div>
+            </section>
+          );
+        })}
+        {publicProfile ? (
+          <section className="space-y-2" data-testid="bot-collaboration-profile">
+            <SectionHeading variant="label">协作简介</SectionHeading>
+            <div className="rounded-xl border border-border/70 bg-card px-4 py-3 shadow-xs">
+              {publicProfile}
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">其他 Bot 通过这段简介了解你的职责和分工。</p>
+            </div>
+          </section>
+        ) : null}
+        <details className="border-t border-border pt-4">
+          <summary className="cursor-pointer text-sm">按需读取的记忆</summary>
+          <p className="mt-2 text-xs text-muted-foreground">memory/ 中的文档由 Bot 按需检索，不会每轮全文加载。</p>
+          <div className="mt-3"><KnowledgeSection botId={botId} excludePaths={native.documents.filter(doc => doc.scope === "bot").map(doc => doc.name)} /></div>
+        </details>
+      </div>
+    );
+  }
   const loaded = data.memory.documents.filter((doc) => doc.shownChars > 0);
   const onDemand = data.memory.documents.filter((doc) => doc.shownChars < doc.totalChars);
   const shared = loaded
@@ -138,14 +198,6 @@ export function LoadedContextPanel({
                       ? t`Workspace “${spaceName}” · shared by your bots`
                       : t`Current workspace · shared by your bots`}
                 </p>
-                {scope === "user" && data.sharedProfileExcluded ? (
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    <Trans>
-                      Not loaded: workspace-shared USER.md, MEMORY.md and profile.md. This bot has
-                      its own user identity or backstory enabled.
-                    </Trans>
-                  </p>
-                ) : null}
                 {loaded
                   .filter((doc) => doc.scope === scope)
                   .map((doc) => (

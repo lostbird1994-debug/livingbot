@@ -76,9 +76,10 @@ describe("createBackgroundJobHandlers", () => {
     installLogger(createLogger({ service: "rakazo-worker", level: "off", sinks: [] }));
   });
 
-  it("compacts the requested thread with the runtime, job publisher, and model key it was given", async () => {
+  it.each([false, true])("only host-managed sessions run queued legacy compaction (native=%s)", async (workspaceContext) => {
+    vi.mocked(compactHistory).mockClear();
     const prisma = { thread: owned() } as unknown as PrismaClient;
-    const runtime = {} as unknown as AgentRuntime;
+    const runtime = { describe: () => ({ capabilities: { workspaceContext } }) } as unknown as AgentRuntime;
     const jobs = {} as unknown as JobPublisher;
     const secretStore = {} as unknown as EncryptedSecretStore;
     const memoryProviders = { resolve: vi.fn(async () => null) };
@@ -103,6 +104,10 @@ describe("createBackgroundJobHandlers", () => {
 
     await handlers["history.compact"]({ threadId: "thread-1" });
 
+    if (workspaceContext) {
+      expect(compactHistory).not.toHaveBeenCalled();
+      return;
+    }
     expect(compactHistory).toHaveBeenCalledWith(
       {
         prisma,

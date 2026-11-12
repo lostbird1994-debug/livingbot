@@ -57,7 +57,7 @@ describe("loaded bot context preview", () => {
     );
     expect(read).toHaveBeenCalledWith({ scope: "user" }, expect.objectContaining(actor));
   });
-  it("previews saved role modules with the executor's shared-profile exclusions", async () => {
+  it("keeps workspace-shared context after retiring the old role switches", async () => {
     const { deps, findFirst } = fixture();
     findFirst.mockResolvedValue({
       id: "bot",
@@ -69,8 +69,29 @@ describe("loaded bot context preview", () => {
     const result = await loadedBotContext(deps, actor, "bot");
     expect(result.identity).toContain("Librarian");
     expect(result.identity).toContain("Visitor");
-    expect(result.sharedProfileExcluded).toBe(true);
+    expect(result.sharedProfileExcluded).toBe(false);
     expect(result.memory.context).toContain("Private fact");
-    expect(result.memory.context).not.toContain("Shared fact");
+    expect(result.memory.context).toContain("Shared fact");
+  });
+  it("returns the native engine's actual excerpts without assembling a second legacy memory block", async () => {
+    const { deps, read } = fixture();
+    const native = {
+      engine: "openclaw" as const, agentId: "test-agent", workspace: "/synthetic/bot",
+      budgets: { document: 12000, total: 60000 },
+      documents: [
+        { path: "/synthetic/bot/AGENTS.md", name: "AGENTS.md", scope: "bot" as const,
+          content: "instructions", excerpt: "instructions", totalChars: 12, shownChars: 12 },
+        { path: "/synthetic/shared/MEMORY.md", name: "工作区共享/MEMORY.md", scope: "user" as const,
+          content: "long shared memory", excerpt: "short excerpt", totalChars: 18, shownChars: 13 },
+      ],
+    };
+    const preview = vi.fn(async () => native);
+    const result = await loadedBotContext({ ...deps, nativeContextPreview: preview }, actor, "bot");
+    expect(result.nativeContext).toEqual(native);
+    expect(result.identity).toBe("instructions");
+    expect(result.memory.body).toBe("short excerpt");
+    expect(result.budgets.document).toBe(12000);
+    expect(preview).toHaveBeenCalledWith(actor, "bot");
+    expect(read).not.toHaveBeenCalled();
   });
 });

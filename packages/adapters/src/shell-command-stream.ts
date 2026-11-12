@@ -1,7 +1,7 @@
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { ProcessEvent } from "@rakazo/adapter-kit";
 import { redactSecrets } from "@rakazo/core";
 import { redactShellStreams } from "./agent-environment.js";
-import { automated } from "./automated-messages.js";
 import { shortenPlainText } from "./context-selection.js";
 import { TOOL_RESULT_TEXT_LIMIT } from "./pi-runtime-limits.js";
 
@@ -31,6 +31,31 @@ export interface RunningShellCommand extends ShellCommandSnapshot {
 
 export type ShellCommandResult = FinishedShellCommand | RunningShellCommand;
 
+export interface PendingShellCommand {
+  toolCallId: string;
+  completion: Promise<FinishedShellCommand>;
+  initial?: ShellCommandSnapshot;
+  settled?: FinishedShellCommand;
+}
+
+export function pendingShellCommand(
+  toolCallId: string,
+  completion: Promise<FinishedShellCommand>,
+  initial?: ShellCommandSnapshot,
+): PendingShellCommand {
+  const pending: PendingShellCommand = { toolCallId, completion, initial };
+  pending.completion = completion.then(
+    (result) => (pending.settled = result),
+    (error: unknown) =>
+      (pending.settled = {
+        stdout: "",
+        stderr: error instanceof Error ? error.message : "command failed",
+        code: 1,
+      }),
+  );
+  return pending;
+}
+
 export function isRunningShellCommand(result: unknown): result is RunningShellCommand {
   return (
     !!result &&
@@ -41,12 +66,13 @@ export function isRunningShellCommand(result: unknown): result is RunningShellCo
 }
 
 export function formatFinishedShellCommand(result: FinishedShellCommand): string {
-  // Delivered in the user's role after the turn, so marked as automated: models took
-  // finished console output for the user replying.
-  const parts = [automated("Shell command finished."), `exit code: ${result.code}`];
-  if (result.stdout) parts.push(`stdout:\n${keepHeadAndTail(result.stdout)}`);
-  if (result.stderr) parts.push(`stderr:\n${keepHeadAndTail(result.stderr)}`);
-  return parts.join("\n");
+  return JSON.stringify({
+    ...result,
+    stdout: keepHeadAndTail(result.stdout),
+    stderr: keepHeadAndTail(result.stderr),
+    notice:
+      "Final result for this command. Continue the task if needed; do not narrate receipt of old logs or repeat an already delivered conclusion.",
+  });
 }
 
 // Build and install failures print last, so keep the tail as well as the head.
@@ -57,22 +83,44 @@ function keepHeadAndTail(text: string): string {
 }
 
 /**
- * After the turn that first saw a still-running shell, wait for those commands
- * to exit and hand the bot the final output. The turn that received the live
- * output is skipped so the bot can relay a device code before the process ends.
+ * Replace the original tool receipt rather than impersonating a user message.
+ * Already-settled commands drain even while another shell is running. At a final
+ * turn, await the remaining receipts so failures and new output are not lost.
  */
 export async function deliverFinishedShells(
-  followUp: (text: string) => void,
-  pending: Array<Promise<FinishedShellCommand>>,
-  turn: { toolResults: Array<{ toolName?: string; details?: unknown }> },
+  pending: PendingShellCommand[],
+  turn: {
+    context: { messages: AgentMessage[] };
+    toolResults: Array<{ toolName?: string; details?: unknown }>;
+  },
   signal?: AbortSignal,
-): Promise<void> {
-  if (pending.length === 0 || turnReturnedRunningShell(turn)) return;
-  const batch = pending.splice(0, pending.length);
-  const results = await Promise.all(batch.map((completion) => finishOrAbort(completion, signal)));
-  const texts = results.filter((result): result is FinishedShellCommand => result !== undefined);
-  if (texts.length === 0) return;
-  followUp(texts.map((result) => formatFinishedShellCommand(result)).join("\n\n"));
+): Promise<boolean> {
+  if (pending.length === 0 || signal?.aborted) return false;
+  const running = turnReturnedRunningShell(turn);
+  let changed = false;
+  for (const command of [...pending]) {
+    // Do not immediately wait for a login command whose live code was just returned.
+    if (running && !command.settled) continue;
+    const result = command.settled ?? (await finishOrAbort(command.completion, signal));
+    if (!result || signal?.aborted) continue;
+    const receipt = turn.context.messages.find(
+      (message) => message.role === "toolResult" && message.toolCallId === command.toolCallId,
+    );
+    // Leave unmatched receipts pending; they must never become unowned user messages.
+    if (receipt?.role !== "toolResult") continue;
+    const initial =
+      command.initial ?? (isRunningShellCommand(receipt.details) ? receipt.details : undefined);
+    const hasNews =
+      result.code !== 0 ||
+      result.stdout !== (initial?.stdout ?? "") ||
+      result.stderr !== (initial?.stderr ?? "");
+    receipt.content = [{ type: "text", text: formatFinishedShellCommand(result) }];
+    receipt.details = { ...result };
+    receipt.isError = result.code !== 0;
+    pending.splice(pending.indexOf(command), 1);
+    changed ||= hasNews;
+  }
+  return changed;
 }
 
 function turnReturnedRunningShell(turn: {

@@ -1125,6 +1125,8 @@ model Routine {
   timezone       String    @default("UTC")
   active         Boolean   @default(false)
   notify         Boolean   @default(true)
+  /// A scheduled run must produce a user-visible final response to count as complete.
+  requireOutput  Boolean   @default(false)
   /// Restricted memory maintenance, including verified source-backed organization.
   memoryMaintenance Boolean @default(false)
   /// One explicit shared-memory organizer per member and space (partial unique index in SQL).
@@ -1529,6 +1531,10 @@ model UsageRecord {
   pricingVersion     String?
   pricingSnapshot    Json?
   usageSource        String?
+  modelDurationMs    Int?
+  generationDurationMs Int?
+  contextTokens      Int?
+  contextWindow      Int?
   callId             String?  @unique
   operationId        String?
   operationKind      String   @default("answer")
@@ -1538,6 +1544,8 @@ model UsageRecord {
   createdAt          DateTime @default(now())
 
   @@index([spaceId, userId, createdAt])
+  @@index([runId])
+  @@index([parentRunId])
   @@map("usage_records")
 }
 

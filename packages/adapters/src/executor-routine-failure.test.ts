@@ -1,7 +1,7 @@
 import type { NotificationMessage } from "@rakazo/adapter-kit";
 import { ModelAccountError, SandboxRateLimitError, TransientModelError } from "@rakazo/adapter-kit";
 import type * as DbModule from "@rakazo/db";
-import { countUnreadInboxChats } from "@rakazo/db";
+import { countUnreadInboxChats, prioritizeConversation } from "@rakazo/db";
 import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
@@ -17,6 +17,7 @@ vi.mock("./computer-lifecycle.js", async (importOriginal) => ({
 vi.mock("@rakazo/db", async (importOriginal) => ({
   ...(await importOriginal<typeof DbModule>()),
   countUnreadInboxChats: vi.fn(),
+  prioritizeConversation: vi.fn(async () => ({ blocked: false, continuationRunId: null })),
 }));
 
 const NOW = new Date("2026-03-02T09:00:00.000Z");
@@ -97,7 +98,7 @@ async function failRun(scenario: Scenario) {
       })),
     },
     chatGroup: { findMany: vi.fn(async () => []) },
-    event: { count: vi.fn(async () => scenario.toolCalls ?? 0) },
+    event: { count: vi.fn(async () => scenario.toolCalls ?? 0), findMany: vi.fn(async () => []) },
     bot: {
       findUniqueOrThrow: vi.fn(async () => ({
         id: run.botId,
@@ -130,6 +131,7 @@ async function failRun(scenario: Scenario) {
     },
     message: {
       findMany: vi.fn(async () => []),
+      findFirst: vi.fn(async () => null),
       findUnique: vi.fn(async () => null),
       count: vi.fn(async () => scenario.botMessages ?? 0),
     },
@@ -234,6 +236,10 @@ const overloaded = () =>
 
 beforeEach(() => {
   vi.mocked(countUnreadInboxChats).mockReset().mockResolvedValue(0);
+  vi.mocked(prioritizeConversation).mockReset().mockResolvedValue({
+    blocked: false,
+    continuationRunId: null,
+  });
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(NOW);
 });

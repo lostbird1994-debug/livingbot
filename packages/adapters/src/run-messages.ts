@@ -9,6 +9,7 @@ import type { Prisma, RunLease } from "@rakazo/db";
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
+  THREAD_LOCK_TRANSACTION_OPTIONS,
   withTransactionRetry,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
@@ -109,7 +110,7 @@ export async function publishMessage(
         Boolean(stoppedHelper),
         lease,
       );
-    }),
+    }, THREAD_LOCK_TRANSACTION_OPTIONS),
   );
   await deps.events
     .notify(run.threadId, committed.eventSeq, committed.firstResponseRunId)
@@ -121,7 +122,7 @@ export async function publishMessage(
 
 export async function persistMessageInTransaction(
   tx: Prisma.TransactionClient,
-  run: { id: string; spaceId: string; threadId: string; botId: string },
+  run: { id: string; spaceId: string; threadId: string; botId: string; trigger?: string },
   role: "user" | "bot" | "system",
   blocks: MessageBlock[],
   markUnread?: boolean,
@@ -153,6 +154,7 @@ export async function persistMessageInTransaction(
       role,
       blocks: role === "bot" ? expandToolStepNotes(blocks) : blocks,
       callId: callIdFromClientNonce(clientNonce),
+      routine: run.trigger === "routine",
     },
   });
   return {

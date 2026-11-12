@@ -36,6 +36,10 @@ export async function recordUsage(
       ? JSON.parse(JSON.stringify(event.pricingSnapshot))
       : undefined,
     usageSource: event.usageSource ?? null,
+    modelDurationMs: event.modelDurationMs ?? (reconcile ? undefined : null),
+    generationDurationMs: event.generationDurationMs ?? (reconcile ? undefined : null),
+    contextTokens: event.contextTokens ?? (reconcile ? undefined : null),
+    contextWindow: event.contextWindow ?? (reconcile ? undefined : null),
   };
   const data = {
     provider: event.provider,

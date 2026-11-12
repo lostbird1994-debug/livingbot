@@ -49,7 +49,7 @@ import {
 import { DESKTOP_HELD_FOR_TAKEOVER_MESSAGE } from "./takeover-resume.js";
 import { getActiveTeachingSession } from "./teaching-session.js";
 
-function appendComputerCommand(ctx: RunContext, payload: ComputerCommand) {
+export function appendComputerCommand(ctx: RunContext, payload: ComputerCommand) {
   const { deps, run, runId, bot, thread } = ctx;
   return (
     deps.events
@@ -306,21 +306,27 @@ export const computerTools: ToolHandlers = {
     try {
       let latestOutput = "";
       let lastPublishedAt = 0;
+      let publishChain = Promise.resolve();
+      let commandFinished = false;
       let publishTimer: ReturnType<typeof setTimeout> | undefined;
       const clearPublishTimer = () => {
         if (publishTimer) clearTimeout(publishTimer);
         publishTimer = undefined;
       };
       const publishRunning = (output: string, immediate = false) => {
+        if (commandFinished) return;
         latestOutput = output.slice(-COMPUTER_COMMAND_OUTPUT_MAX_CHARS);
         const send = () => {
           clearPublishTimer();
           lastPublishedAt = Date.now();
-          void appendComputerCommand(ctx, {
+          const snapshot = {
             ...commandEvent,
-            status: "running",
+            status: "running" as const,
             exitCode: null,
             output: latestOutput,
+          };
+          publishChain = publishChain.then(async () => {
+            await appendComputerCommand(ctx, snapshot);
           });
         };
         if (immediate || Date.now() - lastPublishedAt >= 400) {
@@ -375,18 +381,34 @@ export const computerTools: ToolHandlers = {
             if (output) publishRunning(output);
           },
         },
-      );
+      ).catch(async (error: unknown) => {
+        commandFinished = true;
+        clearPublishTimer();
+        await publishChain;
+        throw error;
+      });
       if (observed.completion) {
-        const completion = observed.completion.then(async (final) => {
-          clearPublishTimer();
-          await appendComputerCommand(ctx, {
-            ...commandEvent,
-            status: "done",
-            exitCode: final.code,
-            output: commandOutput(final, false).slice(-COMPUTER_COMMAND_OUTPUT_MAX_CHARS),
+        const completion = observed.completion
+          .catch((error: unknown) => ({
+            stdout: "",
+            stderr: redactSecrets(
+              error instanceof Error ? error.message : "command failed",
+              ctx.secrets,
+            ),
+            code: 1,
+          }))
+          .then(async (final) => {
+            commandFinished = true;
+            clearPublishTimer();
+            await publishChain;
+            await appendComputerCommand(ctx, {
+              ...commandEvent,
+              status: "done",
+              exitCode: final.code,
+              output: commandOutput(final, false).slice(-COMPUTER_COMMAND_OUTPUT_MAX_CHARS),
+            });
+            return final;
           });
-          return final;
-        });
         void completion.catch(() => undefined);
         publishRunning(commandOutput(observed.result, true), true);
         const returned = await call.finish({
@@ -396,10 +418,13 @@ export const computerTools: ToolHandlers = {
           running: true,
           notice: SHELL_STILL_RUNNING_NOTICE,
         });
-        if (isRunningShellCommand(returned)) observer?.onShellStillRunning?.(completion);
+        if (isRunningShellCommand(returned))
+          observer?.onShellStillRunning?.(completion, observed.result);
         return returned;
       }
       clearPublishTimer();
+      commandFinished = true;
+      await publishChain;
       const redacted = observed.result;
       await appendComputerCommand(ctx, {
         ...commandEvent,

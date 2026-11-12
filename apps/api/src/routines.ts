@@ -48,6 +48,7 @@ export function routineRowData(actor: Actor, input: CreateRoutineInput, nextRunA
     crons: input.crons,
     timezone: input.timezone,
     notify: input.notify,
+    requireOutput: input.requireOutput,
     active: input.active,
     webhookEnabled: input.webhookEnabled,
     githubEnabled: input.githubEnabled,
@@ -85,6 +86,7 @@ export function mapRoutine(row: {
   timezone: string;
   active: boolean;
   notify: boolean;
+  requireOutput: boolean;
   webhookEnabled: boolean;
   githubEnabled: boolean;
   messageProvider: string | null;
@@ -106,6 +108,7 @@ export function mapRoutine(row: {
     timezone: row.timezone,
     active: row.active,
     notify: row.notify,
+    requireOutput: row.requireOutput,
     webhookEnabled: row.webhookEnabled,
     githubEnabled: row.githubEnabled,
     messageProvider: row.messageProvider,

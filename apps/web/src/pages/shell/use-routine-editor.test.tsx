@@ -20,6 +20,7 @@ const routine: Routine = {
   timezone: "UTC",
   active: true,
   notify: true,
+  requireOutput: false,
   webhookEnabled: false,
   githubEnabled: false,
   messageProvider: null,

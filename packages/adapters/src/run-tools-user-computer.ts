@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { AgentToolExecutionResult, ProcessEvent } from "@rakazo/adapter-kit";
+import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@rakazo/contracts";
 import { redactSecrets, sandboxCommandTimeoutMs } from "@rakazo/core";
 import { z } from "zod";
 import type { HostComputerEnvironment } from "./host-computer-protocol.js";
@@ -12,6 +13,7 @@ import { HOST_SCREEN_MAX_ACTIONS, hostScreenAction } from "./host-screen.js";
 import { nativeShellCommandArgv } from "./native-shell.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolCall } from "./run-tool-gate.js";
+import { appendComputerCommand } from "./run-tools-computer.js";
 import {
   isRunningShellCommand,
   observeShellCommand,
@@ -156,7 +158,18 @@ export async function userComputerShell(ctx: RunContext, call: ToolCall) {
   const { owner, devices, deviceId } = connected;
   const { signal } = ctx.context;
   const command = String(call.args.command ?? "");
+  const record = (result: { stdout: string; stderr: string; code: number | null }) =>
+    appendComputerCommand(ctx, {
+      executionId: call.executionId,
+      kind: "shell",
+      command: redactSecrets(command, ctx.secrets),
+      cwd: redactSecrets(String(call.args.cwd ?? "."), ctx.secrets),
+      status: result.code === null ? "running" : "done",
+      exitCode: result.code,
+      output: `${result.stdout}${result.stderr}`.slice(-COMPUTER_COMMAND_OUTPUT_MAX_CHARS),
+    });
   try {
+    await record({ stdout: "", stderr: "", code: null });
     // The device only executes for a provisioned bot; provisioning is idempotent.
     await lastValue(
       devices.request(owner, { method: "provision", botId: bot.id, runId }, signal, deviceId),
@@ -187,10 +200,32 @@ export async function userComputerShell(ctx: RunContext, call: ToolCall) {
       ),
       { secrets: ctx.secrets },
     );
-    if (!observed.completion) return call.finish(observed.result);
-    void observed.completion.catch(() => undefined);
+    if (!observed.completion) {
+      await record(observed.result);
+      return call.finish(observed.result);
+    }
+    await record(observed.result);
+    const completion = observed.completion.then(
+      async (final) => {
+        await record(final);
+        return final;
+      },
+      async (error: unknown) => {
+        const final = {
+          stdout: "",
+          stderr: redactSecrets(
+            error instanceof Error ? error.message : "command failed",
+            ctx.secrets,
+          ),
+          code: 1,
+        };
+        await record(final);
+        return final;
+      },
+    );
     const returned = await call.finish({ ...observed.result, notice: SHELL_STILL_RUNNING_NOTICE });
-    if (isRunningShellCommand(returned)) call.observer?.onShellStillRunning?.(observed.completion);
+    if (isRunningShellCommand(returned))
+      call.observer?.onShellStillRunning?.(completion, observed.result);
     return returned;
   } catch (error) {
     if (signal.aborted) throw error;
@@ -198,6 +233,7 @@ export async function userComputerShell(ctx: RunContext, call: ToolCall) {
       error instanceof Error ? error.message : "command failed",
       ctx.secrets,
     );
+    await record({ stdout: "", stderr: reason, code: 1 });
     return call.finish({ error: `The user's computer did not finish the command: ${reason}` });
   }
 }

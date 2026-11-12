@@ -367,6 +367,8 @@ export function observedPiStream(
       let partialMessage: AssistantMessage | undefined;
       let providerError: unknown;
       let providerThrew = false;
+      let requestStartedAt: number | undefined;
+      let firstContentAt: number | undefined;
       try {
         // A tool-budget or cancellation stop can reach Pi's next-turn hook after
         // aborting. It is not a model invocation and must not create unknown usage.
@@ -375,9 +377,7 @@ export function observedPiStream(
         const cacheRetention = resolvePiCacheRetention(model, options?.cacheRetention);
         const preparedContext = hooks?.prepareContext?.(context, model) ?? context;
         recordPiTelemetryContent(span, "pi.ai.prompt", preparedContext);
-        const inputTokensEstimate = observer
-          ? estimateModelContextTokens(preparedContext, hooks?.imageTokens)
-          : 0;
+        const inputTokensEstimate = estimateModelContextTokens(preparedContext, hooks?.imageTokens);
         const cacheWriteRetention = requestedPiCacheWriteRetention(model, cacheRetention);
         reservation = observer
           ? await observer.beforeCall({
@@ -416,6 +416,7 @@ export function observedPiStream(
           const reportRequestId = (id: string) =>
             reservation !== undefined ? observer?.onRequestId?.(reservation, id) : undefined;
           const callerOnProviderStreamEvent = streamOptions?.onProviderStreamEvent;
+          requestStartedAt = performance.now();
           upstream = models.streamSimple(
             model,
             preparedContext,
@@ -458,6 +459,15 @@ export function observedPiStream(
             })()
           : upstream;
         for await (const event of events) {
+          if (
+            firstContentAt === undefined &&
+            (event.type === "text_delta" ||
+              event.type === "thinking_delta" ||
+              event.type === "toolcall_delta") &&
+            event.delta.length > 0
+          ) {
+            firstContentAt = performance.now();
+          }
           if (hooks?.onProviderError) {
             partialMessage =
               event.type === "done"
@@ -469,6 +479,15 @@ export function observedPiStream(
           if (event.type === "done" || event.type === "error") {
             const message = event.type === "done" ? event.message : event.error;
             normalized = normalizePiUsage(message.usage, model, reported);
+            const endedAt = performance.now();
+            normalized.modelDurationMs =
+              requestStartedAt === undefined ? null : Math.round(endedAt - requestStartedAt);
+            normalized.generationDurationMs =
+              event.type === "done" && firstContentAt !== undefined
+                ? Math.max(1, Math.round(endedAt - firstContentAt))
+                : null;
+            normalized.contextTokens = inputTokensEstimate;
+            normalized.contextWindow = model.contextWindow;
             span?.setAttributes({
               "pi.ai.response.stop_reason": message.stopReason,
               "pi.ai.usage.input_tokens": normalized.inputTokens ?? undefined,

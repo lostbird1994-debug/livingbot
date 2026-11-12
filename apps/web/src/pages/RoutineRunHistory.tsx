@@ -89,7 +89,7 @@ function RunRow({ run }: { run: RoutineRun }) {
       {run.status !== "completed" ? (
         <span className={`ml-auto ${statusTone(run.status)}`}>{statusLabel(run.status)}</span>
       ) : chatTo ? null : (
-        <span className="ml-auto">{t`No reply`}</span>
+        <span className="ml-auto">{t`Finished, no update`}</span>
       )}
       {chatTo ? (
         <ChevronRight

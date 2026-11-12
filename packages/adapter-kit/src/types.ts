@@ -225,6 +225,7 @@ export interface AgentToolExecutionObserver {
    */
   onShellStillRunning?: (
     completion: Promise<{ stdout: string; stderr: string; code: number }>,
+    initial?: { stdout: string; stderr: string },
   ) => void;
 }
 
@@ -550,6 +551,10 @@ export interface AgentRunRequest {
   /** Server verified legacy attachment bytes remain available to file tools. */
   currentTurnImageFileFallback?: boolean;
   tools: ConnectorTool[];
+  /** Trusted host boundary for channels that must not inherit the private app conversation. */
+  conversationScope?: string;
+  /** External messaging runs must not receive private user profiles or memory. */
+  privateContextAllowed?: boolean;
   model: AgentRunModel;
   /** Ordered, user-selected models eligible after provider unavailability. */
   fallbackModels?: Array<Pick<AgentRunModel, "provider" | "id" | "connectionId">>;
@@ -576,6 +581,8 @@ export interface AgentRunRequest {
    * When set, skip synthetic empty-turn fallbacks (including after tools).
    */
   allowSilentEmpty?: boolean;
+  /** Require a final user-visible response; an empty or silent-only turn is an output failure. */
+  requireFinalResponse?: boolean;
   /** Contextual fallback when a non-silent run produces no written response. */
   emptyResponseText?: string;
   executeTool?: (
@@ -619,6 +626,13 @@ export interface AgentUsage {
   pricingVersion?: string | null;
   pricingSnapshot?: Record<string, unknown> | null;
   usageSource?: string | null;
+  /** Model request timing; excludes tool execution and approval waits. */
+  modelDurationMs?: number | null;
+  /** First generated content delta through terminal event; absent for buffered bridges. */
+  generationDurationMs?: number | null;
+  /** Prepared input estimate and effective window for this particular model call. */
+  contextTokens?: number | null;
+  contextWindow?: number | null;
 }
 
 export type UsageOperationKind = "answer" | "setup" | "retrieval" | "subagent" | "compaction";
@@ -705,6 +719,8 @@ export interface AgentRuntimeCapabilities {
   compaction: boolean;
   tools: boolean;
   scripted: boolean;
+  /** Stable identity and memory are loaded by the engine from its workspace files. */
+  workspaceContext?: boolean;
 }
 
 export interface VoiceInfo {

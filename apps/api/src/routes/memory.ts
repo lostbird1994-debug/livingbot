@@ -19,8 +19,45 @@ import type { RouterContext } from "./context.js";
 
 export function memoryRoutes(ctx: RouterContext) {
   const { deps, repos, taughtSkills, agentSkills, authed } = ctx;
+  const liveDocuments = async (
+    actor: { spaceId: string; userId: string },
+    input: { botId?: string; scope?: "bot" | "user" },
+    signal?: AbortSignal,
+  ) => {
+    const bots = input.scope === "user" ? [] : await deps.prisma.bot.findMany({
+      where: { spaceId: actor.spaceId, userId: actor.userId, ...(input.botId ? { id: input.botId } : {}) },
+      select: { id: true },
+    });
+    if (input.botId && input.scope !== "user" && !bots.length) throw new IsolationError();
+    const scopes = [
+      ...bots.map(bot => ({ scope: "bot" as const, botId: bot.id })),
+      ...((!input.botId || input.scope === "user") && input.scope !== "bot"
+        ? [{ scope: "user" as const, botId: undefined }] : []),
+    ];
+    const snapshots = await Promise.all(scopes.map(async request => {
+      const snapshot = await deps.memory.read(request, {
+        ...actor, signal: signal ?? new AbortController().signal,
+        operationId: "memory-list", traceId: "memory-list",
+      });
+      return snapshot.documents.map(doc => ({
+        ...doc, scope: request.scope, botId: request.botId ?? null,
+        updatedAt: doc.updatedAt ?? new Date().toISOString(),
+      }));
+    }));
+    return snapshots.flat();
+  };
   return {
     memory: {
+      updateContextDocument: authed.memory.updateContextDocument.handler(async ({ context, input }) => {
+        if (!deps.botWorkspace?.updateDocument) throw new ORPCError("BAD_REQUEST", { message: "Native context editing is unavailable" });
+        try { await deps.botWorkspace.updateDocument(context.actor, input); }
+        catch (error) {
+          if (error instanceof Error && error.message === MEMORY_REVISION_CONFLICT_ERROR)
+            throw new ORPCError("CONFLICT", { message: "文档已在其他位置修改，请重新读取后再保存。" });
+          throw error;
+        }
+        return { ok: true as const };
+      }),
       loadedContext: authed.memory.loadedContext.handler(async ({ context, input }) =>
         loadedBotContext(deps, context.actor, input.botId, context.signal),
       ),
@@ -34,6 +71,8 @@ export function memoryRoutes(ctx: RouterContext) {
         memoryOrganizationDiary(deps.prisma, context.actor, input.routineId, input.before),
       ),
       list: authed.memory.list.handler(async ({ context, input }) => {
+        if (deps.memory.describe().id === "openclaw-workspace")
+          return liveDocuments(context.actor, input, context.signal);
         const docs = await deps.prisma.memoryDocument.findMany({
           where: {
             spaceId: context.actor.spaceId,
@@ -214,6 +253,10 @@ export function memoryRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       exportMarkdown: authed.memory.exportMarkdown.handler(async ({ context, input }) => {
+        if (deps.memory.describe().id === "openclaw-workspace") {
+          const docs = await liveDocuments(context.actor, input, context.signal);
+          return docs.map(doc => `# ${doc.path}\n\n${doc.content}`).join("\n\n");
+        }
         const docs = await deps.prisma.memoryDocument.findMany({
           where: {
             spaceId: context.actor.spaceId,

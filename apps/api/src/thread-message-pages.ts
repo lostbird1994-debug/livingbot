@@ -60,7 +60,7 @@ export async function loadMessagePage(
       const messages = includePeerRuns ? rows : await withoutPeerRunMessages(prisma, rows);
       return {
         threadId,
-        messages: messages.map(toThreadMessage),
+        messages: await markRoutineReplies(prisma, messages.map(toThreadMessage)),
         olderCursor: hasOlder ? (first?.seq ?? null) : null,
         coveredThroughSeq,
       };
@@ -89,7 +89,7 @@ export async function loadMessagePage(
     if (hasSubstantive || includePeerReceipts || !hasOlder || includePeerRuns) {
       return {
         threadId,
-        messages: visibleRows.map(toThreadMessage),
+        messages: await markRoutineReplies(prisma, visibleRows.map(toThreadMessage)),
         olderCursor: hasOlder ? (pageRows[0]?.seq ?? null) : null,
       };
     }
@@ -296,4 +296,23 @@ function toThreadMessage(row: {
     callId: callIdFromClientNonce(row.clientNonce),
     createdAt: row.createdAt.toISOString(),
   };
+}
+
+async function markRoutineReplies(
+  prisma: MessageDb,
+  messages: ThreadMessage[],
+): Promise<ThreadMessage[]> {
+  const runIds = [
+    ...new Set(messages.flatMap((message) => (message.runId ? [message.runId] : []))),
+  ];
+  if (!runIds.length) return messages;
+  const runs = await prisma.run.findMany({
+    where: { id: { in: runIds }, trigger: "routine" },
+    select: { id: true, trigger: true },
+  });
+  const routineIds = new Set(runs.filter((run) => run.trigger === "routine").map((run) => run.id));
+  return messages.map((message) => ({
+    ...message,
+    routine: !!message.runId && routineIds.has(message.runId),
+  }));
 }

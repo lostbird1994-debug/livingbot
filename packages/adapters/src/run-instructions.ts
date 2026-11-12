@@ -446,10 +446,9 @@ export function runIdentityInstruction(
   const role = [
     card.identity.trim() ? `Bot identity:\n${card.identity}` : "",
     card.personality.trim() ? `Personality:\n${card.personality}` : "",
-    card.userIdentityEnabled && card.userIdentity.trim()
+    card.userIdentity.trim()
       ? `User identity for this bot:\n${card.userIdentity}`
       : "",
-    card.backstoryEnabled && card.backstory.trim() ? `Backstory:\n${card.backstory}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");

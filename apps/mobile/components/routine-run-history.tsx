@@ -103,7 +103,7 @@ function RunRow({
           ? activityStatusLabel(run.status)
           : run.messageId
             ? undefined
-            : t("No reply")
+            : t("Finished, no update")
       }
       chevron={onPress ? "right" : undefined}
       onPress={onPress}

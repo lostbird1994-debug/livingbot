@@ -1,4 +1,5 @@
 import type {
+  AdapterContext,
   AgentContextStrategy,
   AgentHomeStore,
   AgentRuntime,
@@ -23,6 +24,8 @@ import type { CodexLiveCatalog } from "./pi-codex-catalog.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";
 import type { TicketChangeNotifier } from "./ticket-changes.js";
 import type { UserDeviceGateway } from "./user-device-protocol.js";
+import type { BotWorkspaceProfiles } from "./openclaw-workspace-profile.js";
+import type { NativePeer, NativeStore } from "./openclaw-native-driver.js";
 
 export interface ExecutorDeps {
   maxUploadSizeBytes?: number;
@@ -32,6 +35,14 @@ export interface ExecutorDeps {
   runtime: AgentRuntime;
   sandbox: SandboxProvider;
   memory: MemoryStore;
+  botWorkspace?: BotWorkspaceProfiles;
+  nativeWorkspaceFile?: (
+    botId: string, filePath: string, maxBytes: number, context: AdapterContext,
+  ) => Promise<Uint8Array>;
+  nativeExecution?: {
+    store: NativeStore;
+    connect(run: { botId: string; spaceId: string; userId: string }): Promise<NativePeer>;
+  };
   memoryProviders: MemoryProviderResolver;
   home: AgentHomeStore;
   artifacts?: ArtifactStore;

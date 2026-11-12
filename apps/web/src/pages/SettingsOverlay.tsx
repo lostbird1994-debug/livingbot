@@ -354,7 +354,7 @@ function BotPages({
             <>
               <BotPageStatus bot={bot} page={page} />
               <BotSettings
-                key={`${bot.id}:${page}`}
+                key={bot.id}
                 page={page}
                 bot={bot}
                 memoryProviderConfigured={memoryQuery.data != null}

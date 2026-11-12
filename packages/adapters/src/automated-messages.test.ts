@@ -69,7 +69,7 @@ describe("automated messages are labelled as not from the user", () => {
     expect(await plain.onPayload?.({ messages: [] }, undefined as never)).toBeUndefined();
   });
 
-  it("marks Rakazo's continue nudges and finished shell output, and lets the bot ask the user", () => {
+  it("marks Rakazo's continue nudges as automated, and lets the bot ask the user", () => {
     for (const prompt of [
       SILENT_TOOL_CONTINUATION_PROMPT,
       SILENT_ALLOWED_TOOL_CONTINUATION_PROMPT,
@@ -82,8 +82,7 @@ describe("automated messages are labelled as not from the user", () => {
       "stay silent when there is nothing to report",
     );
     const shell = formatFinishedShellCommand({ code: 0, stdout: "done", stderr: "" });
-    expect(shell.startsWith(`${AUTOMATED_MESSAGE_LABEL} Shell command finished.`)).toBe(true);
-    expect(shell).toContain("stdout:\ndone");
+    expect(JSON.parse(shell)).toMatchObject({ code: 0, stdout: "done", stderr: "" });
   });
 
   describe("end to end through the model library", () => {

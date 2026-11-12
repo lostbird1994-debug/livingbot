@@ -76,6 +76,7 @@ import { observedPiStream } from "./pi-usage.js";
 import type { RuntimeContextDecision } from "./runtime-context.js";
 import { createRuntimeContextPolicy } from "./runtime-context.js";
 import { deliverFinishedShells } from "./shell-command-stream.js";
+import { isExactNoResponse } from "./silent-reply.js";
 import {
   restoreTurnCheckpoint,
   serializeTurnCheckpoint,
@@ -483,18 +484,9 @@ export class PiAgentRuntime implements AgentRuntime {
             ? async () => activeStreamTarget.credentials?.accessToken ?? activeStreamTarget.apiKey
             : async () => apiKey,
           finishTurn: async (turn, turnSignal) => {
-            await deliverFinishedShells(
-              (text) => {
-                agent.followUp({
-                  role: "user",
-                  content: text,
-                  timestamp: Date.now(),
-                });
-              },
-              host.pendingShells,
-              turn,
-              turnSignal,
-            );
+            if (host.pausePending) return;
+            const changed = await deliverFinishedShells(host.pendingShells, turn, turnSignal);
+            if (changed) return { action: "continue" };
           },
           prepareNextTurnWithContext: async () => {
             if (!request.claimSteering) return undefined;
@@ -698,7 +690,10 @@ export class PiAgentRuntime implements AgentRuntime {
               streamedBeforePendingFinal = streamed.length;
             } else if (toolWorkPendingFinal && !hasToolCalls && !hasToolResults) {
               const streamedFinal = streamed.slice(streamedBeforePendingFinal).trim();
-              if (messageText.trim() || streamedFinal) {
+              const finalText = messageText.trim() || streamedFinal;
+              const hasRequiredFinal =
+                !request.requireFinalResponse || !isExactNoResponse(finalText);
+              if (finalText && hasRequiredFinal) {
                 toolWorkPendingFinal = false;
                 silentToolContinuations = 0;
                 // A provider can put the answer only on the completed message after
@@ -712,7 +707,8 @@ export class PiAgentRuntime implements AgentRuntime {
                 // another model turn that would hide the error.
                 !providerFailureText(event.message) &&
                 !host.pausePending &&
-                silentToolContinuations < MAX_SILENT_TOOL_CONTINUATIONS
+                silentToolContinuations <
+                  (request.requireFinalResponse ? 1 : MAX_SILENT_TOOL_CONTINUATIONS)
               ) {
                 silentToolContinuations += 1;
                 agent.followUp({
@@ -995,6 +991,9 @@ export class PiAgentRuntime implements AgentRuntime {
           } else if (toolWorkPendingFinal && !request.allowSilentEmpty) {
             throw new ModelOutputError(MISSING_TOOL_FINAL_RESPONSE_ERROR);
           } else if (toolCalls === 0 && !request.allowSilentEmpty) {
+            if (request.requireFinalResponse) {
+              throw new ModelOutputError(MISSING_TOOL_FINAL_RESPONSE_ERROR);
+            }
             streamed = request.emptyResponseText?.trim() || "No response. Try again.";
             queue.push({ type: "text", text: streamed });
           }

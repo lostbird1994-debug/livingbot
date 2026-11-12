@@ -60,6 +60,13 @@ export async function applyTool(
   observer?: AgentToolExecutionObserver,
 ) {
   try {
+    if (ctx.deps.botWorkspace && name === "update_bot") {
+      const target = typeof args.bot_id === "string" && args.bot_id ? args.bot_id : ctx.bot.id;
+      return await ctx.deps.botWorkspace.edit(
+        { spaceId: ctx.run.spaceId, userId: ctx.run.userId }, target,
+        () => dispatchTool(ctx, name, args, executionId, observer),
+      );
+    }
     return await dispatchTool(ctx, name, args, executionId, observer);
   } finally {
     // Editing its own profile returns only what this run wrote; a child's profile is another bot's.

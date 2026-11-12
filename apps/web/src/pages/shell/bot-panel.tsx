@@ -579,8 +579,7 @@ export function BotSettings({
     </div>
   );
 
-  const descriptionField = (
-    <SettingsGroup label={t`How other bots see it`} plain>
+  const descriptionInput = (
       <Textarea
         id={`${ids}-description`}
         aria-label={t`How other bots see it`}
@@ -592,8 +591,8 @@ export function BotSettings({
         rows={2}
         className="min-h-16 resize-none field-sizing-content"
       />
-    </SettingsGroup>
   );
+  const descriptionField = <SettingsGroup label={t`How other bots see it`} plain>{descriptionInput}</SettingsGroup>;
 
   const modelSection = (
     <div ref={modelRef}>
@@ -918,7 +917,6 @@ export function BotSettings({
             {descriptionField}
             {appearanceSection}
             <InstructionSettings key={bot.id} bot={bot} />
-            {saveButton}
           </>
         ) : null}
         {page === "model" ? modelSection : null}
@@ -939,6 +937,7 @@ export function BotSettings({
             {toolsGroup}
           </div>
         ) : null}
+        {saveButton}
         {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
       </div>
     );
@@ -952,7 +951,7 @@ export function BotSettings({
           {profileHeader}
           <TabsList className="w-full rounded-xl bg-muted/60 p-1 [&>button]:transition-none">
             <TabsTrigger value="computer" data-testid="bot-panel-tab-computer">
-              <Trans>Files</Trans>
+              <Trans>Workspace files</Trans>
             </TabsTrigger>
             <TabsTrigger value="loaded" data-testid="bot-panel-tab-loaded">
               <Trans>Context</Trans>
@@ -995,7 +994,7 @@ export function BotSettings({
                   spaceName={spaceName}
                   bot={bot}
                   active={tab === "loaded"}
-                  publicProfile={descriptionField}
+                  publicProfile={descriptionInput}
                 />
               </Suspense>
             </ErrorBoundary>

@@ -1,8 +1,8 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ORPCError } from "@orpc/client";
 import type { Bot, BotRoleCard } from "@rakazo/contracts";
-import { BOT_ROLE_TEXT_MAX_LENGTH, botRoleCard, excludesSharedProfile } from "@rakazo/contracts";
-import { Button, Disclosure, SectionHeading, Switch, Textarea } from "@rakazo/ui-web";
+import { BOT_ROLE_TEXT_MAX_LENGTH, botRoleCard } from "@rakazo/contracts";
+import { Button, Disclosure, SectionHeading, Textarea } from "@rakazo/ui-web";
 import type { ReactNode } from "react";
 import { useId, useState } from "react";
 import { InstructionSettings } from "../components/InstructionSettings";
@@ -28,6 +28,7 @@ export function BotRoleCardEditor({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [conflict, setConflict] = useState(false);
+  const [openFields, setOpenFields] = useState<Record<string, boolean>>({});
   const [seenInstructions, setSeenInstructions] = useState(bot.instructions);
   const [instructionPreview, setInstructionPreview] = useState(bot.instructions);
   if (seenInstructions !== bot.instructions) {
@@ -46,18 +47,7 @@ export function BotRoleCardEditor({
   const fields = [
     { key: "identity", title: t`Identity` },
     { key: "personality", title: t`Personality` },
-    {
-      key: "userIdentity",
-      title: t`User identity`,
-      toggle: "userIdentityEnabled",
-      switchLabel: t`Enable user identity`,
-    },
-    {
-      key: "backstory",
-      title: t`Backstory`,
-      toggle: "backstoryEnabled",
-      switchLabel: t`Enable backstory`,
-    },
+    { key: "userIdentity", title: t`User identity` },
   ] as const;
   function set<K extends keyof BotRoleCard>(key: K, value: BotRoleCard[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -92,6 +82,10 @@ export function BotRoleCardEditor({
         <div key={field.key}>
           <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-card px-4 shadow-xs">
             <Disclosure
+              open={openFields[field.key] ?? false}
+              onOpenChange={(open) =>
+                setOpenFields((current) => ({ ...current, [field.key]: open }))
+              }
               className="min-w-0 flex-1"
               summaryClassName="w-full justify-between py-3 text-sm"
               contentClassName="pb-3"
@@ -100,14 +94,12 @@ export function BotRoleCardEditor({
                   <span className="flex flex-wrap items-center gap-x-2">
                     <span className="font-medium">{field.title}</span>
                     <span className="text-xs font-normal text-muted-foreground">
-                      {"toggle" in field && !draft[field.toggle]
-                        ? t`Not loaded · disabled`
-                        : !draft[field.key].trim()
+                      {!draft[field.key].trim()
                           ? t`Not filled in`
                           : null}
                     </span>
                   </span>
-                  {draft[field.key].trim() ? (
+                  {!openFields[field.key] && draft[field.key].trim() ? (
                     <span className="mt-1 line-clamp-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground group-data-panel-open/disclosure:hidden">
                       {draft[field.key]}
                     </span>
@@ -126,18 +118,13 @@ export function BotRoleCardEditor({
                 onChange={(event) => set(field.key, event.target.value)}
               />
             </Disclosure>
-            {"toggle" in field ? (
-              <Switch
-                className="mt-3 shrink-0"
-                aria-label={field.switchLabel}
-                checked={draft[field.toggle]}
-                disabled={pending}
-                onCheckedChange={(checked) => set(field.toggle, checked)}
-              />
-            ) : null}
           </div>
           {field.key === "identity" ? (
             <Disclosure
+              open={openFields.instructions ?? false}
+              onOpenChange={(open) =>
+                setOpenFields((current) => ({ ...current, instructions: open }))
+              }
               className="mt-2 rounded-xl border border-border/70 bg-card px-4 shadow-xs"
               summaryClassName="w-full justify-between py-3 text-sm"
               contentClassName="pb-3"
@@ -146,9 +133,11 @@ export function BotRoleCardEditor({
                   <span className="block font-medium">
                     <Trans>Instructions</Trans>
                   </span>
-                  <span className="mt-1 line-clamp-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground group-data-panel-open/disclosure:hidden">
-                    {instructionPreview.trim() || t`Not filled in`}
-                  </span>
+                  {!openFields.instructions ? (
+                    <span className="mt-1 line-clamp-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">
+                      {instructionPreview.trim() || t`Not filled in`}
+                    </span>
+                  ) : null}
                 </span>
               }
             >
@@ -164,25 +153,6 @@ export function BotRoleCardEditor({
           ) : null}
         </div>
       ))}
-      {excludesSharedProfile(draft) ? (
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          <Trans>
-            After saving, workspace-shared USER.md, MEMORY.md and profile.md will not load
-            automatically. This bot's own memory stays available.
-          </Trans>
-        </p>
-      ) : (
-        <Disclosure
-          summary={<Trans>Shared profile loading rules</Trans>}
-          summaryClassName="text-xs text-muted-foreground"
-          contentClassName="pt-2 text-xs leading-relaxed text-muted-foreground"
-        >
-          <Trans>
-            User identity and backstory load only when their switches are on. Both off:
-            workspace-shared profiles load as usual.
-          </Trans>
-        </Disclosure>
-      )}
       {dirty || conflict ? (
         <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 bg-background py-2">
           {dirty ? (

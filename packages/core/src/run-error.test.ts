@@ -866,3 +866,18 @@ describe("the one action that fixes a failed run", () => {
     },
   );
 });
+
+describe("local execution failures", () => {
+  it("identifies local permissions without suggesting model or API key changes", () => {
+    expect(normalizeRunError("missing scope: operator.admin")).toEqual({
+      summary: "The local engine connection lacks required permissions.",
+      details: "missing scope: operator.admin",
+    });
+  });
+  it("explains the unresolved session without suggesting a blind retry", () => {
+    const details = "An earlier task in this native session is unresolved; inspect it before submitting another task";
+    expect(normalizeRunError(details)).toEqual({
+      summary: "The previous task is unresolved. Check its status before continuing.", details,
+    });
+  });
+});

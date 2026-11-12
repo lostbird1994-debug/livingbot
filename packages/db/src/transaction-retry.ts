@@ -1,3 +1,7 @@
+/** Thread snapshots may hold their row lock for 15s. Keep action writes alive while waiting,
+ * without overriding the database client's connection-acquisition budget. */
+export const THREAD_LOCK_TRANSACTION_OPTIONS = { timeout: 20_000 };
+
 const MAX_TRANSACTION_ATTEMPTS = 3;
 const RETRYABLE_DATABASE_CODES = new Set(["40001", "40P01"]);
 

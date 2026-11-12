@@ -257,15 +257,13 @@ it("keeps an edit made after a save when the saved status arrives late", async (
   expect(button().textContent).toBe("Saved");
 });
 
-it("speaks the message it renders", () => {
+it("does not expose speech controls for the message it renders", () => {
   const onSpeak = vi.fn();
   renderView("bot", [{ kind: "text", text: "Hello" }], { onSpeak, voiceReady: true });
-  const button = [...container.querySelectorAll("button")].find(
-    (node) => node.textContent === "Speak",
-  );
-  act(() => button?.click());
-  expect(onSpeak).toHaveBeenCalledTimes(1);
-  expect(onSpeak.mock.calls[0]?.[0]).toMatchObject({ id: "message" });
+  expect(
+    [...container.querySelectorAll("button")].some((node) => node.textContent === "Speak"),
+  ).toBe(false);
+  expect(onSpeak).not.toHaveBeenCalled();
 });
 
 it("opens one counted peer line without an inline reply toggle", () => {
@@ -288,4 +286,24 @@ it("opens one counted peer line without an inline reply toggle", () => {
   expect(container.querySelector('[data-testid="peer-replies-toggle"]')).toBeNull();
   act(() => line?.click());
   expect(open).toHaveBeenCalledWith({ peerBotId: "peer", peerBotName: "Researcher" });
+});
+
+it("uses the routine bubble surface only for routine replies", () => {
+  const message: ThreadMessage = {
+    id: "routine",
+    threadId: "thread",
+    seq: 1,
+    role: "bot",
+    createdAt: new Date().toISOString(),
+    routine: true,
+    blocks: [{ kind: "text", text: "Daily report" }],
+  };
+  renderView("bot", message.blocks, { message });
+  expect(
+    container
+      .querySelector('[data-testid="message-bot-bubble"]')
+      ?.classList.contains("rk-bubble-routine"),
+  ).toBe(true);
+  renderView("bot", message.blocks);
+  expect(container.querySelector(".rk-bubble-routine")).toBeNull();
 });

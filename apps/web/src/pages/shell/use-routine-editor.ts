@@ -184,6 +184,9 @@ export function useRoutineEditor({
                 ...(armOneShot || routineDraft.active !== targetRoutine.active
                   ? { active: armOneShot ? true : routineDraft.active }
                   : {}),
+                ...(routineDraft.requireOutput !== targetRoutine.requireOutput
+                  ? { requireOutput: routineDraft.requireOutput }
+                  : {}),
                 webhookEnabled: routineDraft.webhookEnabled,
                 githubEnabled: routineDraft.githubEnabled,
                 messageProvider: routineDraft.messageProvider,
@@ -204,6 +207,7 @@ export function useRoutineEditor({
                 timezone: timezone ?? localTimezone(),
                 active: routineDraft.active,
                 notify: true,
+                requireOutput: routineDraft.requireOutput,
                 webhookEnabled: routineDraft.webhookEnabled,
                 githubEnabled: routineDraft.githubEnabled,
                 messageProvider: routineDraft.messageProvider,

@@ -25,14 +25,14 @@ export const BiliWhaleOwnerSchema = z.object({
 
 export const BiliWhaleWindowSchema = z.object({
   /** HH:MM，"24:00" 表示当天结束。 */
-  start: z.string().regex(/^\d{1,2}:\d{2}$/, "时间格式应为 HH:MM"),
-  end: z.string().regex(/^\d{1,2}:\d{2}$/, "时间格式应为 HH:MM"),
+  start: z.string().regex(/^(?:[01]?\d|2[0-3]):[0-5]\d$/, "时间应在 00:00 至 23:59 之间"),
+  end: z.string().regex(/^(?:(?:[01]?\d|2[0-3]):[0-5]\d|24:00)$/, "时间应在 00:00 至 24:00 之间"),
   /** 这个窗口里醒几次（0 = 不醒）；代码侧硬上限 3。 */
   wakes: z.number().int().min(0).max(3),
 });
 
 export const BiliWhaleNightSchema = z.object({
-  windows: z.array(BiliWhaleWindowSchema).max(3),
+  windows: z.array(BiliWhaleWindowSchema).min(1).max(3),
   /** 今天不想看的概率，0–1。 */
   skipChance: z.number().min(0).max(1),
   /** 两次醒来之间至少隔多少分钟。 */

@@ -229,6 +229,13 @@ export function normalizeRunError(
   period?: "none" | "daily" | "weekly" | "monthly";
 } {
   const trimmed = details.trim();
+  if (/^missing scope: operator\.[a-z]+$/.test(trimmed)) {
+    return { summary: translate("The local engine connection lacks required permissions."), details };
+  }
+  if (trimmed === "An earlier task in this native session is unresolved; inspect it before submitting another task" ||
+      trimmed === "底层任务状态未确认，请先核实，勿重复提交。") {
+    return { summary: translate("The previous task is unresolved. Check its status before continuing."), details };
+  }
   if ([MODEL_IMAGE_INPUT_ERROR, MODEL_IMAGE_INPUT_UNKNOWN].includes(trimmed)) {
     return {
       summary: translate(trimmed),

@@ -31,6 +31,7 @@ import {
   createJobReconciler,
   createMessagingContextLoader,
   createModelCreditReconciler,
+  createOpenClawKernelHost,
   createPaymentWalletProvider,
   createPostgresReconciliationLeadership,
   createProductAnalytics,
@@ -148,10 +149,16 @@ async function main() {
   const ticketBoardEnabled = process.env.TICKET_BOARD_ENABLED === "true";
   const boardEvents = createBoardEvents(realtime);
   const dataDir = process.env.DATA_DIR ?? "./data";
+  const memoryMirror = new MarkdownMemoryStore(prisma);
+  const nativeKernel = process.env.AGENT_RUNTIME === "openclaw"
+    ? createOpenClawKernelHost({
+        dataDir, encryptionKey: resolveEncryptionKey(process.env), prisma, mirror: memoryMirror,
+        notify: (threadId, seq) => events.notify(threadId, seq),
+      }) : undefined;
   const runtime =
-    process.env.AGENT_RUNTIME === "scripted"
+    nativeKernel?.runtime ?? (process.env.AGENT_RUNTIME === "scripted"
       ? new ScriptedAgentRuntime()
-      : new PiAgentRuntime({ sessionRoot: resolvePiSessionRoot(dataDir) });
+      : new PiAgentRuntime({ sessionRoot: resolvePiSessionRoot(dataDir) }));
   // Same resolver the API uses, so both processes agree on provider, model and key.
   const { key: deploymentModelKey, configured: deploymentModelConfigured } =
     resolveDeploymentModel();
@@ -265,7 +272,10 @@ async function main() {
     // Live per-account Codex catalog; never refreshes or writes credentials.
     codexCatalog: new CodexCatalogCache(),
     sandbox,
-    memory: new MarkdownMemoryStore(prisma),
+    memory: nativeKernel?.memory ?? memoryMirror,
+    botWorkspace: nativeKernel?.botWorkspace,
+    nativeWorkspaceFile: nativeKernel?.readWorkspaceFile,
+    nativeExecution: nativeKernel?.recovery,
     memoryProviders,
     home,
     artifacts,

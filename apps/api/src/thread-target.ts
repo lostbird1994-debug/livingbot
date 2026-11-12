@@ -43,6 +43,7 @@ import {
   lockOwnedGroup,
   primaryActiveRun,
   retireWaitingQuestionInTransaction,
+  THREAD_LOCK_TRANSACTION_OPTIONS,
   touchGroupUpdatedAt,
   transientRunEventsWhere,
 } from "@rakazo/db";
@@ -1195,7 +1196,7 @@ export async function sendThreadMessage(
         },
       });
       return { message, runs, routineRuns, eventSeq: event.seq };
-    });
+    }, THREAD_LOCK_TRANSACTION_OPTIONS);
 
   const committed = await withSerializableRetry(commit).catch(async (error) => {
     const winner = await replayExistingSend(
@@ -1314,7 +1315,7 @@ export async function reactToThreadMessage(
       },
     });
     return { eventSeq: event.seq, runs };
-  });
+  }, THREAD_LOCK_TRANSACTION_OPTIONS);
   if (releaseTakeover) {
     for (const run of committed.runs) {
       if (run.status === "waiting_takeover") await releaseTakeover(run.id);
@@ -1458,80 +1459,142 @@ export async function stopThreadRuns(
   actor: Actor,
   target: ThreadTarget,
 ) {
-  const { runIds, computers, leases, eventSeq } = await deps.prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
-    const cancelled = await tx.run.updateManyAndReturn({
-      where: {
-        threadId: target.threadId,
-        status: { in: [...ACTIVE_RUN_STATUSES] },
-      },
-      data: { status: "cancelled", completedAt: new Date() },
-      select: { id: true, botId: true, userId: true, spaceId: true },
-    });
-    const ids = cancelled.map((run) => run.id);
-    await clearEndedRunState(tx, ids);
-    await tx.steeringMessage.deleteMany({
-      where: {
-        botId: { in: target.kind === "bot" ? [target.botId] : target.memberBotIds },
-        message: { threadId: target.threadId },
-      },
-    });
-    // Snapshot teardown coordinates before commit. Once cancellation becomes
-    // visible, a worker can release its lease / execution columns immediately; a
-    // later lookup would then miss the sandbox work this request must stop.
-    // Team ownership lives on ComputerExecutionLease; Computer.executionRunId is
-    // only a legacy secondary path and is not written by current acquisition.
-    const leases = ids.length
-      ? await tx.computerExecutionLease.findMany({
-          where: { runId: { in: ids } },
-          select: { computerId: true, botId: true, runId: true, fence: true },
-        })
-      : [];
-    const leaseComputerIds = [...new Set(leases.map((lease) => lease.computerId))];
-    const computers = ids.length
-      ? await tx.computer.findMany({
-          where:
-            leaseComputerIds.length > 0
-              ? {
-                  OR: [{ id: { in: leaseComputerIds } }, { executionRunId: { in: ids } }],
-                }
-              : { executionRunId: { in: ids } },
-          select: {
-            id: true,
-            homeKey: true,
-            kind: true,
-            providerRef: true,
-            executionBotId: true,
-            executionRunId: true,
-          },
-        })
-      : [];
-    // One terminal event per cancelled run, in the same commit as the status
-    // flip and the progress purge below. Other clients learn the run ended, and
-    // the fresh seq keeps max(seq) above every deleted progress row so a client
-    // whose cursor pointed at one never discards later refreshes as stale.
-    let eventSeq: number | null = null;
-    for (const run of cancelled) {
-      const event = await appendEventInTransaction(tx, {
-        spaceId: actor.spaceId,
-        threadId: target.threadId,
-        botId: run.botId,
-        type: "run.cancelled",
-        runId: run.id,
-        payload: {},
-      });
-      eventSeq = event.seq;
-    }
-    if (ids.length) {
-      await tx.event.deleteMany({
+  const { runIds, computers, leases, eventSeq, pendingMessageCount } =
+    await deps.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
+      const cancelled = await tx.run.updateManyAndReturn({
         where: {
-          ...transientRunEventsWhere(),
-          runId: { in: ids },
+          threadId: target.threadId,
+          status: { in: [...ACTIVE_RUN_STATUSES] },
+        },
+        data: { status: "cancelled", completedAt: new Date() },
+        select: { id: true, botId: true, userId: true, spaceId: true, sourceMessageId: true },
+      });
+      const ids = cancelled.map((run) => run.id);
+      const botIds = target.kind === "bot" ? [target.botId] : target.memberBotIds;
+      // Capture every message before clearing steering, including pending messages
+      // not yet assigned a run. Message.runId alone is only a display association.
+      const steering = await tx.steeringMessage.findMany({
+        where: { botId: { in: botIds }, message: { threadId: target.threadId } },
+        select: { botId: true, messageId: true, claimedAt: true },
+      });
+      const sourceIds = cancelled.flatMap((run) =>
+        run.sourceMessageId ? [run.sourceMessageId] : [],
+      );
+      const stoppedMessages =
+        ids.length || steering.length
+          ? await tx.message.findMany({
+              where: {
+                threadId: target.threadId,
+                role: "user",
+                OR: [
+                  { runId: { in: ids } },
+                  { id: { in: [...sourceIds, ...steering.map((s) => s.messageId)] } },
+                ],
+              },
+              select: { id: true, runId: true },
+            })
+          : [];
+      const boundary =
+        ids.length || steering.length
+          ? await tx.thread.findUniqueOrThrow({
+              where: { id: target.threadId },
+              select: { nextMessageSeq: true },
+            })
+          : null;
+      const pendingMessageCount = new Set(
+        steering.filter((s) => !s.claimedAt).map((s) => s.messageId),
+      ).size;
+      await clearEndedRunState(tx, ids);
+      await tx.steeringMessage.deleteMany({
+        where: {
+          botId: { in: target.kind === "bot" ? [target.botId] : target.memberBotIds },
+          message: { threadId: target.threadId },
         },
       });
-    }
-    return { runIds: ids, computers, leases, eventSeq };
-  });
+      // Snapshot teardown coordinates before commit. Once cancellation becomes
+      // visible, a worker can release its lease / execution columns immediately; a
+      // later lookup would then miss the sandbox work this request must stop.
+      // Team ownership lives on ComputerExecutionLease; Computer.executionRunId is
+      // only a legacy secondary path and is not written by current acquisition.
+      const leases = ids.length
+        ? await tx.computerExecutionLease.findMany({
+            where: { runId: { in: ids } },
+            select: { computerId: true, botId: true, runId: true, fence: true },
+          })
+        : [];
+      const leaseComputerIds = [...new Set(leases.map((lease) => lease.computerId))];
+      const computers = ids.length
+        ? await tx.computer.findMany({
+            where:
+              leaseComputerIds.length > 0
+                ? {
+                    OR: [{ id: { in: leaseComputerIds } }, { executionRunId: { in: ids } }],
+                  }
+                : { executionRunId: { in: ids } },
+            select: {
+              id: true,
+              homeKey: true,
+              kind: true,
+              providerRef: true,
+              executionBotId: true,
+              executionRunId: true,
+            },
+          })
+        : [];
+      // One terminal event per cancelled run, in the same commit as the status
+      // flip and the progress purge below. Other clients learn the run ended, and
+      // the fresh seq keeps max(seq) above every deleted progress row so a client
+      // whose cursor pointed at one never discards later refreshes as stale.
+      let eventSeq: number | null = null;
+      for (const run of cancelled) {
+        const event = await appendEventInTransaction(tx, {
+          spaceId: actor.spaceId,
+          threadId: target.threadId,
+          botId: run.botId,
+          type: "run.cancelled",
+          runId: run.id,
+          payload: {},
+        });
+        eventSeq = event.seq;
+      }
+      for (const botId of botIds) {
+        const runs = cancelled.filter((run) => run.botId === botId);
+        const supplements = steering.filter((s) => s.botId === botId);
+        if (!runs.length && !supplements.length) continue;
+        const ownedRunIds = new Set(runs.map((run) => run.id));
+        const ownedMessageIds = new Set([
+          ...runs.flatMap((run) => (run.sourceMessageId ? [run.sourceMessageId] : [])),
+          ...supplements.map((s) => s.messageId),
+          ...stoppedMessages.filter((m) => m.runId && ownedRunIds.has(m.runId)).map((m) => m.id),
+        ]);
+        const event = await appendEventInTransaction(tx, {
+          spaceId: actor.spaceId,
+          threadId: target.threadId,
+          botId,
+          type: "thread.stopped",
+          payload: {
+            version: 1,
+            throughMessageSeq: boundary!.nextMessageSeq - 1,
+            runIds: [...ownedRunIds],
+            messageIds: [...ownedMessageIds],
+            pendingMessageIds: [
+              ...new Set(supplements.filter((s) => !s.claimedAt).map((s) => s.messageId)),
+            ],
+          },
+        });
+        eventSeq = event.seq;
+      }
+      if (ids.length) {
+        await tx.event.deleteMany({
+          where: {
+            ...transientRunEventsWhere(),
+            runId: { in: ids },
+          },
+        });
+      }
+      return { runIds: ids, computers, leases, eventSeq, pendingMessageCount };
+    }, THREAD_LOCK_TRANSACTION_OPTIONS);
   if (eventSeq !== null) {
     // The events are durable; subscribers refetch from their persisted cursor.
     await deps.events.notify(target.threadId, eventSeq).catch((error) => {
@@ -1613,6 +1676,7 @@ export async function stopThreadRuns(
       executionLeaseExpiresAt: null,
     },
   });
+  return { cancelledRunCount: runIds.length, cancelledPendingMessageCount: pendingMessageCount };
 }
 
 /**
@@ -1659,7 +1723,7 @@ export async function markThreadRead(
     });
     if (result.count > 1) throw new IsolationError();
     return dividerSeq(thread, latestSeq);
-  });
+  }, THREAD_LOCK_TRANSACTION_OPTIONS);
 }
 
 /** A chat only gets a divider when its unread dot was on, so replies seen live never do. */

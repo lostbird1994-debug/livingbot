@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { ScratchpadItem } from "@rakazo/contracts";
 import { fetchFresh, writeSaved } from "@rakazo/core/query";
-import { Button, Checkbox, Input, SectionHeading } from "@rakazo/ui-web";
+import { Button, Checkbox, Disclosure, Input, SectionHeading } from "@rakazo/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
@@ -167,12 +167,16 @@ export function ScratchpadSection({ botId, active = true }: { botId: string; act
                 {item.title}
               </div>
               {item.notes ? (
-                <div
-                  className="mt-1 break-words text-xs leading-relaxed text-muted-foreground"
-                  dir="auto"
+                <Disclosure
+                  summary={<Trans>Details</Trans>}
+                  className="mt-1.5 text-xs text-muted-foreground"
+                  summaryClassName="min-h-7 hover:text-foreground"
+                  contentClassName="pt-1.5"
                 >
-                  {item.notes}
-                </div>
+                  <div className="whitespace-pre-wrap break-words leading-relaxed" dir="auto">
+                    {item.notes}
+                  </div>
+                </Disclosure>
               ) : null}
             </div>
             <Button

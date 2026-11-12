@@ -102,6 +102,7 @@ export type RoutineDraftState = {
   githubEnabled: boolean;
   messageProvider: string | null;
   active: boolean;
+  requireOutput: boolean;
   runAtLocal: string;
   /** Empty runs this routine on the bot's model. */
   modelKey: string;
@@ -198,6 +199,7 @@ export function emptyRoutineDraft(): RoutineDraftState {
     githubEnabled: false,
     messageProvider: null,
     active: true,
+    requireOutput: false,
     runAtLocal: "",
     modelKey: "",
     thinkingLevel: "",
@@ -214,6 +216,7 @@ export function draftFromRoutine(routine: Routine): RoutineDraftState {
     githubEnabled: routine.githubEnabled,
     messageProvider: routine.messageProvider,
     active: routine.active,
+    requireOutput: routine.requireOutput,
     runAtLocal: routineNeedsOneShotArm(routine, routine.crons) ? defaultArmRunAtLocal() : "",
     modelKey:
       routine.modelProvider && routine.modelId
@@ -504,6 +507,23 @@ export function RoutineEditor({
           </Button>
         </div>
       </div>
+
+      <label
+        htmlFor={`${fieldId}-require-output`}
+        className="mb-5 flex items-center gap-2.5 text-sm text-foreground/75"
+      >
+        <Switch
+          id={`${fieldId}-require-output`}
+          checked={draft.requireOutput}
+          onCheckedChange={(requireOutput) => onChange({ ...draft, requireOutput })}
+        />
+        <span>
+          <Trans>Require a result</Trans>
+          <span className="ml-2 text-xs text-muted-foreground/70">
+            <Trans>Empty runs are marked as failed.</Trans>
+          </span>
+        </span>
+      </label>
 
       <label htmlFor={`${fieldId}-name`} className="block text-sm text-muted-foreground">
         <Trans>Name</Trans>

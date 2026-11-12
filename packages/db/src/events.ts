@@ -57,7 +57,7 @@ import { deleteRunSecretsInTransaction } from "./run-secrets.js";
 import { isRunResponse, readRunTimingFields } from "./run-timing.js";
 import { RUN_TURN_CHECKPOINT_KIND } from "./run-turn-checkpoint.js";
 import { recordSecurityEvent } from "./security-events.js";
-import { withTransactionRetry } from "./transaction-retry.js";
+import { THREAD_LOCK_TRANSACTION_OPTIONS, withTransactionRetry } from "./transaction-retry.js";
 
 /** A one-time answer longer than a saved value may be. Nothing is stored or echoed. */
 export class AnswerTooLongError extends Error {
@@ -432,7 +432,7 @@ export async function clearThread(
       cancelledRunIds: runIds,
       historyCompactionGeneration: thread.historyCompactionGeneration,
     };
-  });
+  }, THREAD_LOCK_TRANSACTION_OPTIONS);
   await notifyRealtime(realtime, committed.event.threadId, committed.event.seq);
   // Legacy execution bindings point at runs of pre-lease releases, which kept writing
   // Computer.executionRunId. Clearing them inside the transaction reaches for the
@@ -614,7 +614,7 @@ export async function sendUserMessage(
         },
       });
       return { message, task, run, busy, event };
-    });
+    }, THREAD_LOCK_TRANSACTION_OPTIONS);
   const committed = await commit().catch(async (error) => {
     const winner = await replay();
     if (winner) return { replay: winner } as const;
@@ -765,7 +765,7 @@ async function claimSteeringOnce(
               ? ("messaging" as const)
               : ("member" as const),
     }));
-  });
+  }, THREAD_LOCK_TRANSACTION_OPTIONS);
 }
 
 async function findPendingAsk(
@@ -1099,8 +1099,9 @@ export async function answerRunInput(
   runSecretWriter?: RunSecretWriter,
 ): Promise<boolean> {
   const commit = (writer = runSecretWriter) =>
-    prisma.$transaction(async (tx: Prisma.TransactionClient) =>
-      commitAnswerRunInput(tx, input, writer),
+    prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => commitAnswerRunInput(tx, input, writer),
+      THREAD_LOCK_TRANSACTION_OPTIONS,
     );
   // A dismissal has no secret to prepare.
   const committed =
@@ -1348,7 +1349,7 @@ export async function pauseRunForInput(
       continuationRunId,
       firstResponseRunId: response.firstResponse ? input.runId : undefined,
     };
-  });
+  }, THREAD_LOCK_TRANSACTION_OPTIONS);
 
   if (!committed) return false;
   await notifyCommittedEvent(
@@ -1474,7 +1475,7 @@ export async function pauseRunForTakeover(
       where: { runId: input.runId, ...transientRunEventsWhere() },
     });
     return { threadId: waitingEvent.threadId, seq: waitingEvent.seq, continuationRunId: null };
-  });
+  }, THREAD_LOCK_TRANSACTION_OPTIONS);
 
   if (!committed) return false;
   if (committed.seq !== null) {
@@ -1602,7 +1603,7 @@ export async function finalizeComputerControlRelease(
       },
     });
     return { threadId: event.threadId, seq: event.seq, runId };
-  });
+  }, THREAD_LOCK_TRANSACTION_OPTIONS);
 
   if (!committed) return false;
   if (committed.threadId && committed.seq !== null) {
@@ -1631,7 +1632,7 @@ export async function settleReleasedTakeoverCards(
   const seq = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.$queryRaw`SELECT id FROM threads WHERE id = ${input.threadId} FOR UPDATE`;
     return settleReleasedTakeoverCardsInTransaction(tx, input);
-  });
+  }, THREAD_LOCK_TRANSACTION_OPTIONS);
   if (seq !== null) await notify?.(input.threadId, seq);
 }
 
@@ -1682,7 +1683,10 @@ export async function appendEvent(
 ): Promise<ProductEvent> {
   // Concurrent writers in one thread (group members, bot messages) can deadlock on the thread row.
   const event = await withTransactionRetry(() =>
-    prisma.$transaction((tx: Prisma.TransactionClient) => appendEventInTransaction(tx, input)),
+    prisma.$transaction(
+      (tx: Prisma.TransactionClient) => appendEventInTransaction(tx, input),
+      THREAD_LOCK_TRANSACTION_OPTIONS,
+    ),
   );
   if (
     input.runId &&

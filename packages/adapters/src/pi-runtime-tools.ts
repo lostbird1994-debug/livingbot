@@ -29,7 +29,8 @@ import { parametersFor, prepareFleetArguments } from "./pi-runtime-tool-paramete
 import { recordPiTelemetryContent, withPiTelemetrySpan } from "./pi-telemetry.js";
 import { VERBATIM_TOOL_RESULTS } from "./runtime-context.js";
 import { SCHEDULE_TOOL_NAMES } from "./schedule-tools.js";
-import type { FinishedShellCommand } from "./shell-command-stream.js";
+import type { PendingShellCommand } from "./shell-command-stream.js";
+import { pendingShellCommand } from "./shell-command-stream.js";
 import { textContentArg } from "./tool-text.js";
 import { isVerbatimMcpResult } from "./verbatim-mcp-result.js";
 
@@ -541,8 +542,8 @@ function toAgentTool(
                   executionId,
                   tool.route,
                   {
-                    onShellStillRunning: (completion) => {
-                      host.pendingShells.push(completion);
+                    onShellStillRunning: (completion, initial) => {
+                      host.pendingShells.push(pendingShellCommand(rawCallId, completion, initial));
                     },
                   },
                 );
@@ -719,7 +720,7 @@ export interface ToolHost {
   pausePending: boolean;
   captureCheckpoint?: (toolCallId: string, executionId: string) => Promise<void>;
   /** Shell commands that returned output and are still running. */
-  pendingShells: Array<Promise<FinishedShellCommand>>;
+  pendingShells: PendingShellCommand[];
 }
 
 export function toolCallBudgetExceededMessage(limit: number) {

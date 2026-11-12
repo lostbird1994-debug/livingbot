@@ -85,6 +85,12 @@ describe("sitesInText", () => {
     ]).toEqual([]);
   });
 
+  it("does not mistake a Chinese file name for a website", () => {
+    expect([...sitesInText("把 其他损益明细表工作流.md 标注为已取代")]).toEqual([]);
+    expect([...sitesInText("参考其他损益明细表工作流.md 这份文件")]).toEqual([]);
+    expect([...sitesInText("读一下 月度损益表.py 和 归档说明.zip")]).toEqual([]);
+  });
+
   it("still recognizes explicit links and bare domains using the same suffixes", () => {
     expect(
       [

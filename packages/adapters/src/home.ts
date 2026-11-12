@@ -20,6 +20,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import type { AdapterContext, AgentHomeStore, PortableFile } from "@rakazo/adapter-kit";
+import { moveNativePathToTrash } from "./desktop-workspace-cleanup.js";
 import { fileHandlePath } from "./file-handle-path.js";
 import { shouldSkipPortableWorkspaceFile } from "./workspace-save-policy.js";
 
@@ -136,7 +137,7 @@ export class LocalAgentHomeStore implements AgentHomeStore {
       staleEntries(tmpdir(), isStagingName, Math.min(stale, performance.timeOrigin)),
     ]);
     const doomed = [...staged, ...homes, ...temporary];
-    await Promise.all(doomed.map((entry) => rm(entry, { recursive: true, force: true })));
+    for (const entry of doomed) await moveNativePathToTrash(entry);
     return doomed.length;
   }
 

@@ -371,13 +371,14 @@ export function createRepos(
       });
     },
 
-    async listBots(actor: Actor, options: { archived?: boolean } = {}): Promise<Bot[]> {
+    async listBots(actor: Actor, options: { archived?: boolean; botId?: string } = {}): Promise<Bot[]> {
       const bots = await withNewestThreadMessages(
         prisma,
         await withLatestBotRuns(
           prisma,
           await prisma.bot.findMany({
             where: {
+              ...(options.botId ? { id: options.botId } : {}),
               spaceId: actor.spaceId,
               userId: actor.userId,
               archivedAt: options.archived ? { not: null } : null,

@@ -1,12 +1,12 @@
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import { describe, expect, it } from "vitest";
-import { automated } from "./automated-messages.js";
 import { TOOL_RESULT_TEXT_LIMIT } from "./pi-runtime-limits.js";
 import {
   deliverFinishedShells,
   formatFinishedShellCommand,
   isRunningShellCommand,
   observeShellCommand,
-  SHELL_STILL_RUNNING_NOTICE,
+  pendingShellCommand,
 } from "./shell-command-stream.js";
 
 describe("observeShellCommand", () => {
@@ -229,41 +229,74 @@ describe("observeShellCommand", () => {
 });
 
 describe("deliverFinishedShells", () => {
-  it("waits until the command exits, then hands the bot the final output", async () => {
+  function turn(stdout = "", stderr = "") {
+    const receipt = {
+      role: "toolResult" as const,
+      toolCallId: "shell-1",
+      toolName: "shell",
+      content: [{ type: "text" as const, text: "running" }],
+      details: { stdout, stderr, code: null, running: true },
+      isError: false,
+      timestamp: 1,
+    };
+    return { receipt, context: { messages: [receipt] as AgentMessage[] }, toolResults: [] };
+  }
+
+  it("updates the original receipt and continues for new output without adding user messages", async () => {
     let release: (result: { stdout: string; stderr: string; code: number }) => void = () =>
       undefined;
     const completion = new Promise<{ stdout: string; stderr: string; code: number }>((resolve) => {
       release = resolve;
     });
-    const pending = [completion];
-    const followUps: string[] = [];
-    const delivering = deliverFinishedShells((text) => followUps.push(text), pending, {
-      toolResults: [],
-    });
+    const pending = [pendingShellCommand("shell-1", completion)];
+    const current = turn();
+    const delivering = deliverFinishedShells(pending, current);
 
     await Promise.resolve();
-    expect(followUps).toEqual([]);
-    expect(pending).toEqual([]);
+    expect(current.receipt.details.code).toBeNull();
 
     release({ stdout: "logged in\n", stderr: "", code: 0 });
-    await delivering;
-    expect(followUps).toEqual([
-      formatFinishedShellCommand({ stdout: "logged in\n", stderr: "", code: 0 }),
-    ]);
-    expect(followUps[0]).toContain("exit code: 0");
-    expect(followUps[0]).toContain("logged in");
+    expect(await delivering).toBe(true);
+    expect(current.receipt.details).toEqual({ stdout: "logged in\n", stderr: "", code: 0 });
+    expect(current.context.messages).toHaveLength(1);
+    expect(pending).toEqual([]);
   });
 
-  it("hands the bot the end of long output, where failures are printed", async () => {
-    const followUps: string[] = [];
-    await deliverFinishedShells(
-      (text) => followUps.push(text),
-      [Promise.resolve({ stdout: LONG_OUTPUT, stderr: "", code: 1 })],
-      { toolResults: [] },
-    );
-    expect(followUps).toHaveLength(1);
-    expect(followUps[0]).toContain("START\n");
-    expect(followUps[0]).toContain("ERROR: build failed\n");
+  it("silently records a successful exit when all output was already seen", async () => {
+    const current = turn("ok\n");
+    const pending = [
+      pendingShellCommand("shell-1", Promise.resolve({ stdout: "ok\n", stderr: "", code: 0 })),
+    ];
+    expect(await deliverFinishedShells(pending, current)).toBe(false);
+    expect(current.receipt.details.code).toBe(0);
+    expect(pending).toEqual([]);
+  });
+
+  it("continues for failure even when its output was already seen", async () => {
+    const current = turn("", "failed");
+    expect(
+      await deliverFinishedShells(
+        [
+          pendingShellCommand(
+            "shell-1",
+            Promise.resolve({ stdout: "", stderr: "failed", code: 1 }),
+          ),
+        ],
+        current,
+      ),
+    ).toBe(true);
+    expect(current.receipt.isError).toBe(true);
+  });
+
+  it("records rejected completions as failures", async () => {
+    const current = turn();
+    expect(
+      await deliverFinishedShells(
+        [pendingShellCommand("shell-1", Promise.reject(new Error("disconnected")))],
+        current,
+      ),
+    ).toBe(true);
+    expect(current.receipt.details).toEqual({ stdout: "", stderr: "disconnected", code: 1 });
   });
 
   it("does not wait on the turn that first received the live output", async () => {
@@ -272,29 +305,53 @@ describe("deliverFinishedShells", () => {
     const completion = new Promise<{ stdout: string; stderr: string; code: number }>((resolve) => {
       release = resolve;
     });
-    const pending = [completion];
-    const followUps: string[] = [];
-    await deliverFinishedShells((text) => followUps.push(text), pending, {
-      toolResults: [
-        {
-          toolName: "shell",
-          details: {
-            stdout: "code: ABCD-1234\n",
-            stderr: "",
-            code: null,
-            running: true,
-            notice: SHELL_STILL_RUNNING_NOTICE,
-          },
-        },
-      ],
-    });
+    const pending = [pendingShellCommand("shell-1", completion)];
+    const current = turn("code: ABCD-1234\n");
+    expect(
+      await deliverFinishedShells(pending, { ...current, toolResults: [current.receipt] }),
+    ).toBe(false);
 
-    expect(followUps).toEqual([]);
     expect(pending).toHaveLength(1);
     release({ stdout: "ok\n", stderr: "", code: 0 });
-    await deliverFinishedShells((text) => followUps.push(text), pending, { toolResults: [] });
-    expect(followUps).toHaveLength(1);
-    expect(followUps[0]).toContain("exit code: 0");
+    expect(await deliverFinishedShells(pending, current)).toBe(true);
+    expect(current.receipt.details.code).toBe(0);
+  });
+
+  it("drains older ready receipts while another command is still running", async () => {
+    const current = turn("ok");
+    const pending = [
+      pendingShellCommand("shell-1", Promise.resolve({ stdout: "ok", stderr: "", code: 0 })),
+      pendingShellCommand("shell-2", new Promise(() => undefined)),
+    ];
+    await Promise.resolve();
+    expect(
+      await deliverFinishedShells(pending, {
+        ...current,
+        toolResults: [{ toolName: "shell", details: { code: null, running: true } }],
+      }),
+    ).toBe(false);
+    expect(pending.map((item) => item.toolCallId)).toEqual(["shell-2"]);
+    expect(current.receipt.details.code).toBe(0);
+  });
+
+  it("does not consume a receipt or continue after cancellation", async () => {
+    const current = turn();
+    const pending = [
+      pendingShellCommand("shell-1", Promise.resolve({ stdout: "news", stderr: "", code: 0 })),
+    ];
+    expect(await deliverFinishedShells(pending, current, AbortSignal.abort())).toBe(false);
+    expect(pending).toHaveLength(1);
+    expect(current.receipt.details.code).toBeNull();
+  });
+
+  it("keeps unmatched receipts instead of injecting unowned completion messages", async () => {
+    const pending = [
+      pendingShellCommand("missing", Promise.resolve({ stdout: "news", stderr: "", code: 0 })),
+    ];
+    const current = turn();
+    expect(await deliverFinishedShells(pending, current)).toBe(false);
+    expect(pending).toHaveLength(1);
+    expect(current.context.messages).toHaveLength(1);
   });
 });
 
@@ -309,9 +366,7 @@ function finishedBody(stream: "stdout" | "stderr", output: string): string {
     stderr: stream === "stderr" ? output : "",
     code: 1,
   });
-  const prefix = `${automated("Shell command finished.")}\nexit code: 1\n${stream}:\n`;
-  expect(text.startsWith(prefix)).toBe(true);
-  return text.slice(prefix.length);
+  return JSON.parse(text)[stream];
 }
 
 describe("formatFinishedShellCommand", () => {

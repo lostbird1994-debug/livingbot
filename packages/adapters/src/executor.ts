@@ -28,6 +28,7 @@ import {
   promptInvokesSkill,
   redactSecrets,
   renderBotDirectory,
+  runReadsThreadHistory,
   userRunError,
   userTurnMessageForRun,
 } from "@rakazo/core";
@@ -38,6 +39,7 @@ import {
   isTooManyDatabaseConnections,
   loadRunHistoryMessages,
   loadRunTurnCheckpoint,
+  loadThreadStopContext,
   parseComputerMode,
   prioritizeConversation,
   RunHistoryWriteError,
@@ -192,6 +194,7 @@ import {
 import { loadAgentScratchpadContext } from "./scratchpad-context.js";
 import { inferScript } from "./scripted-runtime.js";
 import { listAgentSkillRecords } from "./skill-tools.js";
+import { stoppedHistoryText, stoppedWorkInstruction } from "./stopped-work.js";
 import {
   continueRunClaimFence,
   refreshTakeoverContinuePlan,
@@ -260,7 +263,13 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         where: { id: runId },
         include: {
           routine: {
-            select: { memoryMaintenance: true, spaceId: true, userId: true, botId: true },
+            select: {
+              memoryMaintenance: true,
+              requireOutput: true,
+              spaceId: true,
+              userId: true,
+              botId: true,
+            },
           },
         },
       });
@@ -482,6 +491,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
       const runSecrets = [...deps.secrets];
       let dispatchHandedOff = false;
       try {
+        await deps.botWorkspace?.refresh({ spaceId: run.spaceId, userId: run.userId }, run.botId);
         // Durable run ownership and its heartbeat now carry recovery. Model,
         // integration and computer setup must not occupy a queue dispatch slot.
         onRunStarted?.();
@@ -539,7 +549,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           deps.prisma.deploymentSettings.findUnique({
             where: { id: "default" },
           }),
-          deps.memoryProviders.resolve(run.spaceId),
+          deps.runtime.describe().capabilities.workspaceContext === true
+            ? Promise.resolve(null) : deps.memoryProviders.resolve(run.spaceId),
           deps.prisma.taughtSkill.findMany({
             where: { botId: run.botId, spaceId: run.spaceId, status: "saved" },
           }),
@@ -642,6 +653,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           deps.connector && !memoryMaintenance
             ? deps.connector.discoverTools(context)
             : Promise.resolve([]);
+        const stopContext = runReadsThreadHistory(run.trigger)
+          ? await loadThreadStopContext(deps.prisma, run, messages)
+          : undefined;
         const threadContext = threadContextForRun(
           run.trigger,
           {
@@ -653,9 +667,13 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 | "user"
                 | "assistant"
                 | "system",
-              content: isPartialReplyClientNonce(m.clientNonce)
-                ? `${messageToAgentHistoryText(m)}\n\n${PARTIAL_REPLY_NOTE}`
-                : messageToAgentHistoryText(m),
+              content: stoppedHistoryText(
+                m,
+                isPartialReplyClientNonce(m.clientNonce)
+                  ? `${messageToAgentHistoryText(m)}\n\n${PARTIAL_REPLY_NOTE}`
+                  : messageToAgentHistoryText(m),
+                stopContext,
+              ),
             })),
             summary: thread.historyCompactionSummary,
             historyCompactedUpToSeq: thread.historyCompactedUpToSeq,
@@ -714,8 +732,15 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           peerMessage?.intent,
           peerMessage?.repliesToRequest,
         );
-        const allowSilentEmptyRun =
-          allowSilentPeerMessage || messagingChannelRun || runAllowsSilentEmpty(run.trigger);
+        const requireRoutineOutput =
+          run.trigger === "routine" &&
+          run.routine?.requireOutput === true &&
+          run.routine.spaceId === run.spaceId &&
+          run.routine.userId === run.userId &&
+          run.routine.botId === run.botId;
+        const allowSilentEmptyRun = requireRoutineOutput
+          ? false
+          : allowSilentPeerMessage || messagingChannelRun || runAllowsSilentEmpty(run.trigger);
         const emptyResponseText = peerMessage
           ? peerMessage.intent === "result" ||
             peerMessage.intent === "status" ||
@@ -933,7 +958,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           resolved,
         } = start;
         runSecrets.push(...resolved.redact);
-        const memoryContext = messagingChannelRun
+        const nativeWorkspaceContext = deps.runtime.describe().capabilities.workspaceContext === true;
+        const memoryContext = messagingChannelRun || nativeWorkspaceContext
           ? undefined
           : await loadAgentMemoryContext(deps.memory, bot.id, context, {
               excludeSharedProfile: excludesSharedProfile(bot.roleCard),
@@ -1250,8 +1276,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               ? `${baseComputerInstruction} ${dockerToolInstruction}`
               : baseComputerInstruction,
         ].join(" ");
-        const workspaceInstruction =
-          computerMode === "team"
+        const workspaceInstruction = nativeWorkspaceContext
+          ? "OpenClaw supplies your real workspace and standard context files. Use its native exec, read, write and memory tools. Keep task scripts and supporting documents inside your own workspace. Product computer and browser actions remain available through the connected tools."
+          : computerMode === "team"
             ? `Your Team Computer home is ${teamBotWorkspaceDirectory(bot.id)}. Relative file paths and shell working directories start there. Put intentionally shared work under shared/. Other bots' folders are visible under bots/; treat them as their working areas.`
             : "This entire computer workspace is your private home. Relative file paths and shell working directories start at its root.";
 
@@ -1353,6 +1380,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           scripted,
           script,
           allowSilentEmptyRun,
+          routineRequiresOutput: requireRoutineOutput,
           emptyResponseText,
           state,
           settleRunningHelpers: settleHelpers,
@@ -1633,35 +1661,42 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               // Keep an explicit executor override, but let the runtime select
               // cache-aware context for connections declaring a cache window.
               contextStrategy: deps.contextStrategy,
-              instructions: userTurnInstructions({
-                botInstructions: runIdentityInstruction(bot, run.trigger),
-                groupContext,
-                messagingContext,
-                redactedMemoryContext: memoryContext
-                  ? redactSecrets(memoryContext, runSecrets)
-                  : undefined,
-                redactedScratchpadContext: scratchpadContext
-                  ? redactSecrets(scratchpadContext, runSecrets)
-                  : undefined,
-                redactedTicketContext: ticketContext
-                  ? redactSecrets(ticketContext, runSecrets)
-                  : undefined,
-                hasHistoricalContext: historicalContext.length > 0,
-                historyRetrievalEnabled: contextStrategy !== "current",
-                computerInstruction,
-                pageBrowserAllowed,
-                taskCatalogInstruction,
-                workspaceInstruction,
-                agentEnvironmentInstruction,
-                botDirectory,
-                pluginLine,
-                agentSkillsLine,
-                taughtSkillsLine,
-                replyGuidance: runReplyGuidance(run.trigger),
-                disabledBuiltinTools,
-                offeredFleetTools: offeredFleetTools(builtins),
-                userComputer,
-              })
+              instructions: [
+                ...userTurnInstructions({
+                  botInstructions: nativeWorkspaceContext ? "" : runIdentityInstruction(bot, run.trigger),
+                  groupContext,
+                  messagingContext,
+                  redactedMemoryContext: memoryContext
+                    ? redactSecrets(memoryContext, runSecrets)
+                    : undefined,
+                  redactedScratchpadContext: scratchpadContext
+                    ? redactSecrets(scratchpadContext, runSecrets)
+                    : undefined,
+                  redactedTicketContext: ticketContext
+                    ? redactSecrets(ticketContext, runSecrets)
+                    : undefined,
+                  hasHistoricalContext: historicalContext.length > 0,
+                  historyRetrievalEnabled: contextStrategy !== "current",
+                  computerInstruction: nativeWorkspaceContext
+                    ? "Answer directly when the conversation is sufficient. Use native filesystem and exec tools for local work; use Rakazo's connected product tools for collaboration, tasks, approvals, attachments and app connections."
+                    : computerInstruction,
+                  pageBrowserAllowed,
+                  taskCatalogInstruction,
+                  workspaceInstruction,
+                  agentEnvironmentInstruction,
+                  botDirectory,
+                  pluginLine,
+                  agentSkillsLine,
+                  taughtSkillsLine,
+                  replyGuidance: requireRoutineOutput
+                    ? `${runReplyGuidance(run.trigger)} A completed routine run must end with a useful, user-visible result; never choose NO_RESPONSE or finish without a final answer.`
+                    : runReplyGuidance(run.trigger),
+                  disabledBuiltinTools,
+                  offeredFleetTools: offeredFleetTools(builtins),
+                  userComputer,
+                }),
+                stoppedWorkInstruction(stopContext),
+              ]
                 .filter((instruction): instruction is string => Boolean(instruction))
                 .join("\n\n"),
               history: runtimeHistory,
@@ -1675,6 +1710,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   ),
               ),
               tools,
+              conversationScope: channelId ? JSON.stringify(["messaging", channelId]) : undefined,
+              privateContextAllowed: !messagingChannelRun,
               model: {
                 provider: runModelProvider,
                 id: runModelId,
@@ -1759,6 +1796,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               },
               script,
               allowSilentEmpty: allowSilentEmptyRun,
+              requireFinalResponse: requireRoutineOutput,
               emptyResponseText,
               executeTool: scripted
                 ? undefined

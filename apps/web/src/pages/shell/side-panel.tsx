@@ -51,9 +51,11 @@ export function ShellSidePanel({
   memoryProviderConfigured,
   setAgentSkills,
   onClearBot,
+  findPanel,
 }: {
   rpc: ReturnType<typeof createSpaceRpc>;
   panel: Panel;
+  findPanel?: ReactNode;
   setPanel: (panel: Panel) => void;
   active: Bot | undefined;
   spaceName?: string;
@@ -103,7 +105,8 @@ export function ShellSidePanel({
 
   return (
     <ResizableSidePanel open={open} panel={panel ?? "closed"}>
-      {open ? (
+      <div className={panel === "find" ? "h-full min-h-0" : "hidden"}>{findPanel}</div>
+      {open && panel !== "find" ? (
         <div className="rk-scroll h-full w-full overflow-y-auto px-5 py-[17px]">
           {panel !== "routine" &&
           panel !== "create-group" &&

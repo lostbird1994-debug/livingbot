@@ -52,7 +52,12 @@ function pendingTimerFixture(reuse = true) {
         if (args.data.nextRunAt) routine.nextRunAt = args.data.nextRunAt;
         return { count: 1 };
       }),
-      findUnique: vi.fn(async () => ({ modelProvider: null, modelId: null, thinkingLevel: null })),
+      findUnique: vi.fn(async () => ({
+        prompt: routine.prompt,
+        modelProvider: null,
+        modelId: null,
+        thinkingLevel: null,
+      })),
     },
     run: {
       findMany: vi.fn(async () => (reuse ? [pending] : [])),
@@ -148,4 +153,24 @@ describe("recurring routine catch-up", () => {
     expect(enqueue).toHaveBeenCalledOnce();
     expect(enqueue).toHaveBeenCalledWith(expect.objectContaining({ name: "routine.wakeup" }));
   });
+});
+
+it("runs the prompt and model committed at claim time after a concurrent edit", async () => {
+  const f = pendingTimerFixture(false);
+  f.routine.prompt = "Old instructions";
+  f.tx.routine.findUnique.mockResolvedValue({
+    prompt: "Updated instructions",
+    modelProvider: "test",
+    modelId: "new-model",
+    thinkingLevel: null,
+  } as never);
+  await f.executor.wakeRoutine(f.routine.id, f.scheduledAt.toISOString());
+  expect(f.tx.task.create).toHaveBeenCalledWith(
+    expect.objectContaining({ data: expect.objectContaining({ prompt: "Updated instructions" }) }),
+  );
+  expect(f.tx.run.create).toHaveBeenCalledWith(
+    expect.objectContaining({
+      data: expect.objectContaining({ modelProvider: "test", modelId: "new-model" }),
+    }),
+  );
 });

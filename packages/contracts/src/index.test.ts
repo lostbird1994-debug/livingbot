@@ -397,6 +397,7 @@ describe("contracts", () => {
       crons: [],
       webhookEnabled: false,
       githubEnabled: true,
+      requireOutput: false,
       messageProvider: null,
     });
     expect(
@@ -407,6 +408,15 @@ describe("contracts", () => {
         messageProvider: "slack",
       }),
     ).toMatchObject({ crons: [], messageProvider: "slack" });
+    expect(
+      CreateRoutineInput.parse({
+        botId: "bot-1",
+        name: "Must report",
+        prompt: "Send a summary",
+        crons: ["0 9 * * *"],
+        requireOutput: true,
+      }).requireOutput,
+    ).toBe(true);
     expect(
       CreateRoutineInput.safeParse({
         botId: "bot-1",

@@ -249,14 +249,29 @@ export async function enqueueBotIntroRun(deps: RouterDeps, actor: Actor, bot: Bo
 export function botsRoutes(ctx: RouterContext) {
   const { deps, repos, botModelValidation, removeBot, agentImportServices, groupRepos, authed } =
     ctx;
+  const listBots = async (actor: Actor, options?: { archived?: boolean }) => {
+    if (deps.botWorkspace) {
+      const bots = await deps.prisma.bot.findMany({
+        where: { spaceId: actor.spaceId, userId: actor.userId,
+          archivedAt: options?.archived ? { not: null } : null },
+        select: { id: true },
+      });
+      await Promise.all(bots.map(bot => deps.botWorkspace!.refresh(actor, bot.id)));
+    }
+    return repos.listBots(actor, options);
+  };
+  const editProfile = <T>(actor: Actor, botId: string, work: () => Promise<T>) =>
+    deps.botWorkspace ? deps.botWorkspace.edit(actor, botId, work) : work();
   return {
     bots: {
-      list: authed.bots.list.handler(async ({ context }) => repos.listBots(context.actor)),
+      list: authed.bots.list.handler(async ({ context }) => listBots(context.actor)),
       listArchived: authed.bots.listArchived.handler(async ({ context }) =>
-        repos.listBots(context.actor, { archived: true }),
+        listBots(context.actor, { archived: true }),
       ),
       get: authed.bots.get.handler(async ({ context, input }) => {
-        const found = (await repos.listBots(context.actor)).find((bot) => bot.id === input.botId);
+        await repos.getBot(context.actor, input.botId);
+        await deps.botWorkspace?.refresh(context.actor, input.botId);
+        const [found] = await repos.listBots(context.actor, { botId: input.botId });
         if (!found) throw new IsolationError();
         return found;
       }),
@@ -360,11 +375,12 @@ export function botsRoutes(ctx: RouterContext) {
         if (!modelChange.ok) throw new ORPCError("BAD_REQUEST", { message: modelChange.error });
         const thinkingLevel = input.thinkingLevel;
         if (!existing.thread) throw new IsolationError();
-        await commitBotUpdate({
+        const threadId = existing.thread.id;
+        await editProfile(context.actor, input.botId, () => commitBotUpdate({
           prisma: deps.prisma,
           notify: (threadId, seq) => deps.events.notify(threadId, seq),
           spaceId: context.actor.spaceId,
-          threadId: existing.thread.id,
+          threadId,
           botId: input.botId,
           emitBotUpdated:
             botProfileLabelsChanged(input) ||
@@ -404,7 +420,7 @@ export function botsRoutes(ctx: RouterContext) {
               ? { disabledBuiltinTools: input.disabledBuiltinTools }
               : {}),
           },
-        }).catch((error) => {
+        })).catch((error) => {
           if (input.expectedSettings && isRecordNotFound(error))
             throw new ORPCError("CONFLICT", {
               message: "Settings changed; review the current settings first.",
@@ -427,18 +443,19 @@ export function botsRoutes(ctx: RouterContext) {
       restoreInstructions: authed.bots.restoreInstructions.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);
         if (!bot.thread) throw new IsolationError();
+        const threadId = bot.thread.id;
         try {
-          await commitBotUpdate({
+          await editProfile(context.actor, bot.id, () => commitBotUpdate({
             prisma: deps.prisma,
             notify: (threadId, seq) => deps.events.notify(threadId, seq),
             spaceId: context.actor.spaceId,
-            threadId: bot.thread.id,
+            threadId,
             botId: bot.id,
             data: {},
             emitBotUpdated: true,
             expectedInstructions: input.expectedInstructions,
             instructionRestore: { versionId: input.versionId, undo: input.undo },
-          });
+          }));
         } catch (error) {
           if (!(error instanceof InstructionConflictError)) throw error;
           throw new ORPCError("CONFLICT", { message: error.message });

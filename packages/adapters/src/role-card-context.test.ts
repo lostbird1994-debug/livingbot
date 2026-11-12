@@ -5,7 +5,7 @@ import { previewAgentMemoryContext } from "./memory-context.js";
 import { runIdentityInstruction } from "./run-instructions.js";
 
 describe("role card runtime context", () => {
-  it("keeps identity, instructions and personality separate and omits disabled role drafts", () => {
+  it("loads filled user identity and omits the retired backstory module", () => {
     const result = runIdentityInstruction(
       {
         name: "Example",
@@ -23,11 +23,11 @@ describe("role card runtime context", () => {
     expect(result).toContain("Private instruction");
     expect(result).toContain("Bot identity:\nA fictional librarian");
     expect(result).toContain("Personality:\nPatient");
-    expect(result).not.toContain("The visitor");
+    expect(result).toContain("The visitor");
     expect(result).not.toContain("A remote library");
   });
   it.each(["user", "created", "routine"])(
-    "includes enabled role modules for %s runs",
+    "includes user identity and ignores retired switches for %s runs",
     (trigger) => {
       const result = runIdentityInstruction(
         {
@@ -42,11 +42,11 @@ describe("role card runtime context", () => {
         trigger,
       );
       expect(result).toContain("The visitor");
-      expect(result).toContain("A remote library");
+      expect(result).not.toContain("A remote library");
     },
   );
   it.each(["userIdentityEnabled", "backstoryEnabled"])(
-    "uses the same exclusions for preview and runtime when %s is on",
+    "keeps shared profiles loaded when retired %s is on",
     async (flag) => {
       const memory = {
         read: vi.fn(async ({ scope }) => ({
@@ -75,11 +75,9 @@ describe("role card runtime context", () => {
         { excludeSharedProfile: excludesSharedProfile({ [flag]: true }) },
       );
       expect(result.body).toContain("bot source MEMORY.md");
-      expect(result.context).not.toContain("user source");
+      expect(result.context).toContain("user source");
       expect(result.index).toContain("user:memory/reference.md");
-      expect(result.documents.filter((doc) => doc.scope === "user").map((doc) => doc.path)).toEqual(
-        ["memory/reference.md"],
-      );
+      expect(result.documents.filter((doc) => doc.scope === "user")).toHaveLength(4);
     },
   );
 });

@@ -105,6 +105,9 @@ body,
    `--rk-bubble-alpha` comes from the chat's backdrop settings, so bubbles fade in step with the
    picture behind them instead of covering it with a solid slab. It defaults to 1 (opaque), which
    keeps every existing theme pixel-identical. */
+.rk-bubble-routine {
+  --bubble-bot: var(--chat-routine);
+}
 .rk-bubble-bot {
   background: color-mix(
     in srgb,

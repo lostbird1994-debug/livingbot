@@ -1,18 +1,19 @@
 import { execFile } from "node:child_process";
 import { realpath, stat } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { promisify } from "node:util";
 import { ORPCError } from "@orpc/server";
 import type { MessageBlock } from "@rakazo/contracts";
 import { expandToolStepNotes, localDocumentPath, localDocumentReferences } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 
-export async function openLocalMessageFile(
+export async function resolveLocalMessageFile(
   deps: {
     prisma: PrismaClient;
     localHost: boolean;
     platform?: string;
+    resolveDocument?: (reference: string) => Promise<string | undefined>;
     open?: (path: string, action: "open" | "reveal") => Promise<void>;
   },
   threadId: string,
@@ -40,13 +41,26 @@ export async function openLocalMessageFile(
   const requested = input.path.startsWith("~/") ? join(homedir(), input.path.slice(2)) : input.path;
   let path: string;
   try {
-    path = await realpath(requested);
+    try { path = await realpath(requested); }
+    catch {
+      const recovered = await deps.resolveDocument?.(input.path);
+      if (!recovered) throw new Error("missing document");
+      path = await realpath(recovered);
+    }
     if (!localDocumentPath(path) || !(await stat(path)).isFile()) throw new Error("not a document");
   } catch {
     throw new ORPCError("NOT_FOUND", {
-      message: "The file is missing or unavailable on this Mac.",
+      message: "文件不存在、路径不完整，或当前 Mac 无法访问。",
     });
   }
+  return { path, name: basename(path), size: (await stat(path)).size ?? 0 };
+}
+
+export async function openLocalMessageFile(
+  deps: Parameters<typeof resolveLocalMessageFile>[0], threadId: string,
+  input: { messageId: string; path: string; action: "open" | "reveal" },
+) {
+  const { path } = await resolveLocalMessageFile(deps, threadId, input);
   const open =
     deps.open ??
     (async (path, action) => {

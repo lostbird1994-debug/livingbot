@@ -4,7 +4,7 @@ import { isModelRequiredSendError, normalizeRunError } from "@rakazo/core";
 import { Button } from "@rakazo/ui-web";
 import { FileIcon, X } from "lucide-react";
 import type { RefObject } from "react";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { translateRunError } from "../../lib/run-error";
 
 export function ComposerError({
@@ -17,6 +17,7 @@ export function ComposerError({
   onOpenModels,
   onOpenConnections,
   onDismissError,
+  onStopUnresolved,
   textareaRef,
 }: {
   sendError: string | null;
@@ -29,11 +30,18 @@ export function ComposerError({
   onOpenModels: () => void;
   onOpenConnections: () => void;
   onDismissError: () => void;
+  onStopUnresolved?: () => Promise<void>;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
 }) {
   const { t } = useLingui();
   const runErrorRef = useRef<HTMLDivElement>(null);
   const fileNoteId = useId();
+  const [stopping, setStopping] = useState(false);
+  const nativeUnresolved = [
+    "An earlier task in this native session is unresolved; inspect it before submitting another task",
+    "底层任务状态未确认，请先核实，勿重复提交。",
+    "后台任务状态尚未确认，请勿重复提交；需恢复连接后核对原任务。",
+  ].includes(runError ?? "");
   const presentedRunErrorIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!runError || !runErrorId) return;
@@ -179,6 +187,16 @@ export function ComposerError({
               {recoveryAction.label}
             </button>
           </>
+        ) : null}
+        {nativeUnresolved && onStopUnresolved ? (
+          <Button type="button" variant="outline" size="sm" className="ml-2"
+            disabled={stopping}
+            onClick={() => {
+              setStopping(true);
+              void onStopUnresolved().catch(() => undefined).finally(() => setStopping(false));
+            }}>
+            {stopping ? "正在核实停止…" : "停止旧任务"}
+          </Button>
         ) : null}
         {!sendError && runError ? (
           <details key={runError} className="mt-1">

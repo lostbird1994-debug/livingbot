@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
 import type { Bot, ComputerStatus, Me, ThreadSnapshot } from "@rakazo/contracts";
+import { toast } from "@rakazo/ui-web";
 import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { useComposerActions } from "./use-composer-actions";
+
+vi.mock("@rakazo/ui-web", () => ({ toast: { success: vi.fn() } }));
 
 vi.mock("@lingui/react/macro", () => ({
   useLingui: () => ({
@@ -24,7 +27,11 @@ vi.mock("../../lib/prepare-image", () => ({
 type Rpc = {
   routines: { testRun: ReturnType<typeof vi.fn> };
   artifacts: { create: ReturnType<typeof vi.fn> };
-  threads: { send: ReturnType<typeof vi.fn>; sendWithRoutines: ReturnType<typeof vi.fn> };
+  threads: {
+    send: ReturnType<typeof vi.fn>;
+    sendWithRoutines: ReturnType<typeof vi.fn>;
+    stop: ReturnType<typeof vi.fn>;
+  };
 };
 
 let rpc: Rpc;
@@ -75,7 +82,7 @@ beforeEach(() => {
   rpc = {
     routines: { testRun: vi.fn() },
     artifacts: { create: vi.fn() },
-    threads: { send: vi.fn(), sendWithRoutines: vi.fn() },
+    threads: { send: vi.fn(), sendWithRoutines: vi.fn(), stop: vi.fn() },
   };
   root = createRoot(document.createElement("div"));
   act(() => root.render(<Harness />));
@@ -103,6 +110,21 @@ it.each([undefined, 1, 8])(
     expect(latest.attachmentNotice).toContain(`max ${limit} attachments`);
   },
 );
+
+it("reports cancelled pending messages after stopping the entire conversation", async () => {
+  rpc.threads.stop.mockResolvedValue({
+    ok: true,
+    cancelledRunCount: 1,
+    cancelledPendingMessageCount: 2,
+  });
+  await act(async () => {
+    await latest.stopRun();
+  });
+  expect(rpc.threads.stop).toHaveBeenCalledWith({ botId: "bot-1" });
+  expect(toast.success).toHaveBeenCalledWith(
+    "Stopped this conversation and cancelled 2 pending messages.",
+  );
+});
 
 it("keeps an attachment added while a send is in flight", async () => {
   const fileA = new File(["a"], "a.txt", { type: "text/plain" });

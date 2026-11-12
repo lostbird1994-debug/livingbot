@@ -208,18 +208,9 @@ export async function executeSubagent(
   };
   nested = new Agent({
     finishTurn: async (turn, turnSignal) => {
-      await deliverFinishedShells(
-        (text) => {
-          nested.followUp({
-            role: "user",
-            content: text,
-            timestamp: Date.now(),
-          });
-        },
-        nestedHost.pendingShells,
-        turn,
-        turnSignal,
-      );
+      if (nestedHost.pausePending) return;
+      const changed = await deliverFinishedShells(nestedHost.pendingShells, turn, turnSignal);
+      if (changed) return { action: "continue" };
     },
     sessionId: conversationSessionId(host.request.threadId, host.request.botId, agentId),
     streamFn: (_m, ctx, options) =>

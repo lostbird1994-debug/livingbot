@@ -49,6 +49,7 @@ export * from "./sessions.js";
 export * from "./space-settings.js";
 export * from "./spaces.js";
 export { primaryActiveRun } from "./thread-listing.js";
+export * from "./thread-stops.js";
 export * from "./transaction-retry.js";
 export * from "./unread-inbox-chats.js";
 export * from "./usage.js";

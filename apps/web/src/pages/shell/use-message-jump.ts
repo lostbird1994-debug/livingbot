@@ -67,11 +67,12 @@ export function useMessageJump({
   const [scrollRequest, setScrollRequest] = useState<{
     messageId: string;
     nonce: number;
+    alignment?: "start" | "center";
   } | null>(null);
   const clearScrollRequest = useCallback(() => setScrollRequest(null), []);
   const initiallyScrolledThread = useRef<string | null>(null);
 
-  async function jumpToMessage(target: JumpTarget) {
+  async function jumpToMessage(target: JumpTarget, alignment: "start" | "center" = "center") {
     const threadTarget = searchHitThreadTarget(target);
     const epoch = historyEpoch.current;
     jumpGeneration.current += 1;
@@ -93,6 +94,7 @@ export function useMessageJump({
     const targetInPage =
       pageTranscript.markerOf.has(messageId) ||
       pageTranscript.messages.some((message) => message.id === messageId);
+    if (alignment === "start" && !targetInPage) throw new Error("原消息已不存在，或当前无权查看。");
     expandedHistoryThread.current = targetInPage ? page.threadId : null;
     pinnedAroundRef.current = targetInPage
       ? {
@@ -131,7 +133,7 @@ export function useMessageJump({
     if (targetInPage) {
       // The transcript owns the scroll: it retries until the pinned row is
       // mounted and unfollows the tail, so live commits cannot cancel it.
-      setScrollRequest({ messageId, nonce: jumpId });
+      setScrollRequest({ messageId, nonce: jumpId, alignment });
     } else {
       window.requestAnimationFrame(() => {
         if (epoch !== historyEpoch.current || jumpId !== jumpGeneration.current) return;
@@ -142,6 +144,7 @@ export function useMessageJump({
         }
       });
     }
+    return targetInPage;
   }
 
   // The routine panel copies a routine's data into local draft state at click time
@@ -232,5 +235,9 @@ export function useMessageJump({
     if (botId) void jumpToMessageRef.current({ botId, messageId }).catch(() => undefined);
   }, []);
 
-  return { scrollRequest, clearScrollRequest, jumpToReplyMessage };
+  const jumpToHistoryMessage = useCallback(async (messageId: string) => {
+    const target = activeGroupId.current ? { groupId: activeGroupId.current, messageId } : { botId: activeBotId.current, messageId };
+    if (!await jumpToMessageRef.current(target, "start")) throw new Error("原消息已不存在，或当前无权查看。");
+  }, []);
+  return { scrollRequest, clearScrollRequest, jumpToReplyMessage, jumpToHistoryMessage };
 }

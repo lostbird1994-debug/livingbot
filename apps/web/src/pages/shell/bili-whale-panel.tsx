@@ -1,9 +1,9 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, BiliWhaleSettings, BiliWhaleStatus } from "@rakazo/contracts";
+import type { BiliWhaleSettings, BiliWhaleStatus, Bot } from "@rakazo/contracts";
 import { Button, Input, SectionHeading, Switch } from "@rakazo/ui-web";
-import { CheckCircle2, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { cloneElement, isValidElement, useCallback, useEffect, useId, useState } from "react";
 import { rpc } from "../../lib/rpc";
 
 /**
@@ -22,10 +22,13 @@ type Props = {
 };
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+  const id = useId();
   return (
     <div className="space-y-1.5">
-      <div className="text-xs font-medium text-muted-foreground">{label}</div>
-      {children}
+      <label htmlFor={id} className="text-xs font-medium text-muted-foreground">
+        {label}
+      </label>
+      {isValidElement<{ id?: string }>(children) ? cloneElement(children, { id }) : children}
       {hint ? <p className="text-[11px] leading-relaxed text-muted-foreground/80">{hint}</p> : null}
     </div>
   );
@@ -41,10 +44,13 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
+  const id = useId();
   return (
     <div className="flex min-h-9 items-center justify-between gap-3">
-      <span className="text-sm">{label}</span>
-      {children}
+      <label htmlFor={id} className="text-sm">
+        {label}
+      </label>
+      {isValidElement<{ id?: string }>(children) ? cloneElement(children, { id }) : children}
     </div>
   );
 }
@@ -122,8 +128,15 @@ export function BiliWhaleSection({ bot, active }: Props) {
   }
 
   async function saveCredentials() {
-    if (!credentials.sessdata.trim()) {
-      setError(t`SESSDATA 不能为空`);
+    if (!Object.values(credentials).some((value) => value.trim())) {
+      setError(t`请至少填写一项需要更新的凭据`);
+      return;
+    }
+    if (
+      !status?.credentials.configured &&
+      (!credentials.sessdata.trim() || !credentials.biliJct.trim())
+    ) {
+      setError(t`首次配置请同时填写 SESSDATA 和 bili_jct`);
       return;
     }
     setBusy("credentials");
@@ -133,7 +146,8 @@ export function BiliWhaleSection({ bot, active }: Props) {
       await rpc.biliWhale.saveCredentials({ botId: bot.id, ...credentials });
       setCredentials({ sessdata: "", biliJct: "", buvid3: "" });
       setNotice(t`凭据已保存（内容不会回显）`);
-      await load();
+      const result = await rpc.biliWhale.get({ botId: bot.id });
+      setStatus(result.status);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally {
@@ -206,9 +220,7 @@ export function BiliWhaleSection({ bot, active }: Props) {
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
         )}
         <div className="space-y-1">
-          <div className="font-medium">
-            {ready ? t`工具链就位` : t`工具链还没就位`}
-          </div>
+          <div className="font-medium">{ready ? t`工具链就位` : t`工具链还没就位`}</div>
           <div className="break-all text-[11px] leading-relaxed text-muted-foreground">
             {status?.projectDir}
           </div>
@@ -231,7 +243,10 @@ export function BiliWhaleSection({ bot, active }: Props) {
             value={settings.persona.name}
             placeholder={bot.name}
             onChange={(event) =>
-              patch((draft) => ({ ...draft, persona: { ...draft.persona, name: event.target.value } }))
+              patch((draft) => ({
+                ...draft,
+                persona: { ...draft.persona, name: event.target.value },
+              }))
             }
           />
         </Field>
@@ -291,7 +306,10 @@ export function BiliWhaleSection({ bot, active }: Props) {
                   night: {
                     ...draft.night,
                     windows: [
-                      { ...(draft.night.windows[0] ?? { start: "20:00", end: "24:00", wakes: 1 }), start: event.target.value },
+                      {
+                        ...(draft.night.windows[0] ?? { start: "20:00", end: "24:00", wakes: 1 }),
+                        start: event.target.value,
+                      },
                       ...draft.night.windows.slice(1),
                     ],
                   },
@@ -308,7 +326,10 @@ export function BiliWhaleSection({ bot, active }: Props) {
                   night: {
                     ...draft.night,
                     windows: [
-                      { ...(draft.night.windows[0] ?? { start: "20:00", end: "24:00", wakes: 1 }), end: event.target.value },
+                      {
+                        ...(draft.night.windows[0] ?? { start: "20:00", end: "24:00", wakes: 1 }),
+                        end: event.target.value,
+                      },
                       ...draft.night.windows.slice(1),
                     ],
                   },
@@ -340,7 +361,10 @@ export function BiliWhaleSection({ bot, active }: Props) {
             />
           </Field>
         </div>
-        <Field label={t`今天不想看的概率：${Math.round(settings.night.skipChance * 100)}%`} hint={t`摆烂也是一种活法；她掷到不看时会写日记说明理由`}>
+        <Field
+          label={t`今天不想看的概率：${Math.round(settings.night.skipChance * 100)}%`}
+          hint={t`摆烂也是一种活法；她掷到不看时会写日记说明理由`}
+        >
           <input
             type="range"
             min={0}
@@ -424,9 +448,7 @@ export function BiliWhaleSection({ bot, active }: Props) {
           />
         </Row>
         <p className="text-[11px] leading-relaxed text-muted-foreground/80">
-          <Trans>
-            关掉就在评论区 @ 你；打开走私信（需要两个号互关）。两条路共用同一份额度。
-          </Trans>
+          <Trans>关掉就在评论区 @ 你；打开走私信（需要两个号互关）。两条路共用同一份额度。</Trans>
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label={t`每天最多几条`}>
@@ -501,11 +523,12 @@ export function BiliWhaleSection({ bot, active }: Props) {
       <SectionHeading>
         <Trans>B 站凭据</Trans>
       </SectionHeading>
-      <Group title={t`凭据只写不读，保存后不再显示`}>
+      <Group title={t`凭据只写不读，留空保留原值`}>
         <p className="text-[11px] leading-relaxed text-muted-foreground">
           <Trans>
-            在 bilibili.com 按 F12 → Application → Cookies → https://www.bilibili.com，复制这三个值。
-            SESSDATA 是 HttpOnly，用 document.cookie 拿不到，必须手动复制。
+            在 bilibili.com 按 F12 → Application → Cookies →
+            https://www.bilibili.com，复制这三个值。 SESSDATA 是 HttpOnly，用 document.cookie
+            拿不到，必须手动复制。
           </Trans>
         </p>
         <div className="flex flex-wrap gap-2 text-[11px]">
@@ -566,7 +589,12 @@ export function BiliWhaleSection({ bot, active }: Props) {
       </SectionHeading>
       <Group title={t`确认她真的能干活`}>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" disabled={busy === "deps"} onClick={() => void runDeps()}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy === "deps"}
+            onClick={() => void runDeps()}
+          >
             {busy === "deps" ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
@@ -574,7 +602,12 @@ export function BiliWhaleSection({ bot, active }: Props) {
             )}
             <Trans>依赖体检</Trans>
           </Button>
-          <Button variant="outline" size="sm" disabled={busy === "plan"} onClick={() => void rollPlan()}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy === "plan"}
+            onClick={() => void rollPlan()}
+          >
             {busy === "plan" ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (

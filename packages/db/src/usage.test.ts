@@ -59,6 +59,10 @@ describe("usage ledger", () => {
       pricingVersion: "v1",
       operationKind: "subagent" as const,
       agentId: "agent-fixture",
+      modelDurationMs: 3000,
+      generationDurationMs: 1000,
+      contextTokens: 900,
+      contextWindow: 4000,
     };
     await recordUsage(prisma, event, {
       spaceId: "space-fixture",
@@ -79,6 +83,10 @@ describe("usage ledger", () => {
           agentId: "agent-fixture",
           parentRunId: "run-fixture",
           cacheWriteTokens: 0,
+          modelDurationMs: 3000,
+          generationDurationMs: 1000,
+          contextTokens: 900,
+          contextWindow: 4000,
         }),
       ],
       skipDuplicates: true,

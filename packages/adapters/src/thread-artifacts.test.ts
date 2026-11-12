@@ -156,6 +156,7 @@ describe("current-turn thread files", () => {
           filePath: "generated.mp4",
           bytes: new Uint8Array([1, 2, 3, 4]),
           operationId: "op",
+          name: "generated",
           onAttached,
         },
       );
@@ -170,6 +171,11 @@ describe("current-turn thread files", () => {
         expect(remove).not.toHaveBeenCalled();
       }
       expect(onAttached).toHaveBeenCalledTimes(1);
+      expect(artifact.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ name: "generated.mp4" }),
+        }),
+      );
     },
   );
   it("removes stored bytes when artifact metadata cannot be created", async () => {

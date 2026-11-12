@@ -18,11 +18,28 @@ vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
 vi.mock("@rakazo/ui-web", () => ({
-  Disclosure: ({ summary, children }: { summary: ReactNode; children: ReactNode }) => (
-    <details>
-      <summary>{summary}</summary>
+  Disclosure: ({
+    summary,
+    children,
+    open,
+    onOpenChange,
+  }: {
+    summary: ReactNode;
+    children: ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+  }) => (
+    <div>
+      <button
+        type="button"
+        data-disclosure-summary
+        aria-expanded={open}
+        onClick={() => onOpenChange?.(!open)}
+      >
+        {summary}
+      </button>
       {children}
-    </details>
+    </div>
   ),
   SectionHeading: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
   Button: ({
@@ -86,17 +103,33 @@ async function click(text: string) {
   const button = [...host.querySelectorAll("button")].find((entry) => entry.textContent === text)!;
   await act(async () => button.click());
 }
-it("saves independent switches and modules with a baseline, without changing instructions", async () => {
+it("shows the preview only while a role or instructions card is collapsed", async () => {
+  await render({
+    ...initial,
+    roleCard: botRoleCard({ identity: "A librarian", personality: "Patient" }),
+  });
+  const identity = host.querySelectorAll<HTMLButtonElement>("[data-disclosure-summary]")[0]!;
+  expect(identity.textContent).toContain("A librarian");
+  await act(async () => identity.click());
+  expect(identity.textContent).not.toContain("A librarian");
+  expect(host.querySelector<HTMLTextAreaElement>('[aria-label="Identity"]')!.value).toBe(
+    "A librarian",
+  );
+  await act(async () => identity.click());
+  expect(identity.textContent).toContain("A librarian");
+  const instructions = host.querySelectorAll<HTMLButtonElement>("[data-disclosure-summary]")[1]!;
+  expect(instructions.textContent).toContain("Private");
+  await act(async () => instructions.click());
+  expect(instructions.textContent).not.toContain("Private");
+});
+it("saves identity modules with a baseline and no retired modules or switches", async () => {
   api.update.mockImplementation(async ({ roleCard }) => ({ ...initial, roleCard }));
   await render();
   await type("Identity", "A librarian");
   await type("User identity", "A visitor");
-  await act(async () =>
-    host.querySelector<HTMLButtonElement>('[aria-label="Enable user identity"]')!.click(),
-  );
-  expect(host.querySelector('[aria-label="Enable backstory"]')?.getAttribute("aria-checked")).toBe(
-    "false",
-  );
+  expect(host.querySelector('[aria-label="Enable user identity"]')).toBeNull();
+  expect(host.querySelector('[aria-label="Enable backstory"]')).toBeNull();
+  expect(host.querySelector('[aria-label="Backstory"]')).toBeNull();
   await click("Save role settings");
   expect(api.update).toHaveBeenCalledExactlyOnceWith({
     botId: "bot",
@@ -104,7 +137,6 @@ it("saves independent switches and modules with a baseline, without changing ins
       ...initial.roleCard,
       identity: "A librarian",
       userIdentity: "A visitor",
-      userIdentityEnabled: true,
     },
     expectedRoleCard: initial.roleCard,
   });

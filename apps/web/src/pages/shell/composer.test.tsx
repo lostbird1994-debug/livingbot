@@ -1432,3 +1432,25 @@ it.each([10, -30, window.innerHeight - 10])(
     }
   },
 );
+
+it("offers a guarded stop action for an unresolved native task without resending it", async () => {
+  let finish!: () => void;
+  const onStop = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
+  const onSend = vi.fn(async () => true);
+  renderComposer(onSend, { onStop,
+    runError: "An earlier task in this native session is unresolved; inspect it before submitting another task",
+    runErrorId: "blocked-run" });
+  const button = [...container!.querySelectorAll("button")].find(b => b.textContent === "停止旧任务");
+  expect(button).toBeTruthy();
+  act(() => button!.click());
+  expect(onStop).toHaveBeenCalledTimes(1);
+  expect(button!.disabled).toBe(true);
+  expect(button!.textContent).toBe("正在核实停止…");
+  expect(onSend).not.toHaveBeenCalled();
+  await act(async () => { finish(); });
+  expect(button!.disabled).toBe(false);
+  rerenderComposer({ running: true });
+  expect(container!.textContent).not.toContain("停止旧任务");
+  rerenderComposer({ running: false, artifactTarget: { groupId: "group" } });
+  expect(container!.textContent).not.toContain("停止旧任务");
+});

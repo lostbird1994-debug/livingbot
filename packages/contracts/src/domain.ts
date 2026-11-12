@@ -25,6 +25,9 @@ import { RoutineWatchSchema, RoutineWatchStateSchema } from "./routine-watch.js"
 import { RunTriggerSchema } from "./runs.js";
 import { SettingsScopeSchema } from "./settings-scope.js";
 
+/** Bound direct chat payloads before they are stored or rendered. Larger material belongs in attachments. */
+export const THREAD_MESSAGE_TEXT_MAX_LENGTH = 100_000;
+
 export const ComputerModeSchema = z.enum(["team", "dedicated"]);
 export type ComputerMode = z.infer<typeof ComputerModeSchema>;
 
@@ -489,6 +492,7 @@ export const RoutineSchema = z.object({
   timezone: z.string(),
   active: z.boolean(),
   notify: z.boolean(),
+  requireOutput: z.boolean(),
   webhookEnabled: z.boolean(),
   githubEnabled: z.boolean(),
   messageProvider: z
@@ -520,6 +524,7 @@ export const CreateRoutineInput = z
     crons: z.array(z.string().min(1)).default([]),
     timezone: TimeZoneSchema.default("UTC"),
     notify: z.boolean().default(true),
+    requireOutput: z.boolean().default(false),
     active: z.boolean().default(false),
     webhookEnabled: z.boolean().default(false),
     githubEnabled: z.boolean().default(false),

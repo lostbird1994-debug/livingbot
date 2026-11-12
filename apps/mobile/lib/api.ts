@@ -1766,6 +1766,7 @@ export function applyMobileThreadEvent(
       createdAt: known?.createdAt ?? event.createdAt,
       runId: event.runId ? String(event.runId) : undefined,
       role: (event.payload?.role as MobileMessage["role"]) ?? "bot",
+      routine: typeof event.payload?.routine === "boolean" ? event.payload.routine : known?.routine,
       // An update can leave the call id out — the `end_call` marker does — so keep the one
       // the message already carries instead of dropping it out of its call.
       callId: typeof event.payload?.callId === "string" ? event.payload.callId : known?.callId,

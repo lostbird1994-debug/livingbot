@@ -6,7 +6,7 @@ import {
   assertAllowedOpenAiCompatibleUrl,
   assertHttpsForKeyedOpenAiCompatibleUrl,
 } from "./openai-compatible-url.js";
-import { NativeRunJournal } from "./openclaw-model-stream.js";
+import { NativeRunJournal } from "./openclaw-gateway.js";
 import type { NativeFrame, NativePeer, NativeStore } from "./openclaw-native-driver.js";
 import {
   NativeExecutionError,

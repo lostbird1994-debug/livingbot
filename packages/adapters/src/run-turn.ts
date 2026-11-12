@@ -724,9 +724,10 @@ export async function completeRun(ctx: RunContext) {
     reply.currentTextSegment = reply.assembled;
   }
   flushPendingTools(reply);
-  // Silent-allowed runs can choose an explicit NO_RESPONSE or finish empty.
-  // Other runs still drop a stray sentinel at the edges of a real reply.
-  const silentReply = ctx.allowSilentEmptyRun
+  // A routine's silence token is control data, never its required result.
+  // Required-output routines must fail the empty-result check below rather
+  // than publishing that token as if it were a useful answer.
+  const silentReply = ctx.allowSilentEmptyRun || run.trigger === "routine"
     ? stripNoResponseReply(reply.assembled, reply.messageSegments)
     : (ctx.source.peerMessage?.intent === "request" ||
           ctx.source.peerMessage?.intent === "question") &&
@@ -765,6 +766,14 @@ export async function completeRun(ctx: RunContext) {
     emptyDelegatedToolTurnShouldFail(completionBlocks)
   ) {
     throw new Error(TOOL_STEPS_WITHOUT_RESPONSE);
+  }
+  if (
+    !ctx.state.handedOff &&
+    run.trigger === "routine" &&
+    ctx.routineRequiresOutput &&
+    !silentReply.assembled.trim()
+  ) {
+    throw new ModelOutputError("This routine did not produce a final result.");
   }
   if (!(await renewRunLease(deps, runId, ctx.workerId, ctx.fence))) return;
   const botMessageOutcome =
@@ -836,6 +845,7 @@ export async function completeRun(ctx: RunContext) {
       },
     });
     if (
+      deps.runtime.describe().capabilities.workspaceContext !== true &&
       (deps.contextStrategy ?? DEFAULT_CONTEXT_STRATEGY) === "current" &&
       shouldEnqueueCompaction(
         updatedThread.nextMessageSeq,

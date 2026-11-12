@@ -35,12 +35,13 @@ function rowClass(open: boolean): string {
  * Bot memory. Skills belong to the person in a space, not to one bot, so they live in
  * the Skills dialog; memory shared across bots lives in the Memory settings overlay.
  */
-export function KnowledgeSection({ botId }: { botId: string }) {
+export function KnowledgeSection({ botId, excludePaths }: { botId: string; excludePaths?: string[] }) {
   return (
     <MemoryDocumentList
       key={botId}
       input={{ botId, scope: "bot" }}
       testId="bot-knowledge-memory"
+      excludePaths={excludePaths}
       compact
     />
   );
@@ -93,11 +94,13 @@ function MemoryDocumentList({
   testId,
   compact = false,
   pathFilter,
+  excludePaths,
 }: {
   input: { botId?: string; scope: "bot" | "user" };
   testId: string;
   compact?: boolean;
   pathFilter?: string;
+  excludePaths?: string[];
 }) {
   const rpc = useSpaceRpc();
   const { t } = useLingui();
@@ -106,7 +109,7 @@ function MemoryDocumentList({
   const list = queries.memory.list.queryOptions({ input });
   // Bots write memory as they run, so every open refreshes behind the cached list.
   const listQuery = useQuery({ ...list, refetchOnMount: "always" });
-  const docs = listQuery.data ?? NO_DOCS;
+  const docs = (listQuery.data ?? NO_DOCS).filter(doc => !excludePaths?.includes(doc.path));
   const loading = listQuery.isPending;
   const [showAll, setShowAll] = useState(false);
   // Once shown, memory stays visible while the panel is open, even if emptied.

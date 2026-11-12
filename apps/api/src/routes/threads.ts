@@ -1,3 +1,4 @@
+import { findConversationHistory } from "../conversation-find.js";
 import { ORPCError } from "@orpc/server";
 import { runContinueJob, runJobKey } from "@rakazo/adapter-kit";
 import { settleCallRequest } from "@rakazo/adapters";
@@ -21,7 +22,7 @@ import {
   touchGroupUpdatedAt,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
-import { openLocalMessageFile } from "../local-message-file.js";
+import { openLocalMessageFile, resolveLocalMessageFile } from "../local-message-file.js";
 import type { RouterDeps } from "../router.js";
 import { createRoutineTestRun, routineTestRunNonce, routineTestTarget } from "../routines.js";
 import { withSerializableRetry } from "../serializable-retry.js";
@@ -151,12 +152,25 @@ export function threadsRoutes(ctx: RouterContext) {
   };
   return {
     threads: {
+      find: authed.threads.find.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input, { includeArchived: true });
+        return findConversationHistory(deps.prisma, context.actor, target.threadId, input, context.signal);
+      }),
+      fileInfo: authed.threads.fileInfo.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input, { includeArchived: true });
+        return resolveLocalMessageFile({ prisma: deps.prisma, localHost: deps.env.sandboxProvider === "desktop",
+          resolveDocument: deps.botWorkspace?.resolveDocument
+            ? reference => deps.botWorkspace!.resolveDocument!(context.actor, reference) : undefined,
+        }, target.threadId, { ...input, action: "open" });
+      }),
       fileAction: authed.threads.fileAction.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input, {
           includeArchived: true,
         });
         return openLocalMessageFile(
-          { prisma: deps.prisma, localHost: deps.env.sandboxProvider === "desktop" },
+          { prisma: deps.prisma, localHost: deps.env.sandboxProvider === "desktop",
+            resolveDocument: deps.botWorkspace?.resolveDocument
+              ? reference => deps.botWorkspace!.resolveDocument!(context.actor, reference) : undefined },
           target.threadId,
           input,
         );
@@ -337,9 +351,16 @@ export function threadsRoutes(ctx: RouterContext) {
         return { ok: true as const, runIds: result.runIds };
       }),
       stop: authed.threads.stop.handler(async ({ context, input }) => {
+        const before = Date.now();
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
-        await stopThreadRuns(deps, context.actor, target);
-        return { ok: true as const };
+        const stopped = await stopThreadRuns(deps, context.actor, target);
+        if (target.kind === "bot" && deps.stopNativeOrphans) {
+          try { await deps.stopNativeOrphans(context.actor, target.botId, target.threadId, before); }
+          catch {
+            throw new ORPCError("CONFLICT", { message: "旧任务尚未确认停止，暂未解除占用。请稍后再次停止，或核实原任务的后台命令。" });
+          }
+        }
+        return { ok: true as const, ...stopped };
       }),
       clear: authed.threads.clear.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);

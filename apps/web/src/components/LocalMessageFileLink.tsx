@@ -11,11 +11,13 @@ export function LocalMessageFileLink({
   label,
   messageId,
   target,
+  inline = false,
 }: {
   path: string;
   label?: string;
   messageId: string;
   target: ArtifactTarget;
+  inline?: boolean;
 }) {
   const { t } = useLingui();
   const [busy, setBusy] = useState(false);
@@ -47,7 +49,7 @@ export function LocalMessageFileLink({
       >
         {label || path.split("/").at(-1) || path}
       </a>
-      <Button
+      {!inline ? <Button
         type="button"
         variant="ghost"
         size="xs"
@@ -57,7 +59,7 @@ export function LocalMessageFileLink({
       >
         <FolderOpen className="size-3.5" />
         {t`Open folder`}
-      </Button>
+      </Button> : null}
       {error ? (
         <span role="alert" className="w-full text-xs text-destructive">
           {error}

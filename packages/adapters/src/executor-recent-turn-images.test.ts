@@ -191,6 +191,7 @@ async function runWithModel(
       // A claimed steering reply looks up the message it quotes; this one quotes nothing.
       findFirst: vi.fn(async () => null),
     },
+    event: { findMany: vi.fn(async () => []) },
     task: { findUniqueOrThrow: vi.fn(async () => ({ id: run.taskId, prompt: "Look again" })) },
     computer: {
       updateMany: vi.fn(async () => ({ count: 1 })),

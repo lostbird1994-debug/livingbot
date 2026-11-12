@@ -4556,6 +4556,10 @@ msgstr "找不到遠端 MCP 伺服器"
 msgid "No reply"
 msgstr "未回覆"
 
+#: src/pages/RoutineRunHistory.tsx
+msgid "Finished, no update"
+msgstr "已完成，無新內容"
+
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/command-palette.tsx

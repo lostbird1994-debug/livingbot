@@ -234,26 +234,71 @@ export function sanitizeAutoReviewReason(reason: string | undefined): string | u
   return truncateReviewText(cleaned, MAX_REASON_CHARS);
 }
 
+/** Only a complete, unambiguous JSON verdict may authorize an action. */
 export function parseAutoReviewJudgeText(text: string): {
   decision: AutoReviewJudgeDecision;
   reason?: string;
 } {
   const trimmed = text.trim();
-  const fenced = trimmed.match(/\{[\s\S]*\}/);
-  const candidate = fenced?.[0] ?? trimmed;
+  const strictBody = /^```(?:json)?[ \t]*\r?\n([\s\S]*)```$/i.exec(trimmed)?.[1]?.trim() ?? trimmed;
   try {
-    const parsed = JSON.parse(candidate) as { decision?: unknown; reason?: unknown };
-    if (parsed.decision === "pass" || parsed.decision === "ask") {
+    const parsed: unknown = JSON.parse(strictBody);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      !Array.isArray(parsed) &&
+      !hasRepeatedTopLevelKey(strictBody) &&
+      "decision" in parsed &&
+      (parsed.decision === "pass" || parsed.decision === "ask")
+    ) {
       return {
         decision: parsed.decision,
         reason:
-          typeof parsed.reason === "string" ? sanitizeAutoReviewReason(parsed.reason) : undefined,
+          "reason" in parsed && typeof parsed.reason === "string"
+            ? sanitizeAutoReviewReason(parsed.reason)
+            : undefined,
       };
     }
   } catch {
-    // fall through
+    /* Non-strict replies may request review, never authorize. */
+  }
+  const candidate = trimmed.match(/\{[\s\S]*\}/)?.[0] ?? trimmed;
+  try {
+    const parsed = JSON.parse(candidate) as { decision?: unknown; reason?: unknown };
+    if (parsed.decision === "pass" || parsed.decision === "ask")
+      return {
+        decision: "ask",
+        reason:
+          parsed.decision === "ask" && typeof parsed.reason === "string"
+            ? sanitizeAutoReviewReason(parsed.reason)
+            : undefined,
+      };
+  } catch {
+    /* Unreadable verdicts are errors and cannot pass an action. */
   }
   return { decision: "error" };
+}
+
+/** JSON.parse keeps the last of repeated keys; call only on text it has already accepted. */
+function hasRepeatedTopLevelKey(json: string): boolean {
+  const keys = new Set<string>();
+  const colon = /\s*:/y;
+  let depth = 0;
+  for (let i = 0; i < json.length; i++) {
+    const ch = json[i];
+    if (ch === '"') {
+      const start = i;
+      for (i++; json[i] !== '"'; i++) if (json[i] === "\\") i++;
+      colon.lastIndex = i + 1;
+      if (depth === 1 && colon.test(json)) {
+        const key: string = JSON.parse(json.slice(start, i + 1));
+        if (keys.has(key)) return true;
+        keys.add(key);
+      }
+    } else if (ch === "{" || ch === "[") depth++;
+    else if (ch === "}" || ch === "]") depth--;
+  }
+  return false;
 }
 
 /**

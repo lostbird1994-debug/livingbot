@@ -79,6 +79,7 @@ export function projectMessages(
         threadId: event.threadId,
         seq: event.seq,
         role,
+        routine: payload.routine === true,
         blocks: expandToolStepNotes(blocks),
         botId: event.botId ?? undefined,
         runId: event.runId ?? undefined,

@@ -360,6 +360,7 @@ function fixture({
       })),
     },
     event: {
+      findMany: vi.fn(async () => []),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
         id: "event-1",
         ...data,

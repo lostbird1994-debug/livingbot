@@ -11,6 +11,7 @@ import {
 } from "@rakazo/contracts";
 import {
   AttachmentValidationError,
+  attachmentFileName,
   decodeAttachmentBase64,
   inferAttachmentMimeType,
   messageBlockForArtifact,
@@ -114,6 +115,7 @@ async function storeOwnedArtifact(
   },
 ) {
   const { mimeType, bytes } = input;
+  input = { ...input, name: attachmentFileName(input.name, mimeType) };
   const context = createAdapterContext(actor, input.botId, `artifact-create:${input.botId}`);
   const stored = await deps.artifacts.put({ name: input.name, mimeType, bytes }, context);
   const hash = createHash("sha256").update(bytes).digest("hex");

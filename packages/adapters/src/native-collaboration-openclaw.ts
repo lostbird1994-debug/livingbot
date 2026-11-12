@@ -1,7 +1,13 @@
 import {
   NATIVE_COLLABORATION_TOOLS,
+  NATIVE_KERNEL_HOST_TOOLS,
   NativeCollaborationBroker,
 } from "./native-collaboration-broker.js";
+import { randomUUID } from "node:crypto";
+import type { NativeModelCallEnd } from "./native-collaboration-broker.js";
+import { NativeProcessControl } from "./openclaw-process-control.js";
+import type { NativeBootstrapEvent } from "./openclaw-workspace-context.js";
+import { NativeWorkspaceContext } from "./openclaw-workspace-context.js";
 
 // OpenClaw loads separate gateway and tool-discovery registries in one process.
 // They must share pending calls, including when it imports the extension again.
@@ -9,13 +15,49 @@ const processState = globalThis as unknown as Record<symbol, NativeCollaboration
 const brokerKey = Symbol.for("rakazo.collaboration.broker.v1");
 const broker = processState[brokerKey] ?? new NativeCollaborationBroker();
 processState[brokerKey] = broker;
+const processKey = Symbol.for("rakazo.process.control.v1");
+const engineState = globalThis as unknown as Record<symbol, NativeProcessControl>;
+const processes = engineState[processKey] ?? new NativeProcessControl();
+engineState[processKey] = processes;
+const instanceKey = Symbol.for("rakazo.native-engine-instance.v1");
+const instanceState = globalThis as unknown as Record<symbol, { id: string; startedAt: number }>;
+const engineInstance = instanceState[instanceKey] ?? {
+  id: randomUUID(), startedAt: Date.now() - process.uptime() * 1000,
+};
+instanceState[instanceKey] = engineInstance;
+export const nativeHostToolNames = [...new Set([
+  ...NATIVE_COLLABORATION_TOOLS, ...NATIVE_KERNEL_HOST_TOOLS, "list_tools", "get_tool", "use_tool",
+])];
 
 // Structural boundary keeps OpenClaw optional; the extension is bundled separately.
 interface PluginApi {
+  pluginConfig?: Record<string, unknown>;
+  runtime?: { config: { loadConfig(): Record<string, any> } };
+  registerHook?(event: string, handler: (event: NativeBootstrapEvent) => Promise<void>, options: { name: string }): void;
+  on?: {
+    (hook: "model_call_ended",
+      handler: (event: NativeModelCallEnd, context: { sessionKey?: string; runId?: string }) => void): void;
+    (hook: "llm_output",
+      handler: (event: { runId?: string; provider?: string; model?: string; lastAssistant?: unknown; usage?: unknown },
+        context: { sessionKey?: string; runId?: string }) => void): void;
+    (hook: "before_tool_call",
+      handler: (event: { toolName: string }, context: { sessionKey?: string }) =>
+        { block: true; blockReason: string } | undefined): void;
+    (hook: "after_tool_call",
+      handler: (event: { toolName: string; runId?: string; result?: unknown },
+        context: { sessionKey?: string; runId?: string }) => void): void;
+    (hook: "before_prompt_build",
+      handler: (event: unknown, context: { agentId?: string; sessionKey?: string }) =>
+        Promise<{ appendSystemContext: string } | undefined>): void;
+  };
   registerGatewayMethod(
     name: string,
     handler: (options: {
       params: Record<string, unknown>;
+      context?: {
+        dedupe: Map<string, { payload?: unknown; error?: { message?: string } }>;
+        chatAbortControllers: Map<string, { sessionKey?: string }>;
+      };
       respond(ok: boolean, payload?: unknown, error?: { code: string; message: string }): void;
     }) => void,
     options: { scope: "operator.write" },
@@ -29,12 +71,104 @@ export default {
   id: "rakazo-collaboration",
   name: "Rakazo collaboration",
   register(api: PluginApi) {
+    // Installed extensions cannot register bundled-only trusted tool policies.
+    // The supported before-tool hook enforces the same run-owned capability grant.
+    api.on?.("before_tool_call", (event, context) =>
+      context.sessionKey ? broker.nativeToolDecision(context.sessionKey, event.toolName) : undefined);
+    api.on?.("llm_output", (event, context) => broker.observeResult(event, context));
+    api.on?.("model_call_ended", (event, context) => broker.observeModelCall(event, context));
+    api.on?.("after_tool_call", (event, context) => processes.observe(event, context));
+    if (typeof api.pluginConfig?.registryFile === "string" && api.runtime?.config) {
+      const config = api.runtime.config;
+      const workspaces = new NativeWorkspaceContext({
+        registryFile: api.pluginConfig.registryFile,
+        config: () => config.loadConfig(),
+      });
+      api.registerHook?.("agent:bootstrap", async event => {
+        if (!event.context.sessionKey || broker.kernelSession(event.context.sessionKey))
+          await workspaces.bootstrap(event, !event.context.sessionKey ||
+            broker.privateContextAllowed(event.context.sessionKey));
+      }, { name: "rakazo-workspace-files" });
+      api.on?.("before_prompt_build", async (_event, context) =>
+        context.agentId && context.sessionKey && broker.kernelSession(context.sessionKey)
+          ? workspaces.guidance(context.agentId, broker.privateContextAllowed(context.sessionKey)) : undefined);
+      api.registerGatewayMethod("rakazo.context.preview", async ({ params, respond }) => {
+        try { respond(true, await workspaces.preview(params)); }
+        catch { respond(false, undefined, { code: "INVALID_REQUEST", message: "Native context preview is unavailable" }); }
+      }, { scope: "operator.write" });
+    }
+    api.registerGatewayMethod("rakazo.process.control", async ({ params, respond }) => {
+      try {
+        respond(true, await processes.control(params));
+      } catch (error) {
+        const message = error instanceof Error && /^(Native process|OpenClaw process|Native process control)/.test(error.message)
+          ? error.message : "Native process control backend is unavailable";
+        respond(false, undefined, {
+          code: "INVALID_REQUEST", message,
+        });
+      }
+    }, { scope: "operator.write" });
+    api.registerGatewayMethod("rakazo.run.status", ({ params, respond, context }) => {
+      // Validate the run-owned receipt independently of tool authorization. Attempt
+      // lifecycle events and agent.wait's lifecycle cache are not final receipts.
+      const { runId, sessionKey } = params;
+      if (typeof runId !== "string" || !/^rakazo-[a-f0-9]{64}$/.test(runId) ||
+        typeof sessionKey !== "string" || !/^agent:[a-zA-Z0-9_-]+:rakazo:[a-f0-9]{64}$/.test(sessionKey)) {
+        respond(true, { status: "unconfirmed" });
+        return;
+      }
+      let known = false;
+      try {
+        broker.result(params);
+        known = true;
+      } catch { /* Receipt memory can be lost when the engine process restarts. */ }
+      if (known) {
+        const entry = context?.dedupe.get(`agent:${runId}`);
+        const payload = entry?.payload as Record<string, any> | undefined;
+        if (payload?.runId === runId && ["ok", "error", "timeout"].includes(payload.status)) {
+          const executionError = payload.result?.meta?.error;
+          respond(true, {
+            status: executionError ? "error" : payload.status === "timeout" ? "aborted" : payload.status,
+            error: executionError?.message ?? entry?.error?.message ?? payload.summary,
+          });
+          return;
+        }
+        if (payload?.runId === runId && payload.status === "accepted") {
+          respond(true, { status: "running" });
+          return;
+        }
+      }
+      const active = context?.chatAbortControllers.get(runId);
+      if (active && (active.sessionKey === sessionKey || (known && !active.sessionKey))) {
+        respond(true, { status: "running" });
+        return;
+      }
+      const sessionActive = context && [...context.chatAbortControllers.values()]
+        .some(entry => entry.sessionKey === sessionKey);
+      const instanceChanged = typeof params.engineInstanceId === "string"
+        ? params.engineInstanceId !== engineInstance.id
+        : typeof params.startedAt === "number" && Number.isFinite(params.startedAt) && params.startedAt > 0 &&
+          params.startedAt < engineInstance.startedAt - 1000;
+      // This proves controller termination, not business success or rollback.
+      // The host separately verifies any background command handles it observed.
+      if (context && !active && !sessionActive && instanceChanged) {
+        respond(true, { status: "error", reason: "engine_restarted",
+          error: "执行内核已重启，原任务已中断；此前操作可能已经执行，请核实结果后再决定是否重做。" });
+        return;
+      }
+      respond(true, { status: "unconfirmed" });
+    }, { scope: "operator.write" });
+    api.registerGatewayMethod("rakazo.run.result", ({ params, respond }) => {
+      try { respond(true, broker.result(params)); }
+      catch { respond(false, undefined, { code: "INVALID_REQUEST", message: "Native run result is unavailable" }); }
+    }, { scope: "operator.write" });
     for (const method of ["register", "poll", "resolve", "close"] as const) {
       api.registerGatewayMethod(
         `rakazo.tools.${method}`,
         ({ params, respond }) => {
           try {
-            respond(true, broker[method](params));
+            const result = broker[method](params);
+            respond(true, method === "register" ? { ...result, engineInstanceId: engineInstance.id } : result);
           } catch {
             respond(false, undefined, {
               code: "INVALID_REQUEST",
@@ -76,7 +210,7 @@ export default {
           },
         }));
       },
-      { names: [...NATIVE_COLLABORATION_TOOLS] },
+      { names: nativeHostToolNames },
     );
   },
 };

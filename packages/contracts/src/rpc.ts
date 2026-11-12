@@ -19,7 +19,11 @@ import {
   ATTACHMENT_COUNT_CEILING,
 } from "./attachments.js";
 import { AuditEventListInputSchema, AuditEventPageSchema } from "./audit-events.js";
-import { BiliWhalePlanSchema, BiliWhaleSettingsSchema, BiliWhaleStatusSchema } from "./bili-whale.js";
+import {
+  BiliWhalePlanSchema,
+  BiliWhaleSettingsSchema,
+  BiliWhaleStatusSchema,
+} from "./bili-whale.js";
 import {
   BoardEventSchema,
   BoardSchema,
@@ -45,6 +49,8 @@ import {
   VaultRevealed,
   VaultRevealInput,
 } from "./bot-secrets.js";
+import { ConversationFindFilters, ConversationFindPage } from "./conversation-find.js";
+import { ConversationUsageSchema } from "./conversation-usage.js";
 import {
   AccessGrantInputSchema,
   AccessGrantSchema,
@@ -132,6 +138,7 @@ import {
   SpaceSchema,
   TaughtSkillSchema,
   TeachRecordingEventSchema,
+  THREAD_MESSAGE_TEXT_MAX_LENGTH,
   ThreadMessagePageSchema,
   ThreadSnapshotSchema,
   TimeZoneSchema,
@@ -198,7 +205,7 @@ const structuredMentionTarget = z.discriminatedUnion("kind", [
 const threadSendFields = threadTarget.safeExtend({
   voicePlayback: VoicePlaybackReceiptSchema.optional(),
   imageHandling: z.enum(["confirm", "file"]).optional(),
-  text: z.string().optional(),
+  text: z.string().max(THREAD_MESSAGE_TEXT_MAX_LENGTH).optional(),
   artifactIds: z.array(Id).max(ATTACHMENT_COUNT_CEILING).optional(),
   /** Bare bot ids (legacy) or typed mention chips from the composer. */
   mentions: z
@@ -511,6 +518,12 @@ export const appContract = {
     ),
   },
   threads: {
+    find: oc
+      .input(threadTarget.safeExtend(ConversationFindFilters.shape))
+      .output(ConversationFindPage),
+    fileInfo: oc
+      .input(threadTarget.safeExtend({ messageId: Id, path: z.string().min(1).max(4096) }))
+      .output(z.object({ path: z.string(), name: z.string(), size: z.number().nonnegative() })),
     fileAction: oc
       .input(
         threadTarget.safeExtend({
@@ -563,7 +576,13 @@ export const appContract = {
         }),
       )
       .output(z.object({ ok: z.literal(true), runIds: z.array(Id).optional() })),
-    stop: oc.input(threadTarget).output(z.object({ ok: z.literal(true) })),
+    stop: oc.input(threadTarget).output(
+      z.object({
+        ok: z.literal(true),
+        cancelledRunCount: z.number().int().nonnegative().optional(),
+        cancelledPendingMessageCount: z.number().int().nonnegative().optional(),
+      }),
+    ),
     followUp: oc
       .input(
         threadTarget.safeExtend({
@@ -733,8 +752,47 @@ export const appContract = {
     heartbeat: oc.input(botId).output(z.object({ ok: z.literal(true) })),
   },
   memory: {
+    updateContextDocument: oc
+      .input(
+        z.object({
+          botId: Id,
+          scope: z.enum(["bot", "user"]),
+          name: z.enum([
+            "IDENTITY.md",
+            "SOUL.md",
+            "AGENTS.md",
+            "USER.md",
+            "MEMORY.md",
+            "TOOLS.md",
+            "HEARTBEAT.md",
+            "BOOTSTRAP.md",
+          ]),
+          content: z.string().max(8 * 1024 * 1024),
+          expectedContent: z.string().max(8 * 1024 * 1024),
+        }),
+      )
+      .output(z.object({ ok: z.literal(true) })),
     loadedContext: oc.input(botId).output(
       z.object({
+        nativeContext: z
+          .object({
+            engine: z.literal("openclaw"),
+            agentId: z.string(),
+            workspace: z.string(),
+            budgets: z.object({ document: z.number(), total: z.number() }),
+            documents: z.array(
+              z.object({
+                path: z.string(),
+                name: z.string(),
+                scope: z.enum(["bot", "user"]),
+                content: z.string(),
+                excerpt: z.string(),
+                totalChars: z.number(),
+                shownChars: z.number(),
+              }),
+            ),
+          })
+          .optional(),
         identity: z.string(),
         roleCard: BotRoleCardSchema,
         sharedProfileExcluded: z.boolean(),
@@ -883,6 +941,7 @@ export const appContract = {
             timezone: TimeZoneSchema.optional(),
             active: z.boolean().optional(),
             notify: z.boolean().optional(),
+            requireOutput: z.boolean().optional(),
             webhookEnabled: z.boolean().optional(),
             githubEnabled: z.boolean().optional(),
             messageProvider: z
@@ -1308,6 +1367,11 @@ export const appContract = {
       .output(z.array(SpaceSettingSchema)),
   },
   artifacts: {
+    fileInfo: oc
+      .input(z.object({ artifactId: Id }))
+      .output(
+        z.object({ sourcePath: z.string().nullable(), size: z.number().nonnegative().optional() }),
+      ),
     list: oc.input(botId).output(z.array(ArtifactSchema)),
     listSpace: oc
       .input(
@@ -1342,17 +1406,24 @@ export const appContract = {
     getById: oc.input(z.object({ artifactId: Id })).output(ArtifactWithContentSchema),
     /**
      * Opens an attachment on the Mac this app runs on: `open` launches it in its own app,
-     * `reveal` shows it in Finder. The file is written to Downloads first, because an
-     * artifact lives in the app's own storage under a bare key.
+     * `reveal` requires a verified source. History can explicitly open the immutable
+     * attachment version; only opening that stored snapshot may materialize a copy.
      */
     fileAction: oc
-      .input(z.object({ artifactId: Id, action: z.enum(["open", "reveal"]) }))
+      .input(
+        z.object({
+          artifactId: Id,
+          action: z.enum(["open", "reveal"]),
+          version: z.enum(["source", "attachment"]).optional(),
+        }),
+      )
       .output(z.object({ ok: z.literal(true) })),
     remove: oc.input(z.object({ artifactId: Id })).output(z.object({ ok: z.literal(true) })),
   },
   usage: {
     list: oc.output(z.array(UsageRecordSchema)),
     summary: oc.output(UsageSummarySchema),
+    thread: oc.input(threadTarget).output(ConversationUsageSchema),
   },
   export: {
     bot: oc.input(botId).output(ExportManifestSchema),
@@ -1488,9 +1559,7 @@ export const appContract = {
   biliWhale: {
     get: oc
       .input(z.object({ botId: Id }))
-      .output(
-        z.object({ settings: BiliWhaleSettingsSchema, status: BiliWhaleStatusSchema }),
-      ),
+      .output(z.object({ settings: BiliWhaleSettingsSchema, status: BiliWhaleStatusSchema })),
     save: oc
       .input(z.object({ botId: Id, settings: BiliWhaleSettingsSchema }))
       .output(z.object({ ok: z.literal(true) })),

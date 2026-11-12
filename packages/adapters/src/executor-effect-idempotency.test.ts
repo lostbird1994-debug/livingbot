@@ -184,7 +184,7 @@ function fixture(runId = "run-1") {
       update: vi.fn(async () => ({ nextMessageSeq: 2, nextEventSeq: 2 })),
     },
     message: { findMany: vi.fn(async () => []), create: messageCreate },
-    event: { create: vi.fn(async () => ({ seq: 1 })) },
+    event: { create: vi.fn(async () => ({ seq: 1 })), findMany: vi.fn(async () => []) },
     artifact: {
       findFirst: vi.fn(
         async ({ where }: { where: { id: string } }) =>

@@ -16,10 +16,12 @@ import {
   listSpaceArtifacts,
 } from "../artifacts.js";
 import { requireIdentityConfirmation } from "../identity-confirmation.js";
-import { openLocalArtifactFile } from "../local-artifact-file.js";
+import { localArtifactInfo, openLocalArtifactFile } from "../local-artifact-file.js";
 import { listSpaceRuns } from "../runs.js";
 import { querySpaceSearch } from "../search.js";
 import { loadAllMessages } from "../thread-message-pages.js";
+import { conversationUsage } from "../conversation-usage.js";
+import { resolveThreadTarget } from "../thread-target.js";
 import type { RouterContext } from "./context.js";
 
 const EXPORT_MESSAGE_PAGE_SIZE = 500;
@@ -28,6 +30,11 @@ export function contentRoutes(ctx: RouterContext) {
   const { deps, repos, favicons, groupRepos, authed } = ctx;
   return {
     artifacts: {
+      fileInfo: authed.artifacts.fileInfo.handler(async ({ context, input }) => localArtifactInfo({
+        prisma: deps.prisma, localHost: deps.env.sandboxProvider === "desktop",
+        resolveSourceDocument: deps.botWorkspace?.resolveSourceDocument
+          ? (botId, reference) => deps.botWorkspace!.resolveSourceDocument!(context.actor, botId, reference) : undefined,
+      }, context.actor, input.artifactId)),
       list: authed.artifacts.list.handler(async ({ context, input }) => {
         await repos.getBot(context.actor, input.botId);
         const rows = await deps.prisma.artifact.findMany({
@@ -114,6 +121,9 @@ export function contentRoutes(ctx: RouterContext) {
             prisma: deps.prisma,
             artifacts: deps.artifacts,
             localHost: deps.env.sandboxProvider === "desktop",
+            resolveSourceDocument: deps.botWorkspace?.resolveSourceDocument
+              ? (botId, reference) => deps.botWorkspace!.resolveSourceDocument!(context.actor, botId, reference)
+              : undefined,
           },
           context.actor,
           input,
@@ -124,6 +134,10 @@ export function contentRoutes(ctx: RouterContext) {
       }),
     },
     usage: {
+      thread: authed.usage.thread.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        return conversationUsage(deps.prisma, context.actor, target.threadId);
+      }),
       list: authed.usage.list.handler(async ({ context }) => {
         const rows = await deps.prisma.usageRecord.findMany({
           where: { spaceId: context.actor.spaceId, userId: context.actor.userId },

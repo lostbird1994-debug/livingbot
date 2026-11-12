@@ -12,6 +12,7 @@ import { isPeerReceiptBlocks, isSecretAskBlock, isToolActivityBlock } from "@rak
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@rakazo/ui-web";
 import { UserRound } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
+import { MessageDeliveryFiles } from "../../components/MessageDeliveryFiles";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
@@ -65,9 +66,6 @@ export const MessageView = memo(function MessageView({
   onRefresh,
   onBotChanged,
   onAddRoutine,
-  voiceReady,
-  speaking,
-  onSpeak,
   onOpenComputer,
   onOpenImportSetup,
   showToolActivity,
@@ -123,6 +121,7 @@ export const MessageView = memo(function MessageView({
         label={label}
         messageId={message.id}
         target={artifactTarget}
+        inline
       />
     ),
     [message.id, artifactTarget],
@@ -134,6 +133,10 @@ export const MessageView = memo(function MessageView({
       (block) => block.kind === "text" || block.kind === "progress" || block.kind === "steps",
     );
   const isLive = message.id.startsWith("progress:");
+  const deliveredFiles =
+    message.role === "bot" && !isLive ? (
+      <MessageDeliveryFiles message={message} target={artifactTarget} />
+    ) : null;
   const quoteMessageId = message.id.includes(":") ? undefined : message.id;
 
   // Only what is drawn names the mentioned bots; copy, quote, and speech keep the original text.
@@ -162,7 +165,6 @@ export const MessageView = memo(function MessageView({
     },
     [mentions, onOpenBot, peerBot],
   );
-  const speak = () => onSpeak(message);
   const replyBotId = message.replyPreview?.botId ?? replyParent?.botId;
   const speakerBot = message.botId ? peerBot?.(message.botId) : undefined;
   const speakerColorDef = useMemo(
@@ -239,7 +241,10 @@ export const MessageView = memo(function MessageView({
           <div className="flex w-fit max-w-full justify-start [@media(hover:none)]:w-full">
             <div
               data-testid="message-bot-bubble"
-              className="max-w-full space-y-2.5 rounded-[20px] rk-bubble-bot px-[18px] py-3 text-body1 text-foreground"
+              className={cn(
+                "max-w-full space-y-2.5 rounded-[20px] rk-bubble-bot px-[18px] py-3 text-body1 text-foreground",
+                message.routine && "rk-bubble-routine",
+              )}
               dir="auto"
             >
               {visibleNarrationBlocks.map((block, i) => {
@@ -279,19 +284,9 @@ export const MessageView = memo(function MessageView({
                 }
                 return null;
               })}
-              {!isLive && voiceReady && message.blocks.some((block) => block.kind === "text") ? (
-                <Button
-                  variant="text"
-                  size="xs"
-                  aria-label={speaking ? t`Stop speaking` : t`Speak this reply`}
-                  onClick={speak}
-                  className="font-normal"
-                >
-                  {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
-                </Button>
-              ) : null}
             </div>
           </div>
+          {deliveredFiles}
           {hoverActions}
         </div>
       </>
@@ -398,7 +393,10 @@ export const MessageView = memo(function MessageView({
               >
                 <div
                   data-testid="message-bot-bubble"
-                  className="max-w-full rounded-[20px] rk-bubble-bot px-[18px] py-3 text-body1 text-foreground"
+                  className={cn(
+                    "max-w-full rounded-[20px] rk-bubble-bot px-[18px] py-3 text-body1 text-foreground",
+                    message.routine && "rk-bubble-routine",
+                  )}
                   dir="auto"
                 >
                   <ChatMarkdown
@@ -495,6 +493,7 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "file") {
+            if (message.role === "bot") return null;
             return (
               <div
                 key={i}
@@ -539,7 +538,10 @@ export const MessageView = memo(function MessageView({
               >
                 <div
                   data-testid="message-bot-bubble"
-                  className="max-w-full rounded-[20px] rk-bubble-bot px-[18px] py-3 text-body1 text-foreground"
+                  className={cn(
+                    "max-w-full rounded-[20px] rk-bubble-bot px-[18px] py-3 text-body1 text-foreground",
+                    message.routine && "rk-bubble-routine",
+                  )}
                   dir="auto"
                 >
                   <div data-quote-message-id={quoteMessageId}>
@@ -552,17 +554,6 @@ export const MessageView = memo(function MessageView({
                       {block.text}
                     </ChatMarkdown>
                   </div>
-                  {voiceReady ? (
-                    <Button
-                      variant="text"
-                      size="xs"
-                      aria-label={speaking ? t`Stop speaking` : t`Speak this reply`}
-                      onClick={speak}
-                      className="mt-2 font-normal"
-                    >
-                      {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
-                    </Button>
-                  ) : null}
                 </div>
                 {i === hoverAnchorIndex ? hoverActions : null}
               </div>
@@ -662,6 +653,7 @@ export const MessageView = memo(function MessageView({
           }
           return null;
         })}
+        {deliveredFiles}
         {hoverAnchorIndex === -1 ? hoverActions : null}
       </div>
     </>

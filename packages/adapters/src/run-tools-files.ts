@@ -160,7 +160,9 @@ export const fileTools: ToolHandlers = {
     const storedPath = resolveBotWorkspacePath(ctx.computer.mode, bot.id, filePath);
     let bytes: Uint8Array;
     try {
-      bytes = await deps.sandbox.readFile(
+      bytes = deps.nativeWorkspaceFile
+        ? await deps.nativeWorkspaceFile(bot.id, filePath, deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES, context)
+        : await deps.sandbox.readFile(
         await ctx.computer.get("tool", name),
         storedPath,
         context,
@@ -195,7 +197,13 @@ export const fileTools: ToolHandlers = {
       );
       await publishMessage(deps, run, "bot", [attached.block]);
       await recordComputerAction(ctx, call, "attach_file", filePath);
-      return call.finish({ ok: true, artifactId: attached.artifactId, path: filePath });
+      return call.finish({
+        ok: true,
+        artifactId: attached.artifactId,
+        name: attached.block.name,
+        path: filePath,
+        delivery: "A persistent clickable file attachment has been published to this conversation.",
+      });
     } catch (error) {
       return failAttach(error instanceof Error ? error.message : "could not attach file");
     }

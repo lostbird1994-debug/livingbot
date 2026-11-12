@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
 import { createRunExecutor } from "./executor.js";
 import { OAUTH_RECONNECT_REQUIRED_ERROR, serializeModelSecret } from "./pi-oauth.js";
+import { CANCELLED_HISTORY_NOTE, stoppedWorkInstruction } from "./stopped-work.js";
 import { withModelRoles } from "./testing/model-roles.js";
 
 vi.mock("./computer-lifecycle.js", async (importOriginal) => ({
@@ -65,9 +66,11 @@ const plaintexts: Record<string, string> = {
 async function runTurn({
   primaryConnected,
   backupConnected = true,
+  stopped = false,
 }: {
   primaryConnected: boolean;
   backupConnected?: boolean;
+  stopped?: boolean;
 }) {
   const run: Record<string, unknown> = {
     id: "run-1",
@@ -144,6 +147,26 @@ async function runTurn({
         }),
       },
       chatGroup: { findMany: vi.fn(async () => []) },
+      event: {
+        findMany: vi.fn(async () =>
+          stopped
+            ? [
+                {
+                  type: "thread.stopped",
+                  runId: null,
+                  createdAt: stamp,
+                  payload: {
+                    version: 1,
+                    throughMessageSeq: 0,
+                    runIds: ["cancelled-run"],
+                    messageIds: ["old-message"],
+                    pendingMessageIds: [],
+                  },
+                },
+              ]
+            : [],
+        ),
+      },
       bot: {
         findUniqueOrThrow: vi.fn(async () => ({
           id: "bot-1",
@@ -175,7 +198,21 @@ async function runTurn({
         })),
       },
       message: {
-        findMany: vi.fn(async () => []),
+        findMany: vi.fn(async () =>
+          stopped
+            ? [
+                {
+                  id: "old-message",
+                  threadId: "thread-1",
+                  runId: "cancelled-run",
+                  role: "user",
+                  seq: 0,
+                  blocks: [{ kind: "text", text: "Write the old report" }],
+                  createdAt: stamp,
+                },
+              ]
+            : [],
+        ),
         findUnique: vi.fn(async () => null),
         findFirst: vi.fn(async () => null),
       },
@@ -247,6 +284,26 @@ async function runTurn({
 describe("a main model that cannot start runs on the member's backup", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it("passes durable cancellation instructions and marked history to the selected runtime", async () => {
+    const { request } = await runTurn({ primaryConnected: false, stopped: true });
+    expect(request?.instructions).toContain(
+      stoppedWorkInstruction({
+        stoppedAt: stamp.toISOString(),
+        throughMessageSeq: 0,
+        cancelledMessageIds: ["old-message"],
+      }),
+    );
+    expect(request?.history).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: "user",
+          content: `${CANCELLED_HISTORY_NOTE}\nWrite the old report`,
+        }),
+      ]),
+    );
+    expect(request?.prompt.split("\n\n")[0]).toBe("hello");
   });
 
   it("starts on the backup when the main model has no connection", async () => {

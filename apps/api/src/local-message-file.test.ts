@@ -1,7 +1,7 @@
 import { realpath, stat } from "node:fs/promises";
 import type { PrismaClient } from "@rakazo/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { openLocalMessageFile } from "./local-message-file.js";
+import { openLocalMessageFile, resolveLocalMessageFile } from "./local-message-file.js";
 
 vi.mock("node:fs/promises", () => ({
   realpath: vi.fn(async (path) => path),
@@ -73,4 +73,28 @@ describe("local message file actions", () => {
     expect(findFirst).not.toHaveBeenCalled();
     expect(stat).not.toHaveBeenCalled();
   });
+});
+
+it.each(["open", "reveal"] as const)("%s resolves a truncated Bot path through the authorized workspace", async action => {
+  const f = fixture();
+  const abbreviated = "/bots/bot-2/feishu/report.md";
+  f.findFirst.mockResolvedValue({ blocks: [{ kind: "text", text: `文件在：\`...${abbreviated}\`` }] });
+  vi.mocked(realpath).mockRejectedValueOnce(Error("missing prefix"));
+  const resolveDocument = vi.fn(async () => "/Users/test/owned-bot/feishu/report.md");
+  await openLocalMessageFile({ ...f.deps, resolveDocument }, "thread-1", { messageId: "message-1", path: abbreviated, action });
+  expect(resolveDocument).toHaveBeenCalledWith(abbreviated);
+  expect(f.open).toHaveBeenCalledWith("/Users/test/owned-bot/feishu/report.md", action);
+});
+
+it("does not recover a path absent from the message", async () => {
+  const f = fixture(); const resolveDocument = vi.fn();
+  await expect(openLocalMessageFile({ ...f.deps, resolveDocument }, "thread-1", { messageId: "message-1", path: "/bots/other/secret.md", action: "open" })).rejects.toMatchObject({code:"NOT_FOUND"});
+  expect(resolveDocument).not.toHaveBeenCalled(); expect(f.open).not.toHaveBeenCalled();
+});
+
+it("returns verified metadata without invoking the Mac launcher", async () => {
+ const f=fixture();
+ const info=await resolveLocalMessageFile(f.deps,'thread-1',{messageId:'message-1',path,action:'open'});
+ expect(info).toMatchObject({path,name:'财务 报告.docx'});
+ expect(f.open).not.toHaveBeenCalled();
 });

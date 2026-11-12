@@ -552,6 +552,7 @@ export function reduceThreadSnapshot(
       threadId: event.threadId,
       seq: event.seq,
       role,
+      routine: typeof event.payload.routine === "boolean" ? event.payload.routine : known?.routine,
       blocks,
       botId: event.botId,
       runId: event.runId,

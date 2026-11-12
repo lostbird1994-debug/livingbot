@@ -1,8 +1,10 @@
 import { useLingui } from "@lingui/react/macro";
 import { Button, Spinner } from "@rakazo/ui-web";
 import { ChevronRight, FileText, Folder, FolderOpen, RotateCw } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { rpc } from "../../lib/rpc";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useSpaceQueries } from "../../lib/query";
+import { useSpaceRpc } from "../../lib/space-rpc";
 import { errorText } from "../../lib/user-error";
 
 type Entry = { path: string; kind: "file" | "dir"; size: number };
@@ -51,34 +53,19 @@ function sorted(entries: Entry[]): Entry[] {
  * app that owns them rather than in a preview, which is what the folder is for.
  */
 export function BotFilesPanel({ botId }: { botId: string }) {
+  return <BotDirectory key={botId} botId={botId} />;
+}
+
+function BotDirectory({ botId }: { botId: string }) {
   const { t } = useLingui();
+  const rpc = useSpaceRpc();
+  const queries = useSpaceQueries();
   const root = rootOf(botId);
   const [path, setPath] = useState(root);
-  const [entries, setEntries] = useState<Entry[]>([]);
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
-
-  const load = useCallback(
-    async (next: string) => {
-      setState("loading");
-      setError("");
-      try {
-        const rows = await rpc.computer.files({ botId, path: next });
-        setEntries(sorted(rows));
-        setPath(next);
-        setState("ready");
-      } catch (cause) {
-        setState("error");
-        setError(errorText(cause));
-      }
-    },
-    [botId],
-  );
-
-  useEffect(() => {
-    void load(rootOf(botId));
-  }, [botId, load]);
+  const listing = useQuery(queries.computer.files.queryOptions({ input: { botId, path } }));
+  const entries = sorted(listing.data ?? []);
 
   async function act(entry: Entry, action: "open" | "reveal") {
     if (busy) return;
@@ -104,7 +91,7 @@ export function BotFilesPanel({ botId }: { botId: string }) {
           variant="ghost"
           size="xs"
           disabled={!parent}
-          onClick={() => void load(parent ?? root)}
+          onClick={() => setPath(parent ?? root)}
         >
           {t`Up`}
         </Button>
@@ -116,19 +103,19 @@ export function BotFilesPanel({ botId }: { botId: string }) {
           variant="ghost"
           size="xs"
           aria-label={t`Refresh`}
-          onClick={() => void load(path)}
+          onClick={() => void listing.refetch()}
         >
           <RotateCw className="size-3.5" />
         </Button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-border/70 bg-card shadow-xs">
-        {state === "loading" ? (
+        {listing.isPending ? (
           <div className="grid h-24 place-items-center">
             <Spinner aria-label={t`Loading files…`} />
           </div>
-        ) : state === "error" ? (
-          <p className="px-3 py-4 text-xs text-destructive">{error}</p>
+        ) : listing.isError && !listing.data ? (
+          <p className="px-3 py-4 text-xs text-destructive">{errorText(listing.error)}</p>
         ) : entries.length === 0 ? (
           <p className="px-3 py-4 text-xs text-muted-foreground">{t`No files yet.`}</p>
         ) : (
@@ -141,7 +128,7 @@ export function BotFilesPanel({ botId }: { botId: string }) {
                 {entry.kind === "dir" ? (
                   <button
                     type="button"
-                    onClick={() => void load(entry.path)}
+                    onClick={() => setPath(entry.path)}
                     className="flex min-h-8 min-w-0 flex-1 items-center gap-3 rounded-md text-left focus-visible:outline-2 focus-visible:outline-ring"
                   >
                     <Folder className="size-4 shrink-0 text-muted-foreground" />
@@ -185,7 +172,9 @@ export function BotFilesPanel({ botId }: { botId: string }) {
         )}
       </div>
 
-      {state === "ready" && error ? <p className="text-xs text-destructive">{error}</p> : null}
+      {error || (listing.isError && listing.data) ? (
+        <p className="text-xs text-destructive">{error || errorText(listing.error)}</p>
+      ) : null}
     </div>
   );
 }
