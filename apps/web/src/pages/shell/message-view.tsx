@@ -11,6 +11,7 @@ import type { ChildBotBlock, PeerExchange } from "@rakazo/core";
 import { isPeerReceiptBlocks, isSecretAskBlock, isToolActivityBlock } from "@rakazo/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@rakazo/ui-web";
 import { UserRound } from "lucide-react";
+import { Link } from "react-router-dom";
 import { memo, useCallback, useMemo } from "react";
 import { MessageDeliveryFiles } from "../../components/MessageDeliveryFiles";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
@@ -221,6 +222,19 @@ export const MessageView = memo(function MessageView({
       onReact={onReact}
     />
   );
+  if (message.taskResult && message.botId) {
+    const result = message.taskResult;
+    const summary = message.blocks[1];
+    const fileCount = message.blocks.filter(block => block.kind === "file" || block.kind === "image").length;
+    return <div className="w-full max-w-lg rounded-2xl border border-border bg-card px-5 py-4">
+      <div className="mb-2 flex items-center justify-between gap-4"><span className="text-sm font-medium">{result.title}</span>
+        <span className="shrink-0 text-xs text-muted-foreground">{result.status === "completed" ? "已完成" : result.status === "failed" ? "失败" : "已停止"}</span></div>
+      {summary?.kind === "text" ? <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{summary.text}</p> : null}
+      <Link className="text-sm font-medium text-foreground underline-offset-4 hover:underline" to={`/app/${message.botId}?task=${result.taskSessionId}`}>
+        查看结果{fileCount ? ` · ${fileCount} 个文件` : ""} →
+      </Link>
+    </div>;
+  }
   if (isNarration) {
     if (visibleNarrationBlocks.length === 0) return null;
     if (isToolOnlyNarration(message.blocks, showToolActivity)) {

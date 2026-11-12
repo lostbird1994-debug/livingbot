@@ -97,6 +97,8 @@ import { ShellSidePanel } from "./shell/side-panel";
 import { BotsSidebarLayout } from "./shell/sidebar-layout";
 import { SidebarRoster } from "./shell/sidebar-roster";
 import { commitSpaceRename, countUnreadChats, sidebarGroupsForSpaces } from "./shell/space-sidebar";
+import { TaskConversation } from "./shell/task-conversation";
+import { TaskTabs, useBotTaskTabs } from "./shell/task-tabs";
 import { Transcript } from "./shell/transcript";
 import { useBrowserNotifications } from "./shell/use-browser-notifications";
 import { useChatRead } from "./shell/use-chat-read";
@@ -483,6 +485,8 @@ function SpaceShell() {
     closeMobileSidebar: () => setMobileSidebarOpen(false),
   });
 
+  const taskTabs = useBotTaskTabs(inGroup ? undefined : active, rpc, `${shellSpaceId}:${userId ?? ""}`, searchParamsRef.current.get("task"));
+  const selectedTask = taskTabs.enabled ? taskTabs.selected : null;
   const activeSnapshot = inGroup
     ? snapshot?.groupId === groupId
       ? snapshot
@@ -1035,7 +1039,7 @@ function SpaceShell() {
             phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
             inCall={Boolean(active) && call?.botId === active?.id}
             panelOpen={chatPanelOpen}
-            onFind={() => setPanel(panel === "find" ? null : "find")}
+            onFind={() => selectedTask ? taskTabs.requestFind() : setPanel(panel === "find" ? null : "find")}
             onOpenNavigation={() => setMobileSidebarOpen(true)}
             onTogglePanel={() => {
               if (chatPanelOpen) setPanel(null);
@@ -1054,7 +1058,14 @@ function SpaceShell() {
               callBot(bot);
             }}
           />
-          {!active && !activeGroup && initialBotsLoaded ? (
+          <TaskTabs state={taskTabs} />
+          {selectedTask && active ? (
+            <TaskConversation key={`${active.id}:${selectedTask}`} bot={active} tabKey={selectedTask}
+              session={taskTabs.tasks.find(task => task.id === selectedTask)} rpc={rpc}
+              scope={`${shellSpaceId}:${userId ?? ""}`} userId={userId ?? ""} enterToSend={enterToSend}
+              findRequest={taskTabs.findRequest} onStarted={taskTabs.adopt} onChanged={taskTabs.refresh} onOpenBot={openBot}
+              onOpenComputer={() => computerControls.onOpenComputer(active.id)} />
+          ) : !active && !activeGroup && initialBotsLoaded ? (
             <div className="grid flex-1 place-items-center">
               <Button onClick={() => dialogs.setCreateBotOpen(true)}>
                 <Plus size={16} aria-hidden="true" />
@@ -1107,7 +1118,7 @@ function SpaceShell() {
             />
           )}
         </div>
-        {active || activeGroup ? (
+        {(active || activeGroup) && !selectedTask ? (
           // Let messages continue behind the composer's rounded top corners.
           <div className="pointer-events-none relative z-30 -mt-7">
             {recordingSkill ? (

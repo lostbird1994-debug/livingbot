@@ -4,6 +4,8 @@ import {
   NativeCollaborationBroker,
 } from "./native-collaboration-broker.js";
 import { randomUUID } from "node:crypto";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type { NativeModelCallEnd } from "./native-collaboration-broker.js";
 import { NativeProcessControl } from "./openclaw-process-control.js";
 import type { NativeBootstrapEvent } from "./openclaw-workspace-context.js";
@@ -17,7 +19,11 @@ const broker = processState[brokerKey] ?? new NativeCollaborationBroker();
 processState[brokerKey] = broker;
 const processKey = Symbol.for("rakazo.process.control.v1");
 const engineState = globalThis as unknown as Record<symbol, NativeProcessControl>;
-const processes = engineState[processKey] ?? new NativeProcessControl();
+// Background handles must survive an engine restart: without the ledger a restarted
+// engine cannot prove that a command it started has already exited, and the session
+// guard would stay closed forever.
+const processLedger = join(homedir(), ".openclaw", ".rakazo", "process-owners.json");
+const processes = engineState[processKey] ?? new NativeProcessControl(undefined, processLedger);
 engineState[processKey] = processes;
 const instanceKey = Symbol.for("rakazo.native-engine-instance.v1");
 const instanceState = globalThis as unknown as Record<symbol, { id: string; startedAt: number }>;
@@ -25,6 +31,10 @@ const engineInstance = instanceState[instanceKey] ?? {
   id: randomUUID(), startedAt: Date.now() - process.uptime() * 1000,
 };
 instanceState[instanceKey] = engineInstance;
+// A run can only reach "no abort controller" once its chat request ended. The grace
+// covers registration/dispatch handshakes and short pauses, so a missing status payload
+// becomes a terminal, evidence-backed answer instead of an unconfirmed dead end.
+const SETTLEMENT_GRACE_MS = 180_000;
 export const nativeHostToolNames = [...new Set([
   ...NATIVE_COLLABORATION_TOOLS, ...NATIVE_KERNEL_HOST_TOOLS, "list_tools", "get_tool", "use_tool",
 ])];
@@ -75,6 +85,7 @@ export default {
     // The supported before-tool hook enforces the same run-owned capability grant.
     api.on?.("before_tool_call", (event, context) =>
       context.sessionKey ? broker.nativeToolDecision(context.sessionKey, event.toolName) : undefined);
+    api.registerGatewayMethod("rakazo.task.capabilities", ({ respond }) => respond(true, { managedSessions: true, hostFileTools: true, version: 1 }), { scope: "operator.write" });
     api.on?.("llm_output", (event, context) => broker.observeResult(event, context));
     api.on?.("model_call_ended", (event, context) => broker.observeModelCall(event, context));
     api.on?.("after_tool_call", (event, context) => processes.observe(event, context));
@@ -154,6 +165,28 @@ export default {
       if (context && !active && !sessionActive && instanceChanged) {
         respond(true, { status: "error", reason: "engine_restarted",
           error: "执行内核已重启，原任务已中断；此前操作可能已经执行，请核实结果后再决定是否重做。" });
+        return;
+      }
+      // A receipt proves this engine accepted the run. With the process unchanged and
+      // no live controller for the run or its session, nothing is executing it any
+      // more: the volatile dedupe cache losing the terminal payload must not pin an
+      // already-finished run to "unconfirmed" forever and lock the session. Report a
+      // terminal outcome instead, preferring the receipt's own answer as the result.
+      const startedAt =
+        typeof params.startedAt === "number" && Number.isFinite(params.startedAt) && params.startedAt > 0
+          ? params.startedAt : 0;
+      if (context && known && !active && !sessionActive && startedAt &&
+        Date.now() - startedAt >= SETTLEMENT_GRACE_MS) {
+        let receiptResult: unknown;
+        try { receiptResult = broker.result(params).result; } catch { /* Receipt lost by a restart. */ }
+        const text = receiptResult && typeof receiptResult === "object"
+          ? (receiptResult as { text?: unknown }).text : undefined;
+        if (typeof text === "string" && text) {
+          respond(true, { status: "ok", recovered: true });
+          return;
+        }
+        respond(true, { status: "error", reason: "outcome_unavailable",
+          error: "上一轮任务已经结束，但执行内核没有保留终态回执；结果可能已经产生，请核实后再决定是否重做。" });
         return;
       }
       respond(true, { status: "unconfirmed" });

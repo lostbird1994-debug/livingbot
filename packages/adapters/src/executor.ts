@@ -1,3 +1,4 @@
+import { publishTaskSessionReceipts } from "./task-session-receipts.js";
 import type { AgentRunRequest, ComputerRef, SemanticMemoryProvider } from "@rakazo/adapter-kit";
 import {
   DEFAULT_CONTEXT_STRATEGY,
@@ -9,6 +10,7 @@ import {
 import type { MessageBlock, ModelRoleChoice, RunStatus } from "@rakazo/contracts";
 import { disabledBuiltinToolSet, excludesSharedProfile } from "@rakazo/contracts";
 import {
+  abortableDelay,
   assertTransition,
   botMessageAllowsSilence,
   expandSkillReferencesInPrompt,
@@ -17,6 +19,7 @@ import {
   isBackgroundRunTrigger,
   isCallClientNonce,
   isMessagingChannelRun,
+  isOnDemandSkillMd,
   isOwnerStartedRun,
   isTerminal,
   MISSING_MODEL_RUN_ERROR,
@@ -33,6 +36,7 @@ import {
   userTurnMessageForRun,
 } from "@rakazo/core";
 import {
+  claimTaskSessionSlot,
   availableInSpace,
   effectiveMemoryScope,
   isPartialReplyClientNonce,
@@ -244,7 +248,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
   const resolveConnectedModel = resolveConnectedRunModel.bind(undefined, executorDeps);
   return {
     resolveConnectedModel,
-    reconcileExternalAgents: createOpenClawReconciler(executorDeps),
+    reconcileExternalAgents: async (...args: Parameters<ReturnType<typeof createOpenClawReconciler>>) => {
+      await createOpenClawReconciler(executorDeps)(...args);
+      await publishTaskSessionReceipts(executorDeps);
+    },
     contextStrategy,
     resolveModel: resolveRunModel.bind(undefined, executorDeps),
     wakeRoutine: wakeRoutine.bind(undefined, executorDeps),
@@ -262,6 +269,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
       const run = await deps.prisma.run.findUnique({
         where: { id: runId },
         include: {
+          thread: { select: { taskBotId: true } },
           routine: {
             select: {
               memoryMaintenance: true,
@@ -295,6 +303,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           await deps.jobs.enqueue(runContinueJob(priority.continuationRunId));
         }
         if (priority.blocked) return;
+      }
+      const independentTask = Boolean(run.thread?.taskBotId);
+      if (independentTask && !(await claimTaskSessionSlot(deps.prisma, runId, run.botId))) {
+        if (run.status === "queued") await deps.jobs.enqueue({ ...runContinueJob(runId), availableAt: new Date(Date.now() + 2000) });
+        return;
       }
       let { resumeCheckpoint, heldForTakeover, takeoverResume } = takeoverContinuePlan(run);
 
@@ -381,6 +394,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
       }
       let computerLease: ComputerExecutionLease | null = null;
       try {
+        const retainedResource = independentTask && await deps.prisma.computerExecutionLease.findFirst({ where: { runId, botId: run.botId } });
+        if (!independentTask || retainedResource) {
         computerLease = await acquireComputerExecutionLease(deps.prisma, {
           computerId: leaseTarget.computerId,
           runId,
@@ -396,6 +411,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             workerId,
             runFence: fence,
           });
+        }
         }
       } catch (error) {
         if (!(error instanceof ComputerBusyError)) throw error;
@@ -623,6 +639,37 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           storedConnections,
           connectedComposio.map((connection) => connection.provider),
         );
+        let acquiringResource: Promise<void> | undefined;
+        const requireTaskResource = async () => {
+          if (!independentTask || computerLease) return;
+          acquiringResource ??= (async () => {
+            for (;;) {
+              runAbortController!.signal.throwIfAborted();
+              const stillOwns = await deps.prisma.run.findFirst({ where: {
+                id: runId, status: "running", leaseOwner: workerId, leaseFence: fence,
+              }, select: { id: true } });
+              if (!stillOwns) throw new Error("Run stopped while waiting for its computer");
+              try {
+                computerLease = await acquireComputerExecutionLease(deps.prisma, {
+                  computerId: leaseTarget.computerId!, botId: run.botId, runId, workerId, runFence: fence,
+                });
+                if (!computerLease && leaseTarget.computer?.scope === "dedicated")
+                  computerLease = await acquireDedicatedScreenLeaseFence(deps.prisma, {
+                    computerId: leaseTarget.computerId!, botId: run.botId, runId, workerId, runFence: fence,
+                  });
+                await deps.prisma.run.updateMany({ where: { id: runId, leaseOwner: workerId, leaseFence: fence }, data: { resourceWaitReason: null } });
+                context.screenLeaseId = screenLeaseIdForRun(computerLease, runId, fence);
+                return;
+              } catch (error) {
+                if (!(error instanceof ComputerBusyError)) throw error;
+                await deps.prisma.run.updateMany({ where: { id: runId, status: "running", leaseOwner: workerId, leaseFence: fence },
+                  data: { resourceWaitReason: "computer" } });
+                await abortableDelay(500, runAbortController!.signal);
+              }
+            }
+          })();
+          return acquiringResource;
+        };
         const context = {
           operationId: runId,
           traceId: runId,
@@ -806,9 +853,12 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         }
         const runDeployment = deps.deploymentModelConfigured ? resolveDeploymentModel() : null;
         const runtimeFallback = runtimeFallbackModel(deps.runtime);
+        // A captured deployment model uses its existing deployment connection,
+        // without requiring a separate personal credential for the same provider.
+        const deploymentTask = independentTask && Boolean(runDeployment && modelChoice.modelProvider === runDeployment.provider);
         const pinError =
           run.modelPinned &&
-          !(
+          !(deploymentTask ||
             (await modelCreditBillingEnabled(deps)) &&
             modelChoice.modelProvider === runDeployment?.provider
           )
@@ -818,7 +868,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           override: modelChoice,
           overrideCredential,
           main,
-          hostedProvider: (await modelCreditBillingEnabled(deps))
+          hostedProvider: deploymentTask ? runDeployment!.provider : (await modelCreditBillingEnabled(deps))
             ? resolveDeploymentModel().provider
             : undefined,
           defaults: { settings, deployment: runDeployment },
@@ -986,6 +1036,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         };
         const runComputer = lazyRunComputer(
           async () => {
+            await requireTaskResource();
             getLogger().info("computer.requested");
             const computer = await provisionComputer(deps, storedComputer.id, context, "bot");
             computerUse.screenRelease = { computer, context, keepWarm: false };
@@ -1367,6 +1418,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             pageBrowserAllowed,
             acceptsImages,
             heldForTakeover,
+            requireResource: requireTaskResource,
           },
           tools: {
             offered: tools,
@@ -1404,7 +1456,13 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   "\n",
                 )}\nWhen the user asks to run a taught skill by name, follow that skill's playbook exactly. The full playbook is included in the user task when they invoke it.`
             : undefined;
-        const agentSkillsLine = formatSkillsCatalogInstruction(agentSkills);
+        // A skill marked on_demand reaches this run only when the composer picked it,
+        // so the model never learns the tool exists until the user reaches for it.
+        const pickedIds = new Set(run.connectorScope ?? []);
+        const visibleAgentSkills = agentSkills.filter(
+          (skill) => !isOnDemandSkillMd(skill.content) || pickedIds.has(skill.id),
+        );
+        const agentSkillsLine = formatSkillsCatalogInstruction(visibleAgentSkills);
         const missingImagesInstruction = missingTurnImagesInstruction(
           turnBlocks,
           currentTurnImages,
@@ -1630,6 +1688,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           const runtimeEvents = deps.runtime.run(
             {
               botId: bot.id,
+              independentTask,
               answeredApproval,
               onExecutionState: async () => {
                 await deps.prisma.run.updateMany({
@@ -1640,7 +1699,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                     leaseFence: fence,
                     status: { in: ["running", "cancelled", "waiting_input"] },
                   },
-                  data: { error: "底层任务状态未确认，请先核实，勿重复提交。" },
+                  data: { error: "底层任务状态未确认，请先核实，勿重复提交。", resourceWaitReason: "unconfirmed" },
                 });
               },
               verbatimMcpServers,
@@ -1679,7 +1738,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   hasHistoricalContext: historicalContext.length > 0,
                   historyRetrievalEnabled: contextStrategy !== "current",
                   computerInstruction: nativeWorkspaceContext
-                    ? "Answer directly when the conversation is sufficient. Use native filesystem and exec tools for local work; use Rakazo's connected product tools for collaboration, tasks, approvals, attachments and app connections."
+                    ? (independentTask ? "This is an independent task. Use only the offered host filesystem and command tools; mutation and desktop operations wait for the shared computer resource. Native exec, process, read and write are disabled. Do not bypass the host gates." : "Answer directly when the conversation is sufficient. Use native filesystem and exec tools for local work; use Rakazo's connected product tools for collaboration, tasks, approvals, attachments and app connections.")
                     : computerInstruction,
                   pageBrowserAllowed,
                   taskCatalogInstruction,
@@ -1938,6 +1997,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         });
         detachShutdown?.();
         clearInterval(heartbeat);
+        if (independentTask) {
+          const ending = await deps.prisma.run.findUnique({ where: { id: runId }, select: { resourceWaitReason: true } });
+          if (ending?.resourceWaitReason === "unconfirmed") lease.retainComputer = true;
+        }
         if (!lease.retainComputer) {
           if (computerUse.screenRelease) {
             const releaseContext = computerUse.screenRelease.keepWarm

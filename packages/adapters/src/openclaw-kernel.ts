@@ -101,7 +101,7 @@ export class OpenClawAgentRuntime implements AgentRuntime {
           }. Other engine tools may be visible but are disabled for this run. Do not try them or substitute shell commands for unavailable product actions. If no tool is allowed, answer directly.`
           : "";
         const credentialInstruction = collaboration?.tools.some(tool => tool.name === "rakazo_shell")
-          ? "\n\nUse native exec for ordinary commands. When a command needs this Bot's managed environment variables, use rakazo_shell; the host injects current credentials per command and redacts results. Never read or print credential values to populate native exec. Deliver user-facing files with attach_file so the conversation receives a persistent clickable attachment."
+          ? "\n\nUse rakazo_shell for commands in independent tasks; native exec is disabled there. In ordinary chats use native exec for ordinary commands. When a command needs this Bot's managed environment variables, use rakazo_shell; the host injects current credentials per command and redacts results. Never read or print credential values to populate native exec. Deliver user-facing files with attach_file so the conversation receives a persistent clickable attachment."
           : "";
         const initial: NativeRecord = frozen ?? {
           version: 1 as const, sessionKey: scope, runId: key, inputHash: identity,

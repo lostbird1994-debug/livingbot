@@ -95,6 +95,8 @@ export interface NativeOptions {
   pollMs?: number;
   /** Deadline for requesting cancellation of an earlier invocation, never proof of exit. */
   staleMs?: number;
+  /** Inconclusive status polls tolerated before the session is held as unconfirmed. */
+  unconfirmedPolls?: number;
 }
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 export const nativeSessionKey = (scope: string, agentId: string) =>
@@ -740,6 +742,7 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       await persist();
       await input.onStarted?.();
     }
+    let unconfirmedPolls = 0;
     const checkStatus = async () => {
       let terminal: any;
       try {
@@ -759,8 +762,21 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         return "retry";
       }
       if (paused || record.status === "approval") return "retry";
-      if (kernel && terminal.status === "unconfirmed")
+      if (kernel && terminal.status === "unconfirmed") {
+        // One inconclusive poll is not proof that the run was lost: the engine may still
+        // be between request registration and its abort controller, or rebuilding its
+        // receipt. Observe through a bounded window before holding the session as
+        // unconfirmed, so a transient answer cannot freeze it permanently.
+        if (++unconfirmedPolls <= (options.unconfirmedPolls ?? 6)) {
+          recovering();
+          if (Date.now() - record.startedAt >= runMs)
+            return await cancel("External task exceeded its execution deadline");
+          await wait(Math.min(pollMs, 1000));
+          return "retry";
+        }
         throw new NativeExecutionError("后台任务状态尚未确认，请勿重复提交；需恢复连接后核对原任务。", "unconfirmed");
+      }
+      unconfirmedPolls = 0;
       if (terminal.reason === "engine_restarted") await confirmNativeBackgroundWorkStopped(connection, record);
       if (isNativeCancelled(terminal))
         throw new NativeExecutionError("Native task was cancelled", "cancelled");

@@ -488,7 +488,9 @@ export const ReplyPreviewSchema = z.object({
 });
 export type ReplyPreview = z.infer<typeof ReplyPreviewSchema>;
 
+export const TaskResultSchema = z.object({ taskSessionId: Id, runId: Id, title: z.string(), status: z.enum(["completed", "failed", "cancelled"]) });
 export const ThreadMessageSchema = z.object({
+  taskResult: TaskResultSchema.optional(),
   id: Id,
   threadId: Id,
   seq: z.number().int().nonnegative(),

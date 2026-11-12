@@ -211,7 +211,9 @@ describe("durable native cancellation reconciliation", () => {
     })();
     expect(f.connect).not.toHaveBeenCalled();
     expect(f.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { error: expect.stringContaining("未确认") } }),
+      expect.objectContaining({
+        data: { error: expect.stringContaining("未确认"), resourceWaitReason: "unconfirmed" },
+      }),
     );
   });
 });

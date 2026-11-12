@@ -8,7 +8,7 @@ import type {
   ThreadMessagePage,
   ThreadSnapshot,
 } from "@rakazo/contracts";
-import { RUN_TRIGGERS } from "@rakazo/contracts";
+import { TaskResultSchema, RUN_TRIGGERS } from "@rakazo/contracts";
 import {
   isActive,
   isBackgroundRunTrigger,
@@ -553,6 +553,7 @@ export function reduceThreadSnapshot(
       seq: event.seq,
       role,
       routine: typeof event.payload.routine === "boolean" ? event.payload.routine : known?.routine,
+      taskResult: TaskResultSchema.safeParse(event.payload.taskResult).data ?? known?.taskResult,
       blocks,
       botId: event.botId,
       runId: event.runId,

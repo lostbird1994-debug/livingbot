@@ -681,6 +681,8 @@ model Bot {
   children          Bot[]             @relation("BotChildren")
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
+  taskThreads       Thread[] @relation("TaskBotThreads")
+  taskSessions      BotTaskSession[]
   thread            Thread?
   computerId        String?
   computer          Computer?         @relation(fields: [computerId], references: [id], onDelete: SetNull)
@@ -797,6 +799,10 @@ model Thread {
   space                       Space      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   botId                       String?    @unique
   bot                         Bot?       @relation(fields: [botId], references: [id], onDelete: Cascade)
+  taskBotId                   String?
+  taskBot                     Bot? @relation("TaskBotThreads", fields: [taskBotId], references: [id], onDelete: Restrict)
+  taskSession                 BotTaskSession? @relation("TaskConversation")
+  childTaskSessions           BotTaskSession[] @relation("TaskMainThread")
   groupId                     String?    @unique
   group                       ChatGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
   externalConversationId      String?    @unique
@@ -822,6 +828,43 @@ model Thread {
   @@index([spaceId])
   @@index([spaceId, userId])
   @@map("threads")
+}
+
+model BotTaskSession {
+  id              String @id @default(cuid())
+  spaceId         String
+  userId          String
+  botId           String
+  bot             Bot @relation(fields: [botId], references: [id], onDelete: Restrict)
+  mainThreadId    String
+  mainThread      Thread @relation("TaskMainThread", fields: [mainThreadId], references: [id], onDelete: Restrict)
+  threadId        String @unique
+  thread          Thread @relation("TaskConversation", fields: [threadId], references: [id], onDelete: Restrict)
+  title           String @db.Text
+  contextSnapshot String? @db.Text
+  clientNonce     String
+  modelProvider   String?
+  modelId         String?
+  thinkingLevel   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  archivedAt      DateTime?
+  receipts        TaskSessionReceipt[]
+
+  @@unique([botId, clientNonce])
+  @@index([spaceId, userId, botId, updatedAt])
+  @@map("bot_task_sessions")
+}
+
+model TaskSessionReceipt {
+  runId         String @id
+  run           Run @relation(fields: [runId], references: [id], onDelete: Restrict)
+  taskSessionId String
+  taskSession   BotTaskSession @relation(fields: [taskSessionId], references: [id], onDelete: Restrict)
+  messageId     String @unique
+  createdAt     DateTime @default(now())
+
+  @@map("task_session_receipts")
 }
 
 model Message {
@@ -892,6 +935,9 @@ model Task {
 }
 
 model Run {
+  taskSlotHeld Boolean @default(false)
+  resourceWaitReason String?
+  taskSessionReceipt TaskSessionReceipt?
   id                   String            @id @default(cuid())
   spaceId              String
   space                Space             @relation(fields: [spaceId], references: [id], onDelete: Cascade)

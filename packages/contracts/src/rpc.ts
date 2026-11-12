@@ -175,6 +175,8 @@ import { SearchQueryOutputSchema } from "./search.js";
 import { SecurityEventListInputSchema, SecurityEventSchema } from "./security-events.js";
 import { SettingsScopeSchema, SpaceSettingSchema, settingsScopeInput } from "./settings-scope.js";
 
+import { TaskSessionSchema } from "./task-sessions.js";
+
 const botId = z.object({ botId: Id });
 const groupId = z.object({ groupId: Id });
 
@@ -182,11 +184,12 @@ const threadTarget = z
   .object({
     botId: Id.optional(),
     groupId: Id.optional(),
+    taskSessionId: Id.optional(),
   })
   .superRefine((input, ctx) => {
     const hasBot = Boolean(input.botId);
     const hasGroup = Boolean(input.groupId);
-    if (hasBot === hasGroup) {
+    if (hasBot === hasGroup || (input.taskSessionId && !hasBot)) {
       ctx.addIssue({
         code: "custom",
         message: "Provide exactly one of botId or groupId",
@@ -203,6 +206,9 @@ const structuredMentionTarget = z.discriminatedUnion("kind", [
 ]);
 
 const threadSendFields = threadTarget.safeExtend({
+  modelProvider: z.string().min(1).optional(),
+  modelId: z.string().min(1).optional(),
+  thinkingLevel: z.string().nullable().optional(),
   voicePlayback: VoicePlaybackReceiptSchema.optional(),
   imageHandling: z.enum(["confirm", "file"]).optional(),
   text: z.string().max(THREAD_MESSAGE_TEXT_MAX_LENGTH).optional(),
@@ -521,6 +527,26 @@ export const appContract = {
         releasedGroups: z.number().int().nonnegative(),
       }),
     ),
+  },
+  taskSessions: {
+    activeRuns: oc.input(botId).output(z.array(z.object({ id: Id, threadId: Id, taskSessionId: Id.nullable(), title: z.string(), status: z.string() }))),
+    stopAll: oc.input(z.object({ botId: Id, runIds: z.array(Id).min(1).max(200) }))
+      .output(z.object({ stopped: z.number().int() })),
+    capabilities: oc.input(z.object({})).output(z.object({ enabled: z.boolean(), concurrency: z.number().int() })),
+    list: oc.input(botId).output(z.array(TaskSessionSchema)),
+    start: oc.input(threadSendFields.safeExtend({ botId: Id, groupId: z.never().optional(),
+      taskSessionId: z.never().optional(), clientNonce: z.string().min(1).max(200),
+      title: z.string().trim().min(1).max(100).optional(),
+    }).superRefine((input, ctx) => {
+      if (!input.text?.trim() && !input.artifactIds?.length)
+        ctx.addIssue({ code: "custom", message: "Provide text or attachments", path: ["text"] });
+      if (input.replyToMessageId || input.replyQuote)
+        ctx.addIssue({ code: "custom", message: "A new task requires an explicit context copy", path: ["replyToMessageId"] });
+    })).output(z.object({ session: TaskSessionSchema, taskId: Id, runId: Id, seq: z.number().int(), requestMatched: z.boolean() })),
+    rename: oc.input(z.object({ botId: Id, taskSessionId: Id, title: z.string().trim().min(1).max(100) }))
+      .output(TaskSessionSchema),
+    archive: oc.input(z.object({ botId: Id, taskSessionId: Id, archived: z.boolean() }))
+      .output(TaskSessionSchema),
   },
   threads: {
     find: oc

@@ -5,6 +5,7 @@ import type { SkillSource } from "@rakazo/core";
 import {
   buildSkillMd,
   findSkillByName,
+  isOnDemandSkillMd,
   isSkillReadOnly,
   mergeBuiltinSkills,
   parseSkillMd,
@@ -45,6 +46,7 @@ export function mapAgentSkill(row: AgentSkillRow): AgentSkill {
     content: row.content,
     source,
     readOnly: isSkillReadOnly(source as SkillSource),
+    onDemand: isOnDemandSkillMd(row.content),
     availability: spaceAvailability(row),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -59,6 +61,7 @@ function builtinCatalog(): AgentSkill[] {
     content: skill.content,
     source: "builtin" as const,
     readOnly: true,
+    onDemand: false,
     createdAt: new Date(0).toISOString(),
     updatedAt: new Date(0).toISOString(),
   }));

@@ -23,7 +23,7 @@ async function runNotice(
   prisma: PrismaClient,
   run: { spaceId: string; userId: string; botId: string; threadId: string },
   routineId?: string | null,
-): Promise<{ enabled: boolean; groupId: string | null }> {
+): Promise<{ enabled: boolean; groupId: string | null; taskSession?: { id: string; title: string; mainThreadId: string } | null }> {
   // A routine carries its own notify setting, which decides on its failures.
   const routine = routineId
     ? await prisma.routine.findUnique({ where: { id: routineId }, select: { notify: true } })
@@ -37,13 +37,14 @@ async function runNotice(
     },
     select: {
       bot: { select: { notifyOnFinish: true } },
-      thread: { select: { groupId: true } },
+      thread: { select: { groupId: true, taskSession: { select: { id: true, title: true, mainThreadId: true } } } },
     },
   });
   if (!source) return { enabled: false, groupId: null };
   return {
     enabled: routine ? routine.notify : Boolean(source.thread.groupId || source.bot.notifyOnFinish),
     groupId: source.thread.groupId,
+    taskSession: source.thread.taskSession,
   };
 }
 
@@ -85,6 +86,8 @@ export async function notifyRun(
     .send(
       {
         ...message,
+        ...(notice.taskSession ? { title: `${notice.taskSession.title} · ${message.title}`,
+          taskSessionId: notice.taskSession.id, mainThreadId: notice.taskSession.mainThreadId } : {}),
         ...(notice.groupId ? { groupId: notice.groupId } : {}),
         ...(badge === undefined ? {} : { badge }),
       },

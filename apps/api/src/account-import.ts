@@ -544,6 +544,25 @@ class AccountImporter implements ArchiveSink {
         return;
       }
       case "thread": {
+        if (record.taskBotId) {
+          const bot = space.bots.get(record.taskBotId);
+          const source = record.taskSession;
+          if (!bot || !source || space.ids.has(source.id)) throw missingRecord();
+          const threadId = newId();
+          const sessionId = randomUUID();
+          space.ids.set(source.id, sessionId);
+          await prisma.thread.create({ data: { id: threadId, spaceId, userId, taskBotId: bot.id,
+            historyCompactedUpToSeq: record.historyCompactedUpToSeq, historyCompactionSummary: record.historyCompactionSummary,
+            createdAt: new Date(record.createdAt) } });
+          // Historical conversations import idle. No run, lease or native identity is transported.
+          await prisma.botTaskSession.create({ data: { id: sessionId, spaceId, userId, botId: bot.id,
+            mainThreadId: bot.threadId, threadId, title: source.title, contextSnapshot: source.contextSnapshot,
+            modelProvider: source.modelProvider, modelId: source.modelId, thinkingLevel: source.thinkingLevel,
+            clientNonce: `import:${sessionId}`, createdAt: new Date(source.createdAt), updatedAt: new Date(source.updatedAt),
+            archivedAt: source.archivedAt ? new Date(source.archivedAt) : null } });
+          space.threadSeqs.set(threadId, -1);
+          return;
+        }
         const threadId = record.botId
           ? space.bots.get(record.botId)?.threadId
           : record.groupId

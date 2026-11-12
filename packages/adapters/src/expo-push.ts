@@ -34,7 +34,8 @@ export function expoPushData(message: NotificationMessage, spaceId: string, deli
   return {
     kind: message.kind,
     botId: message.botId,
-    threadId: message.threadId,
+    threadId: message.mainThreadId ?? message.threadId,
+    ...(message.taskSessionId ? { taskSessionId: message.taskSessionId } : {}),
     deliveryId,
     ...(spaceId ? { spaceId } : {}),
     ...(message.groupId ? { groupId: message.groupId } : {}),

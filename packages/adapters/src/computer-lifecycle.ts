@@ -743,6 +743,7 @@ export async function acquireDedicatedScreenLeaseFence(
     }
 
     await lockOwnedRun(tx, input);
+    await assertTaskResourceAvailable(tx, input);
 
     // An unexpired holder owns the screen until release, pause, or expiry. Keep the
     // expired row so explicit release never resets the next worker's screen fence.
@@ -828,6 +829,8 @@ export async function acquireComputerExecutionLease(
   return prisma.$transaction(async (tx) => {
     // Only the locked current worker claim may reclaim a live same-run lease.
     // API operations have no worker claim and may acquire only new or expired leases.
+    await tx.$queryRaw`SELECT id FROM computers WHERE id = ${input.computerId} FOR UPDATE`;
+    await assertTaskResourceAvailable(tx, input);
     const ownsRun = input.workerId !== undefined;
     if (ownsRun) await lockOwnedRun(tx, input);
     const now = new Date();
@@ -875,6 +878,21 @@ export async function acquireComputerExecutionLease(
       throw error;
     }
   });
+}
+
+/** Independent tasks share host resources with existing conversations and routines.
+ * An expired timer alone is never evidence that native work has stopped. */
+async function assertTaskResourceAvailable(tx: Prisma.TransactionClient, input: { computerId: string; runId: string; botId: string }) {
+  const conflicts = await tx.$queryRaw<Array<{ id: string }>>`
+    SELECT l.id FROM computer_execution_leases l
+    JOIN runs r ON r.id = l."runId"
+    JOIN runs current_run ON current_run.id = ${input.runId}
+    WHERE l."computerId" = ${input.computerId} AND l."runId" <> ${input.runId}
+      AND (r."resourceWaitReason" IN ('unconfirmed', 'stopping')
+        OR ((r."taskSlotHeld" OR current_run."taskSlotHeld")
+          AND r.status NOT IN ('completed', 'failed', 'cancelled')))
+    LIMIT 1`;
+  if (conflicts.length) throw new ComputerBusyError();
 }
 
 async function validateAcquiredComputerLease(

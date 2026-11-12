@@ -254,6 +254,8 @@ type CreateAppOverrides = Partial<AppEnv> & {
   modelConnectionFetch?: typeof fetch;
   logger?: Logger;
   runtime?: AgentRuntime;
+  independentTasksAvailable?: () => Promise<boolean>;
+  nativeExecution?: Parameters<typeof createRunExecutor>[0]["nativeExecution"];
   contextStrategy?: AgentContextStrategy;
   /** Test-only stand-in for desktops connected to this server. */
   userDevices?: UserDeviceGateway;
@@ -277,6 +279,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     pluginMarketplaceRead,
     logger: loggerOverride,
     runtime: runtimeOverride,
+    independentTasksAvailable: independentTasksAvailableOverride,
+    nativeExecution: nativeExecutionOverride,
     contextStrategy,
     userDevices: userDevicesOverride,
     ...envOverrides
@@ -634,7 +638,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     memory,
     botWorkspace: nativeKernel?.botWorkspace,
     nativeWorkspaceFile: nativeKernel?.readWorkspaceFile,
-    nativeExecution: nativeKernel?.recovery,
+    nativeExecution: nativeExecutionOverride ?? nativeKernel?.recovery,
     memoryProviders,
     home,
     artifacts,
@@ -741,6 +745,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       : undefined;
 
   const router = createRouter({
+    independentTasksAvailable: independentTasksAvailableOverride ?? nativeKernel?.independentTasksAvailable,
     cancelNativeRuns: (runIds) => executor.reconcileExternalAgents({ runIds }),
     stopNativeOrphans: nativeKernel?.stopNativeOrphans,
     notificationSummary: createSpeechSummarizer(

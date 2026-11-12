@@ -106,6 +106,18 @@ async function dispatchTool(
   if (refused) return refused;
   const gate = await gateToolCall(ctx, request, observer);
   if ("result" in gate) return gate.result;
+  // Product effects and commands acquire the same computer/workspace resource as legacy runs.
+  // Reads remain eligible for concurrency; unknown connector effects are conservative.
+  const concurrentReads = new Set(["read_file", "list_files", "ask_user", "read_history", "search_history", "read_memory", "search_memory",
+    "recall_memory", "list_fleet", "task_catalog", "schedule_list", "scratchpad_list", "board_tickets", "ticket_get",
+    "skill_read", "web_search", "web_fetch", "list_secrets", "cloud_agent_status", "purchase_status"]);
+  if (!concurrentReads.has(gate.call.name)) {
+    await ctx.computer.requireResource?.();
+    // A late acquisition updates the context token; preserve its exact fence for pause/cleanup.
+    if (ctx.thread.taskBotId) ctx.computer.lease = await ctx.deps.prisma.computerExecutionLease.findFirst({
+      where: { runId: ctx.runId, botId: ctx.bot.id, computerId: ctx.computer.stored.id },
+    });
+  }
   if (!gate.call.applied) return toolHandler(gate.call.name)(ctx, gate.call);
   let outcome: "success" | "failure" = "failure";
   try {

@@ -1,3 +1,4 @@
+import { NativeExecutionError } from "./openclaw-native-driver.js";
 import type { AgentRuntimeEvent } from "@rakazo/adapter-kit";
 import {
   DEFAULT_CONTEXT_STRATEGY,
@@ -893,6 +894,14 @@ export async function failRun(
 ) {
   const { deps, run, runId, bot, thread } = ctx;
   const { reply } = ctx.state;
+  if (thread.taskBotId && caughtError instanceof NativeExecutionError && caughtError.state === "unconfirmed") {
+    ctx.state.lease.retainComputer = true;
+    await deps.prisma.run.updateMany({ where: { id: runId, status: "running", leaseOwner: ctx.workerId, leaseFence: ctx.fence },
+      data: { status: "queued", resourceWaitReason: "unconfirmed", leaseOwner: null, leaseExpiresAt: null,
+        wakeAt: new Date(Date.now() + 5000) } });
+    await deps.jobs.enqueue({ ...runContinueJob(runId), availableAt: new Date(Date.now() + 5000) });
+    return;
+  }
   let error = caughtError;
   // A refused account limit needs user/operator action, not setup-job retries.
   // Keep the provisioning error even if aborting the model masked it.

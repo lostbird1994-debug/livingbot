@@ -29,10 +29,10 @@ export function nativeCollaboration(
   if (!request.executeTool) return undefined;
   const tools = request.tools
     .filter((tool) => toolMode === "kernel"
-      ? isNativeKernelHostTool(tool.name) || tool.name === "shell"
+      ? isNativeKernelHostTool(tool.name) || tool.name === "shell" || (request.independentTask && ["write_file", "read_file", "list_files"].includes(tool.name))
       : NATIVE_COLLABORATION_TOOLS.includes(tool.name as never))
     .map(({ name, description, inputSchema }) => ({
-      name: toolMode === "kernel" && name === "shell" ? "rakazo_shell" : name,
+      name: toolMode === "kernel" && name === "shell" ? "rakazo_shell" : toolMode === "kernel" && request.independentTask && ["write_file", "read_file", "list_files"].includes(name) ? `rakazo_${name}` : name,
       description: toolMode === "kernel" && name === "shell"
         ? `Run a command with this Bot's managed credential environment and product computer permissions. Credentials are injected and redacted by Rakazo. Use native exec for ordinary local commands. ${description}`
         : description,
@@ -54,10 +54,10 @@ export function nativeCollaboration(
   if (!tools.length && toolMode !== "kernel") return undefined;
   const offered = new Set(request.tools.map(tool => tool.name));
   const nativeTools = [
-    ...(offered.has("shell") ? ["exec", "process"] : []),
-    ...(offered.has("read_file") ? ["read", "grep"] : []),
-    ...(offered.has("list_files") ? ["ls", "find"] : []),
-    ...(offered.has("write_file") ? ["write", "edit", "apply_patch"] : []),
+    ...(!request.independentTask && offered.has("shell") ? ["exec", "process"] : []),
+    ...(!request.independentTask && offered.has("read_file") ? ["read", "grep"] : []),
+    ...(!request.independentTask && offered.has("list_files") ? ["ls", "find"] : []),
+    ...(!request.independentTask && offered.has("write_file") ? ["write", "edit", "apply_patch"] : []),
     ...(offered.has("web_search") ? ["web_search"] : []),
     ...(offered.has("web_fetch") ? ["web_fetch"] : []),
     ...(request.privateContextAllowed !== false &&
@@ -68,7 +68,7 @@ export function nativeCollaboration(
     ...(toolMode ? { toolMode, nativeTools, privateContextAllowed: request.privateContextAllowed !== false } : {}),
     tools,
     execute: (name, args, executionId, ...rest) => {
-      const actualName = toolMode === "kernel" && name === "rakazo_shell" ? "shell" : name;
+      const actualName = toolMode === "kernel" && name === "rakazo_shell" ? "shell" : toolMode === "kernel" && ["rakazo_write_file", "rakazo_read_file", "rakazo_list_files"].includes(name) ? name.slice(7) : name;
       if (toolMode === "kernel" && name === "rakazo_connected_tool") {
         if (typeof args.name !== "string" || !connected.some(tool => tool.name === args.name) ||
           !args.arguments || typeof args.arguments !== "object" || Array.isArray(args.arguments))

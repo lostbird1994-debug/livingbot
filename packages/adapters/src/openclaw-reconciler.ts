@@ -22,6 +22,9 @@ import {
 } from "./openclaw-native-driver.js";
 import { resolveConnectedRunModel } from "./run-model.js";
 
+/** A background command from a previous engine instance cannot be verified after this. */
+const UNVERIFIABLE_RELEASE_MS = 30 * 60_000;
+
 const settledError = (record: NativeRecord, productStatus: string) =>
   record.status === "failed" ? record.error ?? "底层任务已中断；此前操作可能已执行，请核实结果。"
     : productStatus === "cancelled" ? "底层任务已结束；取消前的操作可能已经执行。"
@@ -56,9 +59,17 @@ export async function reconcileNativeExecution(input: {
   const abort = input.cancel
     ? await peer.request("chat.abort", params, { timeoutMs: 10_000 })
     : undefined;
+  // A previous engine instance loses the ownership records of the commands it started.
+  // Its handles can then never be confirmed again, so an old run must be released with a
+  // warning instead of pinning the session to "unconfirmed" for good.
+  const staleOldEngine = (reason?: string) =>
+    reason === "engine_restarted" && Date.now() - record.startedAt >= UNVERIFIABLE_RELEASE_MS;
+  let backgroundUnverified = false;
+  let killError: unknown;
   if (input.cancel) {
-    await stopNativeBackgroundWork(peer, record);
-    record.backgroundProcesses = [];
+    try { await stopNativeBackgroundWork(peer, record); }
+    catch (error) { killError = error; }
+    if (!killError) record.backgroundProcesses = [];
   }
   let result = await peer.request<{ status: string; stopReason?: string; unconfirmed?: boolean; reason?: string; error?: string }>(
     record.toolMode === "kernel" ? "rakazo.run.status" : "agent.wait",
@@ -70,7 +81,20 @@ export async function reconcileNativeExecution(input: {
     result = await waitForNativeTermination(peer, record, input.cancelWaitMs ?? 3000, result);
   // A restarted model controller cannot continue, but an already-backgrounded
   // command needs separate ownership/termination evidence before releasing it.
-  if (result.reason === "engine_restarted") await confirmNativeBackgroundWorkStopped(peer, record);
+  const stale = staleOldEngine(result.reason);
+  if (!killError && result.reason === "engine_restarted") {
+    try { await confirmNativeBackgroundWorkStopped(peer, record); }
+    catch (error) {
+      if (!stale) throw error;
+      backgroundUnverified = true;
+      record.backgroundProcesses = [];
+    }
+  }
+  if (killError) {
+    if (!stale) throw killError;
+    backgroundUnverified = true;
+    record.backgroundProcesses = [];
+  }
   const terminal =
     (record.toolMode !== "kernel" && confirmsNativeAbort(abort, record.runId)) ||
     isNativeTerminal(result);
@@ -121,11 +145,16 @@ export async function reconcileNativeExecution(input: {
       error = "原任务已经结束，但最终回复无法恢复；此前操作可能已执行，请核实后再决定是否重做。";
     }
   }
+  const settledMessage = status === "failed" ? error ?? "Native execution failed" : undefined;
   const recovered = {
     ...record,
     status,
     text,
-    error: terminal ? status === "failed" ? error ?? "Native execution failed" : undefined : "Native execution remains unconfirmed",
+    error: terminal
+      ? backgroundUnverified
+        ? [settledMessage, "原任务的后台命令无法核实是否已结束（执行内核已重启，原句柄已丢失）；已解除占用，确认没有异常的残留进程后再继续。"].filter(Boolean).join("\n")
+        : settledMessage
+      : "Native execution remains unconfirmed",
   };
   if (terminal) delete recovered.approval;
   await store.write(key, recovered);
@@ -173,7 +202,7 @@ export function createOpenClawReconciler(
       },
       orderBy: { id: "asc" },
       take: 25,
-      select: { id: true, botId: true, userId: true, spaceId: true, status: true, error: true, modelId: true },
+      select: { id: true, botId: true, userId: true, spaceId: true, status: true, error: true, modelId: true, taskSlotHeld: true, resourceWaitReason: true },
     });
     if (!selection) cursor = runs.length === 25 ? runs.at(-1)!.id : undefined;
 
@@ -209,16 +238,20 @@ export function createOpenClawReconciler(
         const record = await store.read(key);
         if (active?.executionKey && record?.runId !== active.runId)
           throw new Error("Native execution index is inconsistent");
-        if (!record) continue;
+        if (!record) {
+          if (run.status === "cancelled" && run.resourceWaitReason === "stopping")
+            await runAsTenant(run, () => deps.prisma.run.updateMany({ where: { id: run.id, status: "cancelled" }, data: { resourceWaitReason: null } }));
+          continue;
+        }
         if (["done", "failed", "cancelled"].includes(record.status)) {
           // Admission-time recovery may already have settled the journal. Reflect
           // that evidence in the original failed run instead of leaving a stale
           // "unconfirmed" error forever, without marking business work successful.
           const error = settledError(record, run.status);
-          if (deps.nativeExecution && run.error !== error)
+          if (deps.nativeExecution && (run.error !== error || run.resourceWaitReason))
             await runAsTenant(run, () => deps.prisma.run.updateMany({
               where: { id: run.id, spaceId: run.spaceId, userId: run.userId, status: run.status, error: run.error },
-              data: { error },
+              data: { error, resourceWaitReason: null },
             }));
           continue;
         }
@@ -236,7 +269,7 @@ export function createOpenClawReconciler(
             } finally { peer.stop(); }
             await deps.prisma.run.updateMany({
               where: { id: run.id, spaceId: run.spaceId, userId: run.userId, status: run.status, error: run.error },
-              data: { error: status === "unconfirmed"
+              data: { resourceWaitReason: status === "unconfirmed" ? "unconfirmed" : null, error: status === "unconfirmed"
                 ? "底层任务状态未确认，请先核实，勿重复提交。"
                 : settledError((await store.read(key))!, run.status) },
             });
@@ -311,7 +344,7 @@ export function createOpenClawReconciler(
               status: run.status,
               error: run.error,
             },
-            data: { error: "底层任务状态未确认，请先核实，勿重复提交。" },
+            data: { error: "底层任务状态未确认，请先核实，勿重复提交。", resourceWaitReason: "unconfirmed" },
           }),
         ).catch(() => undefined);
       }

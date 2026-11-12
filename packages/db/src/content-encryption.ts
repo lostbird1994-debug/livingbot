@@ -50,6 +50,12 @@ interface ModelSpec {
 
 /** Further content columns (external messages, steering, skills, …) add an entry here. */
 export const ENCRYPTED_MODELS: Record<string, ModelSpec> = {
+  BotTaskSession: {
+    table: "bot_task_sessions",
+    fields: { title: {}, contextSnapshot: {} },
+    space: { column: "spaceId" },
+    ownerRelation: "user",
+  },
   Bot: {
     table: "bots",
     fields: { roleCard: { plainKeys: new Set() } },

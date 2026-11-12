@@ -1,7 +1,7 @@
 import { findConversationHistory } from "../conversation-find.js";
 import { ORPCError } from "@orpc/server";
 import { runContinueJob, runJobKey } from "@rakazo/adapter-kit";
-import { settleCallRequest } from "@rakazo/adapters";
+import { validateBotModelChange, settleCallRequest } from "@rakazo/adapters";
 import type { Actor, ProductEvent } from "@rakazo/contracts";
 import {
   AttachmentValidationError,
@@ -104,11 +104,24 @@ export function threadsRoutes(ctx: RouterContext) {
         )?.botId ?? target.memberBotIds[0]!);
   const send = async (
     actor: Actor,
-    input: Parameters<typeof sendThreadMessage>[3] & { botId?: string; groupId?: string },
+    input: Parameters<typeof sendThreadMessage>[3] & { botId?: string; groupId?: string; taskSessionId?: string },
     startRoutines?: Parameters<typeof sendThreadMessage>[5],
   ) => {
     const setup = await modelSetup(deps, actor);
     const target = await resolveThreadTarget(deps.prisma, actor, input);
+    const modelRequested = input.modelProvider !== undefined || input.modelId !== undefined || input.thinkingLevel !== undefined;
+    if (modelRequested) {
+      if (target.kind !== "bot" || !target.taskSessionId || !target.taskModel)
+        throw new ORPCError("BAD_REQUEST", { message: "Per-task model choices require an independent task." });
+      const choice = await validateBotModelChange(ctx.botModelValidation(actor), {
+        spaceId: actor.spaceId, userId: actor.userId,
+        provider: input.modelProvider ?? target.taskModel.modelProvider,
+        model: input.modelId ?? target.taskModel.modelId, thinkingLevel: input.thinkingLevel,
+        current: { provider: target.taskModel.modelProvider, model: target.taskModel.modelId },
+      });
+      if (!choice.ok) throw new ORPCError("BAD_REQUEST", { message: choice.error });
+      target.taskModel = { modelProvider: choice.provider, modelId: choice.model, thinkingLevel: choice.thinkingLevel };
+    }
     // A bot with its own runnable model needs no main model.
     if (
       setup.needsModel &&
@@ -363,6 +376,7 @@ export function threadsRoutes(ctx: RouterContext) {
         return { ok: true as const, ...stopped };
       }),
       clear: authed.threads.clear.handler(async ({ context, input }) => {
+        if (input.taskSessionId) throw new ORPCError("BAD_REQUEST", { message: "Task history is preserved. Close its tab instead." });
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         const contextBotId = target.kind === "bot" ? target.botId : target.memberBotIds[0];
         if (!contextBotId) throw new IsolationError();

@@ -3,6 +3,11 @@ import { SandboxRateLimitError, SandboxUnresponsiveError } from "@rakazo/adapter
 import type { MessageBlock } from "@rakazo/contracts";
 import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@rakazo/db", async importOriginal => ({
+  ...await importOriginal<Record<string, unknown>>(),
+  prioritizeConversation: vi.fn(async () => ({ blocked: false, continuationRunId: null })),
+}));
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
 import { createRunExecutor } from "./executor.js";
 import * as runMessages from "./run-messages.js";

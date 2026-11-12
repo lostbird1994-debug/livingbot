@@ -1,6 +1,6 @@
 import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
 import { inferAttachmentMimeType, isBackgroundRunTrigger } from "@rakazo/core";
-import { resolveBotWorkspacePath } from "./computer-support.js";
+import { toComputerRef, resolveBotWorkspacePath } from "./computer-support.js";
 import { desktopProtectionGuardMessage } from "./desktop-command-guard.js";
 import { protectedActivateScriptWriteRefusal } from "./desktop-guard-words.js";
 import { generateMediaFromTool } from "./media-generation-tools.js";
@@ -17,7 +17,9 @@ function runWorkspace(ctx: RunContext, call: ToolCall): RunWorkspace {
   return {
     botId: ctx.bot.id,
     computerMode: ctx.computer.mode,
-    computer: () => ctx.computer.get("tool", call.name),
+    computer: () => ctx.thread.taskBotId && ctx.computer.stored.kind === "desktop" && ctx.computer.stored.providerRef
+      ? Promise.resolve(toComputerRef(ctx.computer.stored))
+      : ctx.computer.get("tool", call.name),
     markDirty: () => ctx.computer.checkpoint.markDirty(),
     context: ctx.context,
     runSecrets: ctx.secrets,

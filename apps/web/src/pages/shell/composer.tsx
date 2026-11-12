@@ -58,6 +58,7 @@ const COMPOSER_TEXT = "rk-scroll whitespace-pre-wrap break-words px-0.5 py-0.5 t
 export const Composer = memo(function Composer({
   artifactTarget,
   activeName,
+  targetLabel,
   running,
   disabled,
   pendingAttachments,
@@ -90,6 +91,7 @@ export const Composer = memo(function Composer({
   enterToSend,
 }: {
   activeName?: string;
+  targetLabel?: string;
   running: boolean;
   disabled?: boolean;
   pendingAttachments: PendingAttachment[];
@@ -207,6 +209,23 @@ export const Composer = memo(function Composer({
           install.kind === "api" || install.kind === "mcp" || install.kind === "graphql",
       ),
     [installsQuery.data],
+  );
+  // Skills flagged on_demand stay unknown to every bot until they are picked here.
+  const onDemandSkillsQuery = useQuery(spaceQueries.agentSkills.list.queryOptions());
+  const onDemandSkills = useMemo(
+    () => (onDemandSkillsQuery.data ?? []).filter((skill) => skill.onDemand),
+    [onDemandSkillsQuery.data],
+  );
+  const scopeOptions = useMemo(
+    () => [
+      ...connectorOptions.map((install) => ({
+        id: install.id,
+        name: install.name,
+        kind: install.kind.toUpperCase(),
+      })),
+      ...onDemandSkills.map((skill) => ({ id: skill.id, name: skill.name, kind: "SKILL" })),
+    ],
+    [connectorOptions, onDemandSkills],
   );
   const toggleConnector = (id: string) =>
     setConnectorScope(
@@ -776,21 +795,21 @@ export const Composer = memo(function Composer({
           className="mb-2 overflow-hidden rounded-[14px] border border-border bg-muted animate-in fade-in-0 slide-in-from-bottom-1 duration-150 motion-reduce:animate-none"
         >
           <div className="px-4 pb-1 pt-3 text-[12.5px] text-muted-foreground">
-            {t`Only the connectors you turn on here are visible to this message`}
+            {t`Only what you turn on here is visible to this message`}
           </div>
-          {connectorOptions.length === 0 ? (
+          {scopeOptions.length === 0 ? (
             <div className="px-4 pb-3 text-[13px] text-muted-foreground">
               {t`No connectors installed yet`}
             </div>
           ) : (
-            connectorOptions.map((install) => {
-              const on = connectorScope.includes(install.id);
+            scopeOptions.map((option) => {
+              const on = connectorScope.includes(option.id);
               return (
                 <button
-                  key={install.id}
+                  key={option.id}
                   type="button"
                   aria-pressed={on}
-                  onClick={() => toggleConnector(install.id)}
+                  onClick={() => toggleConnector(option.id)}
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-start hover:bg-accent"
                 >
                   <Plug
@@ -800,10 +819,10 @@ export const Composer = memo(function Composer({
                   />
                   <span className="min-w-0 flex-1">
                     <span dir="auto" className="block truncate text-[14px] text-foreground">
-                      {install.name}
+                      {option.name}
                     </span>
                     <span className="block truncate text-[12px] text-muted-foreground">
-                      {install.kind.toUpperCase()}
+                      {option.kind}
                     </span>
                   </span>
                   <span
@@ -869,7 +888,7 @@ export const Composer = memo(function Composer({
             />
           ) : null}
           {connectorScope.map((id) => {
-            const install = connectorOptions.find((option) => option.id === id);
+            const option = scopeOptions.find((current) => current.id === id);
             return (
               <ComposerChip
                 key={id}
@@ -877,8 +896,8 @@ export const Composer = memo(function Composer({
                 icon={
                   <Plug size={13} strokeWidth={1.7} className="shrink-0 text-muted-foreground/70" />
                 }
-                label={install?.name ?? id}
-                removeLabel={t`Remove connector ${install?.name ?? id}`}
+                label={option?.name ?? id}
+                removeLabel={t`Remove connector ${option?.name ?? id}`}
                 onRemove={() => toggleConnector(id)}
               />
             );
@@ -985,12 +1004,12 @@ export const Composer = memo(function Composer({
               disabled={disabled}
               placeholder={
                 showComposerPlaceholder
-                  ? activeName
+                  ? targetLabel ?? (activeName
                     ? t`Message ${activeName}`
-                    : t`Message…`
+                    : t`Message…`)
                   : undefined
               }
-              aria-label={activeName ? t`Message ${activeName}` : t`Message`}
+              aria-label={targetLabel ?? (activeName ? t`Message ${activeName}` : t`Message`)}
               role="combobox"
               aria-autocomplete="list"
               aria-haspopup="listbox"

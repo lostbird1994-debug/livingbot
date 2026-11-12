@@ -521,6 +521,8 @@ export type AgentContextStrategy = "current" | "retrieval" | "snapshots" | "cach
 export const DEFAULT_CONTEXT_STRATEGY: AgentContextStrategy = "retrieval";
 
 export interface AgentRunRequest {
+  /** Product-managed independent task: engine mutation tools remain host-authorized. */
+  independentTask?: boolean;
   /** Server-validated owner answer tied to one persisted native approval card. */
   answeredApproval?: { id: string; actionId: string };
   /** Durable external execution uncertainty; never interpret a local abort as native confirmation. */
@@ -859,6 +861,8 @@ export interface NotificationMessage {
   body: string;
   botId: string;
   threadId: string;
+  taskSessionId?: string;
+  mainThreadId?: string;
   /** Group chat that owns threadId, so a tap does not open the bot's direct thread. */
   groupId?: string;
   /** Unread chats to show on the app icon, when the sender knows them. */

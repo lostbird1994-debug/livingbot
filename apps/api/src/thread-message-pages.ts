@@ -251,6 +251,8 @@ export function shouldForwardBackgroundThreadEvent(event: {
   return Array.isArray(blocks) && blocks.some(isBackgroundInputBlock);
 }
 
+type EnrichableMessage = ThreadMessage & { resultRunId?: string };
+
 function toThreadMessage(row: {
   id: string;
   threadId: string;
@@ -269,7 +271,7 @@ function toThreadMessage(row: {
   runId: string | null;
   clientNonce?: string | null;
   createdAt: Date;
-}): ThreadMessage {
+}): EnrichableMessage {
   const parent = row.replyTo?.threadId === row.threadId ? row.replyTo : null;
   const parsed = parent ? MessageBlockSchema.array().safeParse(parent.blocks) : undefined;
   const replyPreview =
@@ -294,25 +296,35 @@ function toThreadMessage(row: {
     replyPreview,
     runId: row.runId ?? undefined,
     callId: callIdFromClientNonce(row.clientNonce),
+    resultRunId: row.clientNonce?.startsWith("task-result:") ? row.clientNonce.slice("task-result:".length) : undefined,
     createdAt: row.createdAt.toISOString(),
   };
 }
 
 async function markRoutineReplies(
   prisma: MessageDb,
-  messages: ThreadMessage[],
+  messages: EnrichableMessage[],
 ): Promise<ThreadMessage[]> {
   const runIds = [
     ...new Set(messages.flatMap((message) => (message.runId ? [message.runId] : []))),
   ];
-  if (!runIds.length) return messages;
-  const runs = await prisma.run.findMany({
+  const runs = runIds.length ? await prisma.run.findMany({
     where: { id: { in: runIds }, trigger: "routine" },
     select: { id: true, trigger: true },
-  });
+  }) : [];
+  const resultIds = messages.filter(message => message.resultRunId).map(message => message.id);
+  const receipts = resultIds.length ? await prisma.taskSessionReceipt.findMany({
+    where: { messageId: { in: resultIds } }, include: { taskSession: true, run: { select: { status: true } } },
+  }) : [];
+  const byMessage = new Map(receipts.map(receipt => [receipt.messageId, receipt]));
   const routineIds = new Set(runs.filter((run) => run.trigger === "routine").map((run) => run.id));
-  return messages.map((message) => ({
-    ...message,
-    routine: !!message.runId && routineIds.has(message.runId),
-  }));
+  return messages.map(({ resultRunId: _resultRunId, ...message }) => {
+    const receipt = byMessage.get(message.id);
+    return { ...message, routine: !!message.runId && routineIds.has(message.runId),
+      ...(receipt && receipt.taskSession.mainThreadId === message.threadId ? { taskResult: {
+        taskSessionId: receipt.taskSessionId, runId: receipt.runId, title: receipt.taskSession.title,
+        status: receipt.run.status as "completed" | "failed" | "cancelled",
+      } } : {}),
+    };
+  });
 }

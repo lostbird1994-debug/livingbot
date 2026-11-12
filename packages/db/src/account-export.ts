@@ -196,7 +196,7 @@ async function* spaceRecords(
         ...tenant,
         id: { gt: cursor },
         externalConversationId: null,
-        OR: [{ botId: { in: [...botIds] } }, { groupId: { in: [...groupIds] } }],
+        OR: [{ botId: { in: [...botIds] } }, { taskBotId: { in: [...botIds] } }, { groupId: { in: [...groupIds] } }],
       },
       orderBy: { id: "asc" },
       take: PAGE,
@@ -204,6 +204,9 @@ async function* spaceRecords(
         id: true,
         botId: true,
         groupId: true,
+        taskBotId: true,
+        taskSession: { select: { id: true, title: true, contextSnapshot: true, modelProvider: true, modelId: true,
+          thinkingLevel: true, createdAt: true, updatedAt: true, archivedAt: true } },
         historyCompactedUpToSeq: true,
         historyCompactionSummary: true,
         createdAt: true,
@@ -211,7 +214,9 @@ async function* spaceRecords(
     });
     for (const thread of threads) {
       threadIds.add(thread.id);
-      yield { type: "thread", ...thread, createdAt: iso(thread.createdAt) };
+      yield { type: "thread", ...thread, createdAt: iso(thread.createdAt),
+        taskSession: thread.taskSession ? { ...thread.taskSession, createdAt: iso(thread.taskSession.createdAt),
+          updatedAt: iso(thread.taskSession.updatedAt), archivedAt: isoOrNull(thread.taskSession.archivedAt) } : null };
       for (let seq = -1; ; ) {
         const messages = await prisma.message.findMany({
           where: { threadId: thread.id, seq: { gt: seq } },

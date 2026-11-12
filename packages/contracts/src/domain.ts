@@ -673,6 +673,12 @@ export const AgentSkillSchema = z.object({
   content: z.string(),
   source: AgentSkillSourceSchema,
   readOnly: z.boolean(),
+  /**
+   * Opt-in skill: its catalog line reaches a run only when the message's connector
+   * scope names it. Lets a skill describe a tool the model should not know about
+   * until the user reaches for it in the composer.
+   */
+  onDemand: z.boolean().default(false),
   /** Absent for built-in skills, which every space has. */
   availability: SpaceAvailabilitySchema.optional(),
   createdAt: z.string(),
@@ -686,6 +692,7 @@ export const AgentSkillCatalogEntrySchema = AgentSkillSchema.pick({
   description: true,
   source: true,
   readOnly: true,
+  onDemand: true,
   availability: true,
 });
 export type AgentSkillCatalogEntry = z.infer<typeof AgentSkillCatalogEntrySchema>;

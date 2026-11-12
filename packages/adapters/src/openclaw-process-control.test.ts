@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { NativeProcessControl } from "./openclaw-process-control.js";
 import type { NativeProcessBackend } from "./openclaw-process-control.js";
 
@@ -49,5 +53,36 @@ describe("native process ownership", () => {
     await expect(control.control(params)).rejects.toThrow("scope");
     exists = true;
     await expect(control.control(params)).rejects.toThrow("cancellation handle");
+  });
+  it("proves an exited background command after the engine forgot its registry", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "rakazo-process-"));
+    const ledger = join(dir, "owners.json");
+    try {
+      const empty = { getSession: () => undefined, getFinishedSession: () => undefined, cancel: () => false };
+      const first = new NativeProcessControl(async () => empty, ledger);
+      // A dead PID stands in for a command that exited with the previous engine.
+      const dead = spawnSync(process.execPath, ["-e", "process.exit(0)"]).pid;
+      first.observe({ toolName: "exec", result: { details: {
+        status: "running", sessionId: "owned", pid: dead,
+      } } }, { sessionKey, runId });
+      // A restarted engine has no memory of the handle until the ledger is read.
+      const restarted = new NativeProcessControl(async () => empty, ledger);
+      await expect(restarted.control({ sessionKey, runId, sessionId: "owned", action: "poll" }))
+        .resolves.toEqual({ status: "failed" });
+      // A live PID keeps the guard closed: something is still executing.
+      const alive = new NativeProcessControl(async () => empty, ledger);
+      alive.observe({ toolName: "exec", result: { details: {
+        status: "running", sessionId: "live", pid: process.pid,
+      } } }, { sessionKey, runId });
+      await expect(new NativeProcessControl(async () => empty, ledger)
+        .control({ sessionKey, runId, sessionId: "live", action: "poll" }))
+        .resolves.toEqual({ status: "running" });
+      // Ownership still requires the exact session and run, ledger or not.
+      await expect(new NativeProcessControl(async () => empty, ledger)
+        .control({ sessionKey, runId: "other", sessionId: "owned", action: "poll" }))
+        .rejects.toThrow("ownership");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

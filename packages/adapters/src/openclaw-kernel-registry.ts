@@ -34,7 +34,7 @@ export async function loadKernelManifest(file: string): Promise<{
 }
 export interface KernelEngineConfig {
   gateway?: { port?: number; auth?: { token?: string } };
-  agents?: { defaults?: { workspace?: string }; list?: Array<{ id: string; workspace?: string }> };
+  agents?: { defaults?: { workspace?: string; skipBootstrap?: boolean }; list?: Array<{ id: string; workspace?: string }> };
   models?: { providers?: Record<string, {
     baseUrl?: string; apiKey?: string; headers?: Record<string, string>; api?: string;
     models?: Array<{ id: string }>;
@@ -146,6 +146,10 @@ export class OpenClawKernelRegistry {
       this.options.configFile ?? join(homedir(), ".openclaw", "openclaw.json"), "utf8",
     ));
     let config = await loadConfig();
+    // Rakazo already owns profile creation. Engine template bootstrap mutates one
+    // shared workspace state file and is unsafe to race across independent sessions.
+    if (request.independentTask && config.agents?.defaults?.skipBootstrap !== true)
+      throw new Error("Independent tasks require managed workspace bootstrap (agents.defaults.skipBootstrap=true).");
     try { nativeKernelModel(request, config); }
     catch (error) {
       if (!this.options.prepareModel) throw error;

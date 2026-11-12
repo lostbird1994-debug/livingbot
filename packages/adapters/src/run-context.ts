@@ -180,6 +180,7 @@ export interface RunComputerContext {
   pageBrowserAllowed: boolean;
   acceptsImages: boolean;
   heldForTakeover: boolean;
+  requireResource?: () => Promise<void>;
 }
 
 export interface RunSource {

@@ -51,6 +51,7 @@ import { modelsRoutes } from "./routes/models.js";
 import { paymentWalletRoutes } from "./routes/payment-wallet.js";
 import { routinesRoutes } from "./routes/routines.js";
 import { spacesRoutes } from "./routes/spaces.js";
+import { taskSessionsRoutes } from "./routes/task-sessions.js";
 import { threadsRoutes } from "./routes/threads.js";
 import type { VoiceDeps } from "./voice.js";
 
@@ -120,6 +121,7 @@ export interface RouterDeps {
   onEmailError?: (error: unknown) => void;
   speechSummary?: VoiceDeps["speechSummary"];
   notificationSummary?: VoiceDeps["notificationSummary"];
+  independentTasksAvailable?: () => Promise<boolean>;
   cancelNativeRuns?: (runIds: string[]) => Promise<void>;
   stopNativeOrphans?: (
     actor: { spaceId: string; userId: string }, botId: string, threadId: string, before: number,
@@ -163,6 +165,7 @@ export function createRouter(deps: RouterDeps) {
     ...botsRoutes(ctx),
     ...biliWhaleRoutes(ctx),
     ...threadsRoutes(ctx),
+    ...taskSessionsRoutes(ctx),
     ...computerRoutes(ctx),
     ...memoryRoutes(ctx),
     ...routinesRoutes(ctx),

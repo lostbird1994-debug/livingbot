@@ -19,7 +19,7 @@ export const NATIVE_ENGINE_TOOLS = [
 ] as const;
 /** Product actions remain host-authorized; ordinary filesystem and shell tools are native. */
 export const NATIVE_KERNEL_HOST_TOOLS = [
-  ...BUILTIN_TOOL_NAMES.filter(name => !ENGINE_TOOL_NAMES.has(name)), "rakazo_shell", "rakazo_connected_tool",
+  ...BUILTIN_TOOL_NAMES.filter(name => !ENGINE_TOOL_NAMES.has(name)), "rakazo_shell", "rakazo_write_file", "rakazo_read_file", "rakazo_list_files", "rakazo_connected_tool",
 ];
 export const isNativeKernelExcludedTool = (name: string) => ENGINE_TOOL_NAMES.has(name);
 export const isNativeKernelHostTool = (name: string) =>

@@ -56,6 +56,21 @@ export function createOpenClawKernelHost(options: {
       throw new Error("Native engine connection is not configured");
     return connectOpenClawKernelSdk(`ws://127.0.0.1:${port}`, token, () => {});
   };
+  let capabilities: { at: number; available: Promise<boolean> } | undefined;
+  const independentTasksAvailable = async () => {
+    if (capabilities && Date.now() - capabilities.at < 5000) return capabilities.available;
+    const available = (async () => {
+      const config = JSON.parse(await readFile(join(homedir(), ".openclaw", "openclaw.json"), "utf8"));
+      if (config.agents?.defaults?.skipBootstrap !== true || !Number.isInteger(config.gateway?.port) || typeof config.gateway?.auth?.token !== "string") return false;
+      const peer = await connectOpenClawKernelSdk(`ws://127.0.0.1:${config.gateway.port}`, config.gateway.auth.token, () => {});
+      try {
+        const result = await peer.request<{ managedSessions?: boolean; hostFileTools?: boolean; version?: number }>("rakazo.task.capabilities", {}, { timeoutMs: 3000 });
+        return result.version === 1 && result.managedSessions === true && result.hostFileTools === true;
+      } finally { peer.stop(); }
+    })().catch(() => false);
+    capabilities = { at: Date.now(), available };
+    return available;
+  };
   const nativeContextPreview = async (
     actor: Pick<AdapterContext, "spaceId" | "userId">, botId: string,
   ): Promise<NativeBootstrapPreview> => {
@@ -89,6 +104,6 @@ export function createOpenClawKernelHost(options: {
       }
     } finally { peer.stop(); }
   };
-  return { runtime, memory, botWorkspace, nativeContextPreview, registry, readWorkspaceFile,
+  return { runtime, memory, botWorkspace, nativeContextPreview, independentTasksAvailable, registry, readWorkspaceFile,
     stopNativeOrphans, recovery: { store, connect } };
 }

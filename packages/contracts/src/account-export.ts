@@ -17,7 +17,7 @@ import { Id, IsoDate } from "./ids.js";
  * billing and computers are not exported: they belong to the source install.
  */
 export const ACCOUNT_EXPORT_FORMAT = "rakazo-account-export";
-export const ACCOUNT_EXPORT_VERSION = 1;
+export const ACCOUNT_EXPORT_VERSION = 2;
 export const ACCOUNT_EXPORT_MANIFEST_PATH = "manifest.json";
 /** Larger workspace files stay behind, matching the workspace export limit elsewhere. */
 export const ACCOUNT_EXPORT_MAX_HOME_FILE_BYTES = 8 * 1024 * 1024;
@@ -35,7 +35,7 @@ export type AccountExportExecutables = z.infer<typeof AccountExportExecutablesSc
 
 export const AccountExportManifestSchema = z.object({
   format: z.literal(ACCOUNT_EXPORT_FORMAT),
-  version: z.literal(ACCOUNT_EXPORT_VERSION),
+  version: z.union([z.literal(1), z.literal(ACCOUNT_EXPORT_VERSION)]),
   exportedAt: IsoDate,
   user: z.object({ name: z.string(), email: z.string(), timezone: z.string().nullable() }),
   spaces: z.array(z.object({ id: Id, name: z.string(), createdAt: IsoDate })),
@@ -92,6 +92,10 @@ export const AccountExportRecordSchema = z.discriminatedUnion("type", [
   /** A bot's or a group's conversation. */
   z.object({
     type: z.literal("thread"),
+    taskBotId: Id.nullable().optional(),
+    taskSession: z.object({ id: Id, title: z.string(), contextSnapshot: z.string().nullable(),
+      modelProvider: z.string().nullable(), modelId: z.string().nullable(), thinkingLevel: z.string().nullable(),
+      createdAt: IsoDate, updatedAt: IsoDate, archivedAt: IsoDate.nullable() }).nullable().optional(),
     id: Id,
     botId: Id.nullable(),
     groupId: Id.nullable(),
