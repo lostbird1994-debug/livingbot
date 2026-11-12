@@ -77,13 +77,5 @@
     "@types/ws": "8.18.2",
     "typescript": "7.0.2",
     "vitest": "4.1.12"
-  },
-  "peerDependencies": {
-    "openclaw": ">=2026.5.7"
-  },
-  "peerDependenciesMeta": {
-    "openclaw": {
-      "optional": true
-    }
   }
 }
