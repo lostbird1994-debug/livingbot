@@ -53,7 +53,7 @@ describe("matchWake", () => {
   });
 
   it("matches a latin name whatever case the recogniser used", () => {
-    expect(matchWake("RAKAZO 在吗", bots)?.bot.id).toBe("bot-2");
+    expect(matchWake("LIVINGBOT 在吗", bots)?.bot.id).toBe("bot-2");
   });
 
   it("needs names long enough to mean something", () => {
@@ -61,20 +61,20 @@ describe("matchWake", () => {
   });
 
   it("uses a short name and explicit aliases without the role suffix", () => {
-    const team = [{ id: "finance", name: "Crying | 财务经理", aliases: ["小哭"] }];
-    expect(matchWake("Crying，核对账目", team)).toMatchObject({
+    const team = [{ id: "finance", name: "阿蓝 | 财务助手", aliases: ["小蓝"] }];
+    expect(matchWake("阿蓝，核对账目", team)).toMatchObject({
       bot: { id: "finance" },
       rest: "核对账目",
     });
-    expect(matchWake("嗨，小哭", team)?.bot.id).toBe("finance");
+    expect(matchWake("嗨，小蓝", team)?.bot.id).toBe("finance");
   });
 
   it("does not pick a bot by array order when aliases collide", () => {
     const team = [
-      { id: "a", name: "甲甲", aliases: ["小哭"] },
-      { id: "b", name: "乙乙", aliases: ["小哭"] },
+      { id: "a", name: "甲甲", aliases: ["小蓝"] },
+      { id: "b", name: "乙乙", aliases: ["小蓝"] },
     ];
-    expect(matchWake("小哭，帮我", team)).toBeNull();
+    expect(matchWake("小蓝，帮我", team)).toBeNull();
     expect(matchWake("甲甲，帮我", team)?.bot.id).toBe("a");
   });
 

@@ -36,9 +36,9 @@ describe("memory store contract shape", () => {
   });
   it("filters indexed candidates in SQL, then rejects false candidates after decryption", async () => {
     const $queryRaw = vi.fn().mockResolvedValue([
-      { id: "1", path: "notes.md", content: "月结导账流程" },
+      { id: "1", path: "notes.md", content: "月度结账流程" },
       { id: "2", path: "collision.md", content: "unrelated" },
-      { id: "3", path: "导账.md", content: "path match" },
+      { id: "3", path: "结账.md", content: "path match" },
     ]);
     const findMany = vi.fn();
     const encryption = {
@@ -53,8 +53,8 @@ describe("memory store contract shape", () => {
       $contentEncryption: () => encryption,
       memoryDocument: { findMany },
     } as never);
-    const hits = await store.search({ query: "导账", scope: "bot", botId: "bot-1" }, context);
-    expect(hits.map((hit) => hit.path)).toEqual(["导账.md", "notes.md"]);
+    const hits = await store.search({ query: "结账", scope: "bot", botId: "bot-1" }, context);
+    expect(hits.map((hit) => hit.path)).toEqual(["结账.md", "notes.md"]);
     expect(findMany).not.toHaveBeenCalled();
     const sql = $queryRaw.mock.calls[0]![0];
     expect(sql.text).toContain('"searchTokens" @>');
@@ -66,18 +66,18 @@ describe("memory store contract shape", () => {
     expect(sql.values).toEqual(
       expect.arrayContaining(["workspace-1", "user-1", "bot", "bot-1", [1, 2], [3, 4]]),
     );
-    expect(encryption.memorySearchTokens).toHaveBeenCalledWith("workspace-1", "导账");
+    expect(encryption.memorySearchTokens).toHaveBeenCalledWith("workspace-1", "结账");
   });
 
   it("preserves original snippets when normalization changes character counts", async () => {
-    const content = `${"ﬀ".repeat(150)}项目导账流程😀`;
+    const content = `${"ﬀ".repeat(150)}项目结账流程😀`;
     const store = new MarkdownMemoryStore({
       memoryDocument: {
         findMany: vi.fn().mockResolvedValue([{ id: "doc", path: "notes", content }]),
       },
     } as never);
-    const result = await store.search({ query: "导账", scope: "bot" }, context);
-    expect(result[0]!.snippet).toContain("项目导账流程😀");
+    const result = await store.search({ query: "结账", scope: "bot" }, context);
+    expect(result[0]!.snippet).toContain("项目结账流程😀");
     expect(result[0]!.snippet).toContain("ﬀ");
     expect(result[0]!.snippet.length).toBeLessThan(100);
   });

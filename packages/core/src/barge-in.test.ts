@@ -14,7 +14,7 @@ describe("call barge-in", () => {
     spokenMemory.clear();
   });
 
-  it.each(["hold on", "Hold on.", "等一下", "别讲了", "重新来", "小哭"])(
+  it.each(["hold on", "Hold on.", "等一下", "别讲了", "重新来", "小明"])(
     "lets the interruption %j cut a reply short",
     (text) => {
       expect(isCallBargeIn(text)).toBe(true);

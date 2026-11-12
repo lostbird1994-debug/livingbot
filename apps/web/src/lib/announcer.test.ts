@@ -30,7 +30,7 @@ describe("announcementLine", () => {
   });
 
   it("accepts a short generated notification", () => {
-    expect(announcementLine("LivingBot", "Build passed.")).toBe("收到Rakazo发来的消息：Build passed.");
+    expect(announcementLine("LivingBot", "Build passed.")).toBe("收到LivingBot发来的消息：Build passed.");
   });
 
   it("keeps a long clause from taking over the room", () => {

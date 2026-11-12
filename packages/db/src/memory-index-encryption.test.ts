@@ -42,12 +42,12 @@ it("indexes scalar memory content and queries both data-key versions", async () 
   });
   try {
     const doc = await prisma.memoryDocument.create({
-      data: { spaceId: "s", userId: "u", scope: "bot", path: "MEMORY.md", content: "月结导账流程" },
+      data: { spaceId: "s", userId: "u", scope: "bot", path: "MEMORY.md", content: "月度结账流程" },
     });
-    expect(doc.content).toBe("月结导账流程");
+    expect(doc.content).toBe("月度结账流程");
     expect(written.content).toMatch(/^rkz1:key-2:/);
     expect(written.searchTokensVersion).toBe(1);
-    const query = await contentEncryptionOf(prisma)!.memorySearchTokens("s", "导账");
+    const query = await contentEncryptionOf(prisma)!.memorySearchTokens("s", "结账");
     expect(query).toHaveLength(2);
     const tokens = new Set(written.searchTokens as number[]);
     expect(query[1]!.every((token) => tokens.has(token))).toBe(true);

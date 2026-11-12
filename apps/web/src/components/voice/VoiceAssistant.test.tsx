@@ -59,7 +59,7 @@ let host: HTMLDivElement;
 const bot = (id = "a", patch: Partial<Bot> = {}) =>
   ({
     id,
-    name: id === "a" ? "Crying | 财务经理" : "小雨",
+    name: id === "a" ? "阿蓝 | 财务助手" : "小雨",
     spaceId: "space",
     archivedAt: null,
     color: "",
@@ -106,7 +106,7 @@ it("keeps the mic closed until explicitly entered and only targets enabled bots"
   expect(fake.start).not.toHaveBeenCalled();
   await act(async () => wake());
   expect(fake.start.mock.calls[0]?.[1]).toEqual([
-    { id: "a", name: "Crying | 财务经理", aliases: [] },
+    { id: "a", name: "阿蓝 | 财务助手", aliases: [] },
   ]);
   expect(host.textContent).toContain("等待呼唤");
   await act(async () => wake());
@@ -189,7 +189,7 @@ it("notifies a completed reply once using the AI summary instead of the original
   const final = bot("a", { preview: "错误的预览", updatedAt: "2" });
   await render([final]);
   expect(fake.announce).toHaveBeenCalledWith(
-    "收到Crying | 财务经理发来的消息：检查完成，请查看结果",
+    "收到阿蓝 | 财务助手发来的消息：检查完成，请查看结果",
     "a",
     expect.any(Function),
   );

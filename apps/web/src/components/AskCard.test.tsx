@@ -79,7 +79,7 @@ it("renders a Chinese approval with the task, actual change and reason", async (
       text: "Review before schedule_update",
       approvalContext: {
         tool: "schedule_update",
-        target: "机票巡检",
+        target: "定期巡检",
         reason: "new_schedule_site",
         sites: ["new.example.test"],
         changes: [
@@ -92,7 +92,7 @@ it("renders a Chinese approval with the task, actual change and reason", async (
         { id: "deny", label: "Deny" },
       ],
     });
-    expect(container.querySelector("h3")?.textContent).toBe("机票巡检");
+    expect(container.querySelector("h3")?.textContent).toBe("定期巡检");
     expect(container.textContent).toContain("修改定时任务");
     expect(container.querySelector("dl")?.textContent).toContain("new.example.test");
     expect(container.querySelector("dl")?.textContent).toContain("每天 9:00");

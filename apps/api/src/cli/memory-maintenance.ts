@@ -100,7 +100,7 @@ async function verifySearch() {
       const snapshot = await memory.read(request, context);
       const documents = snapshot.documents.filter((doc) => !isMemoryReviewPath(doc.path));
       const samples = new Set([
-        "导账",
+        "结账",
         "账",
         "流程",
         "WORK",

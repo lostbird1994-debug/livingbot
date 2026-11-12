@@ -15,12 +15,12 @@ it("defaults every bot to off even when the legacy global switch was on", () => 
 });
 
 it("stores independent bot switches and aliases without changing other bots", () => {
-  writeBotVoicePreferences("a", { wakeEnabled: true, notifyEnabled: false, aliases: ["小哭"] });
+  writeBotVoicePreferences("a", { wakeEnabled: true, notifyEnabled: false, aliases: ["小蓝"] });
   writeBotVoicePreferences("b", { wakeEnabled: false, notifyEnabled: true, aliases: [] });
   expect(readBotVoicePreferences("a")).toEqual({
     wakeEnabled: true,
     notifyEnabled: false,
-    aliases: ["小哭"],
+    aliases: ["小蓝"],
   });
   expect(readBotVoicePreferences("b").wakeEnabled).toBe(false);
   expect(readBotVoicePreferences("b").notifyEnabled).toBe(true);

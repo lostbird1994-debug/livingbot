@@ -488,7 +488,7 @@ describe("team chat bridge", () => {
       ...mention,
       eventId,
       kind: "ambient",
-      senderName: "David",
+      senderName: "Alex",
       content: `message ${eventId}`,
       attachments: files.map((name) => ({
         name,
