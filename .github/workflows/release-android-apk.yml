@@ -13,8 +13,9 @@ concurrency:
 
 jobs:
   release:
+    # LivingBot releases require an independently configured publisher.
+    if: ${{ false }}
     name: Build and publish the Android APK
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:

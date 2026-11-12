@@ -1,4 +1,3 @@
-import { ConversationFindPanel } from "./shell/conversation-find-panel";
 import { Trans, useLingui } from "@lingui/react/macro";
 import type {
   AgentSkillCatalogEntry,
@@ -7,6 +6,7 @@ import type {
   ThreadMessage,
   VoiceStatus,
 } from "@rakazo/contracts";
+import { UPSTREAM_UPDATES_ENABLED } from "@rakazo/contracts";
 import {
   answerableAskMessageIds,
   channelMessageSender,
@@ -79,13 +79,14 @@ import { RoutineList } from "./RoutineEditor";
 import { useSettingsNavItems } from "./settings-nav";
 import { ArchivedChats } from "./shell/archived-chats";
 import { ChatContextMenu } from "./shell/chat-context-menu";
-import { ComposerUsage } from "./shell/composer-usage";
 import { ChatHeader } from "./shell/chat-header";
 import { FALLBACK_BOT_COLOR } from "./shell/chat-shared";
 import type { CommandPaletteAction } from "./shell/command-palette";
 import { Composer } from "./shell/composer";
+import { ComposerUsage } from "./shell/composer-usage";
 import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
+import { ConversationFindPanel } from "./shell/conversation-find-panel";
 import type { CreateBotDialogInput } from "./shell/create-bot-dialog";
 import type { ImportSetupTarget } from "./shell/import-setup-card";
 import { ShellDialogs, useShellDialogs } from "./shell/shell-dialogs";
@@ -571,24 +572,25 @@ function SpaceShell() {
     }
   }, [active, initialBotsLoaded, shellReady, snapshot?.botId]);
 
-  const { scrollRequest, clearScrollRequest, jumpToReplyMessage, jumpToHistoryMessage } = useMessageJump({
-    rpc,
-    queries,
-    thread,
-    commitComputer,
-    transcript,
-    active,
-    inGroup,
-    groupId,
-    activeBotId,
-    activeGroupId,
-    searchParams,
-    setSearchParams,
-    setPanel,
-    setPanelState: rightPanel.setPanelState,
-    editRoutine,
-    resetRoutineTarget,
-  });
+  const { scrollRequest, clearScrollRequest, jumpToReplyMessage, jumpToHistoryMessage } =
+    useMessageJump({
+      rpc,
+      queries,
+      thread,
+      commitComputer,
+      transcript,
+      active,
+      inGroup,
+      groupId,
+      activeBotId,
+      activeGroupId,
+      searchParams,
+      setSearchParams,
+      setPanel,
+      setPanelState: rightPanel.setPanelState,
+      editRoutine,
+      resetRoutineTarget,
+    });
   const computerControls = useComputerControls({
     rpc,
     state: computerState,
@@ -777,7 +779,7 @@ function SpaceShell() {
     wallet: Boolean(bootstrapMe?.paymentWalletProvider),
     computer: computersAreUnavailable(bootstrapMe?.sandboxProvider),
     billing: bootstrapMe?.billingEnabled === true,
-    updates: Boolean(desktopBridge()?.update),
+    updates: UPSTREAM_UPDATES_ENABLED && Boolean(desktopBridge()?.update),
   };
   // The palette reaches every panel's pages, so each one is listed.
   const settingsNavItems = [
@@ -1172,7 +1174,10 @@ function SpaceShell() {
                 }
               }}
             />
-            <ComposerUsage usage={conversationUsageQuery.data} failed={conversationUsageQuery.isError} />
+            <ComposerUsage
+              usage={conversationUsageQuery.data}
+              failed={conversationUsageQuery.isError}
+            />
           </div>
         ) : null}
       </main>
@@ -1192,9 +1197,18 @@ function SpaceShell() {
       />
 
       <ShellSidePanel
-        findPanel={active || activeGroup ? <ConversationFindPanel key={`${bootstrapMe?.spaceId}:${activeGroup?.id ?? active?.id}`}
-          rpc={rpc} target={activeGroup ? { groupId: activeGroup.id } : { botId: active!.id }} open={panel === "find"}
-          onClose={() => setPanel(null)} onJump={jumpToHistoryMessage} /> : null}
+        findPanel={
+          active || activeGroup ? (
+            <ConversationFindPanel
+              key={`${bootstrapMe?.spaceId}:${activeGroup?.id ?? active?.id}`}
+              rpc={rpc}
+              target={activeGroup ? { groupId: activeGroup.id } : { botId: active!.id }}
+              open={panel === "find"}
+              onClose={() => setPanel(null)}
+              onJump={jumpToHistoryMessage}
+            />
+          ) : null
+        }
         rpc={rpc}
         spaceName={spaces.find((space) => space.id === active?.spaceId)?.name}
         panel={panel}

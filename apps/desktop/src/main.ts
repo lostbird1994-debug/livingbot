@@ -11,7 +11,7 @@ import type {
   DesktopSetup,
   RakazoDesktopDevice,
 } from "@rakazo/contracts";
-import { parseServerHeaders } from "@rakazo/contracts";
+import { PRODUCT_NAME, parseServerHeaders, UPSTREAM_UPDATES_ENABLED } from "@rakazo/contracts";
 import type { Session } from "electron";
 import {
   app,
@@ -33,7 +33,7 @@ import { waitForMountedAppDocument } from "./app-document-state.js";
 import { fromAppFrame } from "./app-frame.js";
 import { createAppOpener } from "./app-opener.js";
 import type { ElectronAutoUpdater } from "./auto-update.js";
-import { DesktopUpdateController, LAUNCH_CHECK_DELAY_MS, updaterSupport } from "./auto-update.js";
+import { DesktopUpdateController, updaterSupport } from "./auto-update.js";
 import { createBadgeHandler } from "./badge.js";
 import { openBrowserAuth } from "./browser-auth.js";
 import { DOCKER_INSTALL_LINKS, isDesktopSetupLink, runDocker } from "./docker-cli.js";
@@ -86,9 +86,9 @@ import {
 } from "./setup-config.js";
 import { clearSetup, readSetup, writeSetup } from "./setup-store.js";
 import { createSystemSpeech } from "./system-speech.js";
-import { installVoiceMode } from "./voice-mode.js";
 import type { UserDeviceAccess } from "./user-device.js";
 import { createUserDeviceAccess, deviceName } from "./user-device.js";
+import { installVoiceMode } from "./voice-mode.js";
 import { oauthPopupSessionPreferences, shouldOpenInAppPopup } from "./window-open.js";
 import {
   browserWindowOptions,
@@ -133,12 +133,19 @@ let warmWindowTimer: NodeJS.Timeout | undefined;
 let liveProbeWindows = 0;
 const WARM_WINDOW_TTL_MS = warmWindowTtlMs(process.env.RAKAZO_WARM_WINDOW_TTL_MS);
 
+// Preserve the installed profile without moving or replacing user data.
+app.setPath("userData", path.join(app.getPath("appData"), "Rakazo"));
+app.setPath("sessionData", app.getPath("userData"));
+// Electron also uses its internal name for Keychain access. Keep that identity
+// while the bundle, menus, and About panel use the new product name.
+app.setName("Rakazo");
+app.setAboutPanelOptions({ applicationName: PRODUCT_NAME });
 const reportsErrors = desktopReportsErrors(app.isPackaged);
 const updaterEnvironment = {
   // A `--dir` build has no update feed to read.
   packaged: app.isPackaged && existsSync(path.join(process.resourcesPath, "app-update.yml")),
   version: app.getVersion(),
-  disabled: process.env.RAKAZO_DISABLE_AUTO_UPDATE === "1",
+  disabled: !UPSTREAM_UPDATES_ENABLED,
 };
 const desktopUpdater = new DesktopUpdateController(
   updaterEnvironment,
@@ -152,7 +159,6 @@ const desktopUpdater = new DesktopUpdateController(
     quitting = false;
   },
 );
-let launchUpdateCheckScheduled = false;
 let localStack: LocalStackController;
 let hostComputer: Awaited<ReturnType<typeof prepareHostComputer>> | undefined;
 let requestingComputerAccess = false;
@@ -416,11 +422,6 @@ function createWindow(url: string, partition: string | null) {
       throw error;
     },
   );
-  if (!launchUpdateCheckScheduled) {
-    launchUpdateCheckScheduled = true;
-    setTimeout(() => void desktopUpdater.check(false), LAUNCH_CHECK_DELAY_MS).unref();
-    setInterval(() => void desktopUpdater.check(false), 60 * 60 * 1_000).unref();
-  }
   return { loaded, win };
 }
 
@@ -661,7 +662,7 @@ async function runMenuUpdateCheck() {
       : dialog.showMessageBox(options);
   if (state.phase === "ready") {
     const { response } = await alert({
-      message: `Rakazo ${state.availableVersion} is ready to install.`,
+      message: `LivingBot ${state.availableVersion} is ready to install.`,
       buttons: ["Restart", "Later"],
       defaultId: 0,
       cancelId: 1,
@@ -684,7 +685,7 @@ async function runMenuUpdateCheck() {
       detail: state.message,
     });
   } else if (state.phase === "idle") {
-    await alert({ message: "Rakazo is up to date.", detail: `Version ${state.currentVersion}` });
+    await alert({ message: "LivingBot is up to date.", detail: `Version ${state.currentVersion}` });
   }
 }
 
@@ -728,7 +729,7 @@ function installApplicationMenu() {
   };
   const changeServer: Electron.MenuItemConstructorOptions = {
     id: "change-rakazo-server",
-    label: "Change Rakazo Server…",
+    label: "Change LivingBot Server…",
     accelerator: "CmdOrCtrl+Shift+K",
     click: () => showSetupWindow(),
   };
@@ -814,9 +815,9 @@ function installApplicationMenu() {
     process.platform === "darwin"
       ? [
           {
-            label: app.name,
+            label: PRODUCT_NAME,
             submenu: [
-              { role: "about" },
+              { role: "about", label: `About ${PRODUCT_NAME}` },
               openSettings,
               checkForUpdates,
               { type: "separator" },
@@ -825,11 +826,11 @@ function installApplicationMenu() {
               changeServer,
               stopStack,
               { type: "separator" },
-              { role: "hide" },
+              { role: "hide", label: `Hide ${PRODUCT_NAME}` },
               { role: "hideOthers" },
               { role: "unhide" },
               { type: "separator" },
-              { role: "quit" },
+              { role: "quit", label: `Quit ${PRODUCT_NAME}` },
             ],
           },
           { label: "File", submenu: [newItem] },
@@ -862,7 +863,7 @@ function installApplicationMenu() {
               { type: "separator" },
               checkForUpdates,
               { type: "separator" },
-              { role: "quit" },
+              { role: "quit", label: `Quit ${PRODUCT_NAME}` },
             ],
           },
           editMenu,
@@ -873,7 +874,7 @@ function installApplicationMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-/** Setup IPC must only answer the setup window, never a connected Rakazo server. */
+/** Setup IPC must only answer the setup window, never a connected LivingBot server. */
 function fromSetupWindow(event: Electron.IpcMainInvokeEvent) {
   return (
     setupWindow !== null && !setupWindow.isDestroyed() && event.sender === setupWindow.webContents
@@ -904,7 +905,7 @@ async function probeServer(
         ok: false,
         status: response.status,
         url,
-        error: "That address redirects elsewhere. Enter the final Rakazo server address.",
+        error: "That address redirects elsewhere. Enter the final LivingBot server address.",
       };
     }
     if (!response.ok) {
@@ -921,7 +922,7 @@ async function probeServer(
         ok: false,
         status: response.status,
         url,
-        error: "That address did not respond like a Rakazo server.",
+        error: "That address did not respond like a LivingBot server.",
       };
     }
     return {
@@ -1252,6 +1253,9 @@ if (!hasSingleInstanceLock) {
 }
 
 app.whenReady().then(async () => {
+  // Keychain configuration is captured before ready; visible native menu roles
+  // can now use the new name without rotating the installed encryption identity.
+  app.setName(PRODUCT_NAME);
   if (!hasSingleInstanceLock) return;
   voiceMode = installVoiceMode({
     window: () => mainWindow,
@@ -1576,7 +1580,7 @@ app.whenReady().then(async () => {
         if (managedUrl === null || !(await localStack.matchesDesiredStack())) {
           return {
             ok: false,
-            error: "The app-managed Rakazo services are not ready. Retry setup.",
+            error: "The app-managed LivingBot services are not ready. Retry setup.",
           };
         }
         openSetup = { mode: "new", serverUrl: managedUrl };

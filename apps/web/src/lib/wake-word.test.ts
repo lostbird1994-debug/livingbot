@@ -3,7 +3,7 @@ import { matchWake, normalizeWithMap, withinOneEdit } from "./wake-word";
 
 const bots = [
   { id: "bot-1", name: "小雨" },
-  { id: "bot-2", name: "Rakazo" },
+  { id: "bot-2", name: "LivingBot" },
   { id: "bot-3", name: "阿尔法" },
 ];
 
@@ -15,7 +15,7 @@ describe("matchWake", () => {
   });
 
   it("ignores the filler before a name and the punctuation after it", () => {
-    const hit = matchWake("嘿 Rakazo，今天天气怎么样", bots);
+    const hit = matchWake("嘿 LivingBot，今天天气怎么样", bots);
     expect(hit?.bot.id).toBe("bot-2");
     expect(hit?.rest).toBe("今天天气怎么样");
   });
@@ -48,7 +48,7 @@ describe("matchWake", () => {
   });
 
   it("picks the name that was spoken first", () => {
-    const hit = matchWake("小雨让 Rakazo 说句话", bots);
+    const hit = matchWake("小雨让 LivingBot 说句话", bots);
     expect(hit?.bot.id).toBe("bot-1");
   });
 
@@ -79,7 +79,7 @@ describe("matchWake", () => {
   });
 
   it("does not treat a name in an instruction as a switch", () => {
-    expect(matchWake("请把邮件转发给 Rakazo", bots)).toBeNull();
+    expect(matchWake("请把邮件转发给 LivingBot", bots)).toBeNull();
   });
 
   it("keeps an English name that begins with a greeting syllable intact", () => {

@@ -148,7 +148,7 @@ export function CreditChoice({
         </Button>
       )}
       <h1 className="text-heading1 font-medium">
-        <Trans>Choose how to use Rakazo</Trans>
+        <Trans>Choose how to use LivingBot</Trans>
       </h1>
       <div className="grid gap-4 min-[480px]:grid-cols-2">
         <Card>

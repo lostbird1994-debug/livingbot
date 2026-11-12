@@ -551,7 +551,7 @@ describe("bot settings device voice menu", () => {
       )!;
     expect(option("Original").dataset.state).toBe("on");
     expect(mocks.rpc).not.toHaveBeenCalled();
-    await act(async () => option("Rakazo").click());
+    await act(async () => option("LivingBot").click());
     mocks.rpc.mockResolvedValueOnce({ avatarSet: "rakazo" });
     await act(async () =>
       [...container.querySelectorAll<HTMLButtonElement>("button")]
@@ -569,7 +569,7 @@ describe("bot settings device voice menu", () => {
     await act(async () =>
       container.querySelector<HTMLButtonElement>('[aria-label="Edit avatar"]')!.click(),
     );
-    expect(option("Rakazo").dataset.state).toBe("on");
+    expect(option("LivingBot").dataset.state).toBe("on");
     await act(async () => option("Original").click());
     mocks.rpc.mockResolvedValueOnce({ avatarSet: "organic" });
     await act(async () =>

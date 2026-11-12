@@ -111,7 +111,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Connect a model in Settings before running bots.":
     "Verbinde ein Modell in den Einstellungen, bevor du Bots ausführst.",
   "Connect your own API key in Models or choose Rakazo credits in Billing.":
-    "Verbinde deinen eigenen API-Schlüssel unter Modelle oder wähle Rakazo-Guthaben unter Abrechnung.",
+    "Verbinde deinen eigenen API-Schlüssel unter Modelle oder wähle LivingBot-Guthaben unter Abrechnung.",
   "The model provider returned an error.": "Der Modellanbieter hat einen Fehler zurückgegeben.",
   "{provider} is rate limiting requests. Try again shortly.":
     "{provider} begrenzt die Anfragerate. Versuche es gleich noch einmal.",
@@ -178,8 +178,8 @@ export const DE_MESSAGES: Record<string, string> = {
   "Chat Settings": "Chat-Einstellungen",
   "Configure a plugin catalog on the server to connect apps.":
     "Richte auf dem Server einen Plugin-Katalog ein, um Apps zu verbinden.",
-  "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed.":
-    "Füge die OpenAI-kompatible Adresse deines Servers ein. Rakazo ergänzt /v1 bei Bedarf.",
+  "Paste the OpenAI-compatible address from your server. LivingBot adds /v1 if needed.":
+    "Füge die OpenAI-kompatible Adresse deines Servers ein. LivingBot ergänzt /v1 bei Bedarf.",
   "Settings: General": "Einstellungen: Allgemein",
   "Settings: Usage": "Einstellungen: Nutzung",
   "Sign-in did not return a session": "Die Anmeldung hat keine Sitzung zurückgegeben",
@@ -219,9 +219,9 @@ export const DE_MESSAGES: Record<string, string> = {
   "Reset your password": "Setze dein Passwort zurück",
   "Send reset link": "Link zum Zurücksetzen senden",
   Server: "Server",
-  "Sign in to Rakazo": "Bei Rakazo anmelden",
+  "Sign in to LivingBot": "Bei LivingBot anmelden",
   "Sign up": "Registrieren",
-  "Sign up for Rakazo": "Bei Rakazo registrieren",
+  "Sign up for LivingBot": "Bei LivingBot registrieren",
   "Use a custom server": "Eigenen Server verwenden",
   "Use default server": "Standardserver verwenden",
   Activity: "Aktivität",
@@ -543,8 +543,8 @@ export const DE_MESSAGES: Record<string, string> = {
   "Supports images": "Unterstützt Bilder",
   "Supports thinking": "Unterstützt Denkmodus",
   "Then paste the code here.": "Füge dann den Code hier ein.",
-  "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider.":
-    "Diese Abonnementanmeldung ist in Rakazo noch nicht verfügbar. Verwende Zugangsdaten der Bereitstellung oder wähle einen anderen Anbieter.",
+  "This subscription sign-in is not available in LivingBot yet. Use a deployment credential or choose another provider.":
+    "Diese Abonnementanmeldung ist in LivingBot noch nicht verfügbar. Verwende Zugangsdaten der Bereitstellung oder wähle einen anderen Anbieter.",
   "Use a found model": "Gefundenes Modell verwenden",
   "Waiting for sign-in…": "Warten auf Anmeldung…",
   "exact-model-id": "exact-model-id",
@@ -808,8 +808,8 @@ export const DE_MESSAGES: Record<string, string> = {
   "Enter a server URL": "Gib eine Server-URL ein",
   "Public servers need https://. HTTP only works on your local network.":
     "Öffentliche Server brauchen https://. HTTP funktioniert nur im lokalen Netzwerk.",
-  "That URL did not look like a Rakazo server":
-    "Diese URL sieht nicht nach einem Rakazo-Server aus",
+  "That URL did not look like a LivingBot server":
+    "Diese URL sieht nicht nach einem LivingBot-Server aus",
   "That URL is missing a host": "Dieser URL fehlt ein Host",
   "That doesn’t look like a URL": "Das sieht nicht nach einer URL aus",
   "Use an http or https URL": "Verwende eine http- oder https-URL",
@@ -879,7 +879,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "AI models": "KI-Modelle",
   Memory: "Gedächtnis",
   "Privacy policies": "Datenschutzerklärungen",
-  Rakazo: "Rakazo",
+  LivingBot: "LivingBot",
   "Withdraw all permissions": "Alle Berechtigungen widerrufen",
   "Withdraw all permissions?": "Alle Berechtigungen widerrufen?",
   "New mobile actions won't send data to these services. Runs already in progress and routines keep going until you stop them.":
@@ -1003,13 +1003,13 @@ export const DE_MESSAGES: Record<string, string> = {
   Subscribe: "Abonnieren",
   "Monthly credits expire at renewal. Top-ups do not expire.":
     "Monatliches Guthaben verfällt bei Verlängerung. Einmalige Aufladungen verfallen nicht.",
-  "Use Rakazo credits": "Rakazo-Guthaben verwenden",
+  "Use Rakazo credits": "LivingBot-Guthaben verwenden",
   "Choose a plan": "Tarif wählen",
   "Change plan": "Tarif ändern",
   Plan: "Tarif",
   None: "Keiner",
   "Free trial": "Kostenlose Testphase",
-  "Rakazo credits": "Rakazo-Guthaben",
+  "Rakazo credits": "LivingBot-Guthaben",
   "Free until": "Kostenlos bis",
   Ends: "Endet am",
   Renews: "Verlängert sich am",
@@ -1038,7 +1038,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Your free trial has started": "Deine kostenlose Testphase hat begonnen",
   "Free until {date}": "Kostenlos bis {date}",
   "Connect your AI": "Deine KI verbinden",
-  "Start using Rakazo": "Mit Rakazo loslegen",
+  "Start using LivingBot": "Mit LivingBot loslegen",
   "1 unread": "1 ungelesen",
   "{count} unread": "{count} ungelesen",
   "{count} need attention": "{count} brauchen Aufmerksamkeit",
@@ -1046,11 +1046,11 @@ export const DE_MESSAGES: Record<string, string> = {
   "{label}, below": "{label}, unten",
   Work: "Arbeit",
   Both: "Beides",
-  "How will you use Rakazo?": "Wie wirst du Rakazo nutzen?",
-  "What do you most want Rakazo to help with?": "Wobei soll dir Rakazo am meisten helfen?",
+  "How will you use LivingBot?": "Wie wirst du LivingBot nutzen?",
+  "What do you most want LivingBot to help with?": "Wobei soll dir LivingBot am meisten helfen?",
   "How big is your team?": "Wie groß ist dein Team?",
   "How did you hear about us?": "Wie hast du von uns erfahren?",
-  "Welcome to Rakazo": "Willkommen bei Rakazo",
+  "Welcome to LivingBot": "Willkommen bei LivingBot",
   Messaging: "Nachrichten",
   Unlink: "Verknüpfung aufheben",
   "Connect a chat app": "Chat-App verbinden",

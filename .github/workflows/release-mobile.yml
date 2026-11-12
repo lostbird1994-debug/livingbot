@@ -19,8 +19,9 @@ concurrency:
 
 jobs:
   ios:
+    # LivingBot releases require an independently configured publisher.
+    if: ${{ false }}
     name: Build iOS and submit it for App Store review
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:

@@ -746,7 +746,7 @@ msgid "Allow once"
 msgstr "Bir kez izin ver"
 
 #: src/lib/dictation.ts
-msgid "Allow Rakazo to use Speech Recognition and the microphone in System Settings."
+msgid "Allow LivingBot to use Speech Recognition and the microphone in System Settings."
 msgstr ""
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -794,8 +794,8 @@ msgid "An API key is stored for this provider, not a subscription sign-in."
 msgstr "Bu sağlayıcı için abonelik girişi değil, bir API anahtarı saklanıyor."
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "An existing Honcho peer to read from. Rakazo never writes to it."
-msgstr "Verilerin okunacağı mevcut bir Honcho eşi. Rakazo bu eşe asla veri yazmaz."
+msgid "An existing Honcho peer to read from. LivingBot never writes to it."
+msgstr "Verilerin okunacağı mevcut bir Honcho eşi. LivingBot bu eşe asla veri yazmaz."
 
 #: src/lib/agent-import-errors.ts
 msgid "An imported API key could not be checked. Try again."
@@ -1467,7 +1467,7 @@ msgstr "Klasör seç"
 
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
-msgid "Choose how to use Rakazo"
+msgid "Choose how to use LivingBot"
 msgstr ""
 
 #: src/components/ChatBackgroundSettings.tsx
@@ -2528,8 +2528,8 @@ msgid "Create space"
 msgstr ""
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "Rakazo hesabını oluştur"
+msgid "Create your LivingBot"
+msgstr "LivingBot hesabını oluştur"
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -3516,7 +3516,7 @@ msgid "How to check"
 msgstr "Nasıl kontrol edilir"
 
 #: src/components/SignupSurvey.tsx
-msgid "How will you use Rakazo?"
+msgid "How will you use LivingBot?"
 msgstr ""
 
 #: src/pages/shell/computer-release-actions.tsx
@@ -4632,8 +4632,8 @@ msgid "Not imported"
 msgstr "İçe aktarılmadı"
 
 #: src/pages/shell/import-status.ts
-msgid "Not in Rakazo's catalog"
-msgstr "Rakazo kataloğunda yok"
+msgid "Not in LivingBot's catalog"
+msgstr "LivingBot kataloğunda yok"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
@@ -4653,12 +4653,12 @@ msgstr "Şimdi değil"
 
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/import-status.ts
-msgid "Not supported in Rakazo"
-msgstr "Rakazo'da desteklenmiyor"
+msgid "Not supported in LivingBot"
+msgstr "LivingBot'da desteklenmiyor"
 
 #: src/pages/shell/agent-import.tsx
-msgid "Not used by Rakazo"
-msgstr "Rakazo tarafından kullanılmıyor"
+msgid "Not used by LivingBot"
+msgstr "LivingBot tarafından kullanılmıyor"
 
 #: src/components/McpServerHealthLine.tsx
 msgid "Not working"
@@ -4952,8 +4952,8 @@ msgid "Paste a replacement key"
 msgstr "Yeni bir anahtar yapıştır"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
-msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
-msgstr "Sunucundaki OpenAI uyumlu adresi yapıştır. Gerekirse Rakazo /v1 ekler."
+msgid "Paste the OpenAI-compatible address from your server. LivingBot adds /v1 if needed."
+msgstr "Sunucundaki OpenAI uyumlu adresi yapıştır. Gerekirse LivingBot /v1 ekler."
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -5163,11 +5163,11 @@ msgid "Queued"
 msgstr "Kuyrukta"
 
 #: src/pages/shell/avatar-studio-popover.tsx
-msgid "Rakazo"
-msgstr "Rakazo"
+msgid "LivingBot"
+msgstr "LivingBot"
 
 #: src/pages/LoadedContextPanel.tsx
-msgid "Rakazo also adds built-in behavior and safety rules, available tools, skills and environment information. Recent messages, attachments, group context and retrieved content depend on the task and model window. Working files such as README.md and TOOLS.md are not automatically included just because they exist. External messaging channels use different loading rules."
+msgid "LivingBot also adds built-in behavior and safety rules, available tools, skills and environment information. Recent messages, attachments, group context and retrieved content depend on the task and model window. Working files such as README.md and TOOLS.md are not automatically included just because they exist. External messaging channels use different loading rules."
 msgstr ""
 
 #: src/components/ModelCredits.tsx
@@ -5176,7 +5176,7 @@ msgid "Rakazo credits"
 msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
+msgid "rakazo-shared and IDs starting with bot- are reserved for LivingBot."
 msgstr ""
 
 #: src/pages/shell/message-hover-actions.tsx
@@ -5606,8 +5606,8 @@ msgstr ""
 
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/SlackInstallCallback.tsx
-msgid "Return to Rakazo"
-msgstr "Rakazo'ya dön"
+msgid "Return to LivingBot"
+msgstr "LivingBot'ya dön"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Review completed; no documents changed"
@@ -6121,8 +6121,8 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "<0>{0}</0> adresinde oturum açın, ardından kodu buraya yapıştırın."
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Rakazo'da oturum aç"
+msgid "Sign in to LivingBot"
+msgstr "LivingBot'da oturum aç"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
@@ -6693,8 +6693,8 @@ msgid "This server's tool result does not fit the model. Turn off Keep tool resu
 msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
-msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
-msgstr "Bu abonelik girişi Rakazo'da henüz kullanılamıyor. Bir dağıtım kimlik bilgisi kullan veya başka bir sağlayıcı seç."
+msgid "This subscription sign-in is not available in LivingBot yet. Use a deployment credential or choose another provider."
+msgstr "Bu abonelik girişi LivingBot'da henüz kullanılamıyor. Bir dağıtım kimlik bilgisi kullan veya başka bir sağlayıcı seç."
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
@@ -7189,7 +7189,7 @@ msgid "Weekends"
 msgstr "Hafta sonları"
 
 #: src/components/SignupSurvey.tsx
-msgid "Welcome to Rakazo"
+msgid "Welcome to LivingBot"
 msgstr ""
 
 #: src/pages/shell/dialogs.tsx
@@ -7201,7 +7201,7 @@ msgid "What can this space use?"
 msgstr ""
 
 #: src/components/SignupSurvey.tsx
-msgid "What do you most want Rakazo to help with?"
+msgid "What do you most want LivingBot to help with?"
 msgstr ""
 
 #: src/pages/shell/message-cards.tsx

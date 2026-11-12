@@ -109,17 +109,15 @@ it.each(["unsupported", "idle", "available", "downloading", "checking", "error"]
     expect(document.body.textContent).not.toContain("New update available");
   },
 );
-it("installs the ready update only through the footer button", async () => {
+it("ignores a ready upstream update advertised by an older desktop client", async () => {
   const install = bridge("ready");
+  const read = vi.fn(window.rakazoDesktop!.update.state);
+  window.rakazoDesktop!.update.state = read;
   await render("Ada Lovelace");
-  const icon = document.querySelector<HTMLButtonElement>('[aria-label="Install update"]')!;
-  expect(icon).not.toBeNull();
-  expect(document.body.textContent).not.toContain("New update available");
-  await act(async () => icon.click());
-  expect(install).toHaveBeenCalledTimes(1);
-  expect(
-    [...document.querySelectorAll("button")].some((button) => button.textContent === "Install"),
-  ).toBe(false);
+  expect(document.querySelector('[aria-label="Install update"]')).toBeNull();
+  expect(document.querySelector('[aria-label="Desktop update"]')).toBeNull();
+  expect(read).not.toHaveBeenCalled();
+  expect(install).not.toHaveBeenCalled();
 });
 it("shows the account image and falls back to the initial after a load error", async () => {
   await render("Ada Lovelace", "https://example.test/avatar.png");
@@ -146,7 +144,6 @@ it("opens integrations and keeps the existing account actions and links", async 
     "Artifacts",
     "Board",
     "Usage",
-    "Get the mobile app",
     "Docs",
     "Log out",
   ]);
@@ -161,15 +158,14 @@ it("omits Board when unavailable", async () => {
   );
 });
 
-it("offers the existing Android download on Android", async () => {
+it("does not offer upstream mobile binaries as LivingBot downloads", async () => {
   vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Android");
   await render();
-  const mobile = [...document.querySelectorAll("a")].find(
-    (link) => link.textContent === "Get the mobile app",
-  )!;
-  expect(mobile.href).toBe(
-    "https://github.com/elie222/rakazo/releases/download/android/rakazo.apk",
-  );
+  expect(
+    [...document.querySelectorAll("a")].some((link) =>
+      link.href.includes("/releases/download/android/"),
+    ),
+  ).toBe(false);
 });
 
 it("falls back when app artwork fails and accepts replacement artwork", async () => {
@@ -187,39 +183,6 @@ it("falls back when app artwork fails and accepts replacement artwork", async ()
   ]);
   expect(pill.querySelector("img")?.src).toBe("https://example.test/new-slack.svg");
 });
-it.each(["throw", "state"] as const)(
-  "reveals a %s install failure after Later",
-  async (failure) => {
-    const install = bridge("ready");
-    if (failure === "throw") install.mockRejectedValueOnce(new Error("offline"));
-    else
-      install.mockResolvedValueOnce({
-        ...(await window.rakazoDesktop!.update.state()),
-        phase: "error",
-        message: "Update could not be installed",
-      });
-    await render();
-    // The notice is a toast, which mounts and leaves on the toaster's own timers.
-    const notice = () => document.querySelector('[aria-label="Desktop update"]');
-    const later = () =>
-      [...notice()!.querySelectorAll("button")].find((button) => button.textContent === "Later")!;
-    await vi.waitFor(() => expect(notice()).not.toBeNull());
-    await act(async () => later().click());
-    await vi.waitFor(() => expect(notice()).toBeNull());
-    await act(async () =>
-      document.querySelector<HTMLButtonElement>('[aria-label="Install update"]')!.click(),
-    );
-    await vi.waitFor(() =>
-      expect(notice()?.querySelector('[role="status"]')?.textContent).toBe(
-        failure === "throw"
-          ? "Could not complete the update. Try again."
-          : "Update could not be installed",
-      ),
-    );
-    await act(async () => later().click());
-    await vi.waitFor(() => expect(notice()).toBeNull());
-  },
-);
 
 it.each([
   [-20, 0],

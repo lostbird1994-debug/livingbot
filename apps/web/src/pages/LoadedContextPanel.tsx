@@ -285,7 +285,7 @@ export function LoadedContextPanel({
           <Content title={<Trans>Other inputs depend on the conversation</Trans>}>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               <Trans>
-                Rakazo also adds built-in behavior and safety rules, available tools, skills and
+                LivingBot also adds built-in behavior and safety rules, available tools, skills and
                 environment information. Recent messages, attachments, group context and retrieved
                 content depend on the task and model window. Working files such as README.md and
                 TOOLS.md are not automatically included just because they exist. External messaging

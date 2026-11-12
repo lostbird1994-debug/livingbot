@@ -1,5 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { DesktopUpdateState } from "@rakazo/contracts";
+import { UPSTREAM_UPDATES_ENABLED } from "@rakazo/contracts";
 import { Button, toast } from "@rakazo/ui-web";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
@@ -7,7 +8,7 @@ import { desktopBridge } from "../lib/desktop";
 
 function useDesktopUpdates() {
   const { t } = useLingui();
-  const bridge = desktopBridge()?.update;
+  const bridge = UPSTREAM_UPDATES_ENABLED ? desktopBridge()?.update : undefined;
   const [state, setState] = useState<DesktopUpdateState | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmedCheck, setConfirmedCheck] = useState<string | null>(null);

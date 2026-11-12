@@ -48,3 +48,5 @@ export * from "./terminal.js";
 export * from "./user-devices.js";
 export * from "./voice-errors.js";
 export * from "./conversation-find.js";
+
+export * from "./product.js";

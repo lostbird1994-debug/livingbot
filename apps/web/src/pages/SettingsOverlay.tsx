@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import type { Bot, SpaceMemoryConfig } from "@rakazo/contracts";
+import { UPSTREAM_UPDATES_ENABLED } from "@rakazo/contracts";
 import {
   Button,
   Dialog,
@@ -454,7 +455,7 @@ export function SettingsOverlay({
   const [keepComputerRecovery, setKeepComputerRecovery] = useState(false);
   const recoveryHoldTimer = useRef<number | undefined>(undefined);
   const showComputer = keepComputerRecovery || computersAreUnavailable(sandboxProvider);
-  const showUpdates = Boolean(desktopBridge()?.update);
+  const showUpdates = UPSTREAM_UPDATES_ENABLED && Boolean(desktopBridge()?.update);
   const panel: SettingsPanel = settingsPanelOf(requestedSection);
   const panelLabels = useSettingsPanelLabels();
   const navItems = useSettingsNavItems(panel, {

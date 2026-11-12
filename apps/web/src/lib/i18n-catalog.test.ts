@@ -42,7 +42,7 @@ describe("lingui catalogs", () => {
       "utf8",
     );
     for (const message of [
-      "Allow Rakazo to use Speech Recognition and the microphone in System Settings.",
+      "Allow LivingBot to use Speech Recognition and the microphone in System Settings.",
       "This browser can't detect when you stop talking. Use Chrome, the desktop app, or hold-to-talk in the composer.",
       "Dictation failed: {code}",
       "Transcription request timed out.",

@@ -1,4 +1,8 @@
+import { UPSTREAM_UPDATES_ENABLED } from "@rakazo/contracts";
 import { describe, expect, it, vi } from "vitest";
+
+vi.mock("./monitoring.js", () => ({ reportDesktopError: vi.fn() }));
+
 import type { ElectronAutoUpdater, UpdaterEvent } from "./auto-update.js";
 import {
   classifyUpdaterFailure,
@@ -106,9 +110,9 @@ describe("classifyUpdaterFailure", () => {
       classifyUpdaterFailure(
         new Error("Cannot update while running on a read-only volume. The application is on a…"),
       ),
-    ).toEqual({ kind: "read-only", message: "Move Rakazo to Applications to install updates." });
+    ).toEqual({ kind: "read-only", message: "Move LivingBot to Applications to install updates." });
     for (const message of [
-      "ditto: /private/update/Rakazo.app/x.js.map: No space left on device\nditto: Couldn't read pkzip signature.",
+      "ditto: /private/update/LivingBot.app/x.js.map: No space left on device\nditto: Couldn't read pkzip signature.",
       "未能完成该操作。设备上无剩余空间: 设备上无剩余空间",
     ]) {
       expect(classifyUpdaterFailure(new Error(message)), message).toEqual({
@@ -242,7 +246,7 @@ describe("reduceUpdateState", () => {
       apply([{ type: "check-start" }, { type: "failed", error: readOnly, userInitiated: false }]),
     ).toMatchObject({
       phase: "unsupported",
-      message: "Move Rakazo to Applications to install updates.",
+      message: "Move LivingBot to Applications to install updates.",
     });
   });
 
@@ -303,7 +307,7 @@ describe("DesktopUpdateController", () => {
 
     expect(fake.updater).toMatchObject({
       autoDownload: false,
-      autoInstallOnAppQuit: true,
+      autoInstallOnAppQuit: false,
       allowPrerelease: false,
       allowDowngrade: false,
       disableWebInstaller: true,
@@ -599,4 +603,18 @@ describe("DesktopUpdateController", () => {
     expect(fake.updater.checkForUpdates).toHaveBeenCalledTimes(2);
     expect(controller.state()).toMatchObject({ phase: "idle", message: null });
   });
+});
+
+it("never loads, downloads, or installs an updater under LivingBot's release policy", async () => {
+  const load = vi.fn(async () => fakeUpdater().updater);
+  const controller = new DesktopUpdateController(
+    { ...packaged, disabled: !UPSTREAM_UPDATES_ENABLED },
+    load,
+    clock,
+  );
+  expect((await controller.check(false)).phase).toBe("unsupported");
+  expect((await controller.check(true)).phase).toBe("unsupported");
+  expect((await controller.download()).phase).toBe("unsupported");
+  expect((await controller.install()).phase).toBe("unsupported");
+  expect(load).not.toHaveBeenCalled();
 });

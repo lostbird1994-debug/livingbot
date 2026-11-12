@@ -80,7 +80,7 @@ export function classifyUpdaterFailure(error: unknown): UpdaterFailure {
     return { kind: "offline", message: null };
   }
   if (READ_ONLY.some((needle) => text.includes(needle))) {
-    return { kind: "read-only", message: "Move Rakazo to Applications to install updates." };
+    return { kind: "read-only", message: "Move LivingBot to Applications to install updates." };
   }
   // Ahead of signatures: a full disk also leaves ditto unable to read the archive's signature.
   if (DISK_FULL.some((needle) => text.includes(needle))) {
@@ -89,7 +89,7 @@ export function classifyUpdaterFailure(error: unknown): UpdaterFailure {
   if (SIGNATURE.some((needle) => text.includes(needle))) {
     return {
       kind: "signature",
-      message: "This update could not be verified. Reinstall Rakazo from a trusted download.",
+      message: "This update could not be verified. Reinstall LivingBot from a trusted download.",
     };
   }
   return {
@@ -312,7 +312,7 @@ export class DesktopUpdateController {
     const loading = this.loadUpdater()
       .then((updater) => {
         updater.autoDownload = false;
-        updater.autoInstallOnAppQuit = true;
+        updater.autoInstallOnAppQuit = false;
         updater.allowPrerelease = false;
         updater.allowDowngrade = false;
         updater.disableWebInstaller = true;
