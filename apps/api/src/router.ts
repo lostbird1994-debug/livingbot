@@ -123,9 +123,6 @@ export interface RouterDeps {
   notificationSummary?: VoiceDeps["notificationSummary"];
   independentTasksAvailable?: () => Promise<boolean>;
   cancelNativeRuns?: (runIds: string[]) => Promise<void>;
-  stopNativeOrphans?: (
-    actor: { spaceId: string; userId: string }, botId: string, threadId: string, before: number,
-  ) => Promise<void>;
   env: {
     ticketBoardEnabled?: boolean;
     navLinks?: NavLink[];

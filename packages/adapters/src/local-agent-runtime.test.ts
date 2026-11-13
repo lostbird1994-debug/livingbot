@@ -159,7 +159,7 @@ describe("local native Agent boundary", () => {
       { type: "text", text: "Native result" },
     ]);
     expect(events.some((e) => e.type === "tool")).toBe(false);
-    expect(f.calls.find((c) => c.method === "agent")?.params.extraSystemPrompt).toBe("Role");
+    expect(f.calls.find((c) => c.method === "agent")?.params.extraSystemPrompt).toContain("Role");
     expect(events).toContainEqual(
       expect.objectContaining({ type: "usage", inputTokens: 5, outputTokens: 3, costUsd: null }),
     );
@@ -170,15 +170,15 @@ describe("local native Agent boundary", () => {
     await collect(request, f);
     expect(f.calls.filter((c) => c.method === "agent")).toHaveLength(1);
   });
-  it("seeds previous conversation once, preserving isolated native session continuity", async () => {
+  it("quotes the previous conversation on every turn and gives each run its own session", async () => {
     const f = fixture();
     const history = [{ id: "past", role: "user" as const, content: "Earlier question" }];
     await collect({ ...request, history }, f);
     await collect({ ...request, runId: "run-2", prompt: "Next", history }, f);
     const turns = f.calls.filter((c) => c.method === "agent");
     expect(turns[0]!.params.message).toContain("Earlier question");
-    expect(turns[1]!.params.message).toBe("Next");
-    expect(turns[0]!.params.sessionKey).toBe(turns[1]!.params.sessionKey);
+    expect(turns[1]!.params.message).toContain("Earlier question");
+    expect(turns[0]!.params.sessionKey).not.toBe(turns[1]!.params.sessionKey);
   });
   it("pauses questions for an owner answer and resumes the same native task", async () => {
     const f = fixture({ question: true });
@@ -246,7 +246,7 @@ describe("local native Agent boundary", () => {
   });
 });
 
-it("passes the selected native model and preserves a session across model switches", async () => {
+it("passes the selected native model and gives each run its own session across model switches", async () => {
   const f = fixture();
   await collect({ ...request, model: { ...request.model, id: "native/codex/sol" } }, f);
   await collect(
@@ -255,7 +255,7 @@ it("passes the selected native model and preserves a session across model switch
   );
   const turns = f.calls.filter((c) => c.method === "agent");
   expect(turns.map((c) => c.params.model)).toEqual(["sol", "luna"]);
-  expect(turns[0]!.params.sessionKey).toBe(turns[1]!.params.sessionKey);
+  expect(turns[0]!.params.sessionKey).not.toBe(turns[1]!.params.sessionKey);
 });
 it("does not redirect the model of an existing task", async () => {
   const f = fixture();

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { NativePeer, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
 import { nativeRunIndexKey } from "./openclaw-native-driver.js";
-import { createOpenClawReconciler, reconcileNativeExecution, stopOrphanedNativeSession } from "./openclaw-reconciler.js";
+import { createOpenClawReconciler, reconcileNativeExecution } from "./openclaw-reconciler.js";
 
 class Store implements NativeStore {
   rows = new Map<string, NativeRecord>();
@@ -212,6 +212,8 @@ describe("durable native cancellation reconciliation", () => {
     expect(f.connect).not.toHaveBeenCalled();
     expect(f.update).toHaveBeenCalledWith(
       expect.objectContaining({
+        // The unresolved stop stays visible: it is the user's retry entry. A finished run
+        // no longer blocks computer admission, so keeping it cannot freeze the queue.
         data: { error: expect.stringContaining("未确认"), resourceWaitReason: "unconfirmed" },
       }),
     );
@@ -314,35 +316,6 @@ it("does not lock a confirmed-ended invocation forever when its final reply is m
   expect(f.store.rows.get(`session-owner:${f.record.sessionKey}`)?.status).toBe("failed");
 });
 
-describe("explicitly stopping an orphaned native session", () => {
-  it("stops the exact old invocation even after the product run has already failed", async () => {
-    const f = fixture(); f.record.status = "unconfirmed";
-    f.store.rows.set(`session-owner:${f.record.sessionKey}`, { ...f.record, executionKey: "key" });
-    f.store.rows.set("key", f.record);
-    expect(await stopOrphanedNativeSession({ sessionKey: f.record.sessionKey, before: Date.now(), store: f.store, peer: f.peer }))
-      .toBe("cancelled");
-    expect(f.calls).toEqual(["chat.abort", "agent.wait"]);
-    expect(f.store.rows.get("key")?.status).toBe("cancelled");
-  });
-  it("does not stop a replacement invocation that started after the stop request", async () => {
-    const f = fixture();
-    const before = Date.now();
-    f.store.rows.set(`session-owner:${f.record.sessionKey}`, { ...f.record, runId: "replacement", startedAt: before + 1 });
-    expect(await stopOrphanedNativeSession({ sessionKey: f.record.sessionKey, before, store: f.store, peer: f.peer }))
-      .toBeUndefined();
-    expect(f.calls).toEqual([]);
-    expect(f.store.rows.get(`session-owner:${f.record.sessionKey}`)?.runId).toBe("replacement");
-  });
-  it("rejects an execution-key mismatch without cancelling another task", async () => {
-    const f = fixture();
-    f.store.rows.set(`session-owner:${f.record.sessionKey}`, { ...f.record, executionKey: "other-key" });
-    f.store.rows.set("other-key", { ...f.record, runId: "unrelated" });
-    await expect(stopOrphanedNativeSession({ sessionKey: f.record.sessionKey, before: Date.now(), store: f.store, peer: f.peer }))
-      .rejects.toThrow("identity changed");
-    expect(f.calls).toEqual([]);
-  });
-});
-
 it("never downgrades a terminal record when a stale status poll returns inconclusive", async () => {
   const f = fixture();
   const peer: NativePeer = { stop() {}, async request<T>() {
@@ -370,4 +343,45 @@ it("does not release a kernel owner on an abort acknowledgement alone", async ()
   expect(await reconcileNativeExecution({ ...f, key: "key", peer, cancel: true, cancelWaitMs: 1 })).toBe("unconfirmed");
   expect(f.store.rows.get("key")).toEqual(f.record);
   expect(f.store.rows.get(`session-owner:${f.record.sessionKey}`)?.status).toBe("approval");
+});
+
+describe("reconciler cancel authority", () => {
+  const scan = (run: Record<string, unknown>, recordOverride?: Partial<NativeRecord>) => {
+    const request = vi.fn(async (method: string) =>
+      method === "chat.abort" ? { aborted: true, runIds: ["review-native-run"] }
+        : { status: "timeout", unconfirmed: true });
+    const record: NativeRecord = { version: 1, runId: "review-native-run", sessionKey: "review-session",
+      inputHash: "review", startedAt: 1, status: "unconfirmed", text: "", ...recordOverride };
+    const updateMany = vi.fn(async (_args: { data: Record<string, unknown> }) => ({ count: 1 }));
+    const reconciler = createOpenClawReconciler({
+      prisma: { run: { findMany: async () => [run], updateMany } },
+      nativeExecution: {
+        store: { read: async (k: string) => k === JSON.stringify([run.id, 0]) ? record : undefined, write: async () => {} },
+        connect: async () => ({ request, stop() {} }),
+      },
+    } as unknown as ExecutorDeps);
+    return { request, reconciler, updateMany };
+  };
+  it("aborts a failed run whose stop was explicitly requested", async () => {
+    const { request, reconciler } = scan({ id: "review-failed", botId: "review-bot", userId: "review-user",
+      spaceId: "review-space", status: "failed", resourceWaitReason: "stopping", error: null, modelId: "synthetic" });
+    await reconciler({ runIds: ["review-failed"] });
+    expect(request.mock.calls.map(call => call[0])).toContain("chat.abort");
+  });
+  it("keeps an unresolved stop visible on a finished run instead of erasing it", async () => {
+    const { reconciler, updateMany } = scan({ id: "review-failed", botId: "review-bot", userId: "review-user",
+      spaceId: "review-space", status: "failed", resourceWaitReason: "unconfirmed", error: null, modelId: "synthetic" });
+    await reconciler({ runIds: ["review-failed"] });
+    // Admitting other runs is a separate decision (already settled in computer-lifecycle);
+    // the marker itself is evidence the user still needs, so it is not cleared here.
+    const written = updateMany.mock.calls.map(call => call[0].data);
+    expect(written.length).toBeGreaterThan(0);
+    expect(written.some(data => data.resourceWaitReason === "unconfirmed")).toBe(true);
+  });
+  it("never aborts a failed run on a routine status scan", async () => {
+    const { request, reconciler } = scan({ id: "review-failed", botId: "review-bot", userId: "review-user",
+      spaceId: "review-space", status: "failed", resourceWaitReason: null, error: null, modelId: "synthetic" });
+    await reconciler();
+    expect(request.mock.calls.map(call => call[0])).not.toContain("chat.abort");
+  });
 });

@@ -502,6 +502,8 @@ export const ThreadMessageSchema = z.object({
   replyPreview: ReplyPreviewSchema.nullable().optional(),
   runId: Id.optional(),
   routine: z.boolean().optional(),
+  /** Name of the routine that produced this reply, for the bubble's origin label. */
+  routineName: z.string().optional(),
   /** Set when the message was sent from a live voice call; groups one call's transcript. */
   callId: z.string().optional(),
   createdAt: z.string(),

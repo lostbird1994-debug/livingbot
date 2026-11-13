@@ -3,6 +3,7 @@ import {
   NATIVE_KERNEL_HOST_TOOLS,
   NativeCollaborationBroker,
 } from "./native-collaboration-broker.js";
+import { appendFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -31,10 +32,14 @@ const engineInstance = instanceState[instanceKey] ?? {
   id: randomUUID(), startedAt: Date.now() - process.uptime() * 1000,
 };
 instanceState[instanceKey] = engineInstance;
-// A run can only reach "no abort controller" once its chat request ended. The grace
-// covers registration/dispatch handshakes and short pauses, so a missing status payload
-// becomes a terminal, evidence-backed answer instead of an unconfirmed dead end.
-const SETTLEMENT_GRACE_MS = 180_000;
+// Forensic probe, temporary. The host tool list stopped reaching the engine on 11-13
+// 10:16 (nine native tools only), so record what each side of the plugin actually sees:
+// the grant as the tool factory reads it, and the decision the hook makes per call.
+const grantLog = join(homedir(), ".openclaw", ".rakazo", "tool-grant.log");
+const traceGrant = (what: string, sessionKey: string | undefined, detail: string) => {
+  try { appendFileSync(grantLog, `${new Date().toISOString()} ${what} ${sessionKey ?? "-"} ${detail}\n`); }
+  catch { /* the probe must never affect a run */ }
+};
 export const nativeHostToolNames = [...new Set([
   ...NATIVE_COLLABORATION_TOOLS, ...NATIVE_KERNEL_HOST_TOOLS, "list_tools", "get_tool", "use_tool",
 ])];
@@ -83,8 +88,14 @@ export default {
   register(api: PluginApi) {
     // Installed extensions cannot register bundled-only trusted tool policies.
     // The supported before-tool hook enforces the same run-owned capability grant.
-    api.on?.("before_tool_call", (event, context) =>
-      context.sessionKey ? broker.nativeToolDecision(context.sessionKey, event.toolName) : undefined);
+    api.on?.("before_tool_call", (event, context) => {
+      const decision = context.sessionKey
+        ? broker.nativeToolDecision(context.sessionKey, event.toolName) : undefined;
+      const grant = context.sessionKey ? broker.tools(context.sessionKey).tools.length : 0;
+      traceGrant("hook", context.sessionKey,
+        `tool=${event.toolName} decision=${decision ? "block" : "allow"} grant=${grant}`);
+      return decision;
+    });
     api.registerGatewayMethod("rakazo.task.capabilities", ({ respond }) => respond(true, { managedSessions: true, hostFileTools: true, version: 1 }), { scope: "operator.write" });
     api.on?.("llm_output", (event, context) => broker.observeResult(event, context));
     api.on?.("model_call_ended", (event, context) => broker.observeModelCall(event, context));
@@ -167,28 +178,8 @@ export default {
           error: "执行内核已重启，原任务已中断；此前操作可能已经执行，请核实结果后再决定是否重做。" });
         return;
       }
-      // A receipt proves this engine accepted the run. With the process unchanged and
-      // no live controller for the run or its session, nothing is executing it any
-      // more: the volatile dedupe cache losing the terminal payload must not pin an
-      // already-finished run to "unconfirmed" forever and lock the session. Report a
-      // terminal outcome instead, preferring the receipt's own answer as the result.
-      const startedAt =
-        typeof params.startedAt === "number" && Number.isFinite(params.startedAt) && params.startedAt > 0
-          ? params.startedAt : 0;
-      if (context && known && !active && !sessionActive && startedAt &&
-        Date.now() - startedAt >= SETTLEMENT_GRACE_MS) {
-        let receiptResult: unknown;
-        try { receiptResult = broker.result(params).result; } catch { /* Receipt lost by a restart. */ }
-        const text = receiptResult && typeof receiptResult === "object"
-          ? (receiptResult as { text?: unknown }).text : undefined;
-        if (typeof text === "string" && text) {
-          respond(true, { status: "ok", recovered: true });
-          return;
-        }
-        respond(true, { status: "error", reason: "outcome_unavailable",
-          error: "上一轮任务已经结束，但执行内核没有保留终态回执；结果可能已经产生，请核实后再决定是否重做。" });
-        return;
-      }
+      // A run-scoped session has no other writer, so an unknown outcome belongs to this
+      // run alone; the host reports it without holding any session.
       respond(true, { status: "unconfirmed" });
     }, { scope: "operator.write" });
     api.registerGatewayMethod("rakazo.run.result", ({ params, respond }) => {
@@ -217,6 +208,8 @@ export default {
         if (!context.sessionKey) return null;
         const sessionKey = context.sessionKey;
         const { runId, tools } = broker.tools(sessionKey);
+        traceGrant("factory", sessionKey,
+          `tools=${tools.length} runId=${runId} names=${tools.map(tool => tool.name).join(",")}`);
         return tools.map((tool) => ({
           name: tool.name,
           label: tool.name,

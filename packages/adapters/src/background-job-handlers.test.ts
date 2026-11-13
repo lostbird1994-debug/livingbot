@@ -19,7 +19,7 @@ import { compactHistory } from "./history-compaction.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
 import type { EncryptedSecretStore } from "./secrets.js";
 
-vi.mock("./history-compaction.js", () => ({ compactHistory: vi.fn(async () => undefined) }));
+vi.mock("./history-compaction.js", () => ({ compactHistory: vi.fn(async () => undefined), COMPACTION_BATCH_SIZE: 50 }));
 vi.mock("./computer-control.js", async (importOriginal) => ({
   ...(await importOriginal<typeof ComputerControl>()),
   expireComputerControl: vi.fn(async () => false),
@@ -76,10 +76,10 @@ describe("createBackgroundJobHandlers", () => {
     installLogger(createLogger({ service: "rakazo-worker", level: "off", sinks: [] }));
   });
 
-  it.each([false, true])("only host-managed sessions run queued legacy compaction (native=%s)", async (workspaceContext) => {
+  it.each([false, true])("only per-run sessions run queued legacy compaction (native=%s)", async (sessionContinuity) => {
     vi.mocked(compactHistory).mockClear();
     const prisma = { thread: owned() } as unknown as PrismaClient;
-    const runtime = { describe: () => ({ capabilities: { workspaceContext } }) } as unknown as AgentRuntime;
+    const runtime = { describe: () => ({ capabilities: { workspaceContext: true, sessionContinuity } }) } as unknown as AgentRuntime;
     const jobs = {} as unknown as JobPublisher;
     const secretStore = {} as unknown as EncryptedSecretStore;
     const memoryProviders = { resolve: vi.fn(async () => null) };
@@ -104,7 +104,7 @@ describe("createBackgroundJobHandlers", () => {
 
     await handlers["history.compact"]({ threadId: "thread-1" });
 
-    if (workspaceContext) {
+    if (sessionContinuity) {
       expect(compactHistory).not.toHaveBeenCalled();
       return;
     }

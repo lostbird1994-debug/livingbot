@@ -22,28 +22,10 @@ import {
 } from "./openclaw-native-driver.js";
 import { resolveConnectedRunModel } from "./run-model.js";
 
-/** A background command from a previous engine instance cannot be verified after this. */
-const UNVERIFIABLE_RELEASE_MS = 30 * 60_000;
-
 const settledError = (record: NativeRecord, productStatus: string) =>
   record.status === "failed" ? record.error ?? "底层任务已中断；此前操作可能已执行，请核实结果。"
     : productStatus === "cancelled" ? "底层任务已结束；取消前的操作可能已经执行。"
       : "底层任务已结束；请查看原生会话结果。";
-
-/** Explicit user stop. Do not touch a replacement invocation started after the click. */
-export async function stopOrphanedNativeSession(input: {
-  sessionKey: string; before: number; store: NativeStore; peer: NativePeer;
-}): Promise<NativeRecord["status"] | undefined> {
-  const ownerKey = `session-owner:${input.sessionKey}`;
-  const owner = await input.store.read(ownerKey);
-  if (!owner || owner.sessionKey !== input.sessionKey || owner.startedAt > input.before ||
-    ["done", "failed", "cancelled"].includes(owner.status)) return;
-  const key = owner.executionKey ?? ownerKey;
-  const record = key === ownerKey ? owner : await input.store.read(key);
-  if (!record || record.runId !== owner.runId || record.sessionKey !== owner.sessionKey)
-    throw new Error("Native recovery owner identity changed");
-  return reconcileNativeExecution({ ...input, key, record, cancel: true });
-}
 
 /** Status-only recovery: never dispatch a new agent run or automatically approve a request. */
 export async function reconcileNativeExecution(input: {
@@ -59,17 +41,9 @@ export async function reconcileNativeExecution(input: {
   const abort = input.cancel
     ? await peer.request("chat.abort", params, { timeoutMs: 10_000 })
     : undefined;
-  // A previous engine instance loses the ownership records of the commands it started.
-  // Its handles can then never be confirmed again, so an old run must be released with a
-  // warning instead of pinning the session to "unconfirmed" for good.
-  const staleOldEngine = (reason?: string) =>
-    reason === "engine_restarted" && Date.now() - record.startedAt >= UNVERIFIABLE_RELEASE_MS;
-  let backgroundUnverified = false;
-  let killError: unknown;
   if (input.cancel) {
-    try { await stopNativeBackgroundWork(peer, record); }
-    catch (error) { killError = error; }
-    if (!killError) record.backgroundProcesses = [];
+    await stopNativeBackgroundWork(peer, record);
+    record.backgroundProcesses = [];
   }
   let result = await peer.request<{ status: string; stopReason?: string; unconfirmed?: boolean; reason?: string; error?: string }>(
     record.toolMode === "kernel" ? "rakazo.run.status" : "agent.wait",
@@ -81,20 +55,7 @@ export async function reconcileNativeExecution(input: {
     result = await waitForNativeTermination(peer, record, input.cancelWaitMs ?? 3000, result);
   // A restarted model controller cannot continue, but an already-backgrounded
   // command needs separate ownership/termination evidence before releasing it.
-  const stale = staleOldEngine(result.reason);
-  if (!killError && result.reason === "engine_restarted") {
-    try { await confirmNativeBackgroundWorkStopped(peer, record); }
-    catch (error) {
-      if (!stale) throw error;
-      backgroundUnverified = true;
-      record.backgroundProcesses = [];
-    }
-  }
-  if (killError) {
-    if (!stale) throw killError;
-    backgroundUnverified = true;
-    record.backgroundProcesses = [];
-  }
+  if (result.reason === "engine_restarted") await confirmNativeBackgroundWorkStopped(peer, record);
   const terminal =
     (record.toolMode !== "kernel" && confirmsNativeAbort(abort, record.runId)) ||
     isNativeTerminal(result);
@@ -145,16 +106,11 @@ export async function reconcileNativeExecution(input: {
       error = "原任务已经结束，但最终回复无法恢复；此前操作可能已执行，请核实后再决定是否重做。";
     }
   }
-  const settledMessage = status === "failed" ? error ?? "Native execution failed" : undefined;
   const recovered = {
     ...record,
     status,
     text,
-    error: terminal
-      ? backgroundUnverified
-        ? [settledMessage, "原任务的后台命令无法核实是否已结束（执行内核已重启，原句柄已丢失）；已解除占用，确认没有异常的残留进程后再继续。"].filter(Boolean).join("\n")
-        : settledMessage
-      : "Native execution remains unconfirmed",
+    error: terminal ? status === "failed" ? error ?? "Native execution failed" : undefined : "Native execution remains unconfirmed",
   };
   if (terminal) delete recovered.approval;
   await store.write(key, recovered);
@@ -239,6 +195,9 @@ export function createOpenClawReconciler(
         if (active?.executionKey && record?.runId !== active.runId)
           throw new Error("Native execution index is inconsistent");
         if (!record) {
+          // Only a stop this run already acknowledged is dropped when its journal is gone:
+          // an unresolved state is evidence the user still needs, so it is never erased here.
+          // Computer admission ignores finished runs, so keeping it cannot block the queue.
           if (run.status === "cancelled" && run.resourceWaitReason === "stopping")
             await runAsTenant(run, () => deps.prisma.run.updateMany({ where: { id: run.id, status: "cancelled" }, data: { resourceWaitReason: null } }));
           continue;
@@ -255,6 +214,10 @@ export function createOpenClawReconciler(
             }));
           continue;
         }
+        // An explicit stop is the only reason to interrupt a native run here. A run that
+        // already failed or was cancelled keeps its status, so the pending-stop marker is
+        // what carries the user's intent down to the actual cancellation call.
+        const stopRequested = run.status === "cancelled" || run.resourceWaitReason === "stopping";
         const expired =
           record.status === "approval" &&
           (!Number.isFinite(record.approval?.expiresAtMs) ||
@@ -265,13 +228,16 @@ export function createOpenClawReconciler(
             const peer = await deps.nativeExecution.connect(run);
             let status: NativeRecord["status"];
             try {
-              status = await reconcileNativeExecution({ key, record, cancel: run.status === "cancelled", store, peer });
+              status = await reconcileNativeExecution({ key, record, cancel: stopRequested, store, peer });
             } finally { peer.stop(); }
             await deps.prisma.run.updateMany({
               where: { id: run.id, spaceId: run.spaceId, userId: run.userId, status: run.status, error: run.error },
-              data: { resourceWaitReason: status === "unconfirmed" ? "unconfirmed" : null, error: status === "unconfirmed"
-                ? "底层任务状态未确认，请先核实，勿重复提交。"
-                : settledError((await store.read(key))!, run.status) },
+              // An unconfirmed native result stays visible even on a finished run: it is the
+              // user's only retry entry. Blocking is decided by admission, not by this marker.
+              data: { resourceWaitReason: status === "unconfirmed" ? "unconfirmed" : null,
+                error: status === "unconfirmed"
+                  ? "底层任务状态未确认，请先核实，勿重复提交。"
+                  : settledError((await store.read(key))!, run.status) },
             });
             return;
           }
@@ -309,7 +275,7 @@ export function createOpenClawReconciler(
             status = await reconcileNativeExecution({
               key,
               record,
-              cancel: run.status === "cancelled",
+              cancel: stopRequested,
               store,
               peer,
             });

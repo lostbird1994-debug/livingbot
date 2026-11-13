@@ -87,9 +87,13 @@ export function isTerminal(status: string): boolean {
 /** Prompt of a run created to answer messages that waited behind another turn. */
 export const STEERING_CONTINUATION_PROMPT = "Respond to the user's steering context.";
 
-/** Routine runs and the creation intro stay isolated from thread history. */
+/**
+ * Only the creation intro stays isolated from thread history. Scheduled routines read it
+ * too: a routine fires into its thread, so its earlier findings and the decisions behind
+ * them are exactly the context it needs, and a summary carries the part beyond the window.
+ */
 export function runReadsThreadHistory(trigger: string | null | undefined): boolean {
-  return trigger !== "created" && trigger !== "routine";
+  return trigger !== "created";
 }
 
 /** Whether a run's turn is part of the thread's conversation and may take user steering. */

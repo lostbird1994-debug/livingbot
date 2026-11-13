@@ -12,6 +12,7 @@
     "dev": "node scripts/dev.mjs",
     "gallery": "pnpm --filter @rakazo/web dev --open /e2e/fixtures/gallery.html",
     "build": "turbo build",
+    "extension:build": "node scripts/build-openclaw-extension.mjs",
     "check": "turbo check",
     "lint": "biome check .",
     "format": "biome check --write .",

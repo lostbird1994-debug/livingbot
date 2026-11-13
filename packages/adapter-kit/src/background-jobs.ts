@@ -169,10 +169,23 @@ export function messagingDeliverJob(runId?: string, availableAt?: Date): Backgro
   };
 }
 
-export function historyCompactJob(threadId: string): BackgroundJob {
+/**
+ * Waits between paid summarizer attempts. A transient provider error is usually back
+ * within a minute, so the first retry is quick; only repeated failures stretch out.
+ * After the last delay the handler switches to content-based backoff instead, because at
+ * that point the summarizer is broken rather than busy.
+ */
+export const HISTORY_COMPACT_RETRY_DELAYS_MS = [60_000, 5 * 60_000, 15 * 60_000] as const;
+
+/**
+ * `attempt` is how many attempts already failed for this backlog. The handler reschedules
+ * itself with it incremented, so the retry ladder survives process restarts without a
+ * schema change, and the queue's own attempt counter stays for crash recovery only.
+ */
+export function historyCompactJob(threadId: string, attempt = 0): BackgroundJob {
   return {
     name: "history.compact",
-    payload: { threadId },
+    payload: attempt > 0 ? { threadId, attempt } : { threadId },
     replaceKey: historyCompactJobKey(threadId),
     maxAttempts: HISTORY_COMPACT_MAX_ATTEMPTS,
   };

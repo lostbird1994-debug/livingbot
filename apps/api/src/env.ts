@@ -10,6 +10,7 @@ import {
   secretStoreOptionsFromEnv,
   telegramBotsFromEnv,
 } from "@rakazo/adapters";
+import { DEFAULT_CONTEXT_STRATEGY, type AgentContextStrategy } from "@rakazo/adapter-kit";
 import type { OidcConfig } from "@rakazo/auth";
 import type { MinimumClientBuilds, NavLink } from "@rakazo/contracts";
 import { parseMinimumClientBuilds, parseNavLinks } from "@rakazo/contracts";
@@ -153,6 +154,8 @@ export interface AppEnv {
   teamChatJudgeModel: string | undefined;
   defaultProvider: string;
   defaultModel: string;
+  /** How each turn assembles conversation context (RAKAZO_CONTEXT_STRATEGY). */
+  contextStrategy: AgentContextStrategy;
   wakeupDriver: string;
   mcpStdioEnabled: boolean;
   mcpStdioAllowedCommands: string[];
@@ -169,6 +172,16 @@ export interface AppEnv {
     | undefined;
   /** Crisp chat on the paywall, for the hosted service; self-hosted installs leave it unset. */
   crispWebsiteId?: string | null;
+}
+
+/**
+ * Context assembly is a deployment choice: "current" pays for periodic summaries so long
+ * threads keep their older decisions, "retrieval" re-sends the recent window only. An
+ * unreadable value keeps the built-in default rather than silently changing behaviour.
+ */
+function parseContextStrategy(value: string | undefined): AgentContextStrategy {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === "current" || normalized === "retrieval" ? normalized : DEFAULT_CONTEXT_STRATEGY;
 }
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
@@ -250,6 +263,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     piSessionRecording: source.PI_SESSION_RECORDING === "true",
     ticketBoardEnabled: source.TICKET_BOARD_ENABLED === "true",
     userDevicesEnabled: source.USER_DEVICES_ENABLED !== "false",
+    contextStrategy: parseContextStrategy(source.RAKAZO_CONTEXT_STRATEGY),
     navLinks: parseNavLinks(source.RAKAZO_NAV_LINKS),
     adminEmails: list(source.RAKAZO_ADMIN_EMAILS).map((email) => email.toLowerCase()),
     ...phoneCallSettings(source),

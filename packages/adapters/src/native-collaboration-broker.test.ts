@@ -302,10 +302,8 @@ it("recognizes a previous engine instance without inferring success or replaying
     .toMatchObject({ status: "error", reason: "engine_restarted" });
   const registration = invoke("rakazo.tools.register", { ...other, toolMode: "kernel", tools: [], nativeTools: [] });
   expect(registration.engineInstanceId).toEqual(expect.any(String));
-  // An accepted run whose controller is gone is finished, not permanently unknown: the
-  // session must not stay locked because the volatile dedupe payload was dropped.
   expect(invoke("rakazo.run.status", { ...other, startedAt: 1, engineInstanceId: registration.engineInstanceId }, context))
-    .toMatchObject({ status: "error", reason: "outcome_unavailable" });
+    .toEqual({ status: "unconfirmed" });
   expect(invoke("rakazo.run.status", { ...other, engineInstanceId: "previous-process" }, context))
     .toMatchObject({ status: "error", reason: "engine_restarted" });
   context.chatAbortControllers.set(other.runId, { sessionKey: other.sessionKey });
@@ -317,40 +315,4 @@ it("recognizes a previous engine instance without inferring success or replaying
   expect(invoke("rakazo.run.status", { ...other, startedAt: 1 })).toEqual({ status: "unconfirmed" });
   expect(invoke("rakazo.run.status", { ...other, runId: "invalid", startedAt: 1 }, context)).toEqual({ status: "unconfirmed" });
   invoke("rakazo.tools.close", other);
-});
-
-it("settles an accepted run whose controller vanished instead of holding the session forever", () => {
-  const methods = new Map<string, (args: any) => void>();
-  const hooks = new Map<string, (event: any, context: any) => void>();
-  openclawPlugin.register({
-    registerGatewayMethod(name, handler) { methods.set(name, handler); },
-    registerTool() {},
-    on(name, handler) { hooks.set(name, handler); },
-  });
-  const invoke = (method: string, params: any, context?: any) => {
-    let result: any;
-    methods.get(method)!({ params, context, respond(ok: boolean, value: any) { expect(ok).toBe(true); result = value; } });
-    return result;
-  };
-  const idle = () => ({ dedupe: new Map(), chatAbortControllers: new Map() });
-  const registration = invoke("rakazo.tools.register", { ...identity, toolMode: "kernel", tools: [], nativeTools: [] });
-  const status = (startedAt: number, context = idle()) =>
-    invoke("rakazo.run.status", { ...identity, startedAt, engineInstanceId: registration.engineInstanceId }, context);
-  // Observation without a terminal payload, while the request is live: still unknown.
-  expect(status(Date.now())).toEqual({ status: "unconfirmed" });
-  // Nothing is executing it any more and the engine no longer holds an answer.
-  expect(status(Date.now() - 10 * 60_000)).toMatchObject({
-    status: "error", reason: "outcome_unavailable",
-  });
-  // A receipt is authoritative: the finished answer is recovered rather than discarded.
-  hooks.get("llm_output")!({
-    runId, provider: "test", model: "flash",
-    lastAssistant: { role: "assistant", content: [{ type: "text", text: "Late answer" }] },
-  }, identity);
-  expect(status(Date.now() - 10 * 60_000)).toEqual({ status: "ok", recovered: true });
-  // A sibling run still occupies the session, so the run stays unknown.
-  const busy = idle();
-  busy.chatAbortControllers.set(`rakazo-${"f".repeat(64)}`, { sessionKey });
-  expect(status(Date.now() - 10 * 60_000, busy)).toEqual({ status: "unconfirmed" });
-  invoke("rakazo.tools.close", identity);
 });

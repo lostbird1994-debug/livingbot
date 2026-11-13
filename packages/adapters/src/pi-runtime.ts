@@ -30,6 +30,7 @@ import { uncertainEffectResult } from "./approval-effect.js";
 import { automated, withAutomatedLabels } from "./automated-messages.js";
 import { withCloudflareAuth } from "./cloudflare-ai-gateway.js";
 import { isLocalAgentModel, runLocalAgent } from "./local-agent-runtime.js";
+import { ROUTINE_EMPTY_RESULT_TEXT } from "./run-replies.js";
 import { isOpenClawModel, openClawModelStream } from "./openclaw-model-stream.js";
 import { estimatePiImageTokens } from "./pi-image-context.js";
 import {
@@ -988,12 +989,15 @@ export class PiAgentRuntime implements AgentRuntime {
           if (fallback.trim()) {
             queue.push({ type: "text", text: fallback });
             streamed = fallback;
+          } else if (request.requireFinalResponse) {
+            // A required-output routine still owes the user a body. When the model
+            // will not write one, publish the honest one-liner instead of failing
+            // the scheduled run with a provider-shaped error.
+            streamed = request.emptyResponseText?.trim() || ROUTINE_EMPTY_RESULT_TEXT;
+            queue.push({ type: "text", text: streamed });
           } else if (toolWorkPendingFinal && !request.allowSilentEmpty) {
             throw new ModelOutputError(MISSING_TOOL_FINAL_RESPONSE_ERROR);
           } else if (toolCalls === 0 && !request.allowSilentEmpty) {
-            if (request.requireFinalResponse) {
-              throw new ModelOutputError(MISSING_TOOL_FINAL_RESPONSE_ERROR);
-            }
             streamed = request.emptyResponseText?.trim() || "No response. Try again.";
             queue.push({ type: "text", text: streamed });
           }

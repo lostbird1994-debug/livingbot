@@ -108,6 +108,13 @@ body,
 .rk-bubble-routine {
   --bubble-bot: var(--chat-routine);
 }
+/* A task session's result, shown in the main chat: same bubble as any other reply, tinted so it
+   reads as "this opens its own conversation" instead of continuing the current one. */
+.rk-bubble-task {
+  /* 10% of the theme accent over the normal bubble surface: #dde7f3 on the default light theme.
+     The build emits a plain fallback for browsers without color-mix; the app targets Chromium. */
+  --bubble-bot: color-mix(in srgb, var(--ring) 10%, var(--muted));
+}
 .rk-bubble-bot {
   background: color-mix(
     in srgb,

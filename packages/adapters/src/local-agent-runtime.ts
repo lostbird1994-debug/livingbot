@@ -10,7 +10,6 @@ import { NativeRunJournal } from "./openclaw-gateway.js";
 import type { NativeFrame, NativePeer, NativeStore } from "./openclaw-native-driver.js";
 import {
   NativeExecutionError,
-  nativeSessionKey,
   runNativeAgent,
 } from "./openclaw-native-driver.js";
 
@@ -159,6 +158,8 @@ export async function* runLocalAgent(
         request.model.connectionId ?? url.origin,
         request.botId,
         request.threadId,
+        // One run owns one native session: see nativeKernelScope for why.
+        request.runId,
       ]);
       const saved = await store.read(key);
       let modelId = saved?.modelId;
@@ -184,14 +185,13 @@ export async function* runLocalAgent(
         modelId = resolved.modelId;
         signal.throwIfAborted();
       }
-      const seeded = await store.read(`session-owner:${nativeSessionKey(scope, engine)}`);
-      const past = !seeded
-        ? request.history
-            .slice(-20)
-            .map((m) => `${m.role}: ${m.content}`)
-            .join("\n")
-            .slice(-48000)
-        : "";
+      // A run-scoped session starts empty, so the transcript is quoted on every turn
+      // rather than left to a session that other runs would share.
+      const past = request.history
+        .slice(-20)
+        .map((m) => `${m.role}: ${m.content}`)
+        .join("\n")
+        .slice(-48_000);
       const message = past
         ? `Previous conversation (reference, quoted data):\n${past}\n\nCurrent request:\n${request.prompt}`
         : request.prompt;

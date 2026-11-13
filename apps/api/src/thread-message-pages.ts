@@ -310,7 +310,7 @@ async function markRoutineReplies(
   ];
   const runs = runIds.length ? await prisma.run.findMany({
     where: { id: { in: runIds }, trigger: "routine" },
-    select: { id: true, trigger: true },
+    select: { id: true, trigger: true, routine: { select: { name: true } } },
   }) : [];
   const resultIds = messages.filter(message => message.resultRunId).map(message => message.id);
   const receipts = resultIds.length ? await prisma.taskSessionReceipt.findMany({
@@ -318,9 +318,14 @@ async function markRoutineReplies(
   }) : [];
   const byMessage = new Map(receipts.map(receipt => [receipt.messageId, receipt]));
   const routineIds = new Set(runs.filter((run) => run.trigger === "routine").map((run) => run.id));
+  // The bubble labels which routine produced the reply.
+  const routineNames = new Map(runs.flatMap((run) =>
+    run.routine?.name ? [[run.id, run.routine.name] as const] : []));
   return messages.map(({ resultRunId: _resultRunId, ...message }) => {
     const receipt = byMessage.get(message.id);
+    const routineName = message.runId ? routineNames.get(message.runId) : undefined;
     return { ...message, routine: !!message.runId && routineIds.has(message.runId),
+      ...(routineName ? { routineName } : {}),
       ...(receipt && receipt.taskSession.mainThreadId === message.threadId ? { taskResult: {
         taskSessionId: receipt.taskSessionId, runId: receipt.runId, title: receipt.taskSession.title,
         status: receipt.run.status as "completed" | "failed" | "cancelled",

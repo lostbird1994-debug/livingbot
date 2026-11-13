@@ -414,8 +414,9 @@ export function threadContextForRun<T extends { id?: string; role: string }>(
       messages: context.messages.filter((message) => message.id !== sourceMessageId),
     };
   }
-  // Routine runs stay isolated from thread history. The creation intro does
-  // too: a message that arrives during it waits and is answered afterward.
+  // Only the creation intro is isolated from thread history: a message that arrives
+  // during it waits and is answered afterward. Routines read their thread like any
+  // other turn, so a scheduled run can act on what was already decided there.
   if (!runReadsThreadHistory(trigger)) {
     return {
       messages: [] as T[],

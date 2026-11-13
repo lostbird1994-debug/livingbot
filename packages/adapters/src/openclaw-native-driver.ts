@@ -1047,6 +1047,13 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     wake?.();
     if (input.collaboration && !paused && record.status !== "unconfirmed")
       await peer?.request("rakazo.tools.close", { sessionKey, runId }).catch(() => undefined);
+    // The session belonged to this run only, and its conversation is already quoted into
+    // the next turn, so drop it: one entry per turn would otherwise grow the engine's
+    // per-agent session store without bound. Unconfirmed runs keep theirs as evidence.
+    if (!paused && record.status === "done")
+      await peer?.request("sessions.delete",
+        { key: sessionKey, deleteTranscript: true, emitLifecycleHooks: false },
+        { timeoutMs: 10_000 }).catch(() => undefined);
     peer?.stop();
     await pending;
   }

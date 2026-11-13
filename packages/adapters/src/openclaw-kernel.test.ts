@@ -94,7 +94,7 @@ describe("OpenClaw kernel", () => {
     expect(dispatches[0].sessionKey).not.toBe(dispatches[1].sessionKey);
     expect(dispatches[0]).toMatchObject({ provider: "test", model: "flash" });
   });
-  it("seeds history once and never re-dispatches a recovered run", async () => {
+  it("quotes history on every new run and never re-dispatches a recovered run", async () => {
     const f = fixture();
     await f.collect();
     await f.collect();
@@ -102,7 +102,22 @@ describe("OpenClaw kernel", () => {
     await f.collect({ ...f.request, runId: "new-run" });
     const dispatches = f.calls.filter(call => call.method === "agent");
     expect(dispatches[0]!.params.extraSystemPrompt).toContain("Earlier conversation");
-    expect(dispatches[1]!.params.extraSystemPrompt).not.toContain("Earlier conversation");
+    // Every run owns its session, so the transcript is quoted again instead of being
+    // left to a session the previous run had already filled.
+    expect(dispatches[1]!.params.extraSystemPrompt).toContain("Earlier conversation");
+  });
+  it("bounds a long quoted transcript instead of counting on a shared session", async () => {
+    const f = fixture();
+    const history = Array.from({ length: 400 }, (_, index) => ({
+      id: `old-${index}`,
+      role: index % 2 === 0 ? "user" as const : "assistant" as const,
+      content: `Turn ${index}: ${"x".repeat(2000)}`,
+    }));
+    await f.collect({ ...f.request, history });
+    const prompt = f.calls.find(call => call.method === "agent")!.params.extraSystemPrompt as string;
+    expect(prompt).toContain("Turn 399");
+    // The cap keeps the injection bounded even when the widget window is large.
+    expect(prompt.length).toBeLessThan(220_000);
   });
   it("keeps the engine's measured total even when optional cache fields are absent", async () => {
     const f = fixture();
@@ -151,15 +166,14 @@ it("recovers from the frozen first request after clock, history, instructions an
   expect(f.starts()).toBe(1);
 });
 
-it("gives each routine a stable session separate from private chat and other routines", async () => {
+it("gives every run its own session, routines included", async () => {
   const f = fixture();
   await f.collect();
   await f.collect({ ...f.request, runId: "routine-one-first", routineId: "routine-one" });
   await f.collect({ ...f.request, runId: "routine-one-next", routineId: "routine-one" });
   await f.collect({ ...f.request, runId: "routine-two-first", routineId: "routine-two" });
   const calls = f.calls.filter(call => call.method === "agent");
-  expect(calls[0]!.params.sessionKey).not.toBe(calls[1]!.params.sessionKey);
-  expect(calls[1]!.params.sessionKey).toBe(calls[2]!.params.sessionKey);
-  expect(calls[1]!.params.sessionKey).not.toBe(calls[3]!.params.sessionKey);
+  const keys = calls.map(call => call.params.sessionKey);
+  expect(new Set(keys).size).toBe(keys.length);
   expect(calls.every(call => call.params.agentId === calls[0]!.params.agentId)).toBe(true);
 });

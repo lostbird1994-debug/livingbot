@@ -518,9 +518,9 @@ export function RoutineEditor({
           onCheckedChange={(requireOutput) => onChange({ ...draft, requireOutput })}
         />
         <span>
-          <Trans>Require a result</Trans>
+          <Trans>Require a reply</Trans>
           <span className="ml-2 text-xs text-muted-foreground/70">
-            <Trans>Empty runs are marked as failed.</Trans>
+            <Trans>Even a run with nothing to report posts a short reply.</Trans>
           </span>
         </span>
       </label>

@@ -62,6 +62,9 @@ export function replyGuidanceForOfferedTools(
 export const DELEGATED_EMPTY_NOTICE =
   "The delegated bot completed its turn without a written summary.";
 
+/** Body a required-output routine posts when it has nothing to report. */
+export const ROUTINE_EMPTY_RESULT_TEXT = "本轮已执行，没有需要汇报的结果。";
+
 /** Failure used when a tool-bearing turn would otherwise complete as the empty notice. */
 export const TOOL_STEPS_WITHOUT_RESPONSE =
   "The model finished its tool steps without a written response.";

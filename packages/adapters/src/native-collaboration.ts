@@ -31,13 +31,26 @@ export function nativeCollaboration(
     .filter((tool) => toolMode === "kernel"
       ? isNativeKernelHostTool(tool.name) || tool.name === "shell" || (request.independentTask && ["write_file", "read_file", "list_files"].includes(tool.name))
       : NATIVE_COLLABORATION_TOOLS.includes(tool.name as never))
-    .map(({ name, description, inputSchema }) => ({
-      name: toolMode === "kernel" && name === "shell" ? "rakazo_shell" : toolMode === "kernel" && request.independentTask && ["write_file", "read_file", "list_files"].includes(name) ? `rakazo_${name}` : name,
-      description: toolMode === "kernel" && name === "shell"
-        ? `Run a command with this Bot's managed credential environment and product computer permissions. Credentials are injected and redacted by Rakazo. Use native exec for ordinary local commands. ${description}`
-        : description,
-      inputSchema,
-    }));
+    .map(({ name, description, inputSchema }) => {
+      const hostFileTool = toolMode === "kernel" && request.independentTask &&
+        ["write_file", "read_file", "list_files"].includes(name);
+      // The tool description is part of the prompt. Telling an independent task to "use
+      // native exec for ordinary commands" while exec is denied invites exactly the call
+      // that then fails as unauthorized, so the wording follows the run's real tool set.
+      const shellNote = request.independentTask
+        ? "This run has no native exec: use this tool for every command, including pwd, ls and cat."
+        : "Use native exec for ordinary local commands.";
+      const fileNote = hostFileTool
+        ? " This run has no native read, write, ls, find or edit; reach files through rakazo_list_files, rakazo_read_file and rakazo_write_file."
+        : "";
+      return {
+        name: toolMode === "kernel" && name === "shell" ? "rakazo_shell" : hostFileTool ? `rakazo_${name}` : name,
+        description: toolMode === "kernel" && name === "shell"
+          ? `Run a command with this Bot's managed credential environment and product computer permissions. Credentials are injected and redacted by Rakazo. ${shellNote} ${description}`
+          : `${description}${fileNote}`,
+        inputSchema,
+      };
+    });
   const connected = toolMode === "kernel" ? request.tools.filter(tool =>
     !isNativeKernelHostTool(tool.name) && !isNativeKernelExcludedTool(tool.name)) : [];
   if (connected.length) tools.push({

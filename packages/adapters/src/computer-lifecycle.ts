@@ -888,9 +888,14 @@ async function assertTaskResourceAvailable(tx: Prisma.TransactionClient, input: 
     JOIN runs r ON r.id = l."runId"
     JOIN runs current_run ON current_run.id = ${input.runId}
     WHERE l."computerId" = ${input.computerId} AND l."runId" <> ${input.runId}
+      -- A finished run holds nothing, whatever marker it was left with: lease rows
+      -- outlive the run, so a stale "unconfirmed" on a failed run used to freeze
+      -- every other bot sharing the computer, silently, forever. Only a lease that is
+      -- still live can conflict, so an expired row never blocks anyone.
+      AND r.status NOT IN ('completed', 'failed', 'cancelled')
+      AND l."expiresAt" >= now()
       AND (r."resourceWaitReason" IN ('unconfirmed', 'stopping')
-        OR ((r."taskSlotHeld" OR current_run."taskSlotHeld")
-          AND r.status NOT IN ('completed', 'failed', 'cancelled')))
+        OR r."taskSlotHeld" OR current_run."taskSlotHeld")
     LIMIT 1`;
   if (conflicts.length) throw new ComputerBusyError();
 }

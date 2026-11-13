@@ -27,3 +27,14 @@ export async function writeTaskDraftFiles(key: string, files: TaskDraftFile[]) {
     transaction.onabort = () => reject(transaction.error);
   });
 }
+
+/** A discarded draft tab must not leave its picked files behind on this device. */
+export async function clearTaskDraftFiles(key: string) {
+  const transaction = (await db()).transaction("files", "readwrite");
+  transaction.objectStore("files").delete(key);
+  await new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  });
+}

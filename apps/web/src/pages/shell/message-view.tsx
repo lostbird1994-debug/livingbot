@@ -226,11 +226,18 @@ export const MessageView = memo(function MessageView({
     const result = message.taskResult;
     const summary = message.blocks[1];
     const fileCount = message.blocks.filter(block => block.kind === "file" || block.kind === "image").length;
-    return <div className="w-full max-w-lg rounded-2xl border border-border bg-card px-5 py-4">
-      <div className="mb-2 flex items-center justify-between gap-4"><span className="text-sm font-medium">{result.title}</span>
-        <span className="shrink-0 text-xs text-muted-foreground">{result.status === "completed" ? "已完成" : result.status === "failed" ? "失败" : "已停止"}</span></div>
-      {summary?.kind === "text" ? <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{summary.text}</p> : null}
-      <Link className="text-sm font-medium text-foreground underline-offset-4 hover:underline" to={`/app/${message.botId}?task=${result.taskSessionId}`}>
+    // Same geometry as a normal reply bubble — only the tint marks it as its own session.
+    return <div
+      data-testid="message-task-bubble"
+      className="w-full max-w-full space-y-2.5 rounded-[20px] rk-bubble-bot rk-bubble-task px-[18px] py-3 text-body1 text-foreground"
+      dir="auto"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <span className="min-w-0">{result.title}</span>
+        <span className="shrink-0 text-[13px] text-muted-foreground">{result.status === "completed" ? "已完成" : result.status === "failed" ? "失败" : "已停止"}</span>
+      </div>
+      {summary?.kind === "text" ? <p className="whitespace-pre-wrap text-muted-foreground">{summary.text}</p> : null}
+      <Link className="inline-block font-medium underline-offset-4 hover:underline" to={`/app/${message.botId}?task=${result.taskSessionId}`}>
         查看结果{fileCount ? ` · ${fileCount} 个文件` : ""} →
       </Link>
     </div>;
@@ -261,6 +268,16 @@ export const MessageView = memo(function MessageView({
               )}
               dir="auto"
             >
+              {message.routineName && (
+                <div className="flex justify-end">
+                  <span
+                    data-testid="message-routine-label"
+                    className="rounded-full border border-border/60 bg-background/70 px-2 py-0.5 text-[11px] leading-4 text-muted-foreground"
+                  >
+                    ◷ {message.routineName}
+                  </span>
+                </div>
+              )}
               {visibleNarrationBlocks.map((block, i) => {
                 if (block.kind === "steps") {
                   return (

@@ -524,12 +524,12 @@ msgid "Active"
 msgstr "Active"
 
 #: src/pages/RoutineEditor.tsx
-msgid "Require a result"
-msgstr "Require a result"
+msgid "Require a reply"
+msgstr "Require a reply"
 
 #: src/pages/RoutineEditor.tsx
-msgid "Empty runs are marked as failed."
-msgstr "Empty runs are marked as failed."
+msgid "Even a run with nothing to report posts a short reply."
+msgstr "Even a run with nothing to report posts a short reply."
 
 #: src/pages/shell/sidebar-header.tsx
 msgid "Activity"

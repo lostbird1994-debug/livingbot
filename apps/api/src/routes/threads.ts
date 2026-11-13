@@ -364,15 +364,10 @@ export function threadsRoutes(ctx: RouterContext) {
         return { ok: true as const, runIds: result.runIds };
       }),
       stop: authed.threads.stop.handler(async ({ context, input }) => {
-        const before = Date.now();
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        // Every native run owns its session, so there is no earlier turn to confirm
+        // before the thread is released.
         const stopped = await stopThreadRuns(deps, context.actor, target);
-        if (target.kind === "bot" && deps.stopNativeOrphans) {
-          try { await deps.stopNativeOrphans(context.actor, target.botId, target.threadId, before); }
-          catch {
-            throw new ORPCError("CONFLICT", { message: "旧任务尚未确认停止，暂未解除占用。请稍后再次停止，或核实原任务的后台命令。" });
-          }
-        }
         return { ok: true as const, ...stopped };
       }),
       clear: authed.threads.clear.handler(async ({ context, input }) => {

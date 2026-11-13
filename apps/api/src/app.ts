@@ -747,7 +747,6 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const router = createRouter({
     independentTasksAvailable: independentTasksAvailableOverride ?? nativeKernel?.independentTasksAvailable,
     cancelNativeRuns: (runIds) => executor.reconcileExternalAgents({ runIds }),
-    stopNativeOrphans: nativeKernel?.stopNativeOrphans,
     notificationSummary: createSpeechSummarizer(
       {
         prisma,
@@ -1008,6 +1007,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       },
     });
     if (matched) return c.newResponse(response.body, response);
+    // An unmatched RPC becomes a bare 404, and the client renders that as "can't reach the
+    // server"; name the path so a version skew between web and API is visible in the log.
+    getLogger().warn("rpc.unmatched", { "http.method": c.req.method, "rpc.path": c.req.path });
     await next();
   });
   mountAccountExportRoute(app, { prisma, auth, artifacts, home });

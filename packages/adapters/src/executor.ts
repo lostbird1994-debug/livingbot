@@ -238,6 +238,27 @@ async function verbatimMcpServersForRun(
   return { ids: servers.map((server) => server.id), slugs: servers.map((server) => server.slug) };
 }
 
+/**
+ * Tool names an independent task actually receives. Native exec/read/write are withheld
+ * there, so the only truthful instruction is the one built from this run's own tool list:
+ * naming tools a bot does not offer makes the model call them and report "no permission".
+ */
+const independentTaskToolInstruction = (offered: readonly string[]) => {
+  const renamed = offered.map((name) =>
+    name === "shell"
+      ? "rakazo_shell"
+      : ["write_file", "read_file", "list_files"].includes(name)
+        ? `rakazo_${name}`
+        : name);
+  const files = [...new Set(renamed)].filter((name) =>
+    name.startsWith("rakazo_") || ["attach_file", "user_computer_shell", "user_computer_observe",
+      "user_computer_act"].includes(name));
+  const listed = files.length
+    ? `Your file and command tools in this run are: ${files.join(", ")}; call them by those exact names.`
+    : "This run offers no file or command tools at all.";
+  return `This is an independent task. ${listed} There is no exec, read, write, ls or find in this run, and asking for one is refused as unauthorized instead of running, so a missing tool is not a permission problem and must not be reported as one. File and desktop operations wait for the bot's shared computer; if another task holds it, say you are waiting.`;
+};
+
 export function createRunExecutor(executorDeps: ExecutorDeps) {
   const contextStrategy = executorDeps.contextStrategy ?? DEFAULT_CONTEXT_STRATEGY;
   const web = executorDeps.web ?? createWebProvider();
@@ -246,10 +267,14 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
     executorDeps.browser ?? createBrowserProvider(undefined, { sandbox: executorDeps.sandbox });
   const cloudAgent = executorDeps.cloudAgent;
   const resolveConnectedModel = resolveConnectedRunModel.bind(undefined, executorDeps);
+  // One reconciler per executor: its cursor is what advances through runs beyond the
+  // first page, so a fresh instance per call would rescan only the same 25 rows.
+  // Directed runIds calls leave that background cursor untouched.
+  const reconcileExternalAgents = createOpenClawReconciler(executorDeps);
   return {
     resolveConnectedModel,
-    reconcileExternalAgents: async (...args: Parameters<ReturnType<typeof createOpenClawReconciler>>) => {
-      await createOpenClawReconciler(executorDeps)(...args);
+    reconcileExternalAgents: async (...args: Parameters<typeof reconcileExternalAgents>) => {
+      await reconcileExternalAgents(...args);
       await publishTaskSessionReceipts(executorDeps);
     },
     contextStrategy,
@@ -1738,7 +1763,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   hasHistoricalContext: historicalContext.length > 0,
                   historyRetrievalEnabled: contextStrategy !== "current",
                   computerInstruction: nativeWorkspaceContext
-                    ? (independentTask ? "This is an independent task. Use only the offered host filesystem and command tools; mutation and desktop operations wait for the shared computer resource. Native exec, process, read and write are disabled. Do not bypass the host gates." : "Answer directly when the conversation is sufficient. Use native filesystem and exec tools for local work; use Rakazo's connected product tools for collaboration, tasks, approvals, attachments and app connections.")
+                    ? (independentTask ? independentTaskToolInstruction(tools.map(tool => tool.name)) : "Answer directly when the conversation is sufficient. Use native filesystem and exec tools for local work; use Rakazo's connected product tools for collaboration, tasks, approvals, attachments and app connections.")
                     : computerInstruction,
                   pageBrowserAllowed,
                   taskCatalogInstruction,
@@ -1749,7 +1774,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   agentSkillsLine,
                   taughtSkillsLine,
                   replyGuidance: requireRoutineOutput
-                    ? `${runReplyGuidance(run.trigger)} A completed routine run must end with a useful, user-visible result; never choose NO_RESPONSE or finish without a final answer.`
+                    ? `${runReplyGuidance(run.trigger)} This routine must always post a reply body. Never answer NO_RESPONSE or end the turn without text. If this run has nothing to report, say so in one short line instead of staying silent.`
                     : runReplyGuidance(run.trigger),
                   disabledBuiltinTools,
                   offeredFleetTools: offeredFleetTools(builtins),

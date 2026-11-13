@@ -68,6 +68,7 @@ import {
 import {
   completionMessageSegments,
   emptyDelegatedToolTurnShouldFail,
+  ROUTINE_EMPTY_RESULT_TEXT,
   runAllowsSilentEmpty,
   runPromotesMidTurnNarration,
   TOOL_STEPS_WITHOUT_RESPONSE,
@@ -735,16 +736,27 @@ export async function completeRun(ctx: RunContext) {
         !reply.publishedMidTurnUserMessage
       ? peerReplyWithoutSentinel(reply.assembled, reply.messageSegments)
       : stripStrayNoResponse(reply.assembled, reply.messageSegments);
+  // A required-output routine must answer, but "nothing to report" is an answer:
+  // it posts one honest line instead of failing the scheduled run.
+  const routineNeedsBody = run.trigger === "routine" && ctx.routineRequiresOutput;
   let completionBlocks = silentReply.blocks;
   if (!silentReply.assembled || isBackgroundRunTrigger(run.trigger)) {
     // Mid-turn progress already posted durable chat messages; skip the empty
     // "…" fallback so we do not add a junk final bubble.
     completionBlocks = completionMessageSegments(completionBlocks, {
       allowSilentEmpty: ctx.allowSilentEmptyRun || reply.publishedMidTurnUserMessage,
-      emptyResponseText: ctx.emptyResponseText,
+      emptyResponseText: routineNeedsBody ? ROUTINE_EMPTY_RESULT_TEXT : ctx.emptyResponseText,
       suppressOutput: ctx.state.handedOff || isBackgroundRunTrigger(run.trigger),
       skipEmptyFallback: reply.publishedTerminalSubagent || reply.publishedMidTurnUserMessage,
     });
+  }
+  if (routineNeedsBody && !silentReply.assembled.trim()) {
+    silentReply.assembled = ROUTINE_EMPTY_RESULT_TEXT;
+    // Mid-turn progress may already have published a bubble, and the empty-completion
+    // fallback is skipped once that happened. Append the body explicitly so the
+    // scheduled run always shows one line of text.
+    if (!completionBlocks.some((block) => block.kind === "text" && block.text?.trim()))
+      completionBlocks = [...completionBlocks, { kind: "text", text: ROUTINE_EMPTY_RESULT_TEXT }];
   }
   const blocks = ctx.state.handedOff
     ? []
@@ -767,14 +779,6 @@ export async function completeRun(ctx: RunContext) {
     emptyDelegatedToolTurnShouldFail(completionBlocks)
   ) {
     throw new Error(TOOL_STEPS_WITHOUT_RESPONSE);
-  }
-  if (
-    !ctx.state.handedOff &&
-    run.trigger === "routine" &&
-    ctx.routineRequiresOutput &&
-    !silentReply.assembled.trim()
-  ) {
-    throw new ModelOutputError("This routine did not produce a final result.");
   }
   if (!(await renewRunLease(deps, runId, ctx.workerId, ctx.fence))) return;
   const botMessageOutcome =
@@ -846,7 +850,7 @@ export async function completeRun(ctx: RunContext) {
       },
     });
     if (
-      deps.runtime.describe().capabilities.workspaceContext !== true &&
+      deps.runtime.describe().capabilities.sessionContinuity !== true &&
       (deps.contextStrategy ?? DEFAULT_CONTEXT_STRATEGY) === "current" &&
       shouldEnqueueCompaction(
         updatedThread.nextMessageSeq,
@@ -855,7 +859,9 @@ export async function completeRun(ctx: RunContext) {
         COMPACTION_BATCH_SIZE,
       )
     ) {
-      await deps.jobs.enqueue(historyCompactJob(thread.id));
+      // keepExisting: a summarizer retry may be waiting out its delay; replacing it would
+      // restart the ladder and pay for the same attempt twice.
+      await deps.jobs.enqueue({ ...historyCompactJob(thread.id), keepExisting: true });
     }
   } catch (error) {
     getLogger().error("history.compact enqueue failed", error);

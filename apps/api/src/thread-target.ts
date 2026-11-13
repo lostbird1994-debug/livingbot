@@ -1532,7 +1532,7 @@ export async function stopThreadRuns(
   target: ThreadTarget,
   options: { runIds?: string[] } = {},
 ) {
-  const { runIds, computers, leases, eventSeq, pendingMessageCount } =
+  const { runIds, retryRunIds, computers, leases, eventSeq, pendingMessageCount } =
     await deps.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
       const cancelled = await tx.run.updateManyAndReturn({
@@ -1545,6 +1545,22 @@ export async function stopThreadRuns(
         select: { id: true, botId: true, userId: true, spaceId: true, sourceMessageId: true },
       });
       const ids = cancelled.map((run) => run.id);
+      // A run that was cancelled earlier but never confirmed stopped still needs the
+      // native cancellation re-sent; its terminal status keeps it out of the transition
+      // above, so select it separately without emitting another terminal event.
+      const retried = options.runIds?.length
+        ? await tx.run.updateManyAndReturn({
+            where: {
+              id: { in: options.runIds },
+              threadId: target.threadId,
+              status: { in: ["cancelled", "failed"] },
+              resourceWaitReason: { in: ["stopping", "unconfirmed"] },
+            },
+            data: { resourceWaitReason: "stopping" },
+            select: { id: true },
+          })
+        : [];
+      const retryRunIds = retried.map((run) => run.id).filter((id) => !ids.includes(id));
       const botIds = target.kind === "bot" ? [target.botId] : target.memberBotIds;
       // Capture every message before clearing steering, including pending messages
       // not yet assigned a run. Message.runId alone is only a display association.
@@ -1668,7 +1684,7 @@ export async function stopThreadRuns(
           },
         });
       }
-      return { runIds: ids, computers, leases, eventSeq, pendingMessageCount };
+      return { runIds: ids, retryRunIds, computers, leases, eventSeq, pendingMessageCount };
     }, THREAD_LOCK_TRANSACTION_OPTIONS);
   if (eventSeq !== null) {
     // The events are durable; subscribers refetch from their persisted cursor.
@@ -1676,10 +1692,11 @@ export async function stopThreadRuns(
       getLogger().error("thread stop realtime notification", error);
     });
   }
-  if (runIds.length && deps.cancelNativeRuns) {
-    if (target.kind === "bot" && target.taskSessionId) await deps.prisma.run.updateMany({ where: { id: { in: runIds }, thread: { taskBotId: { not: null } }, taskSlotHeld: true },
+  const cancelRunIds = [...runIds, ...retryRunIds];
+  if (cancelRunIds.length && deps.cancelNativeRuns) {
+    if (target.kind === "bot" && target.taskSessionId) await deps.prisma.run.updateMany({ where: { id: { in: cancelRunIds }, thread: { taskBotId: { not: null } }, taskSlotHeld: true },
       data: { resourceWaitReason: "stopping" } });
-    await deps.cancelNativeRuns(runIds).catch((error) => {
+    await deps.cancelNativeRuns(cancelRunIds).catch((error) => {
       // The durable cancelled run remains for the elected reconciler to retry.
       getLogger().error("native task cancellation", error);
     });

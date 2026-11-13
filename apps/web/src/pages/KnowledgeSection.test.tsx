@@ -140,6 +140,7 @@ it("badges built-in skills and leaves plugin skills to their plugin", async () =
       description: "Review a change",
       source: "builtin",
       readOnly: true,
+      onDemand: false,
     },
     {
       id: "plugin:mail",
@@ -147,6 +148,7 @@ it("badges built-in skills and leaves plugin skills to their plugin", async () =
       description: "Sort the inbox",
       source: "plugin",
       readOnly: true,
+      onDemand: false,
     },
     {
       id: "user-1",
@@ -154,6 +156,7 @@ it("badges built-in skills and leaves plugin skills to their plugin", async () =
       description: "Greet politely",
       source: "user",
       readOnly: false,
+      onDemand: false,
     },
   ];
   api.list.mockReset();
@@ -408,6 +411,7 @@ it("opens skills from the composer's cached list and saves back into it", async 
     description: "",
     source: "user",
     readOnly: false,
+    onDemand: false,
   });
   const sharedKey = spaceQueries(null, null).agentSkills.list.queryKey();
   queryClient.setQueryData(sharedKey, [entry("cached", "cached-skill")]);

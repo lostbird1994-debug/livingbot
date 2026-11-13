@@ -2,6 +2,7 @@ import { useLingui } from "@lingui/react/macro";
 import type { Bot, Group, ThreadSnapshot } from "@rakazo/contracts";
 import { BotAvatar, Button, GroupAvatar } from "@rakazo/ui-web";
 import { Menu, Phone, Search } from "lucide-react";
+import type { ReactNode } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 
 /** The chat's title bar: navigation, the chat's name and call. Occupies its own row so the transcript never scrolls under it. */
@@ -17,6 +18,7 @@ export function ChatHeader({
   onTogglePanel,
   onCall,
   onFind,
+  sessionActions,
 }: {
   inGroup: boolean;
   active: Bot | undefined;
@@ -29,6 +31,8 @@ export function ChatHeader({
   onTogglePanel: () => void;
   onCall: (bot: Bot) => void;
   onFind?: () => void;
+  /** New / all sessions: lives here while the chat has only its main session open. */
+  sessionActions?: ReactNode;
 }) {
   const { t } = useLingui();
   return (
@@ -71,6 +75,7 @@ export function ChatHeader({
         </span>
       </Button>
       <div className="flex items-center justify-self-end gap-2">
+        {sessionActions}
         {onFind && (active || activeGroup) ? <IconTooltip label="查找此对话"><Button variant="floating" size="icon-lg" aria-label="查找此对话" onClick={onFind} className="app-no-drag"><Search strokeWidth={1.7} className="size-[18px]" /></Button></IconTooltip> : null}
         {phoneCallsEnabled && !inGroup && active ? (
           <IconTooltip label={inCall ? t`Open call` : t`Call`}>

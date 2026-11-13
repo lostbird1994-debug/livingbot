@@ -43,6 +43,7 @@ const summarize: AgentSkillCatalogEntry = {
   description: "Summarize a document",
   source: "user",
   readOnly: false,
+  onDemand: false,
 };
 
 function renderComposer(

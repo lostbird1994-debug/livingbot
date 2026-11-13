@@ -5,9 +5,7 @@ import type { AdapterContext, MemoryStore } from "@rakazo/adapter-kit";
 import type { PrismaClient } from "@rakazo/db";
 import { moveNativePathToTrash } from "./desktop-workspace-cleanup.js";
 import { connectOpenClawKernelSdk, NativeRunJournal } from "./openclaw-gateway.js";
-import { nativeKernelScope, OpenClawAgentRuntime } from "./openclaw-kernel.js";
-import { nativeSessionKey } from "./openclaw-native-driver.js";
-import { stopOrphanedNativeSession } from "./openclaw-reconciler.js";
+import { OpenClawAgentRuntime } from "./openclaw-kernel.js";
 import { OpenClawKernelRegistry } from "./openclaw-kernel-registry.js";
 import { OpenClawKernelProvisioner } from "./openclaw-kernel-provision.js";
 import type { NativeBootstrapPreview } from "./openclaw-workspace-context.js";
@@ -82,28 +80,8 @@ export function createOpenClawKernelHost(options: {
   const readWorkspaceFile = async (
     botId: string, filePath: string, maxBytes: number, actor: AdapterContext,
   ) => readNativeWorkspaceBytes((await registry.entry(botId, actor)).workspace, filePath, maxBytes);
-  const stopNativeOrphans = async (
-    actor: Pick<AdapterContext, "spaceId" | "userId">, botId: string, threadId: string, before: number,
-  ) => {
-    const owner = { spaceId: actor.spaceId, userId: actor.userId };
-    const entry = await registry.entry(botId, owner);
-    const routines = await options.prisma.routine.findMany({ where: { botId, ...owner }, select: { id: true } });
-    const sessions = [undefined, ...routines.map(routine => routine.id)].map(routineId =>
-      nativeSessionKey(nativeKernelScope({ botId, threadId, routineId }, owner), entry.agentId));
-    const pending: string[] = [];
-    for (const session of sessions) {
-      const owner = await store.read(`session-owner:${session}`);
-      if (owner && owner.startedAt <= before && !["done", "failed", "cancelled"].includes(owner.status)) pending.push(session);
-    }
-    if (!pending.length) return;
-    const peer = await connect({ ...owner, botId });
-    try {
-      for (const sessionKey of pending) {
-        const status = await stopOrphanedNativeSession({ sessionKey, before, store, peer });
-        if (status === "unconfirmed") throw new Error("Native cancellation remains unconfirmed");
-      }
-    } finally { peer.stop(); }
-  };
+  // No orphan sweep: every run owns its session, so a stop never has to confirm that
+  // some earlier turn in a shared session has ended before the thread can be released.
   return { runtime, memory, botWorkspace, nativeContextPreview, independentTasksAvailable, registry, readWorkspaceFile,
-    stopNativeOrphans, recovery: { store, connect } };
+    recovery: { store, connect } };
 }

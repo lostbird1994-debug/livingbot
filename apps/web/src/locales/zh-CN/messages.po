@@ -524,12 +524,12 @@ msgid "Active"
 msgstr "启用"
 
 #: src/pages/RoutineEditor.tsx
-msgid "Require a result"
-msgstr "必须交付结果"
+msgid "Require a reply"
+msgstr "必须有回复正文"
 
 #: src/pages/RoutineEditor.tsx
-msgid "Empty runs are marked as failed."
-msgstr "没有结果时会标记为失败。"
+msgid "Even a run with nothing to report posts a short reply."
+msgstr "即使没有可汇报的内容，也会回一句说明，而不是报错。"
 
 #: src/pages/shell/sidebar-header.tsx
 msgid "Activity"

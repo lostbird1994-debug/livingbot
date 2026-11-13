@@ -53,16 +53,9 @@ export function taskSessionsRoutes(ctx: RouterContext) {
         const target = await resolveThreadTarget(deps.prisma, context.actor,
           { botId: input.botId, ...(runs[0]!.taskSessionId ? { taskSessionId: runs[0]!.taskSessionId! } : {}) }, { includeArchived: true });
         // Same ordering as threads.stop: the run ids are cancelled inside stopThreadRuns
-        // (it calls cancelNativeRuns itself), so only the orphan sweep is added here.
-        // Snapshot the boundary first, or a worker could release its lease before we look.
-        const before = Date.now();
+        // (it calls cancelNativeRuns itself). Every run owns its own native session, so
+        // there is no earlier turn that has to confirm termination first.
         const result = await stopThreadRuns(deps, context.actor, target, { runIds: runs.map(run => run.id) });
-        if (target.kind === "bot" && deps.stopNativeOrphans) {
-          try { await deps.stopNativeOrphans(context.actor, target.botId, target.threadId, before); }
-          catch {
-            throw new ORPCError("CONFLICT", { message: "部分任务尚未确认停止，暂未解除占用。请核实后台命令后重试。" });
-          }
-        }
         stopped += result.cancelledRunCount;
       }
       return { stopped };

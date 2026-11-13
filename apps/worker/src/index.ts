@@ -267,6 +267,11 @@ async function main() {
   });
   const executor = createRunExecutor({
     maxUploadSizeBytes: uploadSizeFromEnv(process.env),
+    // The history.compact handler reads this off the executor, so the worker has to resolve
+    // the same deployment choice the API does; otherwise it always sees the built-in default.
+    ...(process.env.RAKAZO_CONTEXT_STRATEGY?.trim().toLowerCase() === "current"
+      ? { contextStrategy: "current" as const }
+      : {}),
     prisma,
     runtime,
     // Live per-account Codex catalog; never refreshes or writes credentials.

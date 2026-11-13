@@ -98,7 +98,7 @@ import { BotsSidebarLayout } from "./shell/sidebar-layout";
 import { SidebarRoster } from "./shell/sidebar-roster";
 import { commitSpaceRename, countUnreadChats, sidebarGroupsForSpaces } from "./shell/space-sidebar";
 import { TaskConversation } from "./shell/task-conversation";
-import { TaskTabs, useBotTaskTabs } from "./shell/task-tabs";
+import { SessionActions, TaskTabs, useBotTaskTabs } from "./shell/task-tabs";
 import { Transcript } from "./shell/transcript";
 import { useBrowserNotifications } from "./shell/use-browser-notifications";
 import { useChatRead } from "./shell/use-chat-read";
@@ -1039,6 +1039,9 @@ function SpaceShell() {
             phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
             inCall={Boolean(active) && call?.botId === active?.id}
             panelOpen={chatPanelOpen}
+            sessionActions={taskTabs.enabled && taskTabs.opened.length === 0
+              ? <SessionActions state={taskTabs} variant="floating" />
+              : null}
             onFind={() => selectedTask ? taskTabs.requestFind() : setPanel(panel === "find" ? null : "find")}
             onOpenNavigation={() => setMobileSidebarOpen(true)}
             onTogglePanel={() => {

@@ -17,9 +17,9 @@ import {
   truncateSlashDescription,
   updateComposerMentionBindings,
 } from "@rakazo/core";
-import { Button } from "@rakazo/ui-web";
+import { Button, Switch } from "@rakazo/ui-web";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUp, Box, Paperclip, Plug, Plus, Settings, Square, X } from "lucide-react";
+import { ArrowUp, Box, Link, Paperclip, Plus, Settings, Square, X } from "lucide-react";
 import type { ClipboardEvent, DragEvent, RefObject } from "react";
 import { memo, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
@@ -200,6 +200,7 @@ export const Composer = memo(function Composer({
   const scopeKey = scopeKeyForTarget(artifactTarget);
   const [connectorScope, setConnectorScope] = useConnectorScope(scopeKey);
   const [connectorPickerOpen, setConnectorPickerOpen] = useState(false);
+  const connectorPickerRef = useRef<HTMLDivElement>(null);
   const spaceQueries = useSpaceQueries();
   const installsQuery = useQuery(spaceQueries.capabilities.list.queryOptions());
   const connectorOptions = useMemo(
@@ -233,6 +234,28 @@ export const Composer = memo(function Composer({
         ? connectorScope.filter((current) => current !== id)
         : [...connectorScope, id],
     );
+  // The list floats over the transcript now, so it must get out of the way on its own.
+  useEffect(() => {
+    if (!connectorPickerOpen) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (!target) return;
+      // The trigger toggles on its own click; closing here first would make it reopen.
+      if (target.closest('[data-testid="connector-button"]')) return;
+      if (connectorPickerRef.current?.contains(target)) return;
+      setConnectorPickerOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setConnectorPickerOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutside, true);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside, true);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [connectorPickerOpen]);
   const editRevision = useRef(0);
   useEffect(
     () =>
@@ -789,62 +812,11 @@ export const Composer = memo(function Composer({
           })}
         </div>
       ) : null}
-      {connectorPickerOpen ? (
-        <div
-          data-testid="connector-picker"
-          className="mb-2 overflow-hidden rounded-[14px] border border-border bg-muted animate-in fade-in-0 slide-in-from-bottom-1 duration-150 motion-reduce:animate-none"
-        >
-          <div className="px-4 pb-1 pt-3 text-[12.5px] text-muted-foreground">
-            {t`Only what you turn on here is visible to this message`}
-          </div>
-          {scopeOptions.length === 0 ? (
-            <div className="px-4 pb-3 text-[13px] text-muted-foreground">
-              {t`No connectors installed yet`}
-            </div>
-          ) : (
-            scopeOptions.map((option) => {
-              const on = connectorScope.includes(option.id);
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => toggleConnector(option.id)}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-start hover:bg-accent"
-                >
-                  <Plug
-                    size={15}
-                    strokeWidth={1.7}
-                    className={`shrink-0 ${on ? "text-foreground" : "text-muted-foreground"}`}
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span dir="auto" className="block truncate text-[14px] text-foreground">
-                      {option.name}
-                    </span>
-                    <span className="block truncate text-[12px] text-muted-foreground">
-                      {option.kind}
-                    </span>
-                  </span>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11.5px] ${
-                      on
-                        ? "bg-primary/10 text-foreground"
-                        : "bg-transparent text-muted-foreground"
-                    }`}
-                  >
-                    {on ? t`On` : t`Off`}
-                  </span>
-                </button>
-              );
-            })
-          )}
-        </div>
-      ) : null}
       <div
         ref={composerBarRef}
         data-testid="composer-bar"
         data-expanded={expanded}
-        className={`grid grid-cols-[auto_minmax(0,1fr)_auto] content-end items-center rounded-[26px] border border-border bg-background pe-2.5 ps-3 transition-colors focus-within:border-input ${
+        className={`relative grid grid-cols-[auto_minmax(0,1fr)_auto] content-end items-center rounded-[26px] border border-border bg-background pe-2.5 ps-3 transition-colors focus-within:border-input ${
           expanded ? "gap-x-2 gap-y-2 pb-[9px] pt-3" : "gap-x-3.5 py-[9px]"
         }`}
       >
@@ -894,7 +866,7 @@ export const Composer = memo(function Composer({
                 key={id}
                 data-testid="connector-chip"
                 icon={
-                  <Plug size={13} strokeWidth={1.7} className="shrink-0 text-muted-foreground/70" />
+                  <Link size={13} strokeWidth={1.7} className="shrink-0 text-muted-foreground/70" />
                 }
                 label={option?.name ?? id}
                 removeLabel={t`Remove connector ${option?.name ?? id}`}
@@ -1031,6 +1003,45 @@ export const Composer = memo(function Composer({
             />
           </div>
         </div>
+        {/* Floating over the transcript: opening this list must not resize the chat above it. */}
+        {connectorPickerOpen ? (
+          <div
+            ref={connectorPickerRef}
+            data-testid="connector-picker"
+            className="absolute bottom-full end-2 z-50 mb-2 w-[288px] max-w-[calc(100vw_-_2rem)] overflow-hidden rounded-[14px] border border-border bg-popover shadow-[0_10px_30px_-16px_rgba(0,0,0,0.35)] animate-in fade-in-0 slide-in-from-bottom-1 duration-150 motion-reduce:animate-none"
+          >
+            <div className="px-3.5 pb-1 pt-2.5 text-[11.5px] leading-snug text-muted-foreground">
+              只对这条消息生效
+            </div>
+            {scopeOptions.length === 0 ? (
+              <div className="px-3.5 pb-2.5 text-[12.5px] text-muted-foreground">还没有安装连接器</div>
+            ) : (
+              <div className="max-h-[248px] overflow-y-auto pb-1">
+                {scopeOptions.map((option) => {
+                  const on = connectorScope.includes(option.id);
+                  return (
+                    <label
+                      key={option.id}
+                      htmlFor={`connector-toggle-${option.id}`}
+                      title={option.kind}
+                      className="flex cursor-pointer items-center gap-2 px-3.5 py-[5px] hover:bg-accent"
+                    >
+                      <span dir="auto" className="min-w-0 flex-1 truncate text-[13px] text-foreground">
+                        {option.name}
+                      </span>
+                      <Switch
+                        id={`connector-toggle-${option.id}`}
+                        size="sm"
+                        checked={on}
+                        onCheckedChange={() => toggleConnector(option.id)}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : null}
         <div
           ref={composerActionsRef}
           className={`col-start-3 flex shrink-0 items-center gap-2 justify-self-end ${
@@ -1046,13 +1057,13 @@ export const Composer = memo(function Composer({
             data-testid="connector-button"
             disabled={disabled}
             onClick={() => setConnectorPickerOpen((open) => !open)}
-            className={`size-8 shrink-0 rounded-full border border-border transition-colors hover:bg-accent ${
-              connectorScope.length
-                ? "bg-primary/10 text-foreground"
-                : "bg-muted text-muted-foreground hover:text-foreground"
+            className={`size-8 shrink-0 rounded-full transition-colors ${
+              connectorPickerOpen
+                ? "bg-accent text-foreground"
+                : "bg-muted text-foreground/80 hover:bg-accent"
             }`}
           >
-            <Plug size={15} strokeWidth={1.8} />
+            <Link size={15} strokeWidth={1.8} />
           </Button>
           {talk.recording?.locked ? (
             <DictationControls talk={talk} />

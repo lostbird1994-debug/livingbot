@@ -1220,6 +1220,7 @@ function pinnedRoutineRunPrisma(modelId: string) {
     },
     computer: { findUniqueOrThrow: vi.fn(async () => ({ scope: "private", state: "running" })) },
     attempt: {
+      findMany: vi.fn(async () => []),
       create: vi.fn(async () => ({ id: "attempt-1" })),
       updateMany: vi.fn(async () => ({ count: 1 })),
     },
@@ -1233,6 +1234,7 @@ function pinnedRoutineRunPrisma(modelId: string) {
       })),
     },
     message: { findMany: vi.fn(async () => []) },
+    event: { findMany: vi.fn(async () => []) },
     task: { findUniqueOrThrow: vi.fn(async () => ({ id: "task-1", prompt: "hello" })) },
     connection: { findMany: vi.fn(async () => []) },
     taughtSkill: { findMany: vi.fn(async () => []) },
@@ -1342,7 +1344,13 @@ describe("run notification preference", () => {
       },
       select: {
         bot: { select: { notifyOnFinish: true } },
-        thread: { select: { groupId: true } },
+        // A task thread suppresses notifications through its owning thread.
+        thread: {
+          select: {
+            groupId: true,
+            taskSession: { select: { id: true, mainThreadId: true, title: true } },
+          },
+        },
       },
     });
 
@@ -1966,22 +1974,28 @@ describe("createRunExecutor", () => {
     ).toEqual([messages[0]]);
   });
 
-  it("isolates routine runs from every thread-history source", () => {
+  it("gives scheduled routines the same thread context as a chat turn", () => {
     const threadContext = {
       messages: [{ role: "user", content: "Create this routine" }],
       summary: "The user just configured this routine.",
       historyCompactedUpToSeq: 4,
     };
 
+    // A routine fires into its own thread, so it must see what was decided there.
     expect(threadContextForRun("routine", threadContext, false)).toEqual({
-      messages: [],
-      summary: null,
-      historyCompactedUpToSeq: null,
-      includeSemanticRecall: false,
+      ...threadContext,
+      includeSemanticRecall: true,
     });
     expect(threadContextForRun("user", threadContext, false)).toEqual({
       ...threadContext,
       includeSemanticRecall: true,
+    });
+    // The creation intro is still isolated: an early reply would be answered later.
+    expect(threadContextForRun("created", threadContext, false)).toEqual({
+      messages: [],
+      summary: null,
+      historyCompactedUpToSeq: null,
+      includeSemanticRecall: false,
     });
   });
 
@@ -3097,6 +3111,7 @@ description: Prepare standup notes
         findUniqueOrThrow: vi.fn(async () => ({ scope: "private", state: "running" })),
       },
       attempt: {
+        findMany: vi.fn(async () => []),
         create: vi.fn(async () => ({ id: "attempt-1" })),
         updateMany: vi.fn(async () => ({ count: 1 })),
       },
@@ -3110,6 +3125,7 @@ description: Prepare standup notes
         })),
       },
       message: { findMany: vi.fn(async () => []) },
+      event: { findMany: vi.fn(async () => []) },
       task: { findUniqueOrThrow: vi.fn(async () => ({ id: "task-1", prompt: "hello" })) },
       connection: { findMany: vi.fn(async () => []) },
       userModelPreference: {

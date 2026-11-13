@@ -27,7 +27,8 @@ import { rateLimitEnds, scheduleComputerSleep, sleepComputerIfIdle } from "./com
 import { performComputerUpdate } from "./computer-update.js";
 import type { createRunExecutor } from "./executor.js";
 import type { ExpoPushProvider } from "./expo-push.js";
-import { compactHistory } from "./history-compaction.js";
+import { HISTORY_COMPACT_RETRY_DELAYS_MS, historyCompactJob } from "@rakazo/adapter-kit";
+import { COMPACTION_BATCH_SIZE, compactHistory } from "./history-compaction.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
 import { pollPurchase } from "./purchase-poll.js";
@@ -222,19 +223,60 @@ export function createBackgroundJobHandlers(deps: {
       // Retrieval policies use stored context without paid message-count compaction.
       // Skip legacy backlog work after a policy change.
       if (deps.executor.contextStrategy && deps.executor.contextStrategy !== "current") return;
-      if (deps.runtime.describe().capabilities.workspaceContext === true) return;
-      await compactHistory(
-        {
-          prisma: deps.prisma,
-          runtime: deps.runtime,
-          jobs: deps.jobs,
-          memoryProviders: deps.memoryProviders,
-          deploymentModelKey: deps.deploymentModelKey,
-          deploymentModelConfigured: deps.deploymentModelConfigured,
-          ...(deps.executor.resolveModel ? { resolveModel: deps.executor.resolveModel } : {}),
-        },
-        payload.threadId,
-      );
+      if (deps.runtime.describe().capabilities.sessionContinuity === true) return;
+      try {
+        await compactHistory(
+          {
+            prisma: deps.prisma,
+            runtime: deps.runtime,
+            jobs: deps.jobs,
+            memoryProviders: deps.memoryProviders,
+            deploymentModelKey: deps.deploymentModelKey,
+            deploymentModelConfigured: deps.deploymentModelConfigured,
+            ...(deps.executor.resolveModel ? { resolveModel: deps.executor.resolveModel } : {}),
+          },
+          payload.threadId,
+        );
+      } catch (error) {
+        // Retry on a clock first: a provider blip clears in a minute, while waiting for the
+        // next batch of messages can take hours on a quiet thread and leaves older context
+        // outside both the summary and the verbatim window. The attempt rides in the payload,
+        // so the ladder survives a restart without adding state to the schema.
+        const attempt = payload.attempt ?? 0;
+        const delay = HISTORY_COMPACT_RETRY_DELAYS_MS[attempt];
+        if (delay !== undefined) {
+          // Kept as a warning rather than a failed job: the queue's own retry would restart
+          // the ladder from the first delay and pay for the same attempt twice.
+          getLogger().warn("history.compact deferred", {
+            "thread.id": payload.threadId,
+            "history.compact.attempt": attempt + 1,
+            "history.compact.retry_in_ms": delay,
+          });
+          await deps.jobs.enqueue({
+            ...historyCompactJob(payload.threadId, attempt + 1),
+            availableAt: new Date(Date.now() + delay),
+          }).catch((enqueueError) => {
+            getLogger().error("history.compact reschedule failed", enqueueError);
+          });
+          return;
+        }
+        // The ladder is spent: assume a broken summarizer and wait for new material instead,
+        // so a permanently failing thread cannot bill an attempt on every turn.
+        const thread = await deps.prisma.thread
+          .findUnique({ where: { id: payload.threadId }, select: { nextMessageSeq: true } })
+          .catch(() => null);
+        if (thread)
+          await deps.prisma.thread
+            .updateMany({
+              where: { id: payload.threadId },
+              data: { historyCompactionRetryAfterSeq: thread.nextMessageSeq + COMPACTION_BATCH_SIZE },
+            })
+            .catch(() => undefined);
+        getLogger().error("history.compact failed permanently", error, {
+          "thread.id": payload.threadId,
+          "history.compact.attempts": attempt + 1,
+        });
+      }
     }),
   };
 }
