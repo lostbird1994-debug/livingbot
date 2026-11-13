@@ -1,4 +1,4 @@
-import type { Bot, BotAvatarSet, Me, Space } from "@rakazo/contracts";
+import type { Bot, BotAvatarSet, Me, Space } from "@livingbot/contracts";
 import type { RefObject } from "react";
 import { lazyOverlay } from "../../components/ErrorBoundary";
 import type { connectedAppMarks } from "../../lib/connected-apps";

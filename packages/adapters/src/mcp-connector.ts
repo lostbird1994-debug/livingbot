@@ -17,19 +17,19 @@ import type {
   ConnectorProvider,
   ConnectorTool,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
-import type { McpOAuthEnvField } from "@rakazo/contracts";
+} from "@livingbot/adapter-kit";
+import { SecretStoreUnavailableError } from "@livingbot/adapter-kit";
+import type { McpOAuthEnvField } from "@livingbot/contracts";
 import {
   isLocalhostOrLoopbackIp,
   mcpOAuthEnvReferences,
   resolveMcpOAuthEnv,
   resolveMcpOAuthFileTemplate,
-} from "@rakazo/contracts";
-import type { McpServer, PrismaClient, ThreadEvents } from "@rakazo/db";
-import { availableInSpace, itemSecretIn } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
-import { sanitizedError } from "@rakazo/logging/monitoring";
+} from "@livingbot/contracts";
+import type { McpServer, PrismaClient, ThreadEvents } from "@livingbot/db";
+import { availableInSpace, itemSecretIn } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
+import { sanitizedError } from "@livingbot/logging/monitoring";
 import { catalogToolPrefix } from "./approval-effect.js";
 import { composioToolBatch } from "./composio-batch.js";
 import {

@@ -3,8 +3,8 @@ set -eu
 RAKAZO_HOME="${HOME:-/home/rakazo}"
 # start.sh exports the session bus for the whole desktop; the supervisor may
 # launch this script with a minimal environment, so recover the bus address.
-if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -r /tmp/rakazo/dbus-session ]; then
-  . /tmp/rakazo/dbus-session
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -r /tmp/livingbot/dbus-session ]; then
+  . /tmp/livingbot/dbus-session
 fi
 # Page-browser tools and desktop launchers share the assigned display profile.
 DISPLAY_NUM="${DISPLAY:-:1}"
@@ -19,8 +19,8 @@ DISPLAY_NUM="${DISPLAY_NUM:-0}"
 DEBUG_PORT=$((9221 + DISPLAY_NUM))
 if [ -n "${RAKAZO_BROWSER_PROFILE:-}" ]; then
   PROFILE="$RAKAZO_BROWSER_PROFILE"
-elif [ -s "/tmp/rakazo/browser-profile-$DISPLAY_NUM" ]; then
-  PROFILE="$(cat "/tmp/rakazo/browser-profile-$DISPLAY_NUM")"
+elif [ -s "/tmp/livingbot/browser-profile-$DISPLAY_NUM" ]; then
+  PROFILE="$(cat "/tmp/livingbot/browser-profile-$DISPLAY_NUM")"
 else
   case "$DISPLAY_NUM" in
     1) PROFILE="$RAKAZO_HOME/.browser-profiles/chromium" ;;

@@ -1,5 +1,5 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import { expandToolStepNotes } from "@rakazo/core";
+import type { MessageBlock } from "@livingbot/contracts";
+import { expandToolStepNotes } from "@livingbot/core";
 import type { Prisma, PrismaClient } from "./client.js";
 import { THREAD_LOCK_TRANSACTION_OPTIONS, withTransactionRetry } from "./transaction-retry.js";
 

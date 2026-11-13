@@ -61,7 +61,7 @@ struct AskBotIntent: AppIntent {
     }
     let sent = try await send(message, file: file, to: bot)
     guard let reply = try await reply(to: sent), !reply.isEmpty else {
-      return .result(value: "", dialog: "Sent. The reply will be in Rakazo.")
+      return .result(value: "", dialog: "Sent. The reply will be in LivingBot.")
     }
     return .result(value: reply, dialog: "\(reply)")
   }
@@ -77,7 +77,7 @@ struct RunRoutineIntent: AppIntent {
   var routine: RoutineEntity
 
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    let session = try RakazoSession.load()
+    let session = try LivingBotSession.load()
     try await session.requireConsent(["routineId": routine.routineId], spaceId: routine.spaceId)
     let _: Started = try await session.rpc(
       "routines/testRun", ["routineId": routine.routineId, "clientNonce": UUID().uuidString],
@@ -89,7 +89,7 @@ struct RunRoutineIntent: AppIntent {
 /// Opens a bot's chat through the app's own link, the same route a notification opens.
 struct OpenBotIntent: AppIntent {
   static let title: LocalizedStringResource = "Open Bot"
-  static let description = IntentDescription("Open a bot's chat in Rakazo.")
+  static let description = IntentDescription("Open a bot's chat in LivingBot.")
   static let openAppWhenRun = true
 
   @Parameter(title: "Bot")
@@ -106,7 +106,7 @@ struct OpenBotIntent: AppIntent {
 /// modules/rakazo-voice-chat, since the chat link alone must never open the microphone.
 struct StartVoiceChatIntent: AppIntent {
   static let title: LocalizedStringResource = "Start Voice Chat"
-  static let description = IntentDescription("Open Rakazo and start a voice call with a bot.")
+  static let description = IntentDescription("Open LivingBot and start a voice call with a bot.")
   static let openAppWhenRun = true
 
   @Parameter(title: "Bot", description: "Leave empty to use the chat you opened last.")
@@ -119,7 +119,7 @@ struct StartVoiceChatIntent: AppIntent {
     UserDefaults.standard.set(
       ["botId": botId, "at": String(Date().timeIntervalSince1970)],
       forKey: "rakazo.pending_voice_chat")
-    NotificationCenter.default.post(name: Notification.Name("RakazoPendingVoiceChat"), object: nil)
+    NotificationCenter.default.post(name: Notification.Name("LivingBotPendingVoiceChat"), object: nil)
     await openChat(botId: botId, spaceId: target.spaceId)
     return .result()
   }
@@ -142,7 +142,7 @@ private func openChat(botId: String, spaceId: String?) async {
 }
 
 private struct Delivery {
-  let session: RakazoSession
+  let session: LivingBotSession
   let botId: String
   let spaceId: String?
   let runId: String
@@ -153,7 +153,7 @@ private struct Delivery {
 private func send(_ message: String, file: IntentFile?, to bot: BotEntity?) async throws -> Delivery {
   guard let target = target(bot) else { throw MessageBotError.noBot }
   let botId = target.botId
-  let session = try RakazoSession.load()
+  let session = try LivingBotSession.load()
   let spaceId = target.spaceId ?? session.selectedSpaceId
   try await session.requireConsent(["botId": botId], spaceId: spaceId)
   var input: [String: Any] = [
@@ -211,7 +211,7 @@ private func reply(to sent: Delivery) async throws -> String? {
 }
 
 /// Puts the actions in Shortcuts, Spotlight and the Action button without the user building one.
-struct RakazoShortcuts: AppShortcutsProvider {
+struct LivingBotShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(
       intent: MessageBotIntent(),
@@ -257,9 +257,9 @@ struct BotEntity: AppEntity {
 /// Looks entities up Space by Space, since each id starts with its Space.
 private func findEntities<Entity: AppEntity>(
   _ identifiers: [String],
-  in list: (String, RakazoSession) async throws -> [Entity]
+  in list: (String, LivingBotSession) async throws -> [Entity]
 ) async throws -> [Entity] where Entity.ID == String {
-  let session = try RakazoSession.load()
+  let session = try LivingBotSession.load()
   var found: [Entity] = []
   for spaceId in Set(identifiers.compactMap { $0.split(separator: "/").first.map(String.init) }) {
     found += try await list(spaceId, session).filter { identifiers.contains($0.id) }
@@ -273,11 +273,11 @@ struct BotQuery: EntityQuery {
   }
 
   func suggestedEntities() async throws -> [BotEntity] {
-    let session = try RakazoSession.load()
+    let session = try LivingBotSession.load()
     return try await bots(in: session.selectedSpaceId, session: session)
   }
 
-  private func bots(in spaceId: String?, session: RakazoSession) async throws -> [BotEntity] {
+  private func bots(in spaceId: String?, session: LivingBotSession) async throws -> [BotEntity] {
     let navigation: SpaceNavigation = try await session.rpc("spaces/list", [:], spaceId: spaceId)
     return navigation.current.bots.map {
       BotEntity(botId: $0.id, spaceId: navigation.current.id, name: $0.name)
@@ -303,11 +303,11 @@ struct RoutineQuery: EntityQuery {
   }
 
   func suggestedEntities() async throws -> [RoutineEntity] {
-    let session = try RakazoSession.load()
+    let session = try LivingBotSession.load()
     return try await routines(in: session.selectedSpaceId, session: session)
   }
 
-  private func routines(in spaceId: String?, session: RakazoSession) async throws -> [RoutineEntity] {
+  private func routines(in spaceId: String?, session: LivingBotSession) async throws -> [RoutineEntity] {
     let navigation: SpaceNavigation = try await session.rpc("spaces/list", [:], spaceId: spaceId)
     let botIds = navigation.current.bots.prefix(100).map(\.id)
     guard !botIds.isEmpty else { return [] }
@@ -319,23 +319,23 @@ struct RoutineQuery: EntityQuery {
   }
 }
 
-private struct RakazoSession {
+private struct LivingBotSession {
   let apiBase: String
   let token: String
   let selectedSpaceId: String?
   let headers: [String: String]
 
   // The keys lib/session.ts, lib/server-config.ts and lib/api.ts keep in expo-secure-store.
-  static func load() throws -> RakazoSession {
+  static func load() throws -> LivingBotSession {
     guard let token = secureStoreItem("rakazo.session_token"), !token.isEmpty else {
       throw MessageBotError.signedOut
     }
-    let fallback = Bundle.main.object(forInfoDictionaryKey: "RakazoDefaultApiBase") as? String
+    let fallback = Bundle.main.object(forInfoDictionaryKey: "LivingBotDefaultApiBase") as? String
     guard let apiBase = secureStoreItem("rakazo.api_base") ?? fallback else {
       throw MessageBotError.signedOut
     }
     let space = secureStoreItem("rakazo.space_id")
-    return RakazoSession(
+    return LivingBotSession(
       apiBase: apiBase.hasSuffix("/") ? String(apiBase.dropLast()) : apiBase,
       token: token,
       selectedSpaceId: space?.isEmpty == false ? space : nil,
@@ -418,9 +418,9 @@ private enum MessageBotError: Error, CustomLocalizedStringResourceConvertible {
 
   var localizedStringResource: LocalizedStringResource {
     switch self {
-    case .signedOut: "Sign in to Rakazo first."
-    case .noBot: "Open a chat in Rakazo first."
-    case .needsYou: "It needs you in Rakazo."
+    case .signedOut: "Sign in to LivingBot first."
+    case .noBot: "Open a chat in LivingBot first."
+    case .needsYou: "It needs you in LivingBot."
     case .consentRequired: "Review AI data sharing in Account settings before continuing."
     case .server(let message?): "\(message)"
     case .server(nil): "Something went wrong. Try again."

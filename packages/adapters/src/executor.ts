@@ -1,14 +1,14 @@
 import { publishTaskSessionReceipts } from "./task-session-receipts.js";
-import type { AgentRunRequest, ComputerRef, SemanticMemoryProvider } from "@rakazo/adapter-kit";
+import type { AgentRunRequest, ComputerRef, SemanticMemoryProvider } from "@livingbot/adapter-kit";
 import {
   DEFAULT_CONTEXT_STRATEGY,
   isModelCredentialRejected,
   runContinueJob,
   SandboxUnavailableError,
   SandboxUnresponsiveError,
-} from "@rakazo/adapter-kit";
-import type { MessageBlock, ModelRoleChoice, RunStatus } from "@rakazo/contracts";
-import { disabledBuiltinToolSet, excludesSharedProfile } from "@rakazo/contracts";
+} from "@livingbot/adapter-kit";
+import type { MessageBlock, ModelRoleChoice, RunStatus } from "@livingbot/contracts";
+import { disabledBuiltinToolSet, excludesSharedProfile } from "@livingbot/contracts";
 import {
   abortableDelay,
   assertTransition,
@@ -34,7 +34,7 @@ import {
   runReadsThreadHistory,
   userRunError,
   userTurnMessageForRun,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import {
   claimTaskSessionSlot,
   availableInSpace,
@@ -51,9 +51,9 @@ import {
   recordUsage,
   settleReleasedTakeoverCards,
   spaceHasModelAccess,
-} from "@rakazo/db";
-import { enrichLogContext, getLogger } from "@rakazo/logging";
-import { sanitizedError } from "@rakazo/logging/monitoring";
+} from "@livingbot/db";
+import { enrichLogContext, getLogger } from "@livingbot/logging";
+import { sanitizedError } from "@livingbot/logging/monitoring";
 import { formatAgentEnvironmentInstruction } from "./agent-environment.js";
 import { createApprovedEffectReplayQueue } from "./approval-effect.js";
 import { PARTIAL_REPLY_NOTE } from "./automated-messages.js";
@@ -1763,7 +1763,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   hasHistoricalContext: historicalContext.length > 0,
                   historyRetrievalEnabled: contextStrategy !== "current",
                   computerInstruction: nativeWorkspaceContext
-                    ? (independentTask ? independentTaskToolInstruction(tools.map(tool => tool.name)) : "Answer directly when the conversation is sufficient. Use native filesystem and exec tools for local work; use Rakazo's connected product tools for collaboration, tasks, approvals, attachments and app connections.")
+                    ? (independentTask ? independentTaskToolInstruction(tools.map(tool => tool.name)) : "Answer directly when the conversation is sufficient. Use native filesystem and exec tools for local work; use LivingBot's connected product tools for collaboration, tasks, approvals, attachments and app connections.")
                     : computerInstruction,
                   pageBrowserAllowed,
                   taskCatalogInstruction,
@@ -1952,7 +1952,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           redactSecrets(text, runSecrets),
         );
         // An outage at the computer provider is retried like any setup failure, but is not a
-        // Rakazo bug to report.
+        // LivingBot bug to report.
         const providerOutage =
           setupError instanceof SandboxUnavailableError ||
           setupError instanceof SandboxUnresponsiveError;

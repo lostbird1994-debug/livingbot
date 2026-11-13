@@ -1,4 +1,4 @@
-import type { MemorySnapshot } from "@rakazo/adapter-kit";
+import type { MemorySnapshot } from "@livingbot/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import { serializeToolResult } from "./pi-runtime-tools.js";
 import type { RunContext } from "./run-context.js";

@@ -1,4 +1,4 @@
-import { monitoringUserId } from "@rakazo/logging";
+import { monitoringUserId } from "@livingbot/logging";
 import { describe, expect, it } from "vitest";
 import { loadEnv } from "./env.js";
 import { MAX_MONITORING_ENVELOPE_BYTES, monitoringRoutes, parseDsn } from "./monitoring.js";

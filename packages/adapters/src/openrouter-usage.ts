@@ -1,4 +1,4 @@
-import type { AgentUsage, ModelUsageLookup } from "@rakazo/adapter-kit";
+import type { AgentUsage, ModelUsageLookup } from "@livingbot/adapter-kit";
 import { z } from "zod";
 
 /** Attribution is restricted to OpenRouter inference endpoints, never compatible/custom hosts. */
@@ -18,7 +18,7 @@ export function openRouterInferenceFetch(fetcher: typeof fetch, userId?: string)
           : undefined,
     );
     headers.set("HTTP-Referer", "https://rakazo.com");
-    headers.set("X-OpenRouter-Title", "Rakazo");
+    headers.set("X-OpenRouter-Title", "LivingBot");
     const body = init?.body ?? (input instanceof Request ? await input.clone().text() : undefined);
     if (typeof body !== "string") throw new Error("OpenRouter inference requires a JSON body");
     const payload = JSON.parse(body);

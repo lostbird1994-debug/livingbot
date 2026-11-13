@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { botRoleCard } from "@rakazo/contracts";
+import { botRoleCard } from "@livingbot/contracts";
 import { Pool } from "pg";
 import { expect, it } from "vitest";
 import { PrismaClient } from "./client.js";

@@ -4,10 +4,10 @@ import {
   hasHostedModelCredits,
   isAutoReviewCheckerConfigured,
   PushSessionEndedError,
-} from "@rakazo/adapters";
-import type { ActionApprovalRule, Actor, Me, SettingsScope } from "@rakazo/contracts";
-import { approvalModeFromPreference, approvalPreferenceFromMode } from "@rakazo/core";
-import { urlSite } from "@rakazo/core/egress";
+} from "@livingbot/adapters";
+import type { ActionApprovalRule, Actor, Me, SettingsScope } from "@livingbot/contracts";
+import { approvalModeFromPreference, approvalPreferenceFromMode } from "@livingbot/core";
+import { urlSite } from "@livingbot/core/egress";
 import {
   auditLogOrganization,
   findAutoReviewPreference,
@@ -26,7 +26,7 @@ import {
   saveAutoReviewPreference,
   selectVoicePreference,
   voicePreferenceTarget,
-} from "@rakazo/db";
+} from "@livingbot/db";
 import { createAccessGrant, listAccessGrants, revokeAccessGrant } from "../access-grants.js";
 import { requireAdmin } from "../admins.js";
 import { aiConsentStatus, allowAiConsent } from "../ai-consent.js";

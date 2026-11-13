@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
-import { isBuildId } from "@rakazo/contracts/client-build";
-import { webDarkTokens } from "@rakazo/ui-tokens";
+import { isBuildId } from "@livingbot/contracts/client-build";
+import { webDarkTokens } from "@livingbot/ui-tokens";
 import type { Plugin, Rolldown } from "vite";
 import { CACHE_PREFIX } from "./service-worker.js";
 
@@ -74,11 +74,11 @@ export function injectShell(code: string, precache: readonly string[], buildId: 
 }
 
 /** Installable PWA shell: the web manifest and the service worker. */
-export function rakazoPwa(buildId: string): Plugin[] {
+export function livingbotPwa(buildId: string): Plugin[] {
   const manifest = () => JSON.stringify(webManifest(), null, 2);
   return [
     {
-      name: "rakazo-pwa-manifest",
+      name: "livingbot-pwa-manifest",
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
           if (req.url?.split("?", 1)[0] !== `/${MANIFEST_FILE}`) {
@@ -91,7 +91,7 @@ export function rakazoPwa(buildId: string): Plugin[] {
       },
     },
     {
-      name: "rakazo-pwa-service-worker",
+      name: "livingbot-pwa-service-worker",
       apply: "build",
       enforce: "post",
       buildStart() {

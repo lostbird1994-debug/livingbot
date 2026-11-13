@@ -1,9 +1,9 @@
 import { relative, resolve, sep } from "node:path";
-import type { AdapterContext } from "@rakazo/adapter-kit";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
-import { botRoleCard } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { commitBotUpdate } from "@rakazo/db";
+import type { AdapterContext } from "@livingbot/adapter-kit";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@livingbot/adapter-kit";
+import { botRoleCard } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import { commitBotUpdate } from "@livingbot/db";
 import type { OpenClawKernelRegistry } from "./openclaw-kernel-registry.js";
 import { nativeWorkspacePath, readNativeWorkspaceFile, writeNativeWorkspaceFile } from "./openclaw-workspace-files.js";
 

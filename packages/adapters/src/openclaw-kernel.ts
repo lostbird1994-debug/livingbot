@@ -1,6 +1,6 @@
-import type { AdapterContext, AgentRunRequest, AgentRuntime, AgentRuntimeEvent } from "@rakazo/adapter-kit";
+import type { AdapterContext, AgentRunRequest, AgentRuntime, AgentRuntimeEvent } from "@livingbot/adapter-kit";
 import { createHash } from "node:crypto";
-import { DEFAULT_CONTEXT_STRATEGY } from "@rakazo/adapter-kit";
+import { DEFAULT_CONTEXT_STRATEGY } from "@livingbot/adapter-kit";
 import { ContextBudgetError, selectContext } from "./context-selection.js";
 import { verifyNativeDeliveryText } from "./native-delivery-files.js";
 import { nativeCollaboration } from "./native-collaboration.js";

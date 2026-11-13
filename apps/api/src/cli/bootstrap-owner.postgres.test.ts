@@ -1,8 +1,8 @@
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { promisify } from "node:util";
-import { createAuth } from "@rakazo/auth";
-import { createDb, createPool } from "@rakazo/db";
+import { createAuth } from "@livingbot/auth";
+import { createDb, createPool } from "@livingbot/db";
 import { expect, it } from "vitest";
 
 const run = promisify(execFile);
@@ -33,11 +33,11 @@ it.skipIf(!testDatabase)(
       BETTER_AUTH_SECRET: "bootstrap-test-secret-with-over-32-characters",
     };
     try {
-      await run("pnpm", ["--filter", "@rakazo/api", "db:migrate"], {
+      await run("pnpm", ["--filter", "@livingbot/api", "db:migrate"], {
         env: { ...env, DATABASE_MIGRATION_URL: at(ownerDatabase) },
       });
       const boot = (password: string) =>
-        run("pnpm", ["--filter", "@rakazo/api", "exec", "tsx", "src/cli/bootstrap-owner.ts"], {
+        run("pnpm", ["--filter", "@livingbot/api", "exec", "tsx", "src/cli/bootstrap-owner.ts"], {
           env: { ...env, DATABASE_MIGRATION_URL: undefined, OWNER_PASSWORD: password },
         });
       await boot(env.OWNER_PASSWORD);

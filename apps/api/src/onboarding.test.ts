@@ -1,10 +1,10 @@
-import type * as db from "@rakazo/db";
-import { appendEventInTransaction } from "@rakazo/db";
+import type * as db from "@livingbot/db";
+import { appendEventInTransaction } from "@livingbot/db";
 import { describe, expect, it, vi } from "vitest";
 import { chooseFocus, markAppConnected, promptFocus } from "./onboarding.js";
 
 const posted = vi.hoisted(() => [] as Array<{ blocks: unknown[]; markUnread?: boolean }>);
-vi.mock("@rakazo/db", async (original) => ({
+vi.mock("@livingbot/db", async (original) => ({
   ...(await original<typeof db>()),
   createThreadMessageInTransaction: vi.fn(async (_tx, input) => {
     posted.push(input);
@@ -35,7 +35,7 @@ function fixture(catalog: unknown[]) {
   const actor = {
     userId: "user",
     spaceId: "space",
-    email: "user@rakazo.test",
+    email: "user@livingbot.test",
     isDeploymentOwner: true,
   };
   return { deps, actor, tx };

@@ -6,9 +6,9 @@ import type {
   Routine,
   RoutineWatch,
   RoutineWatchInput,
-} from "@rakazo/contracts";
-import { ROUTINE_WATCH_DEFAULT_MINUTES, ROUTINE_WATCH_MIN_MINUTES } from "@rakazo/contracts";
-import type { CronFreq, CronLabels, CronPreset } from "@rakazo/core";
+} from "@livingbot/contracts";
+import { ROUTINE_WATCH_DEFAULT_MINUTES, ROUTINE_WATCH_MIN_MINUTES } from "@livingbot/contracts";
+import type { CronFreq, CronLabels, CronPreset } from "@livingbot/core";
 import {
   credentialForModel,
   cronFromPreset,
@@ -17,7 +17,7 @@ import {
   formatCron,
   isOneShotRoutineCrons,
   presetFromCron,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import {
   Button,
   DropdownMenu,
@@ -36,7 +36,7 @@ import {
   SectionHeading,
   Switch,
   Textarea,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import {
   ChevronLeft,
   Clock,

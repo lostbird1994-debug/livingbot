@@ -63,7 +63,7 @@ def browser_profile():
     if not number.isdigit():
         number = "1"
     number = number.lstrip("0") or "0"
-    recorded = f"/tmp/rakazo/browser-profile-{number}"
+    recorded = f"/tmp/livingbot/browser-profile-{number}"
     try:
         with open(recorded, encoding="utf-8") as handle:
             profile = handle.read().strip()

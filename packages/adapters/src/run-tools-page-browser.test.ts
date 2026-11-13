@@ -1,4 +1,4 @@
-import type { AdapterContext, ComputerRef } from "@rakazo/adapter-kit";
+import type { AdapterContext, ComputerRef } from "@livingbot/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import { FakeBrowserProvider } from "./fake-browser.js";
 import { computerTools, pageBrowserTool } from "./run-tools-computer.js";

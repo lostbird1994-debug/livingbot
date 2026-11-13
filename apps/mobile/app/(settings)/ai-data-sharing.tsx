@@ -1,5 +1,5 @@
-import type { AiConsentStatus } from "@rakazo/contracts";
-import { AI_DATA_DISCLOSURES, AI_PRIVACY_URL } from "@rakazo/contracts";
+import type { AiConsentStatus } from "@livingbot/contracts";
+import { AI_DATA_DISCLOSURES, AI_PRIVACY_URL } from "@livingbot/contracts";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet } from "react-native";
 import {

@@ -12,8 +12,8 @@ import { expect, test } from "@playwright/test";
 import {
   addScreenProxyCapability,
   openScreenCapability,
-} from "@rakazo/core/node/screen-capability";
-import { screenProbeUrl } from "@rakazo/core/screen-reconnect";
+} from "@livingbot/core/node/screen-capability";
+import { screenProbeUrl } from "@livingbot/core/screen-reconnect";
 import type { Plugin, ViteDevServer } from "vite";
 import { createServer, preview } from "vite";
 

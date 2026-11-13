@@ -3,15 +3,15 @@ import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { HostScreen } from "@rakazo/adapters/host-screen";
-import { startUserDeviceClient } from "@rakazo/adapters/user-device-client";
+import type { HostScreen } from "@livingbot/adapters/host-screen";
+import { startUserDeviceClient } from "@livingbot/adapters/user-device-client";
 import type {
   DesktopMenuCommand,
   DesktopReachability,
   DesktopSetup,
-  RakazoDesktopDevice,
-} from "@rakazo/contracts";
-import { PRODUCT_NAME, parseServerHeaders, UPSTREAM_UPDATES_ENABLED } from "@rakazo/contracts";
+  LivingBotDesktopDevice,
+} from "@livingbot/contracts";
+import { PRODUCT_NAME, parseServerHeaders, UPSTREAM_UPDATES_ENABLED } from "@livingbot/contracts";
 import type { Session } from "electron";
 import {
   app,
@@ -70,7 +70,7 @@ import { installSessionPermissions } from "./session-permissions.js";
 import {
   DEFAULT_LOCAL_WEB_URL,
   desktopStackImageTag,
-  isRakazoHealth,
+  isLivingBotHealth,
   managedLocalOpenUrl,
   maySendDesktopStackToken,
   normalizeServerUrl,
@@ -917,7 +917,7 @@ async function probeServer(
       };
     }
     const health = await readProbeJson(response);
-    if (!isRakazoHealth(health)) {
+    if (!isLivingBotHealth(health)) {
       return {
         ok: false,
         status: response.status,
@@ -1469,7 +1469,7 @@ app.whenReady().then(async () => {
       ? origin
       : null;
   };
-  const deviceState = async (origin: string | null): Promise<RakazoDesktopDevice | null> => {
+  const deviceState = async (origin: string | null): Promise<LivingBotDesktopDevice | null> => {
     const state = origin === null ? null : userDevices?.state(origin);
     return state ? { ...state, name: await deviceName() } : null;
   };

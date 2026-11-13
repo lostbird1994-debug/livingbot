@@ -1,4 +1,4 @@
-import type { AgentSkillCatalogEntry } from "@rakazo/contracts";
+import type { AgentSkillCatalogEntry } from "@livingbot/contracts";
 import {
   buildComposerMentionOptions,
   channelMessageSender,
@@ -10,7 +10,7 @@ import {
   memberName,
   newClientId,
   displayName as safeDisplayName,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import { useFocusEffect, useIsFocused, useLocalSearchParams, useRouter } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

@@ -1,5 +1,5 @@
-import type { MessageBlock, ReplyPreview } from "@rakazo/contracts";
-import { droppedTableHtmlText, truncateReplyQuote } from "@rakazo/contracts";
+import type { MessageBlock, ReplyPreview } from "@livingbot/contracts";
+import { droppedTableHtmlText, truncateReplyQuote } from "@livingbot/contracts";
 import { toText } from "hast-util-to-text";
 import { toHast } from "mdast-util-to-hast";
 import remarkGfm from "remark-gfm";
@@ -28,8 +28,8 @@ export const MAX_QUOTABLE_SOURCE_LENGTH = 100_000;
 type MdastNode = { type?: string; value?: string; children?: MdastNode[] };
 
 /* The web renderer salvages <br> and <img alt> text inside table cells
-   (preserveSkippedTableText in @rakazo/chat-ui). Both sides share
-   droppedTableHtmlText from @rakazo/contracts so a quote of a rendered cell
+   (preserveSkippedTableText in @livingbot/chat-ui). Both sides share
+   droppedTableHtmlText from @livingbot/contracts so a quote of a rendered cell
    validates against the same canonical text. */
 function salvageSkippedTableHtml(node: MdastNode, insideCell = false): void {
   const inCell = insideCell || node.type === "tableCell";

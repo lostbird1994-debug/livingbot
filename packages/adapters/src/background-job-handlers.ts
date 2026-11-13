@@ -9,16 +9,16 @@ import type {
   PaymentWalletProvider,
   SandboxProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import {
   messagingDeliverJob,
   SandboxRateLimitError,
   SandboxUnavailableError,
   SandboxUnresponsiveError,
-} from "@rakazo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { runAsSystem, runAsTenant } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/adapter-kit";
+import type { PrismaClient, ThreadEvents } from "@livingbot/db";
+import { runAsSystem, runAsTenant } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { settleCallRequest } from "./call-request.js";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
 import { pollCloudAgent } from "./cloud-agent-poll.js";
@@ -27,7 +27,7 @@ import { rateLimitEnds, scheduleComputerSleep, sleepComputerIfIdle } from "./com
 import { performComputerUpdate } from "./computer-update.js";
 import type { createRunExecutor } from "./executor.js";
 import type { ExpoPushProvider } from "./expo-push.js";
-import { HISTORY_COMPACT_RETRY_DELAYS_MS, historyCompactJob } from "@rakazo/adapter-kit";
+import { HISTORY_COMPACT_RETRY_DELAYS_MS, historyCompactJob } from "@livingbot/adapter-kit";
 import { COMPACTION_BATCH_SIZE, compactHistory } from "./history-compaction.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";

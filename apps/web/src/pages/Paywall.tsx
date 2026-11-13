@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BillingStatus } from "@rakazo/contracts";
-import { Button } from "@rakazo/ui-web";
+import type { BillingStatus } from "@livingbot/contracts";
+import { Button } from "@livingbot/ui-web";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { CreditChoice } from "../components/ModelCredits";

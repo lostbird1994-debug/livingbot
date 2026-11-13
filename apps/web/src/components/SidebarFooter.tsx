@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { NavLink } from "@rakazo/contracts";
+import type { NavLink } from "@livingbot/contracts";
 import {
   AppMarkStack,
   Button,
@@ -7,7 +7,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import {
   BookOpen,
   Download,
@@ -261,7 +261,7 @@ export function SidebarFooter({
             ) : null}
             <a
               className={`${buttonVariants({ variant: "ghost" })} h-9 w-full justify-start gap-2.5 font-normal`}
-              href="https://github.com/elie222/rakazo/blob/main/docs/self-host.md"
+              href="https://github.com/lostbird1994-debug/livingbot/blob/main/docs/self-host.md"
               target="_blank"
               rel="noreferrer"
             >

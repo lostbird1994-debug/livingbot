@@ -1,5 +1,5 @@
 import { i18n } from "@lingui/core";
-import { MODEL_OUTPUT_CUT_ERROR, MODEL_REQUEST_LIMIT_ERROR, normalizeRunError } from "@rakazo/core";
+import { MODEL_OUTPUT_CUT_ERROR, MODEL_REQUEST_LIMIT_ERROR, normalizeRunError } from "@livingbot/core";
 import { afterEach, expect, it } from "vitest";
 import { translateRunError } from "./run-error";
 

@@ -1,4 +1,4 @@
-import { hasThinkingActivityMarker, parseBotAvatarValue } from "@rakazo/contracts";
+import { hasThinkingActivityMarker, parseBotAvatarValue } from "@livingbot/contracts";
 import { isBackgroundRunTrigger, isRunWaitingOnUser, isRunWorking } from "./run-state.js";
 
 /** Minimal public stream fields used by web and native activity projections. */

@@ -5,7 +5,7 @@ test("account settings language picker includes Hebrew and mirrors the UI right-
   page,
 }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `ui-locale-he-${stamp}@rakazo.test`, "password12", "Locale QA");
+  await signup(page, `ui-locale-he-${stamp}@livingbot.test`, "password12", "Locale QA");
   await completeOnboarding(page, testInfo);
 
   const settings = await openUserSettings(page);
@@ -40,7 +40,7 @@ test("account settings language picker includes Hebrew and mirrors the UI right-
 test("Traditional Chinese can be selected, survives reload, and switches back to English", async ({
   page,
 }, testInfo) => {
-  await signup(page, `ui-locale-zh-tw-${Date.now()}@rakazo.test`, "password12", "Locale QA");
+  await signup(page, `ui-locale-zh-tw-${Date.now()}@livingbot.test`, "password12", "Locale QA");
   await completeOnboarding(page, testInfo);
   const settings = await openUserSettings(page);
   const picker = settings.getByTestId("ui-locale-select");

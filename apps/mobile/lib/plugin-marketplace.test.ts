@@ -1,4 +1,4 @@
-import type { CapabilityInstall, PluginMarketplaceEntry } from "@rakazo/contracts";
+import type { CapabilityInstall, PluginMarketplaceEntry } from "@livingbot/contracts";
 import { expect, it } from "vitest";
 import {
   browsablePlugins,

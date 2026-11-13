@@ -1,5 +1,5 @@
-import type { Bot, TaskSession } from "@rakazo/contracts";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input } from "@rakazo/ui-web";
+import type { Bot, TaskSession } from "@livingbot/contracts";
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input } from "@livingbot/ui-web";
 import { History, Plus, X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";

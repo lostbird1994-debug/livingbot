@@ -28,7 +28,7 @@ async function rpc(method, params = {}) {
     body: JSON.stringify({ method, params, sessionKey: config.sessionKey, runId: config.runId }),
     signal: AbortSignal.timeout(30 * 60_000),
   });
-  if (!response.ok) throw Error("Rakazo collaboration transport unavailable");
+  if (!response.ok) throw Error("LivingBot collaboration transport unavailable");
   return response.json();
 }
 const send = (value) => process.stdout.write(JSON.stringify(value) + "\n");
@@ -69,7 +69,7 @@ async function handle(message) {
       id: message.id,
       error: {
         code: -32000,
-        message: "Rakazo collaboration call failed; do not assume delivery",
+        message: "LivingBot collaboration call failed; do not assume delivery",
       },
     });
   }

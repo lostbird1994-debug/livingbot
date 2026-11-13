@@ -5,30 +5,30 @@ import type {
   ComputerRef,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import {
   computerControlExpireJobKey,
   SandboxAllowanceUsedError,
   SandboxRateLimitError,
   SandboxUnavailableError,
   SandboxUnresponsiveError,
-} from "@rakazo/adapter-kit";
-import type { ComputerUpdate } from "@rakazo/contracts";
+} from "@livingbot/adapter-kit";
+import type { ComputerUpdate } from "@livingbot/contracts";
 import {
   ACTIVE_RUN_STATUSES,
   abortableDelay,
   isRetryableError,
   parseScreenLeaseId,
   screenLeaseId,
-} from "@rakazo/core";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@livingbot/core";
+import type { Prisma, PrismaClient, ThreadEvents } from "@livingbot/db";
 import {
   expireComputerExecutionLeases,
   parseComputerMode,
   recordComputerRunEnd,
   recordComputerRunStart,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import {
   clearInactiveUserComputerControl,
   expireComputerControl,

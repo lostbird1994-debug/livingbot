@@ -1,5 +1,5 @@
 {
-  "name": "@rakazo/worker",
+  "name": "@livingbot/worker",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "type": "module",
@@ -11,12 +11,12 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@rakazo/adapter-kit": "workspace:*",
-    "@rakazo/adapters": "workspace:*",
-    "@rakazo/core": "workspace:*",
-    "@rakazo/db": "workspace:*",
-    "@rakazo/logging": "workspace:*",
-    "@rakazo/memory": "workspace:*"
+    "@livingbot/adapter-kit": "workspace:*",
+    "@livingbot/adapters": "workspace:*",
+    "@livingbot/core": "workspace:*",
+    "@livingbot/db": "workspace:*",
+    "@livingbot/logging": "workspace:*",
+    "@livingbot/memory": "workspace:*"
   },
   "devDependencies": {
     "typescript": "7.0.2",

@@ -88,7 +88,7 @@ describe("native collaboration broker", () => {
     await expect(pending).resolves.toEqual({ scheduled: true });
     broker.close(identity);
   });
-  it("binds grants to a native Rakazo session and restricts the tool catalog", () => {
+  it("binds grants to a native LivingBot session and restricts the tool catalog", () => {
     const broker = new NativeCollaborationBroker();
     expect(() =>
       broker.register({ ...identity, tools: [{ ...tools[0], name: "shell" }] }),
@@ -162,7 +162,7 @@ describe("native collaboration broker", () => {
     ])
       await expect(broker.call(sessionKey, runId, invalid)).rejects.toThrow();
   });
-  it("removes a native-cancelled call before the Rakazo executor can run it", async () => {
+  it("removes a native-cancelled call before the LivingBot executor can run it", async () => {
     const broker = new NativeCollaborationBroker();
     broker.register({ ...identity, tools });
     const pending = broker.call(sessionKey, runId, call);

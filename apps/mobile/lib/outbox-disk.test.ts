@@ -1,4 +1,4 @@
-import { resolveComposerSendPlan } from "@rakazo/core";
+import { resolveComposerSendPlan } from "@livingbot/core";
 import { beforeEach, expect, it, vi } from "vitest";
 import { OUTBOX_MAX_BYTES, outboxDisk } from "./outbox-disk";
 import type { SendAttempt } from "./thread-feedback";

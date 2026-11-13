@@ -1,4 +1,4 @@
-import { DEFAULT_NEW_BOT_AVATAR_SET } from "@rakazo/contracts";
+import { DEFAULT_NEW_BOT_AVATAR_SET } from "@livingbot/contracts";
 import type { Href } from "expo-router";
 import { rpc } from "./api";
 import { allowFocusPrompt, scheduleFocusPrompt } from "./focus-prompt";

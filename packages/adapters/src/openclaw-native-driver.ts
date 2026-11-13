@@ -701,7 +701,7 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
           ...modelOverride,
           ...(input.thinking !== undefined ? { thinking: input.thinking } : {}),
           sessionKey,
-          // Rakazo owns delivery. Mark its internal engine session as webchat so
+          // LivingBot owns delivery. Mark its internal engine session as webchat so
           // OpenClaw publishes live assistant/tool events to our operator socket.
           channel: "webchat",
           message: input.message,
@@ -709,7 +709,7 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
             "When sharing an existing local document, use its exact absolute path in a Markdown link. Never abbreviate the path with ellipses or invent a file location.\n\n" +
             input.instructions +
             (collaboration
-              ? "\n\nRakazo collaboration tools are connected to this bot's active run. Use the provided message_bot/handoff_to_bot tools for Rakazo teammates; tool results confirm delivery. Your Rakazo sender identity and space permissions are supplied by the host. Never substitute a shell command or a claim in plain text for a collaboration tool call."
+              ? "\n\nLivingBot collaboration tools are connected to this bot's active run. Use the provided message_bot/handoff_to_bot tools for LivingBot teammates; tool results confirm delivery. Your LivingBot sender identity and space permissions are supplied by the host. Never substitute a shell command or a claim in plain text for a collaboration tool call."
               : ""),
           idempotencyKey: runId,
           deliver: false,
@@ -849,7 +849,7 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
             result = await collaboration.execute(call.name, call.args, executionId);
           } catch (failure) {
             error = failure;
-            result = { error: "Rakazo collaboration tool failed; delivery is not confirmed" };
+            result = { error: "LivingBot collaboration tool failed; delivery is not confirmed" };
           }
           const toolPaused = isToolPauseResult(result);
           try {
@@ -996,9 +996,9 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
           "unconfirmed",
         );
       if (nativeResult?.blockedTools?.length)
-        text += "\n\nRakazo 提示：本轮有工具操作被权限阻止，相关步骤尚未完成。请查看执行记录并处理授权后再继续。";
+        text += "\n\nLivingBot 提示：本轮有工具操作被权限阻止，相关步骤尚未完成。请查看执行记录并处理授权后再继续。";
       if (record.unconfirmedSteeringIds?.length)
-        text += "\n\nRakazo 提示：有追加指令尚未确认送达，请核实后重新发送。";
+        text += "\n\nLivingBot 提示：有追加指令尚未确认送达，请核实后重新发送。";
       const replace = !text.startsWith(record.text);
       const delta = replace ? text : text.slice(record.text.length);
       record.text = text;

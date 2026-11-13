@@ -1,6 +1,6 @@
 {
   "platforms": ["android"],
   "android": {
-    "modules": ["com.rakazo.notifications.RakazoNotificationsModule"]
+    "modules": ["com.rakazo.notifications.LivingBotNotificationsModule"]
   }
 }

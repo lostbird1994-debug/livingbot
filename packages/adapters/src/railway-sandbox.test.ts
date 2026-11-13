@@ -4,8 +4,8 @@ import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { ComputerRef, ProcessEvent } from "@rakazo/adapter-kit";
-import { screenDisplayArgv, shellQuote } from "@rakazo/core/node/desktop-runtime";
+import type { ComputerRef, ProcessEvent } from "@livingbot/adapter-kit";
+import { screenDisplayArgv, shellQuote } from "@livingbot/core/node/desktop-runtime";
 import type { RailwayGraphQLErrorItem, SandboxInfo } from "railway";
 import {
   RailwayGraphQLError,
@@ -854,7 +854,7 @@ describe("Railway computers", () => {
         cwd: "/home/rakazo/notes",
         env: expect.objectContaining({
           FAKE_TOKEN: "fake-secret",
-          UV_CACHE_DIR: "/tmp/rakazo-cache/uv",
+          UV_CACHE_DIR: "/tmp/livingbot-cache/uv",
         }),
         timeoutSec: 5,
       }),

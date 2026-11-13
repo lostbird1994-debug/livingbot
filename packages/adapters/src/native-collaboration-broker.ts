@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { BUILTIN_TOOL_NAMES } from "@rakazo/contracts";
+import { BUILTIN_TOOL_NAMES } from "@livingbot/contracts";
 
 // The catalog is deliberately restricted. Execution still goes through the run's gate.
 export const NATIVE_COLLABORATION_TOOLS = [
@@ -97,10 +97,10 @@ export class NativeCollaborationBroker {
   private active(sessionKey: unknown, runId?: unknown) {
     const record = typeof sessionKey === "string" ? this.registrations.get(sessionKey) : undefined;
     if (!record || (runId !== undefined && record.runId !== runId))
-      throw new Error("No active Rakazo collaboration grant");
+      throw new Error("No active LivingBot collaboration grant");
     if (record.expiresAt <= this.now()) {
       this.close({ sessionKey: record.sessionKey, runId: record.runId });
-      throw new Error("Rakazo collaboration grant expired");
+      throw new Error("LivingBot collaboration grant expired");
     }
     return record;
   }
@@ -135,7 +135,7 @@ export class NativeCollaborationBroker {
       ) ||
       new Set(tools.map((tool) => tool.name)).size !== tools.length
     )
-      throw new Error("Invalid Rakazo collaboration registration");
+      throw new Error("Invalid LivingBot collaboration registration");
     let prior = this.registrations.get(sessionKey);
     if (prior && prior.expiresAt <= this.now()) {
       this.close({ sessionKey, runId: prior.runId });
@@ -275,7 +275,7 @@ export class NativeCollaborationBroker {
           timer = setTimeout(
             () => {
               if (this.registrations.get(sessionKey) === record) this.close({ sessionKey, runId });
-              resolve(failed("Rakazo collaboration grant expired"));
+              resolve(failed("LivingBot collaboration grant expired"));
             },
             Math.max(1, record.expiresAt - this.now()),
           );
@@ -333,7 +333,7 @@ export class NativeCollaborationBroker {
       typeof params.sessionKey === "string" ? this.registrations.get(params.sessionKey) : undefined;
     if (record && record.runId === params.runId) {
       for (const call of record.calls.values())
-        if (!call.done) call.resolve(failed("Rakazo collaboration run closed"));
+        if (!call.done) call.resolve(failed("LivingBot collaboration run closed"));
       this.registrations.delete(record.sessionKey);
     }
     return { ok: true };

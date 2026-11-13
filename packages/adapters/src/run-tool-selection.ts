@@ -4,8 +4,8 @@ import {
   FLEET_WRITE_TOOL_NAMES,
   MEMORY_MAINTENANCE_TOOL_NAMES,
   PRIVATE_MEMORY_TOOL_NAMES,
-} from "@rakazo/contracts";
-import { isBackgroundRunTrigger, isOwnerStartedRun } from "@rakazo/core";
+} from "@livingbot/contracts";
+import { isBackgroundRunTrigger, isOwnerStartedRun } from "@livingbot/core";
 import { builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";
 import { selectMemoryTools } from "./memory-tools.js";

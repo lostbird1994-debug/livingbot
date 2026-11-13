@@ -1,4 +1,4 @@
-import { UPSTREAM_UPDATES_ENABLED } from "@rakazo/contracts";
+import { UPSTREAM_UPDATES_ENABLED } from "@livingbot/contracts";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./monitoring.js", () => ({ reportDesktopError: vi.fn() }));

@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { PassThrough, Readable } from "node:stream";
 import { setTimeout as delay } from "node:timers/promises";
-import { getLogger } from "@rakazo/logging";
+import { getLogger } from "@livingbot/logging";
 import Docker from "dockerode";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {

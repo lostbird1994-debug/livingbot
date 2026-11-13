@@ -4,13 +4,13 @@ import type {
   BotMcpServer,
   CapabilityInstall,
   McpServer,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
 
 test("Integrations installs a plugin, completes real broker OAuth against a fake provider, and removes its children", async ({
   page,
 }, testInfo) => {
-  await signup(page, `marketplace-${Date.now()}@rakazo.test`, "password12", "Marketplace Test");
+  await signup(page, `marketplace-${Date.now()}@livingbot.test`, "password12", "Marketplace Test");
   await completeOnboarding(page);
   const botId = activeBotId(page);
   let cancel = true;

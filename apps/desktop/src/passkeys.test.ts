@@ -92,13 +92,13 @@ describe("self-hosted passkey domain", () => {
 
   it("associates the build with RAKAZO_PASSKEY_RP_ID", async () => {
     const passkeys = await load(" LivingBot.Example.org ");
-    expect(passkeys.PASSKEY_RP_ID).toBe("rakazo.example.org");
+    expect(passkeys.PASSKEY_RP_ID).toBe("livingbot.example.org");
     expect(passkeys.passkeyEntitlements(base, "ABCDE12345", pkg.build.appId)).toContain(
-      "<string>webcredentials:rakazo.example.org</string>",
+      "<string>webcredentials:livingbot.example.org</string>",
     );
   });
 
-  it.each(["https://rakazo.example.org", "localhost", "192.168.1.20", "rakazo.example.org:8443"])(
+  it.each(["https://livingbot.example.org", "localhost", "192.168.1.20", "livingbot.example.org:8443"])(
     "refuses to sign entitlements for %s",
     async (rpId) => {
       const passkeys = await load(rpId);

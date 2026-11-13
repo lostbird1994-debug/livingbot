@@ -6,13 +6,13 @@ import type {
   McpServer,
   PluginMarketplaceEntry,
   RpcOutput,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   CONNECTION_LABEL_MAX_LENGTH,
   MCP_OAUTH_CLIENT_REQUIRED,
   SUBMIT_PLUGIN_URL,
-} from "@rakazo/contracts";
-import type { PluginCategory } from "@rakazo/core";
+} from "@livingbot/contracts";
+import type { PluginCategory } from "@livingbot/core";
 import {
   buildFeaturedConnectorTiles,
   CONNECTION_CATALOG_PAGE_SIZE,
@@ -26,7 +26,7 @@ import {
   matchesWordPrefixes,
   newClientId,
   OTHER_PLUGINS,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import type { NativeStackNavigationOptions } from "expo-router";
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";

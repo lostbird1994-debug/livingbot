@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { IOSConfig, withInfoPlist, withXcodeProject } = require("expo/config-plugins");
 
-const SOURCE = path.join(__dirname, "..", "ios-intents", "RakazoIntents.swift");
+const SOURCE = path.join(__dirname, "..", "ios-intents", "LivingBotIntents.swift");
 const FILE_NAME = path.basename(SOURCE);
 
 /**
@@ -12,7 +12,7 @@ const FILE_NAME = path.basename(SOURCE);
  */
 function withAppIntents(config) {
   config = withInfoPlist(config, (config) => {
-    config.modResults.RakazoDefaultApiBase =
+    config.modResults.LivingBotDefaultApiBase =
       process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:3100";
     return config;
   });

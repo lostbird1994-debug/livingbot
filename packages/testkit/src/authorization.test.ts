@@ -6,9 +6,9 @@ import {
   ExpoPushProvider,
   FakeComposioClient,
   PrismaPushTokenStore,
-} from "@rakazo/adapters";
-import type { createApp } from "@rakazo/api/app";
-import type { appContract, Space, SpaceNavigation } from "@rakazo/contracts";
+} from "@livingbot/adapters";
+import type { createApp } from "@livingbot/api/app";
+import type { appContract, Space, SpaceNavigation } from "@livingbot/contracts";
 import {
   claimSpaceDeletionForMember,
   deleteClaimedSpaceForMember,
@@ -19,7 +19,7 @@ import {
   runAsSystem,
   runAsTenant,
   setSpaceSettingOverride,
-} from "@rakazo/db";
+} from "@livingbot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { BotIntroHarness } from "./discard-bot-intro.js";
 import { discardBotIntroFromCreate } from "./discard-bot-intro.js";
@@ -56,7 +56,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-authz-"));
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@livingbot/api/app");
     handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       encryptionKey,
@@ -81,8 +81,8 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("keeps another member's routine test run keys apart from a send's", async () => {
-    const owner = await signup(app, `routine-keys-owner-${stamp}@rakazo.test`, "Owner");
-    const peer = await signup(app, `routine-keys-peer-${stamp}@rakazo.test`, "Peer");
+    const owner = await signup(app, `routine-keys-owner-${stamp}@livingbot.test`, "Owner");
+    const peer = await signup(app, `routine-keys-peer-${stamp}@livingbot.test`, "Peer");
     const ownerActor = await rpc<Actor>(app, owner, "me");
     const peerActor = await rpc<Actor>(app, peer, "me");
     const space = await db.space.findUniqueOrThrow({ where: { id: ownerActor.spaceId } });
@@ -178,8 +178,8 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("batches routine mentions with the same user, space and archive isolation as per-bot reads", async () => {
-    const owner = await signup(app, `routine-mentions-owner-${stamp}@rakazo.test`, "Owner");
-    const peer = await signup(app, `routine-mentions-peer-${stamp}@rakazo.test`, "Peer");
+    const owner = await signup(app, `routine-mentions-owner-${stamp}@livingbot.test`, "Owner");
+    const peer = await signup(app, `routine-mentions-peer-${stamp}@livingbot.test`, "Peer");
     const ownerActor = await rpc<Actor>(app, owner, "me");
     const peerActor = await rpc<Actor>(app, peer, "me");
     const space = await db.space.findUniqueOrThrow({ where: { id: ownerActor.spaceId } });
@@ -542,10 +542,10 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("prevents one user from reading or mutating another user's resources", async () => {
-    const owner = await signup(app, `owner-authz-${stamp}@rakazo.test`, "Authorization Owner");
+    const owner = await signup(app, `owner-authz-${stamp}@livingbot.test`, "Authorization Owner");
     const intruder = await signup(
       app,
-      `intruder-authz-${stamp}@rakazo.test`,
+      `intruder-authz-${stamp}@livingbot.test`,
       "Authorization Intruder",
     );
     const ownerActor = await rpc<Actor>(app, owner, "me");
@@ -829,8 +829,8 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("hands a device's push token to the account that registers it last", async () => {
-    const first = await signup(app, `push-first-${stamp}@rakazo.test`, "Push First");
-    const second = await signup(app, `push-second-${stamp}@rakazo.test`, "Push Second");
+    const first = await signup(app, `push-first-${stamp}@livingbot.test`, "Push First");
+    const second = await signup(app, `push-second-${stamp}@livingbot.test`, "Push Second");
     const firstUser = (await rpc<Actor>(app, first, "me")).userId;
     const secondUser = (await rpc<Actor>(app, second, "me")).userId;
     const device = "ExponentPushToken[shared-device]";
@@ -854,7 +854,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   const emptyBody = { method: "POST", body: "" };
 
   it("ends the session when an older phone app signs out with an empty body", async () => {
-    const phone = await phoneSession(app, `phone-sign-out-${stamp}@rakazo.test`);
+    const phone = await phoneSession(app, `phone-sign-out-${stamp}@livingbot.test`);
     const signedOut = await app.request("/api/auth/sign-out", {
       ...emptyBody,
       headers: { ...phone.headers, "content-type": "application/json", "content-length": "0" },
@@ -864,7 +864,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("accepts the deletion-code request older apps send with no body", async () => {
-    const phone = await phoneSession(app, `phone-deletion-code-${stamp}@rakazo.test`);
+    const phone = await phoneSession(app, `phone-deletion-code-${stamp}@livingbot.test`);
     const response = await app.request("/api/auth/request-account-deletion", {
       ...emptyBody,
       headers: { ...phone.headers, "content-length": "0" },
@@ -874,7 +874,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("still rejects a malformed auth body", async () => {
-    const phone = await phoneSession(app, `phone-malformed-${stamp}@rakazo.test`);
+    const phone = await phoneSession(app, `phone-malformed-${stamp}@livingbot.test`);
     const response = await app.request("/api/auth/sign-out", {
       method: "POST",
       headers: { ...phone.headers, "content-type": "application/json" },
@@ -885,7 +885,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("marks account and RPC replies as not cacheable, including errors", async () => {
-    const email = `phone-no-store-${stamp}@rakazo.test`;
+    const email = `phone-no-store-${stamp}@livingbot.test`;
     const phone = await phoneSession(app, email);
     const rpc = (path: string, headers: Record<string, string>) =>
       app.request(`/rpc/${path}`, {
@@ -932,8 +932,8 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("uses the bearer session over another account's session cookie", async () => {
-    const a = await phoneSession(app, `phone-cookie-a-${stamp}@rakazo.test`);
-    const b = await phoneSession(app, `phone-cookie-b-${stamp}@rakazo.test`);
+    const a = await phoneSession(app, `phone-cookie-a-${stamp}@livingbot.test`);
+    const b = await phoneSession(app, `phone-cookie-b-${stamp}@livingbot.test`);
     const both = { ...b.headers, cookie: a.cookie, "content-type": "application/json" };
     const me = () =>
       app.request("/rpc/me", { method: "POST", headers: both, body: JSON.stringify({ json: {} }) });
@@ -953,7 +953,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("accepts only signed bearer tokens, and every sign-in hands one out", async () => {
-    const email = `phone-signed-${stamp}@rakazo.test`;
+    const email = `phone-signed-${stamp}@livingbot.test`;
     const phone = await phoneSession(app, email);
     const me = async (token: string) =>
       (
@@ -1015,7 +1015,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("drops a push token when the session that registered it is revoked", async () => {
-    const email = `push-sessions-${stamp}@rakazo.test`;
+    const email = `push-sessions-${stamp}@livingbot.test`;
     const phone = await signup(app, email, "Push Sessions");
     const userId = (await rpc<Actor>(app, phone, "me")).userId;
     const token = "ExponentPushToken[phone]";
@@ -1057,7 +1057,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("does not deliver a push token after its session expires without a request", async () => {
-    const email = `push-expired-${stamp}@rakazo.test`;
+    const email = `push-expired-${stamp}@livingbot.test`;
     const phone = await signup(app, email, "Push Expired");
     const userId = (await rpc<Actor>(app, phone, "me")).userId;
     const token = "ExponentPushToken[expired-session]";
@@ -1092,8 +1092,8 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("keeps approval rules private to each user in a shared Space", async () => {
-    const owner = await signup(app, `approval-owner-${stamp}@rakazo.test`, "Approval Owner");
-    const member = await signup(app, `approval-member-${stamp}@rakazo.test`, "Approval Member");
+    const owner = await signup(app, `approval-owner-${stamp}@livingbot.test`, "Approval Owner");
+    const member = await signup(app, `approval-member-${stamp}@livingbot.test`, "Approval Member");
     const ownerActor = await rpc<Actor>(app, owner, "me");
     const memberActor = await rpc<Actor>(app, member, "me");
 
@@ -1135,7 +1135,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("keeps space data and computers behind the selected space boundary", async () => {
-    const cookie = await signup(app, `spaces-${stamp}@rakazo.test`, "Space Owner");
+    const cookie = await signup(app, `spaces-${stamp}@livingbot.test`, "Space Owner");
     const original = await rpc<Actor>(app, cookie, "me");
     const originalBot = await rpc<Bot>(app, cookie, "bots/create", botInput("Open source"));
     const support = await rpc<Space>(app, cookie, "spaces/create", {
@@ -1267,12 +1267,12 @@ describeWithDatabase("API authorization and resource isolation", () => {
     expect(storedSupport?.spaceId).toBe(support.id);
     expect(storedOriginal?.computerId).not.toBe(storedSupport?.computerId);
 
-    const intruder = await signup(app, `spaces-intruder-${stamp}@rakazo.test`, "Intruder");
+    const intruder = await signup(app, `spaces-intruder-${stamp}@livingbot.test`, "Intruder");
     await expectDenied(app, intruder, "bots/list", {}, support.id);
   });
 
   it("enforces the space limit across concurrent creation requests", async () => {
-    const cookie = await signup(app, `space-limit-${stamp}@rakazo.test`, "Space Limit");
+    const cookie = await signup(app, `space-limit-${stamp}@livingbot.test`, "Space Limit");
     const actor = await rpc<Actor>(app, cookie, "me");
     const currentSpace = await handles.prisma.space.findUniqueOrThrow({
       where: { id: actor.spaceId },
@@ -1310,7 +1310,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("reuses provider credentials and selections in a new Space", async () => {
-    const cookie = await signup(app, `space-provider-copy-${stamp}@rakazo.test`, "Provider Copy");
+    const cookie = await signup(app, `space-provider-copy-${stamp}@livingbot.test`, "Provider Copy");
     const actor = await rpc<Actor>(app, cookie, "me");
     const model = await rpc<ModelCredential>(app, cookie, "models/connect", {
       provider: "copy-provider",
@@ -1390,7 +1390,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("shares model credentials and the main model across spaces until one customizes it", async () => {
-    const cookie = await signup(app, `model-defaults-${stamp}@rakazo.test`, "Model Defaults");
+    const cookie = await signup(app, `model-defaults-${stamp}@livingbot.test`, "Model Defaults");
     const actor = await rpc<Actor>(app, cookie, "me");
     const support = await rpc<Space>(app, cookie, "spaces/create", { name: "Support models" });
     const expectSpaceModelDefault = async (spaceId: string, provider: string, modelId: string) => {
@@ -1533,7 +1533,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("deletes an owned non-default space with all of its content", async () => {
-    const cookie = await signup(app, `space-delete-${stamp}@rakazo.test`, "Space Delete");
+    const cookie = await signup(app, `space-delete-${stamp}@livingbot.test`, "Space Delete");
     const actor = await rpc<Actor>(app, cookie, "me");
     const keepBot = await rpc<Bot>(app, cookie, "bots/create", botInput("Keep bot"));
     const keepRoutine = await rpc<{ id: string }>(
@@ -1594,7 +1594,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
       raw(app, cookie, "spaces/remove", { spaceId: "missing-space" }),
     ).resolves.toMatchObject({ status: 404 });
 
-    const intruder = await signup(app, `space-delete-intruder-${stamp}@rakazo.test`, "Intruder");
+    const intruder = await signup(app, `space-delete-intruder-${stamp}@livingbot.test`, "Intruder");
     await expect(raw(app, intruder, "spaces/remove", { spaceId: busy.id })).resolves.toMatchObject({
       status: 404,
     });
@@ -1636,7 +1636,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("lets only the owner rename or delete a shared space, removing its members", async () => {
-    const cookie = await signup(app, `space-shared-${stamp}@rakazo.test`, "Space Owner");
+    const cookie = await signup(app, `space-shared-${stamp}@livingbot.test`, "Space Owner");
     const shared = await rpc<Space>(app, cookie, "spaces/create", { name: "Shared" });
     const ownerBot = await rpc<Bot>(app, cookie, "bots/create", botInput("Shared bot"), shared.id);
     const sharedRow = await handles.prisma.space.findUniqueOrThrow({
@@ -1645,7 +1645,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
     });
     const memberCookie = await signup(
       app,
-      `space-shared-member-${stamp}@rakazo.test`,
+      `space-shared-member-${stamp}@livingbot.test`,
       "Space Member",
     );
     const memberActor = await rpc<Actor>(app, memberCookie, "me");
@@ -1730,7 +1730,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("keeps a bot's sandbox handle when its teardown fails, and finishes on retry", async () => {
-    const cookie = await signup(app, `space-strict-${stamp}@rakazo.test`, "Strict Teardown");
+    const cookie = await signup(app, `space-strict-${stamp}@livingbot.test`, "Strict Teardown");
     const actor = await rpc<Actor>(app, cookie, "me");
     const space = await rpc<Space>(app, cookie, "spaces/create", { name: "Strict" });
     const bot = await rpc<Bot>(app, cookie, "bots/create", botInput("Sandboxed"), space.id);
@@ -1787,7 +1787,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("resumes a stale space deletion and rejects one still in progress", async () => {
-    const cookie = await signup(app, `space-resume-${stamp}@rakazo.test`, "Space Resume");
+    const cookie = await signup(app, `space-resume-${stamp}@livingbot.test`, "Space Resume");
     const actor = await rpc<Actor>(app, cookie, "me");
     const space = await rpc<Space>(app, cookie, "spaces/create", { name: "Resume" });
     const bot = await rpc<Bot>(app, cookie, "bots/create", botInput("Resume bot"), space.id);
@@ -1817,7 +1817,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("keeps the Better Auth organization routes closed to product sessions", async () => {
-    const cookie = await signup(app, `org-routes-${stamp}@rakazo.test`, "Org Routes");
+    const cookie = await signup(app, `org-routes-${stamp}@livingbot.test`, "Org Routes");
     const actor = await rpc<Actor>(app, cookie, "me");
     const marker = await rpc<Space>(app, cookie, "spaces/create", { name: "Marker" });
 
@@ -1850,7 +1850,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("blocks bot creation after space deletion is claimed", async () => {
-    const cookie = await signup(app, `space-race-${stamp}@rakazo.test`, "Space Race");
+    const cookie = await signup(app, `space-race-${stamp}@livingbot.test`, "Space Race");
     const actor = await rpc<Actor>(app, cookie, "me");
     const space = await rpc<Space>(app, cookie, "spaces/create", { name: "Concurrent" });
     await asSystem(handles.prisma).computer.create({
@@ -1952,7 +1952,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("keeps a space claimed after ambiguous sandbox teardown failure", async () => {
-    const cookie = await signup(app, `space-teardown-${stamp}@rakazo.test`, "Teardown");
+    const cookie = await signup(app, `space-teardown-${stamp}@livingbot.test`, "Teardown");
     const actor = await rpc<Actor>(app, cookie, "me");
     const space = await rpc<Space>(app, cookie, "spaces/create", { name: "Teardown" });
     await asSystem(handles.prisma).computer.create({
@@ -2010,7 +2010,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("times out a hung sandbox teardown without unblocking the space", async () => {
-    const cookie = await signup(app, `space-deadline-${stamp}@rakazo.test`, "Deadline");
+    const cookie = await signup(app, `space-deadline-${stamp}@livingbot.test`, "Deadline");
     const actor = await rpc<Actor>(app, cookie, "me");
     const space = await rpc<Space>(app, cookie, "spaces/create", { name: "Deadline" });
     await asSystem(handles.prisma).computer.create({
@@ -2064,7 +2064,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("keeps compatible headers encrypted and out of DTOs across reconnects", async () => {
-    const cookie = await signup(app, `model-headers-${stamp}@rakazo.test`, "Model Headers");
+    const cookie = await signup(app, `model-headers-${stamp}@livingbot.test`, "Model Headers");
     const actor = await rpc<Actor>(app, cookie, "me");
     const connection = {
       provider: "openai-compatible",
@@ -2104,7 +2104,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("validates custom thinking against the saved connection capability", async () => {
-    const cookie = await signup(app, `custom-thinking-${stamp}@rakazo.test`, "Custom Thinking");
+    const cookie = await signup(app, `custom-thinking-${stamp}@livingbot.test`, "Custom Thinking");
     const bot = await rpc<Bot>(app, cookie, "bots/create", botInput("Thinking Bot"));
     const connection = {
       provider: "openai-compatible",
@@ -2154,7 +2154,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("validates per-bot model overrides against connected providers and catalog", async () => {
-    const cookie = await signup(app, `bot-model-${stamp}@rakazo.test`, "Bot Model");
+    const cookie = await signup(app, `bot-model-${stamp}@livingbot.test`, "Bot Model");
     const bot = await rpc<
       Bot & {
         modelProvider: string | null;
@@ -2212,7 +2212,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("binds a new default to the space preference credential, not a newer unused duplicate", async () => {
-    const cookie = await signup(app, `model-duplicates-${stamp}@rakazo.test`, "Model Duplicates");
+    const cookie = await signup(app, `model-duplicates-${stamp}@livingbot.test`, "Model Duplicates");
     const actor = await rpc<Actor>(app, cookie, "me");
     const olderSecret = await db.secret.create({
       data: {
@@ -2275,7 +2275,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("never hands out session tokens and asks for the password before account deletion", async () => {
-    const email = `sessions-${stamp}@rakazo.test`;
+    const email = `sessions-${stamp}@livingbot.test`;
     const cookie = await signup(app, email, "Sessions");
     const second = await app.request("/api/auth/sign-in/email", {
       method: "POST",
@@ -2307,8 +2307,8 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("shows an organization's audit log only to its owners and admins, past deleted spaces", async () => {
-    const owner = await signup(app, `audit-owner-${stamp}@rakazo.test`, "Audit Owner");
-    const outsider = await signup(app, `audit-outsider-${stamp}@rakazo.test`, "Audit Outsider");
+    const owner = await signup(app, `audit-owner-${stamp}@livingbot.test`, "Audit Owner");
+    const outsider = await signup(app, `audit-outsider-${stamp}@livingbot.test`, "Audit Outsider");
     const account = await rpc<Actor>(app, owner, "me");
     const space = await rpc<Space>(app, owner, "spaces/create", { name: "Client A" });
     await rpc(app, owner, "spaces/remove", { spaceId: space.id });
@@ -2333,8 +2333,8 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("denies server administration to every app account, including a stored former owner", async () => {
-    const formerOwner = await signup(app, `former-owner-${stamp}@rakazo.test`, "Test Account");
-    const other = await signup(app, `ordinary-${stamp}@rakazo.test`, "Other Account");
+    const formerOwner = await signup(app, `former-owner-${stamp}@livingbot.test`, "Test Account");
+    const other = await signup(app, `ordinary-${stamp}@livingbot.test`, "Other Account");
     const account = await rpc<Actor>(app, formerOwner, "me");
     await handles.prisma.deploymentSettings.update({
       where: { id: "default" },

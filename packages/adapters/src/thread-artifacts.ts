@@ -5,24 +5,24 @@ import type {
   ArtifactStore,
   ComputerRef,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import type { ComputerMode, MessageBlock } from "@rakazo/contracts";
+} from "@livingbot/adapter-kit";
+import type { ComputerMode, MessageBlock } from "@livingbot/contracts";
 import {
   ARTIFACT_DESCRIPTION_MAX_LENGTH,
   ATTACHMENT_MAX_BYTES,
   ATTACHMENT_MAX_COUNT,
   attachmentSizeLabel,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   attachmentExtensionForMimeType,
   attachmentFileName,
   inferAttachmentMimeType,
   messageBlockForArtifact,
   validateAttachmentMimeType,
-} from "@rakazo/core";
-import type { Artifact, Prisma, PrismaClient } from "@rakazo/db";
-import { withResolvedArtifactVersion } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/core";
+import type { Artifact, Prisma, PrismaClient } from "@livingbot/db";
+import { withResolvedArtifactVersion } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { resolveBotWorkspacePath } from "./computer-support.js";
 
 export type MaterializedThreadFile = {

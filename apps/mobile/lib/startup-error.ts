@@ -1,4 +1,4 @@
-import { sanitizedError } from "@rakazo/logging/monitoring";
+import { sanitizedError } from "@livingbot/logging/monitoring";
 import type * as Application from "expo-application";
 import { API_BASE_STORAGE_KEY, DEFAULT_API } from "./server-config";
 

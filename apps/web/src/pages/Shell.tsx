@@ -5,8 +5,8 @@ import type {
   SpaceMemoryConfig,
   ThreadMessage,
   VoiceStatus,
-} from "@rakazo/contracts";
-import { UPSTREAM_UPDATES_ENABLED } from "@rakazo/contracts";
+} from "@livingbot/contracts";
+import { UPSTREAM_UPDATES_ENABLED } from "@livingbot/contracts";
 import {
   answerableAskMessageIds,
   channelMessageSender,
@@ -17,11 +17,11 @@ import {
   isActive,
   isRunWorking,
   memberName,
-} from "@rakazo/core";
-import { fetchFresh, writeSaved } from "@rakazo/core/query";
-import type { GroupAvatarMember } from "@rakazo/ui-web";
-import { Button } from "@rakazo/ui-web";
-import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
+} from "@livingbot/core";
+import { fetchFresh, writeSaved } from "@livingbot/core/query";
+import type { GroupAvatarMember } from "@livingbot/ui-web";
+import { Button } from "@livingbot/ui-web";
+import { useIsMobile } from "@livingbot/ui-web/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { Lock, Monitor, Moon, Palette, Plug, Plus, ScrollText, Sun, Users } from "lucide-react";
 import {

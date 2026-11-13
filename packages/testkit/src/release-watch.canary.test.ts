@@ -8,8 +8,8 @@ import {
   githubToolResultHasSeededRelease,
   RELEASE_WATCH_GITHUB_TOOL_NAMES,
   resolveReleaseWatchEvalModelId,
-} from "@rakazo/adapters";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
+} from "@livingbot/adapters";
+import { loadRootEnv } from "@livingbot/core/node/load-root-env";
 import { afterAll, describe, expect, it } from "vitest";
 import { sessionCookieHeader } from "./index.js";
 
@@ -38,7 +38,7 @@ describeLive("live release-watch eval (GPT 5.6 Luna + GitHub emulator)", () => {
     const { modelId, label } = resolveReleaseWatchEvalModelId(process.env);
     process.env.PI_DEFAULT_MODEL = modelId;
 
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@livingbot/api/app");
     dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-release-watch-"));
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
@@ -54,7 +54,7 @@ describeLive("live release-watch eval (GPT 5.6 Luna + GitHub emulator)", () => {
       method: "POST",
       headers: { "content-type": "application/json", origin: "http://127.0.0.1:5173" },
       body: JSON.stringify({
-        email: `release-watch-${stamp}@rakazo.test`,
+        email: `release-watch-${stamp}@livingbot.test`,
         password: "password12",
         name: "Release Watch",
       }),

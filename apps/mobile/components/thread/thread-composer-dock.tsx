@@ -1,4 +1,4 @@
-import { replyAttachment } from "@rakazo/core";
+import { replyAttachment } from "@livingbot/core";
 import type { ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import { Image, Platform, Pressable, Text, View } from "react-native";

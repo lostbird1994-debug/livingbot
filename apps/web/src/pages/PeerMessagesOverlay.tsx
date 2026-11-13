@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
-import type { BotAvatarSet } from "@rakazo/contracts";
-import { loadPeerHistory, peerConversations } from "@rakazo/core";
+import { ChatMarkdown } from "@livingbot/chat-ui/web";
+import type { BotAvatarSet } from "@livingbot/contracts";
+import { loadPeerHistory, peerConversations } from "@livingbot/core";
 import {
   BotAvatar,
   Button,
@@ -10,7 +10,7 @@ import {
   DialogContent,
   DialogTitle,
   Spinner,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import { useLayoutEffect, useMemo, useRef } from "react";

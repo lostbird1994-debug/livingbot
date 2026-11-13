@@ -1,4 +1,4 @@
-import type { ConnectionCatalogItem, MessageBlock } from "@rakazo/contracts";
+import type { ConnectionCatalogItem, MessageBlock } from "@livingbot/contracts";
 import { featuredConnectorProvidersMatch } from "./featured-connectors.js";
 
 export type AppConnectBlock = Extract<MessageBlock, { kind: "app_connect" }>;

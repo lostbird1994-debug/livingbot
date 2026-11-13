@@ -1,5 +1,5 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import { REPLY_QUOTE_MAX_LENGTH } from "@rakazo/contracts";
+import type { MessageBlock } from "@livingbot/contracts";
+import { REPLY_QUOTE_MAX_LENGTH } from "@livingbot/contracts";
 import { describe, expect, it } from "vitest";
 import {
   deriveMessageQuote,

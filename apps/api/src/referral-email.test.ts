@@ -1,4 +1,4 @@
-import type { TransactionalEmailProvider } from "@rakazo/adapter-kit";
+import type { TransactionalEmailProvider } from "@livingbot/adapter-kit";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { unsubscribeUrl } from "./marketing-email.js";
 import { sendReferralEmails, startReferralEmails } from "./referral-email.js";

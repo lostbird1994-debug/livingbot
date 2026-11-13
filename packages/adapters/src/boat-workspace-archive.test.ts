@@ -3,7 +3,7 @@ import { createReadStream } from "node:fs";
 import { chmod, link, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { WorkspaceExportLimits } from "@rakazo/adapter-kit";
+import type { WorkspaceExportLimits } from "@livingbot/adapter-kit";
 import { afterEach, describe, expect, it } from "vitest";
 import { archiveBoatWorkspaceCommand } from "./boat-sandbox.js";
 import { readWorkspaceArchive } from "./workspace-archive.js";

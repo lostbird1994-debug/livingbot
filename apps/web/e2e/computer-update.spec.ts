@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { ComputerUpdate } from "@rakazo/contracts";
+import type { ComputerUpdate } from "@livingbot/contracts";
 import {
   activeBotId,
   captureScreenshot,
@@ -12,7 +12,7 @@ test("computer maintenance shows durable background progress and failure recover
   page,
 }, testInfo) => {
   await page.addInitScript(() => localStorage.setItem("rakazo.uiAppearance", "dark"));
-  await signup(page, `computer-update-${Date.now()}@rakazo.test`, "password12", "Computer Update");
+  await signup(page, `computer-update-${Date.now()}@livingbot.test`, "password12", "Computer Update");
   await completeOnboarding(page);
   const botId = activeBotId(page);
   let updates: ComputerUpdate[] = [];

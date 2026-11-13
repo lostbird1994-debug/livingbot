@@ -3,8 +3,8 @@ import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
-import type { PortableFile } from "@rakazo/adapter-kit";
-import { WorkspaceTooLargeError } from "@rakazo/adapter-kit";
+import type { PortableFile } from "@livingbot/adapter-kit";
+import { WorkspaceTooLargeError } from "@livingbot/adapter-kit";
 import { afterEach, describe, expect, it } from "vitest";
 import { readWorkspaceArchive } from "./workspace-archive.js";
 import type { TarEntry } from "./workspace-archive.test-support.js";

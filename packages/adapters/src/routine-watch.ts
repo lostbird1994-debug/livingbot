@@ -9,20 +9,20 @@ import type {
   PaymentWalletProvider,
   SandboxProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { routineJobKey, routineWakeupJob } from "@rakazo/adapter-kit";
-import type { RoutineWatch, RoutineWatchState } from "@rakazo/contracts";
-import { RoutineWatchSchema, RoutineWatchStateSchema } from "@rakazo/contracts";
-import type { ActionApprovalRule } from "@rakazo/core";
-import { connectorKindFromToolName, redactSecrets, watchToolRefusal } from "@rakazo/core";
-import type { ComputerMode, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@livingbot/adapter-kit";
+import { routineJobKey, routineWakeupJob } from "@livingbot/adapter-kit";
+import type { RoutineWatch, RoutineWatchState } from "@livingbot/contracts";
+import { RoutineWatchSchema, RoutineWatchStateSchema } from "@livingbot/contracts";
+import type { ActionApprovalRule } from "@livingbot/core";
+import { connectorKindFromToolName, redactSecrets, watchToolRefusal } from "@livingbot/core";
+import type { ComputerMode, PrismaClient, ThreadEvents } from "@livingbot/db";
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
   listApprovalRules,
   parseComputerMode,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { loadLoginPasswordRedactions, shellCommandEnvironment } from "./bot-secrets.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import { ComputerBusyError, provisionComputer } from "./computer-lifecycle.js";

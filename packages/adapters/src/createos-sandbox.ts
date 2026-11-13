@@ -14,13 +14,13 @@ import type {
   SandboxProvider,
   ScreenRequest,
   ScreenSession,
-} from "@rakazo/adapter-kit";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
+} from "@livingbot/adapter-kit";
+import { boundedSandboxCommandTimeoutMs } from "@livingbot/core";
 import {
   browserProfilePathForScreen,
   DEFAULT_DESKTOP_ENV,
   quiesceBrowserProfilesCommand,
-} from "@rakazo/core/node/desktop-runtime";
+} from "@livingbot/core/node/desktop-runtime";
 import { computerIdleSleepEnabled, sandboxIdleMs } from "./computer-idle.js";
 import { screenSessionKey } from "./computer-screens.js";
 import {
@@ -1184,7 +1184,7 @@ print(json.dumps(out))
         `--user-data-dir=${profileQuoted}`,
         "--new-tab",
         shellQuote(uri),
-        ">/tmp/rakazo-chrome.log 2>&1 </dev/null &",
+        ">/tmp/livingbot-chrome.log 2>&1 </dev/null &",
       ].join(" "),
       "else",
       `python3 -c ${shellQuote(CHROME_STOP_PROFILE_SCRIPT)} ${profileQuoted}`,
@@ -1217,7 +1217,7 @@ print(json.dumps(out))
         "--remote-debugging-port=$debug_port",
         `--user-data-dir=${profileQuoted}`,
         shellQuote(uri),
-        ">/tmp/rakazo-chrome.log 2>&1 </dev/null &",
+        ">/tmp/livingbot-chrome.log 2>&1 </dev/null &",
       ].join(" "),
       "probe=0",
       'while [ "$probe" -lt 8 ]; do',

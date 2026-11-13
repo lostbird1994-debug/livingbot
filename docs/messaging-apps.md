@@ -16,13 +16,13 @@ there.
 3. Send the code shown from that app within 10 minutes.
 
 From then on, messages you send there go to that bot's chat, and its replies come back to you there.
-The conversation is the same one you see in the Rakazo app.
+The conversation is the same one you see in the LivingBot app.
 
 To stop, choose **Unlink**.
 
 ## Slack
 
-Choose **Connect** next to Slack to add Rakazo to your Slack workspace, then **Link DMs** so direct
+Choose **Connect** next to Slack to add LivingBot to your Slack workspace, then **Link DMs** so direct
 messages reach your bot.
 
 A [routine](./routines.md) can also start from a **Slack message**.

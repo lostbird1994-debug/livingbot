@@ -1,5 +1,5 @@
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
-import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo/contracts";
+import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@livingbot/contracts";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { declaredVisionModelIds } from "./model-modalities.js";
 import type * as ModelVision from "./model-vision.js";

@@ -1,5 +1,5 @@
-import type { JobPublisher } from "@rakazo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+import type { JobPublisher } from "@livingbot/adapter-kit";
+import type { PrismaClient, ThreadEvents } from "@livingbot/db";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FleetDeps, FleetPrepareDeps, FleetRun } from "./fleet-tools.js";
 import {

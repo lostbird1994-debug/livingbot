@@ -1,13 +1,13 @@
 import { RPCHandler } from "@orpc/server/fetch";
-import type { Actor } from "@rakazo/contracts";
-import { encodeLoginSecret } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { Actor } from "@livingbot/contracts";
+import { encodeLoginSecret } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";
 
 const events = vi.hoisted(() => ({ record: vi.fn() }));
-vi.mock("@rakazo/db", async (original) => ({
+vi.mock("@livingbot/db", async (original) => ({
   ...(await original<Record<string, unknown>>()),
   recordSecurityEvent: events.record,
 }));
@@ -20,7 +20,7 @@ type Row = Record<string, unknown>;
 const actor = {
   spaceId: "space-1",
   userId: "user-1",
-  email: "user@rakazo.test",
+  email: "user@livingbot.test",
   isDeploymentOwner: true,
 } satisfies Actor;
 
@@ -124,7 +124,7 @@ function botSecretDeps(seed: Row[] = []) {
       screenProxySecret: "fake-test-secret",
       sandboxProvider: "fake",
     },
-    dataDir: "/tmp/rakazo-router-test",
+    dataDir: "/tmp/livingbot-router-test",
   } as unknown as RouterDeps;
   const handler = new RPCHandler(createRouter(deps));
   async function call(path: string, input: unknown) {

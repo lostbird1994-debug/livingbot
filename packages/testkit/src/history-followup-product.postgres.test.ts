@@ -94,7 +94,7 @@ describe.skipIf(!enabled)("persisted source-verified history followups", () => {
       });
       const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-history-followup-"));
       try {
-        const { createApp } = await import("@rakazo/api/app");
+        const { createApp } = await import("@livingbot/api/app");
         const result = await runTrial(
           {
             id: "synthetic-source-verified-followups",

@@ -15,11 +15,11 @@
 
   <application>
     <service
-      android:name=".RakazoNotificationService"
+      android:name=".LivingBotNotificationService"
       android:exported="false"
       android:foregroundServiceType="remoteMessaging" />
     <service
-      android:name=".RakazoCallService"
+      android:name=".LivingBotCallService"
       android:exported="false"
       android:foregroundServiceType="microphone" />
   </application>

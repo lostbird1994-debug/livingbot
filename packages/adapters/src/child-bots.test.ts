@@ -20,11 +20,11 @@ import type {
   CommandRequest,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { SandboxDamagedError } from "@rakazo/adapter-kit";
-import { browserProfilePathForScreen } from "@rakazo/core/node/desktop-runtime";
-import type { createRepos, PrismaClient } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+} from "@livingbot/adapter-kit";
+import { SandboxDamagedError } from "@livingbot/adapter-kit";
+import { browserProfilePathForScreen } from "@livingbot/core/node/desktop-runtime";
+import type { createRepos, PrismaClient } from "@livingbot/db";
+import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { describe, expect, it, vi } from "vitest";
 import {
   archiveBot,
@@ -138,7 +138,7 @@ describe("spawned bot creation", () => {
       name: "Painter",
       threadId: "thread-2",
     });
-    const createReposSpy = vi.spyOn(await import("@rakazo/db"), "createRepos").mockReturnValue({
+    const createReposSpy = vi.spyOn(await import("@livingbot/db"), "createRepos").mockReturnValue({
       createBot,
     } as unknown as ReturnType<typeof createRepos>);
 
@@ -690,7 +690,7 @@ describe("destroyBot", () => {
           sandbox: {} as SandboxProvider,
           home: {} as AgentHomeStore,
           jobs: { cancel: vi.fn() } as unknown as JobPublisher,
-          dataDir: "/tmp/rakazo-destroy-bot-test",
+          dataDir: "/tmp/livingbot-destroy-bot-test",
         },
         {
           id: "bot-1",

@@ -44,8 +44,8 @@ describe("observing an extra display", () => {
     // A display number no other test uses, so only this test's files are counted.
     const displayNumber = 90_000 + process.pid;
     const owned = () =>
-      readdirSync("/tmp/rakazo").filter((name) => name.startsWith(`observe-${displayNumber}-`));
-    mkdirSync("/tmp/rakazo", { recursive: true });
+      readdirSync("/tmp/livingbot").filter((name) => name.startsWith(`observe-${displayNumber}-`));
+    mkdirSync("/tmp/livingbot", { recursive: true });
     const observe = (char: string) =>
       run("sh", ["-c", observeExtraDisplayCommand({ display: ":7", displayNumber })], {
         env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, DISPLAY_CHAR: char },

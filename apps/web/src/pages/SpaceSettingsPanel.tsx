@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { SpaceSetting } from "@rakazo/contracts";
-import { Button, Input } from "@rakazo/ui-web";
+import type { SpaceSetting } from "@livingbot/contracts";
+import { Button, Input } from "@livingbot/ui-web";
 import { useEffect, useId, useState } from "react";
 import { InheritanceBadge } from "../components/InheritanceBadge";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";

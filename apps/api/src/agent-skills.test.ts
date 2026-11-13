@@ -1,13 +1,13 @@
-import type { Actor } from "@rakazo/contracts";
-import { buildSkillMd, parseSkillMd } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+import type { Actor } from "@livingbot/contracts";
+import { buildSkillMd, parseSkillMd } from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
 import { describe, expect, it, vi } from "vitest";
 import { createAgentSkillsService, resolveSkillContent } from "./agent-skills.js";
 
 const actor: Actor = {
   spaceId: "space-1",
   userId: "user-1",
-  email: "user@rakazo.test",
+  email: "user@livingbot.test",
   isDeploymentOwner: true,
 };
 

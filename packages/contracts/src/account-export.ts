@@ -2,7 +2,7 @@ import * as z from "zod";
 import { Id, IsoDate } from "./ids.js";
 
 /**
- * A whole account as one zip, to move between Rakazo installs (Cloud to self-hosted and back).
+ * A whole account as one zip, to move between LivingBot installs (Cloud to self-hosted and back).
  *
  * - `manifest.json` comes first: the format, version and the exported spaces.
  * - `spaces/<spaceId>/records.jsonl`: one `AccountExportRecord` per line. A record only refers to

@@ -9,8 +9,8 @@ import type {
   ScreenRequest,
   ScreenSession,
   TerminalRequest,
-} from "@rakazo/adapter-kit";
-import type { DesktopEnvironment } from "@rakazo/core/node/desktop-runtime";
+} from "@livingbot/adapter-kit";
+import type { DesktopEnvironment } from "@livingbot/core/node/desktop-runtime";
 import {
   BROWSER_APPLICATIONS,
   browserLauncherPath,
@@ -24,7 +24,7 @@ import {
   screenPorts,
   shellQuote,
   stopAllDesktopBrowsersCommand,
-} from "@rakazo/core/node/desktop-runtime";
+} from "@livingbot/core/node/desktop-runtime";
 import {
   BrowserStoppedReleaseError,
   ComputerScreenUnavailableError,
@@ -278,7 +278,7 @@ function browserActionCommand(
         ? (action.uri ?? "about:blank")
         : undefined;
   if (browser !== undefined) {
-    return `nohup ${browserLauncherPath(layout.displayNumber)} ${shellQuote(browser)} </dev/null >/tmp/rakazo/browser-open-${layout.displayNumber}.log 2>&1 &`;
+    return `nohup ${browserLauncherPath(layout.displayNumber)} ${shellQuote(browser)} </dev/null >/tmp/livingbot/browser-open-${layout.displayNumber}.log 2>&1 &`;
   }
   const workspace = env.workspaceDir;
   return `cd ${shellQuote(workspace)}\n${extraDisplayActionCommand(layout, action.kind === "open" ? { ...action, path: workspacePath(workspace, action.path) } : action)}`;
@@ -323,7 +323,7 @@ function focusOrLaunchActionCommand(
   // Like rakazo-focus-or-launch, the launch never adopts the app's lifetime: a GUI that stays
   // up must not hold the command open, and one that exits at once with an error still fails.
   const launch = browser
-    ? `nohup ${browserLauncherPath(layout.displayNumber)} ${shellQuote(action.uri ?? "about:blank")} </dev/null >/tmp/rakazo/browser-open-${layout.displayNumber}.log 2>&1 &`
+    ? `nohup ${browserLauncherPath(layout.displayNumber)} ${shellQuote(action.uri ?? "about:blank")} </dev/null >/tmp/livingbot/browser-open-${layout.displayNumber}.log 2>&1 &`
     : `DISPLAY=${layout.display} python3 -c ${shellQuote(FOCUS_LAUNCH_PROBE)} ${quotedApp}${quotedArg} || exit $?`;
   if (!browser && !binary) return launch;
   const classCase = browser ? CHROME_WM_CLASSES : binary.toLowerCase();
@@ -385,7 +385,7 @@ const FIND_MISSING_DESKTOP_TOOLS = [
 ];
 
 /**
- * Same as infra/sandboxes/computer/browser-policy.json. Rakazo keeps credentials itself, so
+ * Same as infra/sandboxes/computer/browser-policy.json. LivingBot keeps credentials itself, so
  * the browser's save-password, address, and card prompts only cover the page.
  */
 export const BROWSER_POLICY = JSON.stringify({
@@ -433,7 +433,7 @@ export const PREPARE_LINUX_DESKTOP = [
 export const INSTALL_LINUX_BROWSER = [
   "if ! command -v google-chrome >/dev/null && ! command -v chromium >/dev/null; then",
   '  if [ "$(id -u)" -eq 0 ]; then root=""; else root="sudo -n"; fi',
-  "  package=$(mktemp /tmp/rakazo-chrome-XXXXXX.deb)",
+  "  package=$(mktemp /tmp/livingbot-chrome-XXXXXX.deb)",
   "  trap 'rm -f \"$package\"' EXIT",
   '  curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o "$package"',
   '  $root env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "$package"',

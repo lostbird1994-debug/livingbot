@@ -145,7 +145,7 @@ COPY --chmod=755 rakazo-browser /usr/local/bin/rakazo-browser
 COPY --chmod=755 rakazo-focus-or-launch /usr/local/bin/rakazo-focus-or-launch
 COPY --chmod=755 rakazo-page-browser /usr/local/bin/rakazo-page-browser
 COPY --chmod=644 rakazo-browser.desktop /usr/share/applications/rakazo-browser.desktop
-# Rakazo keeps credentials itself; the browser's save prompts would cover pages.
+# LivingBot keeps credentials itself; the browser's save prompts would cover pages.
 COPY --chmod=644 browser-policy.json /etc/chromium/policies/managed/rakazo-browser.json
 COPY --chmod=644 browser-policy.json /etc/brave/policies/managed/rakazo-browser.json
 COPY --chmod=644 fluxbox.init /etc/rakazo/fluxbox/init
@@ -169,8 +169,8 @@ EXPOSE 7070 6080 6081 6082 6083 6084 6085 6086 6087 6088 6089 6090 6091 6092 609
 # Docker exec does not inherit PID 1's exports, so every process gets the same
 # identity lookup. Startup creates these private files for the effective UID/GID.
 ENV LD_PRELOAD=/usr/local/lib/libnss_wrapper.so \
-    NSS_WRAPPER_PASSWD=/tmp/rakazo-nss/passwd \
-    NSS_WRAPPER_GROUP=/tmp/rakazo-nss/group
+    NSS_WRAPPER_PASSWD=/tmp/livingbot-nss/passwd \
+    NSS_WRAPPER_GROUP=/tmp/livingbot-nss/group
 USER 1000:1000
 # Start Bash without the wrapper; user-env enables it once both files exist.
 CMD ["/usr/bin/env", "-u", "LD_PRELOAD", "/usr/local/bin/rakazo-computer"]

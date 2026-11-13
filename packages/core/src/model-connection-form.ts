@@ -6,7 +6,7 @@ import type {
   ModelHeaderRow,
   SettingsScope,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   DEFAULT_MODEL_CONTEXT_WINDOW,
   isCloudflareModelProvider,
@@ -18,7 +18,7 @@ import {
   parseModelMaxImagesPerPrompt,
   parseModelMaxTokens,
   savedCompatibleEndpointMatches,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   clampCatalogThinkingLevel,
   compatibleThinkingLevels,

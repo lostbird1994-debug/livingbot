@@ -1,4 +1,4 @@
-import type { AgentRunRequest, AgentRuntime } from "@rakazo/adapter-kit";
+import type { AgentRunRequest, AgentRuntime } from "@livingbot/adapter-kit";
 import { expect, it, vi } from "vitest";
 import { runCachePrefixProbe } from "./cache-probe.js";
 

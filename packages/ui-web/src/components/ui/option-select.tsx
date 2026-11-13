@@ -1,4 +1,4 @@
-import { cn } from "@rakazo/ui-web/lib/utils";
+import { cn } from "@livingbot/ui-web/lib/utils";
 import {
   Select,
   SelectContent,

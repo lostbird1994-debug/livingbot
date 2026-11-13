@@ -1,5 +1,5 @@
 import type * as TimersPromises from "node:timers/promises";
-import type { ComputerRef, ProcessEvent } from "@rakazo/adapter-kit";
+import type { ComputerRef, ProcessEvent } from "@livingbot/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import { isSandboxGoneError } from "./sandbox-errors.js";
 import { assertSandboxWorkspaceContract, provisionPrepared } from "./sandbox-test-support.js";

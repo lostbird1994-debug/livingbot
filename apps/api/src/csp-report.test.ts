@@ -1,6 +1,6 @@
-import { CSP_REPORT_PATH } from "@rakazo/contracts/content-security-policy";
-import type { TestSink } from "@rakazo/logging";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+import { CSP_REPORT_PATH } from "@livingbot/contracts/content-security-policy";
+import type { TestSink } from "@livingbot/logging";
+import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cspReportRoutes, MAX_CSP_REPORT_BYTES, parseCspReports } from "./csp-report.js";
 

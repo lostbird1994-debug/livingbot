@@ -110,7 +110,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Your model provider": "Dein Modellanbieter",
   "Connect a model in Settings before running bots.":
     "Verbinde ein Modell in den Einstellungen, bevor du Bots ausführst.",
-  "Connect your own API key in Models or choose Rakazo credits in Billing.":
+  "Connect your own API key in Models or choose LivingBot credits in Billing.":
     "Verbinde deinen eigenen API-Schlüssel unter Modelle oder wähle LivingBot-Guthaben unter Abrechnung.",
   "The model provider returned an error.": "Der Modellanbieter hat einen Fehler zurückgegeben.",
   "{provider} is rate limiting requests. Try again shortly.":
@@ -1003,13 +1003,13 @@ export const DE_MESSAGES: Record<string, string> = {
   Subscribe: "Abonnieren",
   "Monthly credits expire at renewal. Top-ups do not expire.":
     "Monatliches Guthaben verfällt bei Verlängerung. Einmalige Aufladungen verfallen nicht.",
-  "Use Rakazo credits": "LivingBot-Guthaben verwenden",
+  "Use LivingBot credits": "LivingBot-Guthaben verwenden",
   "Choose a plan": "Tarif wählen",
   "Change plan": "Tarif ändern",
   Plan: "Tarif",
   None: "Keiner",
   "Free trial": "Kostenlose Testphase",
-  "Rakazo credits": "LivingBot-Guthaben",
+  "LivingBot credits": "LivingBot-Guthaben",
   "Free until": "Kostenlos bis",
   Ends: "Endet am",
   Renews: "Verlängert sich am",

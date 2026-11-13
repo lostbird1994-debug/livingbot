@@ -8,16 +8,16 @@ import type {
   PurchaseCredentialKind,
   PurchaseSnapshot,
   PurchaseStatus,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import {
   PaymentWalletDisconnected,
   PaymentWalletRequestRejected,
   purchasePollJob,
-} from "@rakazo/adapter-kit";
-import type { PurchaseCardField } from "@rakazo/contracts";
-import { PurchaseIdInput, PurchaseRequestInput } from "@rakazo/contracts";
-import type { Purchase } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/adapter-kit";
+import type { PurchaseCardField } from "@livingbot/contracts";
+import { PurchaseIdInput, PurchaseRequestInput } from "@livingbot/contracts";
+import type { Purchase } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import type { PaymentWalletDeps } from "./payment-wallets.js";
 import { withPaymentWalletCredential } from "./payment-wallets.js";
 import { deleteSecretBestEffort } from "./secret-store-factory.js";

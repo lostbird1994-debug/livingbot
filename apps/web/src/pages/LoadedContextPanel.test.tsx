@@ -30,7 +30,7 @@ vi.mock("./KnowledgeSection", () => ({
   LoadedMemoryEditor: () => <button type="button">Edit full document</button>,
 }));
 vi.mock("./BotRoleCardEditor", () => ({ BotRoleCardEditor: () => <div>Role editor</div> }));
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@livingbot/ui-web", () => ({
   Button: ({
     variant: _variant,
     size: _size,

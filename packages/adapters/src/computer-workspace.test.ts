@@ -14,9 +14,9 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { CommandRequest, ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
-import { SandboxDamagedError } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
+import type { CommandRequest, ComputerRef, SandboxProvider } from "@livingbot/adapter-kit";
+import { SandboxDamagedError } from "@livingbot/adapter-kit";
+import type { PrismaClient } from "@livingbot/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   checkpointAndStopComputer,

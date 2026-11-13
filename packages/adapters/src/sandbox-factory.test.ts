@@ -1,4 +1,4 @@
-import { SandboxKind } from "@rakazo/contracts";
+import { SandboxKind } from "@livingbot/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { NO_SANDBOX_MESSAGE } from "./none-sandbox.js";
 import { createSandboxProvider } from "./sandbox-factory.js";

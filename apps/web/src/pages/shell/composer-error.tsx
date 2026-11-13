@@ -1,7 +1,7 @@
 import { i18n } from "@lingui/core";
 import { useLingui } from "@lingui/react/macro";
-import { isModelRequiredSendError, normalizeRunError } from "@rakazo/core";
-import { Button } from "@rakazo/ui-web";
+import { isModelRequiredSendError, normalizeRunError } from "@livingbot/core";
+import { Button } from "@livingbot/ui-web";
 import { FileIcon, X } from "lucide-react";
 import type { RefObject } from "react";
 import { useEffect, useId, useRef, useState } from "react";

@@ -1,4 +1,4 @@
-import type { AdapterContext, ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
+import type { AdapterContext, ComputerRef, SandboxProvider } from "@livingbot/adapter-kit";
 
 /**
  * A coding agent CLI and the session files, relative to the home folder, it writes while it

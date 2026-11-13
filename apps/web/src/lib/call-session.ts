@@ -1,6 +1,6 @@
 import { t } from "@lingui/core/macro";
-import type { BotAvatarSet, ProductEvent, ThreadMessage, ThreadSnapshot } from "@rakazo/contracts";
-import type { CallExchange } from "@rakazo/core";
+import type { BotAvatarSet, ProductEvent, ThreadMessage, ThreadSnapshot } from "@livingbot/contracts";
+import type { CallExchange } from "@livingbot/core";
 import {
   CALL_FAREWELL_TIMEOUT_MS,
   callClientNonce,
@@ -16,7 +16,7 @@ import {
   spokenDecision,
   spokenMemory,
   VOICE_MODE_CALL_PREFIX,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import { getGlobalBroadcastChannel } from "better-auth/client";
 import { useSyncExternalStore } from "react";
 import { announcer } from "./announcer.js";

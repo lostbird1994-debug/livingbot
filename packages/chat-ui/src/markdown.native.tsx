@@ -1,5 +1,5 @@
-import type { ColorTokens, ResolvedAppearance } from "@rakazo/ui-tokens";
-import { darkTokens, fontWeight, MAX_FONT_SCALE, typeScale } from "@rakazo/ui-tokens";
+import type { ColorTokens, ResolvedAppearance } from "@livingbot/ui-tokens";
+import { darkTokens, fontWeight, MAX_FONT_SCALE, typeScale } from "@livingbot/ui-tokens";
 import type {
   ASTNode,
   MarkdownStyleMap,

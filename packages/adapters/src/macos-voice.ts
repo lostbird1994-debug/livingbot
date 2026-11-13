@@ -12,7 +12,7 @@ import type {
   VoiceProvider,
   VoiceSynthesizeRequest,
   VoiceVerifyResult,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import { MAX_SPEAK_CHARS, MAX_SYNTHESIZED_AUDIO_BYTES } from "./voice-http.js";
 
 export const MACOS_VOICE_PROVIDER_ID = "macos";

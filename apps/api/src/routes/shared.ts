@@ -6,13 +6,13 @@ import {
   mcpStdioAvailable,
   resolveMemberMainModel,
   selectConfiguredModel,
-} from "@rakazo/adapters";
-import type { Actor, Me } from "@rakazo/contracts";
-import { attachmentMaxBytes, attachmentMaxCount, canonicalPiProviderId } from "@rakazo/contracts";
+} from "@livingbot/adapters";
+import type { Actor, Me } from "@livingbot/contracts";
+import { attachmentMaxBytes, attachmentMaxCount, canonicalPiProviderId } from "@livingbot/contracts";
 import { isAdmin } from "../admins.js";
 import type { RouterDeps } from "../router.js";
 
-export { createAdapterContext as computerContext } from "@rakazo/adapter-kit";
+export { createAdapterContext as computerContext } from "@livingbot/adapter-kit";
 
 function hostCredentials(active: boolean, provider: string) {
   return active

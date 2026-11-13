@@ -64,7 +64,7 @@ process.env.ANALYTICS_PROVIDER = "none";
 // without runAsTenant/runAsSystem returns nothing there, as in production, so
 // fail the suite on it instead. Loaded only then: other tests need no database.
 if (process.env.VERIFY_DATABASE) {
-  const { createPool, drainUnscopedDatabaseAccess } = await import("@rakazo/db");
+  const { createPool, drainUnscopedDatabaseAccess } = await import("@livingbot/db");
   // Each app reconciles all durable work in its database, including a fixture's unfinished
   // runs, so parallel files each get a copy of the pristine migrated database.
   if (process.env.COPY_TEST_DATABASE) {

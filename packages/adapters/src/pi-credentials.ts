@@ -9,9 +9,9 @@ import type {
   AgentModelOAuthCredential,
   ModelCredentialFailedState,
   ModelCredentialRetireReason,
-} from "@rakazo/adapter-kit";
-import { canonicalPiProviderId } from "@rakazo/contracts";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/adapter-kit";
+import { canonicalPiProviderId } from "@livingbot/contracts";
+import { getLogger } from "@livingbot/logging";
 import {
   OAUTH_ACCOUNT_CHANGED_ERROR,
   OAUTH_RECONNECT_REQUIRED_ERROR,
@@ -26,7 +26,7 @@ export function toOAuthCredential(value: AgentModelOAuthCredential): OAuthCreden
 
 /**
  * Request-scoped Pi store for one already-authorized provider. Pi's default
- * in-memory store cannot see Rakazo's encrypted database; refreshes are
+ * in-memory store cannot see LivingBot's encrypted database; refreshes are
  * serialized here and published back for encryption.
  */
 export class PiRuntimeCredentialStore implements CredentialStore {

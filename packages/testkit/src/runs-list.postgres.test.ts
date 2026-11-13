@@ -1,9 +1,9 @@
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { RunActivityRow } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { createThreadMessage } from "@rakazo/db";
+import type { RunActivityRow } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import { createThreadMessage } from "@livingbot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { sessionCookieHeader } from "./index.js";
 import { asSystem } from "./system-db.js";
@@ -25,7 +25,7 @@ describeRunsList("runs.list activity tracker", () => {
   const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-runs-list-"));
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@livingbot/api/app");
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,
@@ -42,7 +42,7 @@ describeRunsList("runs.list activity tracker", () => {
   });
 
   it("lists active runs from two bots and keeps completed runs under recent", async () => {
-    const cookie = await signup(app, `runs-${stamp}@rakazo.test`, "Runs User");
+    const cookie = await signup(app, `runs-${stamp}@livingbot.test`, "Runs User");
     const alpha = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "Alpha",
       title: "Alpha",
@@ -80,7 +80,7 @@ describeRunsList("runs.list activity tracker", () => {
   });
 
   it("never returns runs from another workspace", async () => {
-    const ownerCookie = await signup(app, `runs-owner-${stamp}@rakazo.test`, "Owner");
+    const ownerCookie = await signup(app, `runs-owner-${stamp}@livingbot.test`, "Owner");
     const ownerBot = await rpc<{ id: string }>(app, ownerCookie, "bots/create", {
       name: "OwnerBot",
       title: "OwnerBot",
@@ -90,7 +90,7 @@ describeRunsList("runs.list activity tracker", () => {
     });
     await seedRun(prisma, ownerBot.id, "running", "owner active run");
 
-    const intruderCookie = await signup(app, `runs-intruder-${stamp}@rakazo.test`, "Intruder");
+    const intruderCookie = await signup(app, `runs-intruder-${stamp}@livingbot.test`, "Intruder");
     const active = await rpc<{ runs: RunActivityRow[] }>(app, intruderCookie, "runs/list", {
       filter: "active",
     });
@@ -98,7 +98,7 @@ describeRunsList("runs.list activity tracker", () => {
   });
 
   it("excludes archived bots from recent before applying the limit", async () => {
-    const cookie = await signup(app, `runs-archived-${stamp}@rakazo.test`, "Archive User");
+    const cookie = await signup(app, `runs-archived-${stamp}@livingbot.test`, "Archive User");
     const archivedBot = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "Archived",
       title: "Archived",
@@ -135,7 +135,7 @@ describeRunsList("runs.list activity tracker", () => {
   });
 
   it("returns legacy labels alongside structured agent messages", async () => {
-    const cookie = await signup(app, `runs-message-${stamp}@rakazo.test`, "Runs User");
+    const cookie = await signup(app, `runs-message-${stamp}@livingbot.test`, "Runs User");
     const bot = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "Worker",
       title: "Worker",
@@ -192,7 +192,7 @@ describeRunsList("runs.list activity tracker", () => {
   });
 
   it("returns group runs with groupId for navigation", async () => {
-    const cookie = await signup(app, `runs-group-${stamp}@rakazo.test`, "Group User");
+    const cookie = await signup(app, `runs-group-${stamp}@livingbot.test`, "Group User");
     const botA = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "Worker",
       title: "Worker",

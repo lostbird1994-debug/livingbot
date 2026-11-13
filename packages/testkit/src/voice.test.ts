@@ -1,8 +1,8 @@
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { SCRIPTED_MPEG, SCRIPTED_TRANSCRIPT, SCRIPTED_VOICE_ID } from "@rakazo/adapters";
-import type { PrismaClient } from "@rakazo/db";
+import { SCRIPTED_MPEG, SCRIPTED_TRANSCRIPT, SCRIPTED_VOICE_ID } from "@livingbot/adapters";
+import type { PrismaClient } from "@livingbot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { BotIntroHarness } from "./discard-bot-intro.js";
 import { discardBotIntroFromCreate } from "./discard-bot-intro.js";
@@ -27,7 +27,7 @@ describeVoice("voice credentials and speech HTTP", () => {
   const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-voice-"));
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@livingbot/api/app");
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,
@@ -45,8 +45,8 @@ describeVoice("voice credentials and speech HTTP", () => {
   });
 
   it("connects a scripted key, speaks, and transcribes without leaking the secret", async () => {
-    const cookie = await signup(app, `voice-${stamp}@rakazo.test`, "Voice User");
-    const other = await signup(app, `voice-other-${stamp}@rakazo.test`, "Other Voice");
+    const cookie = await signup(app, `voice-${stamp}@livingbot.test`, "Voice User");
+    const other = await signup(app, `voice-other-${stamp}@livingbot.test`, "Other Voice");
 
     const before = await rpc<{ ready: boolean; utterances: string[] }>(
       app,
@@ -139,10 +139,10 @@ describeVoice("voice credentials and speech HTTP", () => {
   });
 
   it("disconnects the actor credential and leaves another user's key in place", async () => {
-    const cookie = await signup(app, `voice-disconnect-${stamp}@rakazo.test`, "Voice Disconnect");
+    const cookie = await signup(app, `voice-disconnect-${stamp}@livingbot.test`, "Voice Disconnect");
     const other = await signup(
       app,
-      `voice-disconnect-other-${stamp}@rakazo.test`,
+      `voice-disconnect-other-${stamp}@livingbot.test`,
       "Other Voice Disconnect",
     );
     const me = await rpc<{ userId: string }>(app, cookie, "me");

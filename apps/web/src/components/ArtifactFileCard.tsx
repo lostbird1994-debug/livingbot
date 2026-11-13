@@ -1,10 +1,10 @@
 import { i18n } from "@lingui/core";
 import { t as translate } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
-import { isAttachmentAudioMimeType } from "@rakazo/contracts";
-import { attachmentFileName, fileSizeParts } from "@rakazo/core";
-import { Button, Dialog, DialogClose, DialogContent, DialogTitle, Spinner } from "@rakazo/ui-web";
+import { ChatMarkdown } from "@livingbot/chat-ui/web";
+import { isAttachmentAudioMimeType } from "@livingbot/contracts";
+import { attachmentFileName, fileSizeParts } from "@livingbot/core";
+import { Button, Dialog, DialogClose, DialogContent, DialogTitle, Spinner } from "@livingbot/ui-web";
 import { Code2, Download, FileText, FolderOpen, Play, X } from "lucide-react";
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";

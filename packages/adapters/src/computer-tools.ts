@@ -2,8 +2,8 @@ import type {
   AgentToolExecutionResult,
   ComputerAction,
   ComputerObservation,
-} from "@rakazo/adapter-kit";
-import { scrollDirection } from "@rakazo/core";
+} from "@livingbot/adapter-kit";
+import { scrollDirection } from "@livingbot/core";
 
 /** Identical visual actions that leave the frame unchanged before computer_act stops repeating them. */
 export const MAX_CONSECUTIVE_UNCHANGED_VISUAL_ACTIONS = 3;

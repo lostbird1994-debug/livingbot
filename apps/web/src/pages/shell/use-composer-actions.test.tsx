@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import type { Bot, ComputerStatus, Me, ThreadSnapshot } from "@rakazo/contracts";
-import { toast } from "@rakazo/ui-web";
+import type { Bot, ComputerStatus, Me, ThreadSnapshot } from "@livingbot/contracts";
+import { toast } from "@livingbot/ui-web";
 import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
@@ -8,7 +8,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { useComposerActions } from "./use-composer-actions";
 
-vi.mock("@rakazo/ui-web", () => ({ toast: { success: vi.fn() } }));
+vi.mock("@livingbot/ui-web", () => ({ toast: { success: vi.fn() } }));
 
 vi.mock("@lingui/react/macro", () => ({
   useLingui: () => ({

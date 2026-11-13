@@ -2,7 +2,7 @@ import path from "node:path";
 import {
   CSP_REPORTING_ENDPOINTS,
   contentSecurityPolicyFor,
-} from "@rakazo/contracts/content-security-policy";
+} from "@livingbot/contracts/content-security-policy";
 
 const PASSTHROUGH_PATHS = ["/api", "/rpc", "/novnc"];
 

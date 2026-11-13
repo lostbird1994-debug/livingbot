@@ -1786,8 +1786,8 @@ msgstr "Connect this model's provider first."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect your own API key in Models or choose Rakazo credits in Billing."
-msgstr "Connect your own API key in Models or choose Rakazo credits in Billing."
+msgid "Connect your own API key in Models or choose LivingBot credits in Billing."
+msgstr "Connect your own API key in Models or choose LivingBot credits in Billing."
 
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/integrations/IntegrationSetup.tsx
@@ -5185,8 +5185,8 @@ msgstr "LivingBot also adds built-in behavior and safety rules, available tools,
 
 #: src/components/ModelCredits.tsx
 #: src/pages/Onboarding.tsx
-msgid "Rakazo credits"
-msgstr "Rakazo credits"
+msgid "LivingBot credits"
+msgstr "LivingBot credits"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for LivingBot."
@@ -6379,8 +6379,8 @@ msgid "Subscribe for {price} / month"
 msgstr "Subscribe for {price} / month"
 
 #: src/components/ModelCredits.tsx
-msgid "Subscribe to Rakazo credits"
-msgstr "Subscribe to Rakazo credits"
+msgid "Subscribe to LivingBot credits"
+msgstr "Subscribe to LivingBot credits"
 
 #: src/components/ModelCredits.tsx
 msgid "Subscribe with your own AI"
@@ -7026,8 +7026,8 @@ msgid "Use Protected input for passwords."
 msgstr "Use Protected input for passwords."
 
 #: src/components/ModelCredits.tsx
-msgid "Use Rakazo credits"
-msgstr "Use Rakazo credits"
+msgid "Use LivingBot credits"
+msgstr "Use LivingBot credits"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"

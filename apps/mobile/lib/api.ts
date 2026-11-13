@@ -18,15 +18,15 @@ import type {
   SpaceNavigation,
   ThreadMessage,
   ThreadSnapshot,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   accountSecuritySchema,
   authCapabilitiesSchema,
   CLIENT_UPDATE_REQUIRED_STATUS,
   legacyAccountSecurity,
   legacyAuthCapabilitiesSchema,
-} from "@rakazo/contracts";
-import type { ThreadHistory } from "@rakazo/core";
+} from "@livingbot/contracts";
+import type { ThreadHistory } from "@livingbot/core";
 import {
   aiConsentTarget,
   aiDataUsesForProcedure,
@@ -56,8 +56,8 @@ import {
   updateCloudAgentMessages,
   upsertMessageById,
   withAbort,
-} from "@rakazo/core";
-import { clientCorrelationHeaders, responseCorrelation } from "@rakazo/logging/monitoring";
+} from "@livingbot/core";
+import { clientCorrelationHeaders, responseCorrelation } from "@livingbot/logging/monitoring";
 import * as SecureStore from "expo-secure-store";
 import { promptAiConsent } from "./ai-consent";
 import type { EndpointResult } from "./endpoint";

@@ -1,4 +1,4 @@
-import type { AdapterContext, SecretStore } from "@rakazo/adapter-kit";
+import type { AdapterContext, SecretStore } from "@livingbot/adapter-kit";
 import { INFISICAL_REF_PREFIX } from "./infisical-secret-store.js";
 import { deleteSecretBestEffort } from "./secret-store-factory.js";
 

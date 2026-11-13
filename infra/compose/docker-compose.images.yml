@@ -309,7 +309,7 @@ services:
   supervisor:
     image: ${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}:${RAKAZO_IMAGE_TAG:-edge}
     restart: unless-stopped
-    command: ["pnpm", "--filter", "@rakazo/sandbox-supervisor", "start"]
+    command: ["pnpm", "--filter", "@livingbot/sandbox-supervisor", "start"]
     init: true
     user: root
     security_opt:

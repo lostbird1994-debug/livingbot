@@ -1,4 +1,4 @@
-import type { DesktopSetup } from "@rakazo/contracts";
+import type { DesktopSetup } from "@livingbot/contracts";
 import type { Session } from "electron";
 import { serverHeadersFor } from "./setup-config.js";
 

@@ -1,4 +1,4 @@
-import type { Connection, ConnectionCatalogItem } from "@rakazo/contracts";
+import type { Connection, ConnectionCatalogItem } from "@livingbot/contracts";
 import { abortableDelay } from "./async.js";
 
 type CatalogRef = Pick<ConnectionCatalogItem, "connectorId" | "slug">;

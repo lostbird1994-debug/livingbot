@@ -8,7 +8,7 @@ import type {
   SandboxProvider,
   SecretStore,
   TransactionalEmailProvider,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import type {
   CloudAgentConnection,
   BotWorkspaceProfiles,
@@ -30,10 +30,10 @@ import type {
   RemoteConnectorDependencies,
   TicketChangeNotifier,
   verifyModelServesAgents,
-} from "@rakazo/adapters";
-import type { Auth } from "@rakazo/auth";
-import type { NavLink } from "@rakazo/contracts";
-import type { BoardEvents, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@livingbot/adapters";
+import type { Auth } from "@livingbot/auth";
+import type { NavLink } from "@livingbot/contracts";
+import type { BoardEvents, PrismaClient, ThreadEvents } from "@livingbot/db";
 import type { BillingService } from "./billing.js";
 import { accountRoutes } from "./routes/account.js";
 import { availabilityRoutes } from "./routes/availability.js";

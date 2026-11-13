@@ -1,5 +1,5 @@
-import type { MemoryStore } from "@rakazo/adapter-kit";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
+import type { MemoryStore } from "@livingbot/adapter-kit";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@livingbot/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import {
   AUTOMATIC_MEMORY_PROMPT,

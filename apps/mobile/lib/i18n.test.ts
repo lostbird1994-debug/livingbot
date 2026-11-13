@@ -89,7 +89,7 @@ describe("mobile i18n", () => {
 
     resetI18nForTests("ja");
     expect(t("Account")).toBe("アカウント");
-    expect(t("Sign in to LivingBot")).toBe("Rakazoにログイン");
+    expect(t("Sign in to LivingBot")).toBe("LivingBotにログイン");
     expect(t("New bot")).toBe("新しいボット");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "3回の実行、12トークン",
@@ -152,10 +152,10 @@ describe("mobile i18n", () => {
     const { JA_MESSAGES } = await import("./locales/ja");
     const { ES_MESSAGES } = await import("./locales/es");
     const { EMPTY_PLUGIN_CATALOG_MESSAGE, SLASH_ACTIONS, RUN_ERROR_LIMIT_MESSAGES } = await import(
-      "@rakazo/core"
+      "@livingbot/core"
     );
     const { AI_DATA_DISCLOSURES, OPENAI_COMPATIBLE_BASE_URL_HINT } = await import(
-      "@rakazo/contracts"
+      "@livingbot/contracts"
     );
     const { createMenuItems } = await import("./create-chooser");
     const mobileRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -171,7 +171,7 @@ describe("mobile i18n", () => {
       "Your model provider",
       "The model provider returned an error.",
       "Connect a model in Settings before running bots.",
-      "Connect your own API key in Models or choose Rakazo credits in Billing.",
+      "Connect your own API key in Models or choose LivingBot credits in Billing.",
       "{provider} is rate limiting requests. Try again shortly.",
       "{summary} Resets {date}.",
       "{provider} rejected the API key. Check your connection settings.",
@@ -237,7 +237,7 @@ describe("mobile i18n", () => {
     ["ru", "Ваш поставщик моделей не ответил вовремя. Повторите попытку."],
     ["zh-CN", "你的模型提供商响应超时。请重试。"],
   ] as const)("renders provider errors in %s", async (locale, expected) => {
-    const { normalizeRunError } = await import("@rakazo/core");
+    const { normalizeRunError } = await import("@livingbot/core");
     const { resetI18nForTests, t, dateLocaleForUi } = await import("./i18n");
     resetI18nForTests(locale);
     expect(normalizeRunError("Request timed out", t, dateLocaleForUi()).summary).toBe(expected);

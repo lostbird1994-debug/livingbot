@@ -35,7 +35,7 @@ function fixture() {
         "-eu",
         "-c",
         portable
-          .replaceAll("/tmp/rakazo", runtime)
+          .replaceAll("/tmp/livingbot", runtime)
           .replaceAll("/home/rakazo", home)
           .replaceAll("/proc", path.join(root, "no-proc")),
       ],

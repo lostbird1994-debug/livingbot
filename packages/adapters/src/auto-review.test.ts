@@ -1,4 +1,4 @@
-import type { AgentRunModel } from "@rakazo/adapter-kit";
+import type { AgentRunModel } from "@livingbot/adapter-kit";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   autoReviewMinConfidence,

@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name           = 'RakazoFoldRegions'
+  s.name           = 'LivingBotFoldRegions'
   s.version        = '0.1.0'
   s.summary        = 'Reports active window folding regions'
   s.author         = ''

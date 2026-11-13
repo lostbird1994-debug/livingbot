@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import path from "node:path";
-import type { AdapterContext, JobPublisher } from "@rakazo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+import type { AdapterContext, JobPublisher } from "@livingbot/adapter-kit";
+import type { PrismaClient, ThreadEvents } from "@livingbot/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ComputerBusyError, provisionComputer } from "./computer-lifecycle.js";
 import { DockerSandboxProvider } from "./docker-sandbox.js";

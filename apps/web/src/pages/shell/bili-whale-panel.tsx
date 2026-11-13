@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BiliWhaleSettings, BiliWhaleStatus, Bot } from "@rakazo/contracts";
-import { Button, Input, SectionHeading, Switch } from "@rakazo/ui-web";
+import type { BiliWhaleSettings, BiliWhaleStatus, Bot } from "@livingbot/contracts";
+import { Button, Input, SectionHeading, Switch } from "@livingbot/ui-web";
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { cloneElement, isValidElement, useCallback, useEffect, useId, useState } from "react";

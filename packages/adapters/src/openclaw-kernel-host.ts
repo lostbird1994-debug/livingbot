@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { AdapterContext, MemoryStore } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
+import type { AdapterContext, MemoryStore } from "@livingbot/adapter-kit";
+import type { PrismaClient } from "@livingbot/db";
 import { moveNativePathToTrash } from "./desktop-workspace-cleanup.js";
 import { connectOpenClawKernelSdk, NativeRunJournal } from "./openclaw-gateway.js";
 import { OpenClawAgentRuntime } from "./openclaw-kernel.js";

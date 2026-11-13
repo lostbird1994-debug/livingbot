@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { RakazoDesktop } from "@rakazo/contracts";
+import type { LivingBotDesktop } from "@livingbot/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { act } from "react";
@@ -60,7 +60,7 @@ async function render() {
 }
 
 it("clears the macOS window controls in the desktop app", async () => {
-  window.rakazoDesktop = { platform: "darwin" } as RakazoDesktop;
+  window.rakazoDesktop = { platform: "darwin" } as LivingBotDesktop;
   const view = await render();
   const header = view.firstElementChild!;
   expect(header.classList).toContain("app-drag");

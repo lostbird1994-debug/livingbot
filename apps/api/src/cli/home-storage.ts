@@ -4,9 +4,9 @@ import {
   createAgentHomeStore,
   ObjectAgentHomeStore,
   unwrapEnvFromKeyManager,
-} from "@rakazo/adapters";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
-import { createDb } from "@rakazo/db";
+} from "@livingbot/adapters";
+import { loadRootEnv } from "@livingbot/core/node/load-root-env";
+import { createDb } from "@livingbot/db";
 
 loadRootEnv();
 await unwrapEnvFromKeyManager();

@@ -1,7 +1,7 @@
 import { realpath, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
-import { localDocumentReferences } from "@rakazo/core";
+import { localDocumentReferences } from "@livingbot/core";
 
 /** A model-written path is not a delivery receipt. Verify before publishing it. */
 export async function verifyNativeDeliveryText(text: string): Promise<string> {
@@ -24,6 +24,6 @@ export async function verifyNativeDeliveryText(text: string): Promise<string> {
   for (const item of replacements.reverse())
     text = text.slice(0, item.start) + item.value + text.slice(item.end);
   if (missing.length)
-    text += "\n\nRakazo 提示：上述文件路径未通过核验，文件尚未成功交付。需要提供真实文件后重新交付。";
+    text += "\n\nLivingBot 提示：上述文件路径未通过核验，文件尚未成功交付。需要提供真实文件后重新交付。";
   return text;
 }

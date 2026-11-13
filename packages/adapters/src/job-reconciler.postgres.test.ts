@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { BackgroundJob, JobPublisher } from "@rakazo/adapter-kit";
-import { asSystem, createDb, provisionMessagingIdentity, runAsSystem } from "@rakazo/db";
+import type { BackgroundJob, JobPublisher } from "@livingbot/adapter-kit";
+import { asSystem, createDb, provisionMessagingIdentity, runAsSystem } from "@livingbot/db";
 import { Pool } from "pg";
 import { describe, expect, it } from "vitest";
 import { createJobReconciler, createPostgresReconciliationLeadership } from "./job-reconciler.js";

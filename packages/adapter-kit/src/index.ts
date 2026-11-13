@@ -1,4 +1,4 @@
-export { isMemoryReviewPath, MEMORY_REVIEW_DIRECTORY } from "@rakazo/contracts";
+export { isMemoryReviewPath, MEMORY_REVIEW_DIRECTORY } from "@livingbot/contracts";
 export * from "./adapter-context.js";
 export * from "./analytics.js";
 export * from "./background-jobs.js";

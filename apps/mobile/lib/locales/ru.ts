@@ -103,7 +103,7 @@ export const RU_MESSAGES: Record<string, string> = {
   "Your model provider": "Ваш поставщик моделей",
   "Connect a model in Settings before running bots.":
     "Подключите модель в настройках, прежде чем запускать ботов.",
-  "Connect your own API key in Models or choose Rakazo credits in Billing.":
+  "Connect your own API key in Models or choose LivingBot credits in Billing.":
     "Подключите свой API-ключ в разделе «Модели» или выберите кредиты LivingBot в разделе «Оплата».",
   "The model provider returned an error.": "Поставщик моделей вернул ошибку.",
   "{provider} is rate limiting requests. Try again shortly.":
@@ -1034,13 +1034,13 @@ export const RU_MESSAGES: Record<string, string> = {
   Subscribe: "Оформить подписку",
   "Monthly credits expire at renewal. Top-ups do not expire.":
     "Ежемесячные кредиты истекают при продлении. Разовые пополнения не сгорают.",
-  "Use Rakazo credits": "Использовать кредиты LivingBot",
+  "Use LivingBot credits": "Использовать кредиты LivingBot",
   "Choose a plan": "Выбрать тариф",
   "Change plan": "Сменить тариф",
   Plan: "Тариф",
   None: "Нет",
   "Free trial": "Бесплатный пробный период",
-  "Rakazo credits": "Кредиты LivingBot",
+  "LivingBot credits": "Кредиты LivingBot",
   "Free until": "Бесплатно до",
   Ends: "Заканчивается",
   Renews: "Продление",

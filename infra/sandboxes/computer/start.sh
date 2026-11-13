@@ -4,7 +4,7 @@ source /usr/local/lib/rakazo-user-env.sh
 export DISPLAY="${DISPLAY:-:1}"
 export HOME="${HOME:-/home/rakazo}"
 AGENT_HOME="$HOME"
-mkdir -p "$AGENT_HOME" "$AGENT_HOME/.local/bin" "$AGENT_HOME/.config" /tmp/rakazo /tmp/.X11-unix /tmp/fluxbox-home
+mkdir -p "$AGENT_HOME" "$AGENT_HOME/.local/bin" "$AGENT_HOME/.config" /tmp/livingbot /tmp/.X11-unix /tmp/fluxbox-home
 # Login shells re-apply ~/.local/bin from /etc/profile.d/rakazo-local-bin.sh.
 export PATH="$AGENT_HOME/.local/bin:/usr/local/bin:$PATH"
 export NPM_CONFIG_PREFIX="$AGENT_HOME/.local"
@@ -32,12 +32,12 @@ if [[ -n "${RAKAZO_COMPUTER_CONTROL_TOKEN:-}" ]]; then
   while true; do
     /usr/local/bin/rakazo-computer-control
     sleep 1
-  done >/tmp/rakazo/control.log 2>&1 &
+  done >/tmp/livingbot/control.log 2>&1 &
 fi
 
 rm -f /tmp/.X1-lock /tmp/.X11-unix/X1
 
-Xvfb :1 -screen 0 1280x800x24 -ac +extension RANDR +render -noreset >/tmp/rakazo/xvfb.log 2>&1 &
+Xvfb :1 -screen 0 1280x800x24 -ac +extension RANDR +render -noreset >/tmp/livingbot/xvfb.log 2>&1 &
 XVFB_PID=$!
 
 ready=0
@@ -50,7 +50,7 @@ for _ in $(seq 1 100); do
 done
 if [[ "$ready" -ne 1 ]]; then
   echo "Xvfb failed to start" >&2
-  cat /tmp/rakazo/xvfb.log >&2 || true
+  cat /tmp/livingbot/xvfb.log >&2 || true
   exit 1
 fi
 
@@ -59,7 +59,7 @@ if command -v dbus-launch >/dev/null 2>&1; then
   # rakazo-browser is launched later without this session's environment; the
   # file-chooser portals only work if the browser finds the same bus.
   printf 'export DBUS_SESSION_BUS_ADDRESS=%s\n' "$DBUS_SESSION_BUS_ADDRESS" \
-    > /tmp/rakazo/dbus-session
+    > /tmp/livingbot/dbus-session
 fi
 
 # Chromium's file chooser talks to xdg-desktop-portal over the session bus.
@@ -67,8 +67,8 @@ fi
 # chosen file never reaches the page — uploads silently do nothing. The
 # daemons install as flat files in /usr/libexec on Debian bookworm.
 if [ -x /usr/libexec/xdg-desktop-portal ] && [ -x /usr/libexec/xdg-desktop-portal-gtk ]; then
-  /usr/libexec/xdg-desktop-portal >/tmp/rakazo/portal.log 2>&1 &
-  /usr/libexec/xdg-desktop-portal-gtk >/tmp/rakazo/portal-gtk.log 2>&1 &
+  /usr/libexec/xdg-desktop-portal >/tmp/livingbot/portal.log 2>&1 &
+  /usr/libexec/xdg-desktop-portal-gtk >/tmp/livingbot/portal-gtk.log 2>&1 &
 fi
 
 xsetroot -solid "#111113" >/dev/null 2>&1 || true
@@ -82,7 +82,7 @@ xsetroot -solid "#111113"
 exec fluxbox -rc /tmp/fluxbox-home/.fluxbox/init
 EOF
 chmod +x /tmp/fluxbox-home/.fluxbox/startup
-HOME=/tmp/fluxbox-home /tmp/fluxbox-home/.fluxbox/startup >/tmp/rakazo/fluxbox.log 2>&1 &
+HOME=/tmp/fluxbox-home /tmp/fluxbox-home/.fluxbox/startup >/tmp/livingbot/fluxbox.log 2>&1 &
 
 register_browser_handler() {
   local mime="$1"
@@ -101,7 +101,7 @@ if ! xdg-settings set default-web-browser rakazo-browser.desktop >/dev/null 2>&1
   exit 1
 fi
 
-x11vnc -display :1 -forever -shared -viewonly -nopw -listen 127.0.0.1 -rfbport 5900 -xkb -ncache 0 >/tmp/rakazo/x11vnc.log 2>&1 &
+x11vnc -display :1 -forever -shared -viewonly -nopw -listen 127.0.0.1 -rfbport 5900 -xkb -ncache 0 >/tmp/livingbot/x11vnc.log 2>&1 &
 
 NOVNC_ROOT=/usr/share/novnc
 if [[ ! -d "$NOVNC_ROOT" ]]; then
@@ -121,7 +121,7 @@ if [[ ! -f "$NOVNC_ROOT/mobile-keyboard.js" ]]; then
   exit 1
 fi
 # The screen proxy reaches this isolated container through its bridge interface.
-websockify --heartbeat=30 --web="$NOVNC_ROOT" --token-plugin=TokenFile --token-source=/tmp/rakazo/view-target-1 0.0.0.0:6080 >/tmp/rakazo/novnc.log 2>&1 &
+websockify --heartbeat=30 --web="$NOVNC_ROOT" --token-plugin=TokenFile --token-source=/tmp/livingbot/view-target-1 0.0.0.0:6080 >/tmp/livingbot/novnc.log 2>&1 &
 
 wait "$XVFB_PID"
 echo "Xvfb exited" >&2

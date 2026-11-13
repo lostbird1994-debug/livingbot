@@ -1,5 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
-import { Button, Spinner } from "@rakazo/ui-web";
+import { Button, Spinner } from "@livingbot/ui-web";
 import { ChevronRight, FileText, Folder, FolderOpen, RotateCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";

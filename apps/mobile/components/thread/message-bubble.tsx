@@ -1,15 +1,15 @@
-import { ChatMarkdown, withBlockMentions } from "@rakazo/chat-ui/native";
-import type { LoginFieldInput, MessageBlock } from "@rakazo/contracts";
-import { isAttachmentAudioMimeType } from "@rakazo/contracts";
-import type { ChildBotBlock, PeerExchange } from "@rakazo/core";
+import { ChatMarkdown, withBlockMentions } from "@livingbot/chat-ui/native";
+import type { LoginFieldInput, MessageBlock } from "@livingbot/contracts";
+import { isAttachmentAudioMimeType } from "@livingbot/contracts";
+import type { ChildBotBlock, PeerExchange } from "@livingbot/core";
 import {
   approvalPresentation,
   formatFileSize,
   isApprovalAskBlock,
   memberName,
   selectedAskActionLabel,
-} from "@rakazo/core";
-import { fontWeight, typeScale } from "@rakazo/ui-tokens";
+} from "@livingbot/core";
+import { fontWeight, typeScale } from "@livingbot/ui-tokens";
 import type { ComponentProps } from "react";
 import { memo, useState } from "react";
 import type { TextProps } from "react-native";

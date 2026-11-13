@@ -1,4 +1,4 @@
-import * as adapters from "@rakazo/adapters";
+import * as adapters from "@livingbot/adapters";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createDashscopeLiveSessions } from "./voice-live.js";
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import type { ProductEvent } from "@rakazo/contracts";
-import { BotAvatar, BotAvatarActivityProvider } from "@rakazo/ui-web";
+import type { ProductEvent } from "@livingbot/contracts";
+import { BotAvatar, BotAvatarActivityProvider } from "@livingbot/ui-web";
 import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
@@ -156,7 +156,7 @@ it("keeps static SVG artwork mounted through rapid live activity changes", async
         event(seq, "thread.meta", { activity: { thinking: seq % 2 === 0 } }),
       ),
     );
-    expect(container.querySelector(".rakazo-logo-avatar")!.getAttribute("data-activity")).toBe(
+    expect(container.querySelector(".livingbot-logo-avatar")!.getAttribute("data-activity")).toBe(
       seq % 2 === 0 ? "thinking" : "working",
     );
     expect(container.querySelector(".logo-avatar-art")).toBe(body);

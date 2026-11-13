@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock } from "@livingbot/contracts";
 import { useState } from "react";
 import { Alert, Text, View } from "react-native";
 import { rpc } from "../lib/api";

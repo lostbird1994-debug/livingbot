@@ -1,8 +1,8 @@
-import { runContinueJob } from "@rakazo/adapter-kit";
-import { BotSecretName, botSecretSubmissionSchema } from "@rakazo/contracts";
-import { createStreamingRedactor, displayName } from "@rakazo/core";
-import { runLoginKind, runSecretKind } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import { runContinueJob } from "@livingbot/adapter-kit";
+import { BotSecretName, botSecretSubmissionSchema } from "@livingbot/contracts";
+import { createStreamingRedactor, displayName } from "@livingbot/core";
+import { runLoginKind, runSecretKind } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import {
   completeExternalEffect,
   replaceCompletedExternalEffectResult,

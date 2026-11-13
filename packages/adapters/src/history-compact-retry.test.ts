@@ -4,8 +4,8 @@ import type {
   ArtifactStore,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@livingbot/adapter-kit";
+import type { PrismaClient, ThreadEvents } from "@livingbot/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createBackgroundJobHandlers } from "./background-job-handlers.js";
 import { compactHistory } from "./history-compaction.js";

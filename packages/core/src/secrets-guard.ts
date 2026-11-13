@@ -10,7 +10,7 @@ export const EXAMPLE_SCREEN_PROXY_SECRET_PLACEHOLDER =
 const EXAMPLE_ENCRYPTION_KEY_PLACEHOLDER = "replace-with-64-random-hex-characters";
 
 const RUNTIME_SECRETS_ERROR =
-  "Set BETTER_AUTH_SECRET and ENCRYPTION_KEY to long random strings before starting Rakazo outside local development or tests.";
+  "Set BETTER_AUTH_SECRET and ENCRYPTION_KEY to long random strings before starting LivingBot outside local development or tests.";
 
 const DEDICATED_SECRET_PLACEHOLDERS = new Set([
   DEV_SUPERVISOR_TOKEN_PLACEHOLDER,
@@ -164,7 +164,7 @@ export function timingSafeStringEqual(supplied: string | undefined, expected: st
  * Constant-time bearer comparison, shared by every privileged sidecar.
  *
  * Deliberately not `node:crypto`'s `timingSafeEqual`: this module is reachable from the web bundle
- * through `@rakazo/core`, and importing `node:crypto` here fails the production Vite build. The XOR
+ * through `@livingbot/core`, and importing `node:crypto` here fails the production Vite build. The XOR
  * accumulation inspects every byte no matter where the first difference falls. Length is compared
  * first because a length mismatch is already observable from the response.
  */

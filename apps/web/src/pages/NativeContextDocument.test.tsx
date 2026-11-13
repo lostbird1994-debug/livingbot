@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({ updateContextDocument: vi.fn() }));
 vi.mock("../lib/space-rpc", () => ({ useSpaceRpc: () => ({ memory: api }) }));
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@livingbot/ui-web", () => ({
   Button: ({
     variant: _v,
     size: _s,

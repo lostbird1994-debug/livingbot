@@ -5,7 +5,7 @@ import {
   recognitionLocaleTag,
   speechLocaleTag,
   withAbort,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import { desktopBridge } from "./desktop.js";
 import { DesktopSpeechRecognition } from "./desktop-speech.js";
 import { DictationStream } from "./dictation-stream.js";

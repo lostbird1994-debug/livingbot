@@ -1,5 +1,5 @@
-import { CLIENT_IP_HEADER } from "@rakazo/auth";
-import { recordSecurityEvent } from "@rakazo/db";
+import { CLIENT_IP_HEADER } from "@livingbot/auth";
+import { recordSecurityEvent } from "@livingbot/db";
 import {
   createLogger,
   createTestSink,
@@ -7,7 +7,7 @@ import {
   getLogger,
   installLogger,
   runWithLogContext,
-} from "@rakazo/logging";
+} from "@livingbot/logging";
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 import {

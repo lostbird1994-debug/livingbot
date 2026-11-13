@@ -1,6 +1,6 @@
-import type { Connection, ConnectionCatalogItem, Routine } from "@rakazo/contracts";
-import type { MentionPickerConnector } from "@rakazo/core";
-import { createRoutineMentionBatcher, mentionConnectorsFrom } from "@rakazo/core";
+import type { Connection, ConnectionCatalogItem, Routine } from "@livingbot/contracts";
+import type { MentionPickerConnector } from "@livingbot/core";
+import { createRoutineMentionBatcher, mentionConnectorsFrom } from "@livingbot/core";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { captureApiRequestContext, currentApiBase, rpc, selectedSpaceId } from "./api";
 import { currentSessionGeneration, subscribeSessionGeneration } from "./session";

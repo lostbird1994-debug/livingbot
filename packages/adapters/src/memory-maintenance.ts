@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import type { MemorySnapshot } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
+import type { MemorySnapshot } from "@livingbot/adapter-kit";
+import type { PrismaClient } from "@livingbot/db";
 import * as z from "zod";
 import { charLength } from "./utf8.js";
 

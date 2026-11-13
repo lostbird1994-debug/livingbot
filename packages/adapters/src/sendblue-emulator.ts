@@ -95,7 +95,7 @@ export class SendBlueEmulator {
 
   /** A webhook request exactly as Sendblue would deliver it (static secret header). */
   buildInboundRequest(input: EmulatorInboundInput): Request {
-    return new Request("https://rakazo.test/api/v1/messaging/webhook/sendblue", {
+    return new Request("https://livingbot.test/api/v1/messaging/webhook/sendblue", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -122,7 +122,7 @@ export class SendBlueEmulator {
 
   /** Outbound delivery-status webhook (same auth header as inbound). */
   buildStatusRequest(input: { handle: string; status: string }): Request {
-    return new Request("https://rakazo.test/api/v1/messaging/webhook/sendblue", {
+    return new Request("https://livingbot.test/api/v1/messaging/webhook/sendblue", {
       method: "POST",
       headers: {
         "content-type": "application/json",

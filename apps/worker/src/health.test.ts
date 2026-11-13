@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { startWorkerHealth, watchEventLoopStalls, workerHealthIsFresh } from "./health.js";
 

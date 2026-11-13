@@ -3,8 +3,8 @@ import type {
   AutomatedSenderPolicyMode,
   Bot,
   ExternalConversation,
-} from "@rakazo/contracts";
-import type { ListenMode } from "@rakazo/core";
+} from "@livingbot/contracts";
+import type { ListenMode } from "@livingbot/core";
 import {
   AUTOMATED_SENDER_MODES,
   ambientValue,
@@ -13,7 +13,7 @@ import {
   senderPolicy,
   withRollupHours,
   withSenderMode,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";

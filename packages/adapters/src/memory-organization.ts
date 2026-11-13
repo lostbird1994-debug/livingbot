@@ -1,10 +1,10 @@
-import type { AdapterContext, MemorySnapshot, MemoryStore } from "@rakazo/adapter-kit";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
-import type { Actor } from "@rakazo/contracts";
-import { isMemoryArchivePath, isMemoryReviewPath } from "@rakazo/contracts";
-import { findWorkspaceChief, nextCronDate, WORKSPACE_CHIEF_SPAWN_KEY } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { lockSpaceSettings, withTransactionRetry } from "@rakazo/db";
+import type { AdapterContext, MemorySnapshot, MemoryStore } from "@livingbot/adapter-kit";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@livingbot/adapter-kit";
+import type { Actor } from "@livingbot/contracts";
+import { isMemoryArchivePath, isMemoryReviewPath } from "@livingbot/contracts";
+import { findWorkspaceChief, nextCronDate, WORKSPACE_CHIEF_SPAWN_KEY } from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
+import { lockSpaceSettings, withTransactionRetry } from "@livingbot/db";
 import { normalizeMemoryPath } from "./memory-context.js";
 import type { MemoryConsolidationDecision } from "./memory-maintenance.js";
 import { configureMemoryMaintenance, renderMemoryProposal } from "./memory-maintenance.js";

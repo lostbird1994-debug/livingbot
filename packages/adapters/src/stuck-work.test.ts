@@ -1,6 +1,6 @@
-import type { JobPublisher, NotificationProvider } from "@rakazo/adapter-kit";
-import { STUCK_WORK_NOTICE, stuckWorkStatusMessage } from "@rakazo/core";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+import type { JobPublisher, NotificationProvider } from "@livingbot/adapter-kit";
+import { STUCK_WORK_NOTICE, stuckWorkStatusMessage } from "@livingbot/core";
+import type { PrismaClient, ThreadEvents } from "@livingbot/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ExpoPushProvider } from "./expo-push.js";
 import { createJobReconciler } from "./job-reconciler.js";

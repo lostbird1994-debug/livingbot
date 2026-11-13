@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AgentRunRequest, AgentRuntimeEvent } from "@rakazo/adapter-kit";
+import type { AgentRunRequest, AgentRuntimeEvent } from "@livingbot/adapter-kit";
 import type { NativeFrame, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
 
 const files = vi.hoisted(() => new Map<string, string>());

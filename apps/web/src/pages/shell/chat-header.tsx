@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
-import type { Bot, Group, ThreadSnapshot } from "@rakazo/contracts";
-import { BotAvatar, Button, GroupAvatar } from "@rakazo/ui-web";
+import type { Bot, Group, ThreadSnapshot } from "@livingbot/contracts";
+import { BotAvatar, Button, GroupAvatar } from "@livingbot/ui-web";
 import { Menu, Phone, Search } from "lucide-react";
 import type { ReactNode } from "react";
 import { IconTooltip } from "../../components/IconTooltip";

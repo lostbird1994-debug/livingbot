@@ -1,13 +1,13 @@
-import type { AdapterContext } from "@rakazo/adapter-kit";
+import type { AdapterContext } from "@livingbot/adapter-kit";
 import {
   assignSharedMemoryToWorkspaceChiefs,
   configureMemoryMaintenance,
   contentKeyProviderFromEnv,
   enableAutomaticMemoryOrganization,
   unwrapEnvFromKeyManager,
-} from "@rakazo/adapters";
-import { isMemoryReviewPath } from "@rakazo/contracts";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
+} from "@livingbot/adapters";
+import { isMemoryReviewPath } from "@livingbot/contracts";
+import { loadRootEnv } from "@livingbot/core/node/load-root-env";
 import {
   backfillMemorySearch,
   contentEncryptionOf,
@@ -15,8 +15,8 @@ import {
   MEMORY_SEARCH_VERSION,
   normalizeMemorySearch,
   runAsSystem,
-} from "@rakazo/db";
-import { MarkdownMemoryStore } from "@rakazo/memory";
+} from "@livingbot/db";
+import { MarkdownMemoryStore } from "@livingbot/memory";
 
 loadRootEnv();
 await unwrapEnvFromKeyManager();

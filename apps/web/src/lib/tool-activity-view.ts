@@ -1,5 +1,5 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import { expandToolStepNotes, isRetiredImportSetup, isToolActivityBlock } from "@rakazo/core";
+import type { MessageBlock } from "@livingbot/contracts";
+import { expandToolStepNotes, isRetiredImportSetup, isToolActivityBlock } from "@livingbot/core";
 
 /** Number of tool calls behind a steps block: the sum of each row's count. */
 export function toolStepCount(steps: readonly { count: number }[]): number {

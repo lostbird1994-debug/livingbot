@@ -1,4 +1,4 @@
-import type { ConversationFindFilters, ConversationFindItem } from "@rakazo/contracts";
+import type { ConversationFindFilters, ConversationFindItem } from "@livingbot/contracts";
 import {
   Button,
   Input,
@@ -9,7 +9,7 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Search, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";

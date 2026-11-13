@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
-  s.name           = 'RakazoNetworkCache'
+  s.name           = 'LivingBotVoiceChat'
   s.version        = '0.1.0'
-  s.summary        = 'Clears the system HTTP cache'
+  s.summary        = 'Starts the voice chat a Shortcuts action asked for'
   s.author         = ''
   s.homepage       = 'https://docs.expo.dev/modules/'
   s.platforms      = { :ios => '16.4' }

@@ -5,11 +5,11 @@ import type {
   BackgroundJobName,
   JobPublisher,
   JobWorkerHost,
-} from "@rakazo/adapter-kit";
-import { dispatchBackgroundJob } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
-import { isTooManyDatabaseConnections, runAsSystem } from "@rakazo/db";
-import { getLogger, runCorrelatedJob, unwrapJobPayload, wrapJobPayload } from "@rakazo/logging";
+} from "@livingbot/adapter-kit";
+import { dispatchBackgroundJob } from "@livingbot/adapter-kit";
+import type { PrismaClient } from "@livingbot/db";
+import { isTooManyDatabaseConnections, runAsSystem } from "@livingbot/db";
+import { getLogger, runCorrelatedJob, unwrapJobPayload, wrapJobPayload } from "@livingbot/logging";
 import type { Runner, WorkerUtils } from "graphile-worker";
 import { makeWorkerUtils, run } from "graphile-worker";
 import type { Pool } from "pg";

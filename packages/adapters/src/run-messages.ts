@@ -1,18 +1,18 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock } from "@livingbot/contracts";
 import {
   callIdFromClientNonce,
   expandToolStepNotes,
   isBackgroundRunTrigger,
   redactSecrets,
-} from "@rakazo/core";
-import type { Prisma, RunLease } from "@rakazo/db";
+} from "@livingbot/core";
+import type { Prisma, RunLease } from "@livingbot/db";
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
   THREAD_LOCK_TRANSACTION_OPTIONS,
   withTransactionRetry,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 
 /** Deps for one attempt: its run's history writes carry the lease, so a superseded attempt cannot write. */

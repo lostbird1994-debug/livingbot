@@ -2,8 +2,8 @@ import { spawn, spawnSync } from "node:child_process";
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { AdapterContext, ComputerAction, ComputerRef } from "@rakazo/adapter-kit";
-import { browserProfilePathForScreen } from "@rakazo/core/node/desktop-runtime";
+import type { AdapterContext, ComputerAction, ComputerRef } from "@livingbot/adapter-kit";
+import { browserProfilePathForScreen } from "@livingbot/core/node/desktop-runtime";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { LinuxDesktop } from "./linux-desktop.js";
 
@@ -245,7 +245,7 @@ describe("provider focus command", () => {
       application: "firefox",
       uri: "https://example.test",
     });
-    expect(command).toContain("nohup /tmp/rakazo/browser-launch-1 'https://example.test'");
+    expect(command).toContain("nohup /tmp/livingbot/browser-launch-1 'https://example.test'");
     expect(command).toContain(
       "in chromium|chromium-browser|google-chrome|google-chrome-stable|chrome|brave-browser)",
     );

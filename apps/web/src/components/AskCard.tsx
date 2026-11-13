@@ -1,22 +1,22 @@
 import { i18n } from "@lingui/core";
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
-import type { LoginFieldInput, ThreadMessage } from "@rakazo/contracts";
+import { ChatMarkdown } from "@livingbot/chat-ui/web";
+import type { LoginFieldInput, ThreadMessage } from "@livingbot/contracts";
 import {
   BOT_INSTRUCTIONS_MAX_LENGTH,
   commandVariableName,
   LoginSecretValue,
   loginCardFields,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   approvalPresentation,
   isApprovalAskBlock,
   isSecretAskBlock,
   resolveAskChoice,
   selectedAskActionLabel,
-} from "@rakazo/core";
-import { Button, Input, Label, Switch, Textarea } from "@rakazo/ui-web";
+} from "@livingbot/core";
+import { Button, Input, Label, Switch, Textarea } from "@livingbot/ui-web";
 import { Check, ShieldCheck } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { rpc } from "../lib/rpc";

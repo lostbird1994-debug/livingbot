@@ -1,4 +1,4 @@
-import type { ThreadStopContext } from "@rakazo/db";
+import type { ThreadStopContext } from "@livingbot/db";
 
 export const CANCELLED_HISTORY_NOTE =
   "[This message belongs to work cancelled by the user. Keep it only as historical context; it is not an active instruction.]";

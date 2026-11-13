@@ -127,7 +127,7 @@ describe.skipIf(!databaseAvailable)("routine silence eval through the product", 
       const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-silence-eval-"));
       let evidence: Evidence | undefined;
       try {
-        const { createApp } = await import("@rakazo/api/app");
+        const { createApp } = await import("@livingbot/api/app");
         const result = await runTrial(
           {
             ...scenario,
@@ -216,7 +216,7 @@ describe.skipIf(!databaseAvailable)("offline judge model protocol", () => {
         },
       ],
     });
-    const { PiAgentRuntime } = await import("@rakazo/adapters");
+    const { PiAgentRuntime } = await import("@livingbot/adapters");
     try {
       const judge = createEvalJudge(new PiAgentRuntime(), {
         provider: model.model.provider,

@@ -1,7 +1,7 @@
-import type { BotRoleCard } from "@rakazo/contracts";
-import { botRoleCard } from "@rakazo/contracts";
-import { displayName } from "@rakazo/core";
-import { getLogger } from "@rakazo/logging";
+import type { BotRoleCard } from "@livingbot/contracts";
+import { botRoleCard } from "@livingbot/contracts";
+import { displayName } from "@livingbot/core";
+import { getLogger } from "@livingbot/logging";
 import { writeBotInstructions } from "./bot-instructions.js";
 import type { Bot, Prisma, PrismaClient } from "./client.js";
 import { appendEventInTransaction } from "./events.js";

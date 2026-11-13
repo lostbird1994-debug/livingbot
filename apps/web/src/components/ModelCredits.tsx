@@ -1,10 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BillingStatus } from "@rakazo/contracts";
+import type { BillingStatus } from "@livingbot/contracts";
 import {
   DEFAULT_MONTHLY_CREDIT_AMOUNT,
   MODEL_CREDIT_AMOUNTS,
   ModelCreditAmountSchema,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   Button,
   Card,
@@ -22,7 +22,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { formatBillingAmount, formatBillingDate, formatBillingPrice } from "../lib/billing";
@@ -202,7 +202,7 @@ export function CreditChoice({
         <Card>
           <CardHeader>
             <h2 className="text-lg font-medium">
-              <Trans>Rakazo credits</Trans>
+              <Trans>LivingBot credits</Trans>
             </h2>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col gap-4">
@@ -223,7 +223,7 @@ export function CreditChoice({
             <Button
               className="w-full"
               disabled={pending || !status.canManage || !status.creditPurchasesEnabled}
-              aria-label={t`Subscribe to Rakazo credits`}
+              aria-label={t`Subscribe to LivingBot credits`}
               onClick={() => void choose(false)}
             >
               <Trans>Subscribe</Trans>
@@ -411,7 +411,7 @@ export function ModelCreditsSettings({
             })
           }
         >
-          <Trans>Use Rakazo credits</Trans>
+          <Trans>Use LivingBot credits</Trans>
         </Button>
       ) : null}
       {status.canManage && status.funding !== "byok" && (!recurring || status.cancelAtPeriodEnd) ? (

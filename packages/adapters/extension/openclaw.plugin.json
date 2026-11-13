@@ -1,6 +1,6 @@
 {
   "id": "rakazo-collaboration",
-  "name": "Rakazo collaboration",
+  "name": "LivingBot collaboration",
   "activation": {
     "onStartup": true
   },

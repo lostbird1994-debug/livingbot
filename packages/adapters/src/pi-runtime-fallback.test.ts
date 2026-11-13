@@ -10,13 +10,13 @@ import type {
 } from "@earendil-works/pi-ai";
 import { clampThinkingLevel } from "@earendil-works/pi-ai";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
-import type { AgentRunRequest, AgentRuntimeEvent, ModelCallObserver } from "@rakazo/adapter-kit";
-import type * as Core from "@rakazo/core";
+import type { AgentRunRequest, AgentRuntimeEvent, ModelCallObserver } from "@livingbot/adapter-kit";
+import type * as Core from "@livingbot/core";
 import {
   MODEL_CONTEXT_TOO_SMALL_ERROR,
   MODEL_REQUEST_LIMIT_ERROR,
   normalizeRunError,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const providerState = vi.hoisted(() => ({
@@ -28,7 +28,7 @@ const providerState = vi.hoisted(() => ({
   delay: vi.fn<(delayMs: number, signal?: AbortSignal) => Promise<void>>(),
 }));
 
-vi.mock("@rakazo/core", async (importOriginal) => ({
+vi.mock("@livingbot/core", async (importOriginal) => ({
   ...(await importOriginal<typeof Core>()),
   abortableDelay: providerState.delay,
 }));
@@ -408,7 +408,7 @@ describe("Pi runtime transient model retries", () => {
 
   it("bounds repeated early timeouts by elapsed request budget", async () => {
     vi.useFakeTimers();
-    const { abortableDelay } = await vi.importActual<typeof Core>("@rakazo/core");
+    const { abortableDelay } = await vi.importActual<typeof Core>("@livingbot/core");
     providerState.delay.mockImplementation(abortableDelay);
     providerState.stream.mockImplementation((_target, _context, options) => {
       const pending = new AssistantMessageEventStream();
@@ -436,7 +436,7 @@ describe("Pi runtime transient model retries", () => {
 
   it("does not back off when the delay would consume the remaining budget", async () => {
     vi.useFakeTimers();
-    const { abortableDelay } = await vi.importActual<typeof Core>("@rakazo/core");
+    const { abortableDelay } = await vi.importActual<typeof Core>("@livingbot/core");
     providerState.delay.mockImplementation(abortableDelay);
     providerState.stream.mockImplementation(() => {
       const pending = new AssistantMessageEventStream();
@@ -553,7 +553,7 @@ describe("Pi runtime transient model retries", () => {
 
   it("waits for each bounded backoff before retrying", async () => {
     vi.useFakeTimers();
-    const { abortableDelay } = await vi.importActual<typeof Core>("@rakazo/core");
+    const { abortableDelay } = await vi.importActual<typeof Core>("@livingbot/core");
     providerState.delay.mockImplementation(abortableDelay);
     providerState.stream.mockImplementation(() =>
       stream(primary, message(primary, [], "error", "429 rate limit")),
@@ -582,7 +582,7 @@ describe("Pi runtime transient model retries", () => {
     "stops promptly when the $source signal aborts during $error backoff",
     async ({ source, error }) => {
       vi.useFakeTimers();
-      const { abortableDelay } = await vi.importActual<typeof Core>("@rakazo/core");
+      const { abortableDelay } = await vi.importActual<typeof Core>("@livingbot/core");
       providerState.delay.mockImplementation(abortableDelay);
       providerState.stream.mockImplementation(() =>
         stream(primary, message(primary, [], "error", error)),

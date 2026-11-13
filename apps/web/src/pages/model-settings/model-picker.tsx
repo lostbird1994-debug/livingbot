@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { filterModelCatalog } from "@rakazo/core";
+import { filterModelCatalog } from "@livingbot/core";
 import {
   Command,
   CommandEmpty,
@@ -10,7 +10,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { TextOnlyMark } from "../../components/TextOnlyMark";

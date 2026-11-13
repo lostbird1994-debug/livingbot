@@ -95,7 +95,7 @@ jobs:
         timeout-minutes: 5
         # Skip --with-deps: GitHub ubuntu-latest already has Chromium's OS libraries,
         # and apt-get against azure.archive.ubuntu.com can stall until the job timeout.
-        run: pnpm --filter @rakazo/web exec playwright install chromium
+        run: pnpm --filter @livingbot/web exec playwright install chromium
       - name: Validate E2B credentials
         if: inputs.sandbox_provider == 'e2b'
         env:
@@ -131,7 +131,7 @@ jobs:
       # Runs after product e2e so shared apps/web/test-results is not wiped by the product run.
       - name: Capture marketing homepage screenshots
         if: matrix.shard == 1 && always() && (steps.playwright_tests.outcome == 'success' || steps.playwright_tests.outcome == 'failure')
-        run: pnpm --filter @rakazo/www e2e
+        run: pnpm --filter @livingbot/www e2e
       - name: Upload shard results
         if: always()
         uses: actions/upload-artifact@v4
@@ -203,7 +203,7 @@ jobs:
         env:
           PLAYWRIGHT_HTML_OUTPUT_DIR: ${{ github.workspace }}/playwright-report
           PLAYWRIGHT_HTML_OPEN: never
-        run: pnpm --filter @rakazo/web exec playwright merge-reports --reporter html "$GITHUB_WORKSPACE/blob-report"
+        run: pnpm --filter @livingbot/web exec playwright merge-reports --reporter html "$GITHUB_WORKSPACE/blob-report"
       - name: Record Playwright result
         if: ${{ !cancelled() && inputs.upload_artifacts }}
         env:

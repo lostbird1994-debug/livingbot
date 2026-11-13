@@ -19,7 +19,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
-import type { AdapterContext, AgentHomeStore, PortableFile } from "@rakazo/adapter-kit";
+import type { AdapterContext, AgentHomeStore, PortableFile } from "@livingbot/adapter-kit";
 import { moveNativePathToTrash } from "./desktop-workspace-cleanup.js";
 import { fileHandlePath } from "./file-handle-path.js";
 import { shouldSkipPortableWorkspaceFile } from "./workspace-save-policy.js";

@@ -16,14 +16,14 @@ import type {
   ScreenRequest,
   ScreenSession,
   TerminalRequest,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import {
   boundedSandboxCommandTimeoutMs,
   cancelResponseBody,
   requestDeadline,
   resolveSupervisorToken,
-} from "@rakazo/core";
-import { outgoingCorrelationHeaders } from "@rakazo/logging";
+} from "@livingbot/core";
+import { outgoingCorrelationHeaders } from "@livingbot/logging";
 import {
   boundedComputerActions,
   clampRounded,

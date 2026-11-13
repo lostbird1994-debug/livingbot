@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { HostScreenError } from "@rakazo/adapters/host-screen";
+import { HostScreenError } from "@livingbot/adapters/host-screen";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ScreenPermissionApi } from "./host-screen.js";
 import {

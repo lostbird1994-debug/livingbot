@@ -29,7 +29,7 @@ describePostgres("ticket board app wiring", () => {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://127.0.0.1:5173" },
         body: JSON.stringify({
-          email: `board-${enabled}-${Date.now()}@rakazo.test`,
+          email: `board-${enabled}-${Date.now()}@livingbot.test`,
           password: "test-password-123",
           name: "Board tester",
         }),

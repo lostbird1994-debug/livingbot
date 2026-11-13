@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { ORPCError } from "@orpc/client";
-import type { Bot } from "@rakazo/contracts";
-import { botRoleCard } from "@rakazo/contracts";
+import type { Bot } from "@livingbot/contracts";
+import { botRoleCard } from "@livingbot/contracts";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";
@@ -17,7 +17,7 @@ vi.mock("@lingui/react/macro", () => ({
   useLingui: () => ({ t: (parts: TemplateStringsArray) => parts.join("") }),
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@livingbot/ui-web", () => ({
   Disclosure: ({
     summary,
     children,

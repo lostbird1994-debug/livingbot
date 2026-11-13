@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { RoutineRun, RoutineRunCursor } from "@rakazo/contracts";
+import type { RoutineRun, RoutineRunCursor } from "@livingbot/contracts";
 import {
   formatRoutineRunAt,
   isRetryableError,
@@ -7,8 +7,8 @@ import {
   normalizeRunError,
   routineHistoryPage,
   routineRunAt,
-} from "@rakazo/core";
-import { Button, SectionHeading, Spinner } from "@rakazo/ui-web";
+} from "@livingbot/core";
+import { Button, SectionHeading, Spinner } from "@livingbot/ui-web";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";

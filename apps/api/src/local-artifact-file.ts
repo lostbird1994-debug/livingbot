@@ -4,11 +4,11 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { ORPCError } from "@orpc/server";
-import type { ArtifactStore } from "@rakazo/adapter-kit";
-import { createAdapterContext } from "@rakazo/adapter-kit";
-import type { Actor } from "@rakazo/contracts";
-import { attachmentFileName, isLocalDocumentName } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+import type { ArtifactStore } from "@livingbot/adapter-kit";
+import { createAdapterContext } from "@livingbot/adapter-kit";
+import type { Actor } from "@livingbot/contracts";
+import { attachmentFileName, isLocalDocumentName } from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
 
 const MAX_NAME_LENGTH = 120;
 

@@ -107,7 +107,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Your Anthropic": "你的 Anthropic",
   "Your model provider": "你的模型提供商",
   "Connect a model in Settings before running bots.": "运行机器人前，请先在设置中连接模型。",
-  "Connect your own API key in Models or choose Rakazo credits in Billing.":
+  "Connect your own API key in Models or choose LivingBot credits in Billing.":
     "请在“模型”中连接你自己的 API 密钥，或在“账单”中选择 LivingBot 额度。",
   "The model provider returned an error.": "模型提供商返回了错误。",
   "{provider} is rate limiting requests. Try again shortly.":
@@ -1026,13 +1026,13 @@ export const ZH_MESSAGES: Record<string, string> = {
   Subscribe: "订阅",
   "Monthly credits expire at renewal. Top-ups do not expire.":
     "每月额度在续费时到期。单次充值额度不会过期。",
-  "Use Rakazo credits": "使用 LivingBot 额度",
+  "Use LivingBot credits": "使用 LivingBot 额度",
   "Choose a plan": "选择方案",
   "Change plan": "更改方案",
   Plan: "方案",
   None: "无",
   "Free trial": "免费试用",
-  "Rakazo credits": "LivingBot 额度",
+  "LivingBot credits": "LivingBot 额度",
   "Free until": "免费至",
   Ends: "结束于",
   Renews: "续费日期",

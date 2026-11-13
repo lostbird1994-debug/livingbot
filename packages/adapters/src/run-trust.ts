@@ -1,8 +1,8 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import type { ActionApprovalRule } from "@rakazo/core";
-import { connectorKindFromToolName, inboundRoutinePrompts, siteAlwaysAllowed } from "@rakazo/core";
-import { sitesInText, urlSite } from "@rakazo/core/egress";
-import { findAutoReviewPreference, listApprovalRules, storedBatchActions } from "@rakazo/db";
+import type { MessageBlock } from "@livingbot/contracts";
+import type { ActionApprovalRule } from "@livingbot/core";
+import { connectorKindFromToolName, inboundRoutinePrompts, siteAlwaysAllowed } from "@livingbot/core";
+import { sitesInText, urlSite } from "@livingbot/core/egress";
+import { findAutoReviewPreference, listApprovalRules, storedBatchActions } from "@livingbot/db";
 import { SITE_SENDING_TOOLS } from "./approval-ask.js";
 import { boundDirectApprovalDetails, catalogApprovalDetails } from "./approval-effect.js";
 import type { ExecutorDeps } from "./executor-deps.js";

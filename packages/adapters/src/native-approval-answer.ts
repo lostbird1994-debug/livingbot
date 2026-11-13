@@ -1,4 +1,4 @@
-import { MessageBlock as MessageBlockSchema } from "@rakazo/contracts";
+import { MessageBlock as MessageBlockSchema } from "@livingbot/contracts";
 
 /** Only a persisted choice answer can authorize an external approval. */
 export function readAnsweredNativeApproval(

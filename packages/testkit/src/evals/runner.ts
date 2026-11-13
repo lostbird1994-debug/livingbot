@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { AgentRuntime, JobPublisher, NotificationProvider } from "@rakazo/adapter-kit";
-import { runJobKey } from "@rakazo/adapter-kit";
-import { CapturingNotificationProvider, MessagingTeamChatEmulator } from "@rakazo/adapters";
-import type { ModelConnectInput, RunStatus } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, isTerminal } from "@rakazo/core";
-import type { createDb } from "@rakazo/db";
+import type { AgentRuntime, JobPublisher, NotificationProvider } from "@livingbot/adapter-kit";
+import { runJobKey } from "@livingbot/adapter-kit";
+import { CapturingNotificationProvider, MessagingTeamChatEmulator } from "@livingbot/adapters";
+import type { ModelConnectInput, RunStatus } from "@livingbot/contracts";
+import { ACTIVE_RUN_STATUSES, isTerminal } from "@livingbot/core";
+import type { createDb } from "@livingbot/db";
 import { discardBotIntroRun } from "../discard-bot-intro.js";
 import { sessionCookieHeader } from "../index.js";
 import { asSystem } from "../system-db.js";

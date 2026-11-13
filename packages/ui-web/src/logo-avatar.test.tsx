@@ -1,4 +1,4 @@
-import { BOT_COLOR_LIST, contrastRatio, seededLogoAvatarColor } from "@rakazo/core";
+import { BOT_COLOR_LIST, contrastRatio, seededLogoAvatarColor } from "@livingbot/core";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { BotAvatar } from "./bot-avatar.js";

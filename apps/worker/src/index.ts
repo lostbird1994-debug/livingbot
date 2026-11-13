@@ -1,14 +1,14 @@
 import { hostname } from "node:os";
 import { setTimeout as sleep } from "node:timers/promises";
-import type { JobPublisher, JobWorkerHost } from "@rakazo/adapter-kit";
+import type { JobPublisher, JobWorkerHost } from "@livingbot/adapter-kit";
 import {
   ComposioConnector,
   IntegrationProviderSettings,
   unwrapEnvFromKeyManager,
-} from "@rakazo/adapters";
-import { phoneCallSettings } from "@rakazo/core";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
-import { stopOnShutdownSignals } from "@rakazo/core/node/shutdown-signals";
+} from "@livingbot/adapters";
+import { phoneCallSettings } from "@livingbot/core";
+import { loadRootEnv } from "@livingbot/core/node/load-root-env";
+import { stopOnShutdownSignals } from "@livingbot/core/node/shutdown-signals";
 import { startWorkerHealth, watchEventLoopStalls } from "./health.js";
 import { createWorkerSecretStore } from "./secret-store.js";
 
@@ -80,8 +80,8 @@ import {
   userDeviceForwardSecret,
   withRunWorker,
   withSecretPersistence,
-} from "@rakazo/adapters";
-import { resolveEncryptionKey, resolveSupervisorToken, uploadSizeFromEnv } from "@rakazo/core";
+} from "@livingbot/adapters";
+import { resolveEncryptionKey, resolveSupervisorToken, uploadSizeFromEnv } from "@livingbot/core";
 import {
   createBoardEvents,
   createDb,
@@ -98,10 +98,10 @@ import {
   runAsSystem,
   securityEventRetentionDays,
   verifyContentKeys,
-} from "@rakazo/db";
-import { SERVICE_NAMES } from "@rakazo/logging";
-import { createRootLogger } from "@rakazo/logging/axiom";
-import { MarkdownMemoryStore } from "@rakazo/memory";
+} from "@livingbot/db";
+import { SERVICE_NAMES } from "@livingbot/logging";
+import { createRootLogger } from "@livingbot/logging/axiom";
+import { MarkdownMemoryStore } from "@livingbot/memory";
 
 const logger = createRootLogger(SERVICE_NAMES.worker);
 

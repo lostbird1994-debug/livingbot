@@ -2,18 +2,18 @@ import ExpoModulesCore
 
 /// Hands the "Start Voice Chat" Shortcuts action to the chat screen. The request lives in the app's
 /// own storage, so a link can open a chat but never its microphone.
-public class RakazoVoiceChatModule: Module {
+public class LivingBotVoiceChatModule: Module {
   private static let key = "rakazo.pending_voice_chat"
   private static let maxAge: TimeInterval = 30
   private var observer: NSObjectProtocol?
 
   public func definition() -> ModuleDefinition {
-    Name("RakazoVoiceChat")
+    Name("LivingBotVoiceChat")
     Events("onPendingVoiceChat")
 
     OnStartObserving {
       self.observer = NotificationCenter.default.addObserver(
-        forName: Notification.Name("RakazoPendingVoiceChat"), object: nil, queue: .main
+        forName: Notification.Name("LivingBotPendingVoiceChat"), object: nil, queue: .main
       ) { [weak self] _ in
         self?.sendEvent("onPendingVoiceChat", [:])
       }

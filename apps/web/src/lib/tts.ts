@@ -1,12 +1,12 @@
 import { t } from "@lingui/core/macro";
-import type { SettingsScope } from "@rakazo/contracts";
+import type { SettingsScope } from "@livingbot/contracts";
 import {
   readVoiceAudio,
   readVoiceError,
   requestDeadline,
   VOICE_RESPONSE_TIMEOUT_MS,
   withAbort,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import { rpc, selectedSpaceId, withSpaceHeaders } from "./rpc.js";
 import { errorText, voiceAccountErrorText } from "./user-error.js";
 import { VoicePlayback } from "./voice-playback.js";

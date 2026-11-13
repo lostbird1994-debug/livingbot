@@ -1,5 +1,5 @@
-import type { AdapterContext } from "@rakazo/adapter-kit";
-import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
+import type { AdapterContext } from "@livingbot/adapter-kit";
+import { ATTACHMENT_MAX_BYTES } from "@livingbot/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
 import {

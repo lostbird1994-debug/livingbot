@@ -1,7 +1,7 @@
 import { verifyNativeDeliveryText } from "./native-delivery-files.js";
 import { join } from "node:path";
-import { runAsTenant } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import { runAsTenant } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { connectLocalAgentBridge } from "./local-agent-runtime.js";
 import {
@@ -84,7 +84,7 @@ export async function reconcileNativeExecution(input: {
     }
     text = await verifyNativeDeliveryText(text);
     if (receipt.result?.blockedTools?.length)
-      text += "\n\nRakazo 提示：本轮有工具操作被权限阻止，相关步骤尚未完成。请查看执行记录并处理授权后再继续。";
+      text += "\n\nLivingBot 提示：本轮有工具操作被权限阻止，相关步骤尚未完成。请查看执行记录并处理授权后再继续。";
   } else if (status === "done") {
     const history = await peer.request<{
       messages?: Array<{

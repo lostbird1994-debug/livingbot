@@ -8,14 +8,14 @@ import type {
   ComputerRef,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import {
   SandboxAllowanceUsedError,
   SandboxDamagedError,
   SandboxUnresponsiveError,
-} from "@rakazo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { clearThread } from "@rakazo/db";
+} from "@livingbot/adapter-kit";
+import type { PrismaClient, ThreadEvents } from "@livingbot/db";
+import { clearThread } from "@livingbot/db";
 import { describe, expect, it, vi } from "vitest";
 import {
   acquireComputerExecutionLease,

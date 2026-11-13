@@ -7,19 +7,19 @@ import net from "node:net";
 import path from "node:path";
 import tls from "node:tls";
 import { lingui } from "@lingui/vite-plugin";
-import type { DesktopStackProbeResponse } from "@rakazo/contracts";
-import { buildIdAt } from "@rakazo/contracts/client-build";
+import type { DesktopStackProbeResponse } from "@livingbot/contracts";
+import { buildIdAt } from "@livingbot/contracts/client-build";
 import {
   appContentSecurityPolicy,
   CSP_REPORTING_ENDPOINTS,
   contentSecurityPolicyFor,
   parseContentSecuritySources,
   parseCrispWebsiteId,
-} from "@rakazo/contracts/content-security-policy";
+} from "@livingbot/contracts/content-security-policy";
 import {
   safeScreenProxyResponseHeaders,
   stripSensitiveHandshakeHeaders,
-} from "@rakazo/core/node/screen-proxy-response";
+} from "@livingbot/core/node/screen-proxy-response";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -39,7 +39,7 @@ import {
   rewrittenNovncHeaders,
   shouldInjectNovncStorageShim,
 } from "./src/novnc-html.js";
-import { rakazoPwa } from "./src/pwa/plugin.js";
+import { livingbotPwa } from "./src/pwa/plugin.js";
 import type { ScreenTargetFailure } from "./src/screen-proxy.js";
 import {
   checkScreenAuthorization,
@@ -529,10 +529,10 @@ export default defineConfig(({ command, mode }) => {
       babel({ plugins: ["@lingui/babel-plugin-lingui-macro"] }),
       lingui(),
       tailwindcss(),
-      rakazoPwa(buildId),
+      livingbotPwa(buildId),
       {
         // Production only: the dev server injects inline scripts for React Refresh.
-        name: "rakazo-content-security-policy",
+        name: "livingbot-content-security-policy",
         configurePreviewServer(server) {
           server.middlewares.use((req, res, next) => {
             const policy = contentSecurityPolicyFor(req.url?.split("?", 1)[0] ?? "/", appPolicy);
@@ -545,7 +545,7 @@ export default defineConfig(({ command, mode }) => {
         },
       },
       {
-        name: "rakazo-missing-asset-404",
+        name: "livingbot-missing-asset-404",
         configurePreviewServer({ config, middlewares }) {
           const outDir = path.resolve(config.root, config.build.outDir);
           const assetsDir = path.join(outDir, config.build.assetsDir);
@@ -572,7 +572,7 @@ export default defineConfig(({ command, mode }) => {
           attachDesktopStackProbe(server, desktopStackToken, imageTag),
       },
       {
-        name: "rakazo-performance-asset-delay",
+        name: "livingbot-performance-asset-delay",
         configurePreviewServer(server) {
           if (!Number.isFinite(performanceAssetDelayMs) || performanceAssetDelayMs <= 0) return;
           server.middlewares.use((req, _res, next) => {

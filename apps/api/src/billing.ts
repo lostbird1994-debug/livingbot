@@ -5,16 +5,16 @@ import type {
   BillingProvider,
   BillingSubscriptionSnapshot,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import {
   BillingCheckoutCompletedError,
   BillingCustomerNotFoundError,
   BillingNoMonthlyCreditsError,
-} from "@rakazo/adapter-kit";
-import { sandboxAllowance, sandboxHoursLeft } from "@rakazo/adapters";
-import type { Actor, BillingStatus } from "@rakazo/contracts";
-import { BYOK_MONTHLY_PRICE_CENTS } from "@rakazo/contracts";
-import type { BillingAccount, PrismaClient } from "@rakazo/db";
+} from "@livingbot/adapter-kit";
+import { sandboxAllowance, sandboxHoursLeft } from "@livingbot/adapters";
+import type { Actor, BillingStatus } from "@livingbot/contracts";
+import { BYOK_MONTHLY_PRICE_CENTS } from "@livingbot/contracts";
+import type { BillingAccount, PrismaClient } from "@livingbot/db";
 import {
   billingAccountForOrganization,
   byokFreeUntil,
@@ -33,8 +33,8 @@ import {
   releaseCheckoutLease,
   replaceBillingCustomer,
   syncBillingSnapshot,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { applyAccessGrants } from "./access-grants.js";
 import { createReferrals } from "./referrals.js";
 

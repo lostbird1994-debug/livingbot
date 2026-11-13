@@ -1,7 +1,7 @@
-import { runContinueJob } from "@rakazo/adapter-kit";
-import { displayName } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import { runContinueJob } from "@livingbot/adapter-kit";
+import { displayName } from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { returnBotMessageOutcome } from "./bot-messages.js";
 import { withComputerScreenAvailability } from "./computer-screens.js";
 import type { ExecutorDeps } from "./executor-deps.js";

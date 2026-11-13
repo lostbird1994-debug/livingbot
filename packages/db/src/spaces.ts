@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { displayName } from "@rakazo/core";
+import { displayName } from "@livingbot/core";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 import { IsolationError } from "./scope.js";

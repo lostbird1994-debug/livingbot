@@ -39,7 +39,7 @@ function computer(overrides: Partial<ComputerStatus> = {}): ComputerStatus {
 describe("embeddableScreenUrl", () => {
   it("leaves a public stream URL alone", () => {
     const url = "https://sandbox.e2b.app/stream?authKey=abc&view_only=true";
-    expect(embeddableScreenUrl(url, "https://api.rakazo.test")).toBe(url);
+    expect(embeddableScreenUrl(url, "https://api.livingbot.test")).toBe(url);
   });
 
   it.each(["screen.example", "8.8.8.8", "172.32.0.1", "100.63.255.255", "100.128.0.1"])(
@@ -76,8 +76,8 @@ describe("embeddableScreenUrl", () => {
       "http://127.0.0.1:5173/novnc/session/view/1.t/embed.html?view_only=true",
       "https://192.168.1.20/novnc/session/view/1.t/embed.html?view_only=true",
     ]) {
-      expect(embeddableScreenUrl(sealed, "https://rakazo.example.test")).toBe(
-        "https://rakazo.example.test/novnc/session/view/1.t/embed.html?view_only=true",
+      expect(embeddableScreenUrl(sealed, "https://livingbot.example.test")).toBe(
+        "https://livingbot.example.test/novnc/session/view/1.t/embed.html?view_only=true",
       );
     }
   });

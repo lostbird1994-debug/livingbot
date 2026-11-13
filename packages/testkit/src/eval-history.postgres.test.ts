@@ -40,7 +40,7 @@ describe.skipIf(!databaseAvailable)("eval history accounting", () => {
       });
       const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-eval-history-"));
       try {
-        const { createApp } = await import("@rakazo/api/app");
+        const { createApp } = await import("@livingbot/api/app");
         const result = await runTrial(
           {
             id: "cleared-history-fixture",

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import type { Bot } from "@rakazo/contracts";
-import type * as CoreModule from "@rakazo/core";
+import type { Bot } from "@livingbot/contracts";
+import type * as CoreModule from "@livingbot/core";
 import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -25,7 +25,7 @@ vi.mock("@lingui/react/macro", () => ({
       "message" in parts ? parts.message : String.raw(parts, ...values),
   }),
 }));
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@livingbot/ui-web", () => ({
   BotAvatar: () => null,
   defaultBotAvatarValue: () => "",
   Button: ({ children, ...props }: { children: ReactNode }) => (
@@ -33,7 +33,7 @@ vi.mock("@rakazo/ui-web", () => ({
   ),
 }));
 vi.mock("./auth", () => ({ authClient: { signOut: mocks.signOut } }));
-vi.mock("@rakazo/core", async (importOriginal) => ({
+vi.mock("@livingbot/core", async (importOriginal) => ({
   ...(await importOriginal<typeof CoreModule>()),
   runThreadSubscription: vi.fn(async () => undefined),
 }));

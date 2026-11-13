@@ -8,7 +8,7 @@ import type {
   MessagingSendRequest,
   MessagingSendResult,
   MessagingSurface,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import type { MessagingPlatform } from "./chat-sdk-surface.js";
 import { providerOfThreadId } from "./chat-sdk-surface.js";
 

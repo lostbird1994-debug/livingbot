@@ -2,13 +2,13 @@ import { mkdtemp, readFile, realpath, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { PrismaClient } from "@rakazo/db";
-import { botRoleCard } from "@rakazo/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import { botRoleCard } from "@livingbot/contracts";
 import type { OpenClawKernelRegistry } from "./openclaw-kernel-registry.js";
 import { OpenClawWorkspaceProfiles } from "./openclaw-workspace-profile.js";
 
 const { commit } = vi.hoisted(() => ({ commit: vi.fn() }));
-vi.mock("@rakazo/db", () => ({ commitBotUpdate: commit }));
+vi.mock("@livingbot/db", () => ({ commitBotUpdate: commit }));
 beforeEach(() => { commit.mockReset(); });
 async function fixture() {
   const root = await realpath(await mkdtemp(join(tmpdir(), "rakazo-native-profile-")));

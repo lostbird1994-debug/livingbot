@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { Routine } from "@rakazo/contracts";
+import type { Routine } from "@livingbot/contracts";
 import { notifyManager } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { act, createElement, useEffect } from "react";

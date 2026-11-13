@@ -1,8 +1,8 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { BotSecretDestination } from "@rakazo/contracts";
-import { redactSecrets } from "@rakazo/core";
+import type { BotSecretDestination } from "@livingbot/contracts";
+import { redactSecrets } from "@livingbot/core";
 import { describe, expect, it, vi } from "vitest";
 import { redactAgentCommandResult } from "./agent-environment.js";
 import {

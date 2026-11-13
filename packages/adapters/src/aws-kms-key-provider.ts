@@ -1,5 +1,5 @@
 import { DecryptCommand, EncryptCommand, KMSClient } from "@aws-sdk/client-kms";
-import type { KeyProvider, KeyWrapContext, WrappedDataKey } from "@rakazo/adapter-kit";
+import type { KeyProvider, KeyWrapContext, WrappedDataKey } from "@livingbot/adapter-kit";
 
 export type AwsKmsKeyProviderConfig = {
   /** Key ARN, not an alias, which can be repointed without stored keys noticing. */

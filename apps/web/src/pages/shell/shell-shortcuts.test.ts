@@ -2,7 +2,7 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { RakazoDesktop } from "../../lib/desktop";
+import type { LivingBotDesktop } from "../../lib/desktop";
 import type { ShellShortcut, ShortcutHost } from "./shell-shortcuts";
 import { cycleBotId, shellShortcut, startsTyping, useShellShortcuts } from "./shell-shortcuts";
 
@@ -224,7 +224,7 @@ describe("useShellShortcuts", () => {
           return stop;
         },
       },
-    } as unknown as RakazoDesktop;
+    } as unknown as LivingBotDesktop;
     const run = vi.fn(() => true);
     const unmount = await mount(run);
     send?.("search");

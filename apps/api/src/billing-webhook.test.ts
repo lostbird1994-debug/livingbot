@@ -1,5 +1,5 @@
-import type { BillingProvider } from "@rakazo/adapter-kit";
-import type { Actor } from "@rakazo/contracts";
+import type { BillingProvider } from "@livingbot/adapter-kit";
+import type { Actor } from "@livingbot/contracts";
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 import type { BillingService } from "./billing.js";
@@ -13,7 +13,7 @@ import {
 const actor: Actor = {
   userId: "user-1",
   spaceId: "space-1",
-  email: "user@rakazo.test",
+  email: "user@livingbot.test",
   isDeploymentOwner: false,
 };
 

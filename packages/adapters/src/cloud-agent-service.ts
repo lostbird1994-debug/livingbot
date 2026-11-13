@@ -1,9 +1,9 @@
-import type { AdapterContext, JobPublisher } from "@rakazo/adapter-kit";
-import { cloudAgentPollJob } from "@rakazo/adapter-kit";
-import { cloudAgentBlockFromPayload } from "@rakazo/core";
-import type { CloudAgent, PrismaClient, ThreadEvents } from "@rakazo/db";
-import { appendEventInTransaction, createThreadMessageInTransaction } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { AdapterContext, JobPublisher } from "@livingbot/adapter-kit";
+import { cloudAgentPollJob } from "@livingbot/adapter-kit";
+import { cloudAgentBlockFromPayload } from "@livingbot/core";
+import type { CloudAgent, PrismaClient, ThreadEvents } from "@livingbot/db";
+import { appendEventInTransaction, createThreadMessageInTransaction } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import { cloudAgentLaunchSchema, cloudAgentReplySchema } from "./cloud-agent-tools.js";

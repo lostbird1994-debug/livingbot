@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import type { Bot, Routine } from "@rakazo/contracts";
+import type { Bot, Routine } from "@livingbot/contracts";
 import {
   activeBotId,
   captureScreenshot,
@@ -31,7 +31,7 @@ test("routine editing updates in place, preserves timezone, deletion persists, a
   page,
 }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `routine-crud-${stamp}@rakazo.test`, "password12", "Routine CRUD");
+  await signup(page, `routine-crud-${stamp}@livingbot.test`, "password12", "Routine CRUD");
   await completeOnboarding(page);
   const botId = activeBotId(page);
 
@@ -154,7 +154,7 @@ test("a successful routine create is not reported as failed when refresh fails",
   tag: "@nightly",
 }, async ({ page }) => {
   const stamp = Date.now();
-  await signup(page, `routine-refresh-${stamp}@rakazo.test`, "password12", "Routine Refresh");
+  await signup(page, `routine-refresh-${stamp}@livingbot.test`, "password12", "Routine Refresh");
   await completeOnboarding(page);
   const botId = activeBotId(page);
 
@@ -192,7 +192,7 @@ test("switching bots while a routine save is pending does not reopen stale state
   tag: "@nightly",
 }, async ({ page }) => {
   const stamp = Date.now();
-  await signup(page, `routine-switch-${stamp}@rakazo.test`, "password12", "Routine Switch");
+  await signup(page, `routine-switch-${stamp}@livingbot.test`, "password12", "Routine Switch");
   await completeOnboarding(page);
   const firstBotId = activeBotId(page);
   const secondBot = await rpc<Bot>(page, "bots/create", {
@@ -323,7 +323,7 @@ function localSchedule(iso: string, timezone: string) {
 test("change-trigger screenshot walkthrough", { tag: "@nightly" }, async ({ page }, testInfo) => {
   await page.emulateMedia({ colorScheme: "light" });
   const stamp = Date.now();
-  await signup(page, `routine-walkthrough-${stamp}@rakazo.test`, "password12", "Routine Watch");
+  await signup(page, `routine-walkthrough-${stamp}@livingbot.test`, "password12", "Routine Watch");
   await completeOnboarding(page);
   const botId = activeBotId(page);
 

@@ -1,5 +1,5 @@
-import type { WorkspaceExportLimits } from "@rakazo/adapter-kit";
-import { shellQuote } from "@rakazo/core/node/desktop-runtime";
+import type { WorkspaceExportLimits } from "@livingbot/adapter-kit";
+import { shellQuote } from "@livingbot/core/node/desktop-runtime";
 
 /** The most one save copies; a larger home keeps running unsaved. */
 export const WORKSPACE_SAVE_LIMITS: WorkspaceExportLimits = {

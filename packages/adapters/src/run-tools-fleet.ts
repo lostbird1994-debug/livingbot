@@ -1,5 +1,5 @@
-import { BotSettingsValuesSchema } from "@rakazo/contracts";
-import { redactSecrets } from "@rakazo/core";
+import { BotSettingsValuesSchema } from "@livingbot/contracts";
+import { redactSecrets } from "@livingbot/core";
 import {
   commitBotUpdate,
   createSpaceForMember,
@@ -8,8 +8,8 @@ import {
   runAsSystem,
   SpaceLimitError,
   writeBotInstructions,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { uncertainEffectResult } from "./approval-effect.js";
 import { archiveSpawnedBot, spawnBot } from "./child-bots.js";
 import {

@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { RoutineRunCursor } from "@rakazo/contracts";
-import { formatCron } from "@rakazo/core";
+import type { RoutineRunCursor } from "@livingbot/contracts";
+import { formatCron } from "@livingbot/core";
 import {
   Button,
   NativeSelect,
@@ -9,7 +9,7 @@ import {
   Spinner,
   Switch,
   Textarea,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useState } from "react";
 import { cronLabels } from "../lib/cron";

@@ -1,8 +1,8 @@
-import type { AdapterContext, ManagedConnectorProvider } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { appConnectCard, matchAppCatalog, matchesAppConnection } from "@rakazo/core";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { appendEventInTransaction, createThreadMessageInTransaction } from "@rakazo/db";
+import type { AdapterContext, ManagedConnectorProvider } from "@livingbot/adapter-kit";
+import type { MessageBlock } from "@livingbot/contracts";
+import { appConnectCard, matchAppCatalog, matchesAppConnection } from "@livingbot/core";
+import type { PrismaClient, ThreadEvents } from "@livingbot/db";
+import { appendEventInTransaction, createThreadMessageInTransaction } from "@livingbot/db";
 
 const RECENT_MESSAGES = 50;
 

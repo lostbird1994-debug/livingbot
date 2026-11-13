@@ -1,5 +1,5 @@
-import type { BackgroundJobHandlers } from "@rakazo/adapter-kit";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+import type { BackgroundJobHandlers } from "@livingbot/adapter-kit";
+import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDeadJobPruner, DEAD_JOB_RETENTION_DAYS, InMemoryJobQueue } from "./wakeup.js";
 
@@ -392,7 +392,7 @@ describe("InMemoryJobQueue", () => {
 
   it("unwraps correlation envelopes and restores request traces", async () => {
     const { createLogger, createTestSink, installLogger, runWithLogContext } = await import(
-      "@rakazo/logging"
+      "@livingbot/logging"
     );
     const sink = createTestSink();
     installLogger(createLogger({ service: "rakazo-worker", sinks: [sink] }));
@@ -416,8 +416,8 @@ describe("InMemoryJobQueue", () => {
   });
 
   it("keeps wrapped payloads readable by workers that do not unwrap envelopes", async () => {
-    const { wrapJobPayload } = await import("@rakazo/logging");
-    const { parseBackgroundJob } = await import("@rakazo/adapter-kit");
+    const { wrapJobPayload } = await import("@livingbot/logging");
+    const { parseBackgroundJob } = await import("@livingbot/adapter-kit");
     const wrapped = wrapJobPayload(
       { runId: "run-rollback" },
       { jobId: "job-1", traceId: "a".repeat(32) },

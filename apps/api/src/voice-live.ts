@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { dashscopeSocketConstructor } from "@rakazo/adapters";
+import { dashscopeSocketConstructor } from "@livingbot/adapters";
 import type { TurnSnapshot } from "./voice-turn.js";
 import { createLocalTurnDetector } from "./voice-turn.js";
 

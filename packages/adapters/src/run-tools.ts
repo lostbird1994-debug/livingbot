@@ -1,6 +1,6 @@
-import type { AgentToolExecutionObserver } from "@rakazo/adapter-kit";
-import { MEMORY_MAINTENANCE_TOOL_NAMES } from "@rakazo/contracts";
-import { toolResultTaintsRun } from "@rakazo/core";
+import type { AgentToolExecutionObserver } from "@livingbot/adapter-kit";
+import { MEMORY_MAINTENANCE_TOOL_NAMES } from "@livingbot/contracts";
+import { toolResultTaintsRun } from "@livingbot/core";
 import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolHandler } from "./run-tool-gate.js";

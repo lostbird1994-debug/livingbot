@@ -1,4 +1,4 @@
-import type { PhotonProjectCredentials, TelegramBotCredentials } from "@rakazo/adapters";
+import type { PhotonProjectCredentials, TelegramBotCredentials } from "@livingbot/adapters";
 import {
   boatApiKeyFromEnv,
   boatApiUrlFromEnv,
@@ -9,12 +9,12 @@ import {
   resolveSandboxProvider,
   secretStoreOptionsFromEnv,
   telegramBotsFromEnv,
-} from "@rakazo/adapters";
-import { DEFAULT_CONTEXT_STRATEGY, type AgentContextStrategy } from "@rakazo/adapter-kit";
-import type { OidcConfig } from "@rakazo/auth";
-import type { MinimumClientBuilds, NavLink } from "@rakazo/contracts";
-import { parseMinimumClientBuilds, parseNavLinks } from "@rakazo/contracts";
-import { parseCrispWebsiteId } from "@rakazo/contracts/content-security-policy";
+} from "@livingbot/adapters";
+import { DEFAULT_CONTEXT_STRATEGY, type AgentContextStrategy } from "@livingbot/adapter-kit";
+import type { OidcConfig } from "@livingbot/auth";
+import type { MinimumClientBuilds, NavLink } from "@livingbot/contracts";
+import { parseMinimumClientBuilds, parseNavLinks } from "@livingbot/contracts";
+import { parseCrispWebsiteId } from "@livingbot/contracts/content-security-policy";
 import {
   attachmentCountFromEnv,
   phoneCallSettings,
@@ -24,10 +24,10 @@ import {
   resolveScreenProxySecret,
   resolveSupervisorToken,
   uploadSizeFromEnv,
-} from "@rakazo/core";
-import { monitoringPseudonymSecret } from "@rakazo/logging";
+} from "@livingbot/core";
+import { monitoringPseudonymSecret } from "@livingbot/logging";
 
-export { resolveCloudAgentProvider, resolveSandboxProvider } from "@rakazo/adapters";
+export { resolveCloudAgentProvider, resolveSandboxProvider } from "@livingbot/adapters";
 
 /** Where a local development stack serves the web client. */
 const DEFAULT_WEB_ORIGIN = "http://127.0.0.1:5173";

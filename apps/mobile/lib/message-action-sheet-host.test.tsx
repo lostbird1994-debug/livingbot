@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { tokensForAppearance } from "@rakazo/ui-tokens";
+import { tokensForAppearance } from "@livingbot/ui-tokens";
 import type { ReactNode, Ref } from "react";
 import { act, useImperativeHandle } from "react";
 import type { Root } from "react-dom/client";

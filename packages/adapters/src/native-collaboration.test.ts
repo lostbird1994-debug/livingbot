@@ -1,4 +1,4 @@
-import type { AgentRunRequest } from "@rakazo/adapter-kit";
+import type { AgentRunRequest } from "@livingbot/adapter-kit";
 import { expect, it, vi } from "vitest";
 import { nativeCollaboration } from "./native-collaboration.js";
 

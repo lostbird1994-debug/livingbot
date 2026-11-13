@@ -795,7 +795,7 @@ msgstr "이 서비스에는 구독 로그인이 아니라 API 키가 저장되�
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "An existing Honcho peer to read from. LivingBot never writes to it."
-msgstr "데이터를 읽어올 기존 Honcho 피어입니다. Rakazo는 이 피어에 데이터를 쓰지 않습니다."
+msgstr "데이터를 읽어올 기존 Honcho 피어입니다. LivingBot는 이 피어에 데이터를 쓰지 않습니다."
 
 #: src/lib/agent-import-errors.ts
 msgid "An imported API key could not be checked. Try again."
@@ -1778,8 +1778,8 @@ msgstr "먼저 이 모델의 제공자를 연결하세요."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect your own API key in Models or choose Rakazo credits in Billing."
-msgstr "AI 모델에서 자체 API 키를 연결하거나 결제에서 Rakazo 크레딧을 선택하세요."
+msgid "Connect your own API key in Models or choose LivingBot credits in Billing."
+msgstr "AI 모델에서 자체 API 키를 연결하거나 결제에서 LivingBot 크레딧을 선택하세요."
 
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/integrations/IntegrationSetup.tsx
@@ -4654,11 +4654,11 @@ msgstr "나중에"
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/import-status.ts
 msgid "Not supported in LivingBot"
-msgstr "Rakazo에서 지원하지 않음"
+msgstr "LivingBot에서 지원하지 않음"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Not used by LivingBot"
-msgstr "Rakazo에서 사용하지 않음"
+msgstr "LivingBot에서 사용하지 않음"
 
 #: src/components/McpServerHealthLine.tsx
 msgid "Not working"
@@ -4953,7 +4953,7 @@ msgstr "새 API 키를 붙여넣으세요"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Paste the OpenAI-compatible address from your server. LivingBot adds /v1 if needed."
-msgstr "서버의 OpenAI 호환 주소를 붙여넣으세요. 필요하면 Rakazo가 /v1을 추가합니다."
+msgstr "서버의 OpenAI 호환 주소를 붙여넣으세요. 필요하면 LivingBot가 /v1을 추가합니다."
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -5172,7 +5172,7 @@ msgstr ""
 
 #: src/components/ModelCredits.tsx
 #: src/pages/Onboarding.tsx
-msgid "Rakazo credits"
+msgid "LivingBot credits"
 msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -5607,7 +5607,7 @@ msgstr ""
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/SlackInstallCallback.tsx
 msgid "Return to LivingBot"
-msgstr "Rakazo로 돌아가기"
+msgstr "LivingBot로 돌아가기"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Review completed; no documents changed"
@@ -6366,8 +6366,8 @@ msgid "Subscribe for {price} / month"
 msgstr "월 {price}에 구독"
 
 #: src/components/ModelCredits.tsx
-msgid "Subscribe to Rakazo credits"
-msgstr "Rakazo 크레딧 구독"
+msgid "Subscribe to LivingBot credits"
+msgstr "LivingBot 크레딧 구독"
 
 #: src/components/ModelCredits.tsx
 msgid "Subscribe with your own AI"
@@ -6694,7 +6694,7 @@ msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in LivingBot yet. Use a deployment credential or choose another provider."
-msgstr "이 구독 로그인 방식은 아직 Rakazo에서 지원되지 않습니다. 서버에 설정된 인증 정보를 사용하거나 다른 서비스를 선택하세요."
+msgstr "이 구독 로그인 방식은 아직 LivingBot에서 지원되지 않습니다. 서버에 설정된 인증 정보를 사용하거나 다른 서비스를 선택하세요."
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
@@ -7013,7 +7013,7 @@ msgid "Use Protected input for passwords."
 msgstr ""
 
 #: src/components/ModelCredits.tsx
-msgid "Use Rakazo credits"
+msgid "Use LivingBot credits"
 msgstr ""
 
 #: src/pages/model-settings/space-bots-model.tsx

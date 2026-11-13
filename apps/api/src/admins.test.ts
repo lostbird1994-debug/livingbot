@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@rakazo/db";
+import type { PrismaClient } from "@livingbot/db";
 import { describe, expect, it } from "vitest";
 import { isAdmin } from "./admins.js";
 

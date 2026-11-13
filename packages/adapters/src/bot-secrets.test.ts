@@ -1,8 +1,8 @@
-import type { BotSecretDestination } from "@rakazo/contracts";
-import { BOT_SECRET_ORIGIN_MISSING_MESSAGE, encodeLoginSecret } from "@rakazo/contracts";
-import { redactSecrets } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import * as Logging from "@rakazo/logging";
+import type { BotSecretDestination } from "@livingbot/contracts";
+import { BOT_SECRET_ORIGIN_MISSING_MESSAGE, encodeLoginSecret } from "@livingbot/contracts";
+import { redactSecrets } from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
+import * as Logging from "@livingbot/logging";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   credentialArgument,

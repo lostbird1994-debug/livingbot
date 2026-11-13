@@ -13,7 +13,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { WorkspaceTooLargeError } from "@rakazo/adapter-kit";
+import { WorkspaceTooLargeError } from "@livingbot/adapter-kit";
 import { afterEach, describe, expect, it } from "vitest";
 import { checkHomeArchive, packHome, unpackHome } from "./home-archive.js";
 

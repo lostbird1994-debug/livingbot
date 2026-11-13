@@ -9,10 +9,10 @@ import {
   unwrapEnvFromKeyManager,
   upgradeLegacySecrets,
   withSecretPersistence,
-} from "@rakazo/adapters";
-import { resolveContentEncryption, resolveEncryptionKey } from "@rakazo/core";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
-import type { ContentMigrationMode } from "@rakazo/db";
+} from "@livingbot/adapters";
+import { resolveContentEncryption, resolveEncryptionKey } from "@livingbot/core";
+import { loadRootEnv } from "@livingbot/core/node/load-root-env";
+import type { ContentMigrationMode } from "@livingbot/db";
 import {
   contentEncryptionStatus,
   createDb,
@@ -21,7 +21,7 @@ import {
   rewrapSpaceKeys,
   rotateSpaceDataKeys,
   runAsSystem,
-} from "@rakazo/db";
+} from "@livingbot/db";
 import { moveMcpArgsIntoSecrets } from "../mcp-args-migration.js";
 import { createSecretMigrationRepository } from "../secret-migration.js";
 

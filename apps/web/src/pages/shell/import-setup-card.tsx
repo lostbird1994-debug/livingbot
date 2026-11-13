@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { AgentImportSetupItem, AgentImportSetupState, MessageBlock } from "@rakazo/contracts";
-import { isRetiredImportSetup } from "@rakazo/core";
-import { Button } from "@rakazo/ui-web";
+import type { AgentImportSetupItem, AgentImportSetupState, MessageBlock } from "@livingbot/contracts";
+import { isRetiredImportSetup } from "@livingbot/core";
+import { Button } from "@livingbot/ui-web";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BuiCard, SuccessPop } from "../../components/ai/primitives";

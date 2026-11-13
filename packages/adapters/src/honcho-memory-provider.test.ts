@@ -1,4 +1,4 @@
-import type { AdapterContext } from "@rakazo/adapter-kit";
+import type { AdapterContext } from "@livingbot/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import { MAX_HONCHO_CONCLUSION_BYTES } from "./honcho-client.js";
 import {

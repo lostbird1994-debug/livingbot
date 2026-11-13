@@ -1,5 +1,5 @@
-import type { ToolCallStreak } from "@rakazo/core";
-import { trackToolCallStreak } from "@rakazo/core";
+import type { ToolCallStreak } from "@livingbot/core";
+import { trackToolCallStreak } from "@livingbot/core";
 
 const LOOP_GUARD_STOP_PREFIX = "I got stuck calling ";
 const LOOP_GUARD_STOP_COUNT_PATTERN = " with (?:nearly )?the same input ";

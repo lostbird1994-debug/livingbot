@@ -1,5 +1,5 @@
 import type { Message, ToolCall } from "@earendil-works/pi-ai";
-import type { AgentRunModel } from "@rakazo/adapter-kit";
+import type { AgentRunModel } from "@livingbot/adapter-kit";
 import { withoutThinkingFrom } from "./thinking-signatures.js";
 
 /** Internal, versioned transcript; never a client event payload. */

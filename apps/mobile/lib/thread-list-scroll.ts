@@ -1,5 +1,5 @@
-import type { ThreadItem } from "@rakazo/core";
-import { reconcileThreadScrollState } from "@rakazo/core";
+import type { ThreadItem } from "@livingbot/core";
+import { reconcileThreadScrollState } from "@livingbot/core";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type {
   FlatList,

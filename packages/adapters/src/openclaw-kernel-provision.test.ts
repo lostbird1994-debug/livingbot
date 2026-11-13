@@ -1,8 +1,8 @@
 import { mkdtemp, mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { AgentRunRequest } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
+import type { AgentRunRequest } from "@livingbot/adapter-kit";
+import type { PrismaClient } from "@livingbot/db";
 import { describe, expect, it, vi } from "vitest";
 import { nativeKernelModel } from "./openclaw-kernel-registry.js";
 import { OpenClawKernelProvisioner } from "./openclaw-kernel-provision.js";

@@ -2,11 +2,11 @@ import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from
 import type { IncomingMessage } from "node:http";
 import { networkInterfaces } from "node:os";
 import type { Duplex } from "node:stream";
-import type { UserDeviceSummary } from "@rakazo/contracts";
-import { USER_DEVICE_CONNECT_PATH } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { runAsSystem } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { UserDeviceSummary } from "@livingbot/contracts";
+import { USER_DEVICE_CONNECT_PATH } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import { runAsSystem } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { WebSocketServer } from "ws";
 import { z } from "zod";
 import type { HostComputerFrame, HostComputerRequest } from "./host-computer-protocol.js";
@@ -22,9 +22,9 @@ import { userDeviceClientMessage } from "./user-device-protocol.js";
 export const USER_DEVICE_FORWARD_PATH = "/internal/user-devices/request";
 export const USER_DEVICE_DISCONNECT_PATH = "/internal/user-devices/disconnect";
 export const USER_DEVICE_OFFLINE_MESSAGE =
-  "Your computer is not connected. Open the Rakazo desktop app.";
+  "Your computer is not connected. Open the LivingBot desktop app.";
 const DISCONNECTED_MESSAGE = "Your computer disconnected. Check the result before retrying.";
-const REVOKED_MESSAGE = "This computer was disconnected from Rakazo.";
+const REVOKED_MESSAGE = "This computer was disconnected from LivingBot.";
 export const USER_DEVICE_LIMIT = 10;
 const PING_INTERVAL_MS = 25_000;
 /** A connection row older than this has lost its holding process. */

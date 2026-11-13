@@ -1,4 +1,4 @@
-import { BillingNoMonthlyCreditsError } from "@rakazo/adapter-kit";
+import { BillingNoMonthlyCreditsError } from "@livingbot/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import { StripeBillingProvider } from "./stripe-billing.js";
 

@@ -1,5 +1,5 @@
-import type { PrismaClient } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+import type { PrismaClient } from "@livingbot/db";
+import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createModelCreditReconciler } from "./model-credit-reconciler.js";
 

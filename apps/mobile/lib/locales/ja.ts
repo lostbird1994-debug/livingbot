@@ -110,8 +110,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Your model provider": "お使いのモデルプロバイダー",
   "Connect a model in Settings before running bots.":
     "ボットを実行する前に、設定でモデルを接続してください。",
-  "Connect your own API key in Models or choose Rakazo credits in Billing.":
-    "モデルで自分のAPIキーを接続するか、請求でRakazoクレジットを選択してください。",
+  "Connect your own API key in Models or choose LivingBot credits in Billing.":
+    "モデルで自分のAPIキーを接続するか、請求でLivingBotクレジットを選択してください。",
   "The model provider returned an error.": "モデルプロバイダーがエラーを返しました。",
   "{provider} is rate limiting requests. Try again shortly.":
     "{provider}がリクエストを制限しています。しばらくしてからもう一度お試しください。",
@@ -162,7 +162,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Configure a plugin catalog on the server to connect apps.":
     "アプリを接続するには、サーバーでプラグインカタログを設定してください。",
   "Paste the OpenAI-compatible address from your server. LivingBot adds /v1 if needed.":
-    "サーバーのOpenAI互換アドレスを貼り付けてください。必要に応じてRakazoが/v1を追加します。",
+    "サーバーのOpenAI互換アドレスを貼り付けてください。必要に応じてLivingBotが/v1を追加します。",
   "Settings: General": "設定: 一般",
   "Settings: Usage": "設定: 使用量",
   "Sign-in did not return a session": "ログインでセッションが返されませんでした",
@@ -202,9 +202,9 @@ export const JA_MESSAGES: Record<string, string> = {
   "Reset your password": "パスワードをリセット",
   "Send reset link": "リセットリンクを送信",
   Server: "サーバー",
-  "Sign in to LivingBot": "Rakazoにログイン",
+  "Sign in to LivingBot": "LivingBotにログイン",
   "Sign up": "新規登録",
-  "Sign up for LivingBot": "Rakazoに新規登録",
+  "Sign up for LivingBot": "LivingBotに新規登録",
   "Use a custom server": "カスタムサーバーを使用",
   "Use default server": "デフォルトのサーバーを使用",
   Activity: "アクティビティ",
@@ -526,7 +526,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Supports thinking": "思考に対応",
   "Then paste the code here.": "その後、ここにコードを貼り付けてください。",
   "This subscription sign-in is not available in LivingBot yet. Use a deployment credential or choose another provider.":
-    "このサブスクリプションでのログインはRakazoではまだ利用できません。デプロイの認証情報を使うか、別のプロバイダーを選択してください。",
+    "このサブスクリプションでのログインはLivingBotではまだ利用できません。デプロイの認証情報を使うか、別のプロバイダーを選択してください。",
   "Use a found model": "見つかったモデルを使用",
   "Waiting for sign-in…": "ログインを待っています…",
   "exact-model-id": "exact-model-id",
@@ -790,7 +790,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Enter a server URL": "サーバーのURLを入力してください",
   "Public servers need https://. HTTP only works on your local network.":
     "公開サーバーには https:// が必要です。HTTPはローカルネットワークでのみ使用できます。",
-  "That URL did not look like a LivingBot server": "そのURLはRakazoサーバーではないようです",
+  "That URL did not look like a LivingBot server": "そのURLはLivingBotサーバーではないようです",
   "That URL is missing a host": "URLにホストがありません",
   "That doesn’t look like a URL": "URLではないようです",
   "Use an http or https URL": "http または https のURLを使用してください",
@@ -983,13 +983,13 @@ export const JA_MESSAGES: Record<string, string> = {
   Subscribe: "登録する",
   "Monthly credits expire at renewal. Top-ups do not expire.":
     "月間クレジットは更新時に失効します。追加購入分は失効しません。",
-  "Use Rakazo credits": "Rakazoクレジットを使用",
+  "Use LivingBot credits": "LivingBotクレジットを使用",
   "Choose a plan": "プランを選択",
   "Change plan": "プランを変更",
   Plan: "プラン",
   None: "なし",
   "Free trial": "無料トライアル",
-  "Rakazo credits": "Rakazoクレジット",
+  "LivingBot credits": "LivingBotクレジット",
   "Free until": "無料期間の終了日",
   Ends: "終了日",
   Renews: "更新日",
@@ -1018,7 +1018,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Your free trial has started": "無料トライアルが始まりました",
   "Free until {date}": "{date}まで無料",
   "Connect your AI": "AIを接続",
-  "Start using LivingBot": "Rakazoを使い始める",
+  "Start using LivingBot": "LivingBotを使い始める",
   "1 unread": "未読1件",
   "{count} unread": "未読{count}件",
   "{count} need attention": "{count}件が要対応",
@@ -1026,11 +1026,11 @@ export const JA_MESSAGES: Record<string, string> = {
   "{label}, below": "{label}、下",
   Work: "仕事",
   Both: "両方",
-  "How will you use LivingBot?": "Rakazoをどのように使いますか？",
-  "What do you most want LivingBot to help with?": "Rakazoで一番手伝ってほしいことは何ですか？",
+  "How will you use LivingBot?": "LivingBotをどのように使いますか？",
+  "What do you most want LivingBot to help with?": "LivingBotで一番手伝ってほしいことは何ですか？",
   "How big is your team?": "チームの規模はどのくらいですか？",
-  "How did you hear about us?": "Rakazoを何で知りましたか？",
-  "Welcome to LivingBot": "Rakazoへようこそ",
+  "How did you hear about us?": "LivingBotを何で知りましたか？",
+  "Welcome to LivingBot": "LivingBotへようこそ",
   "Stop all workers and confirm that provider operations have stopped before releasing this computer.":
     "このコンピューターを解放する前に、すべてのワーカーを停止し、プロバイダーの処理が停止したことを確認してください。",
   "Workers and operations are stopped": "ワーカーと処理は停止済み",
@@ -1051,7 +1051,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Members ({min}–{max})": "メンバー（{min}–{max}）",
   "Open computer →": "コンピューターを開く →",
   "Point this app at your self-hosted LivingBot origin, the same HTTPS URL you open in a browser.":
-    "ブラウザで開くのと同じHTTPSのURLで、セルフホストのRakazoオリジンを指定してください。",
+    "ブラウザで開くのと同じHTTPSのURLで、セルフホストのLivingBotオリジンを指定してください。",
   Recover: "復旧",
   "Remove thumbs-up": "いいねを削除",
   Searching: "検索中",

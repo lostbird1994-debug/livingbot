@@ -1,5 +1,5 @@
-import type { MemoryStore } from "@rakazo/adapter-kit";
-import { botRoleCard, excludesSharedProfile } from "@rakazo/contracts";
+import type { MemoryStore } from "@livingbot/adapter-kit";
+import { botRoleCard, excludesSharedProfile } from "@livingbot/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { previewAgentMemoryContext } from "./memory-context.js";
 import { runIdentityInstruction } from "./run-instructions.js";

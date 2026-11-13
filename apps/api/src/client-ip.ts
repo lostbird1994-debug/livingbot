@@ -3,8 +3,8 @@ import { existsSync } from "node:fs";
 import { BlockList, isIP } from "node:net";
 import { networkInterfaces } from "node:os";
 import { getConnInfo } from "@hono/node-server/conninfo";
-import { CLIENT_IP_HEADER } from "@rakazo/auth";
-import { withSecurityRequest } from "@rakazo/db";
+import { CLIENT_IP_HEADER } from "@livingbot/auth";
+import { withSecurityRequest } from "@livingbot/db";
 import type { Context, MiddlewareHandler } from "hono";
 
 export interface ClientIpConfig {

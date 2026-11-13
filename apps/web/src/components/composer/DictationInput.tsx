@@ -1,5 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
-import { Button, cn } from "@rakazo/ui-web";
+import { Button, cn } from "@livingbot/ui-web";
 import { LoaderCircle, Mic, Square, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { dictation } from "../../lib/dictation";

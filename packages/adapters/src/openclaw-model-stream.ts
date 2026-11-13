@@ -6,7 +6,7 @@ import type {
   AgentRunRequest,
   AgentRuntimeEvent,
   AgentUsage,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import { nativeCollaboration } from "./native-collaboration.js";
 import {
   assertAllowedOpenAiCompatibleUrl,

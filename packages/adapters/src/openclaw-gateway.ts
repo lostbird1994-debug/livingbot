@@ -63,7 +63,7 @@ export async function connectOpenClawSdk(
   return new Promise((resolve, reject) => {
     let ready = false;
     const client = new GatewayClient({
-      url, token, clientName: "gateway-client", clientDisplayName: "Rakazo", clientVersion: "1",
+      url, token, clientName: "gateway-client", clientDisplayName: "LivingBot", clientVersion: "1",
       mode: "backend", role: "operator", scopes, caps: ["tool-events"], onEvent,
       onHelloOk() { ready = true; clearTimeout(timer); resolve(client); },
       onConnectError(error: Error) {

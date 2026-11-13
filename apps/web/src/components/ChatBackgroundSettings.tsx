@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Button, Disclosure, SectionHeading } from "@rakazo/ui-web";
+import { Button, Disclosure, SectionHeading } from "@livingbot/ui-web";
 import { ImagePlus, RotateCcw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import {

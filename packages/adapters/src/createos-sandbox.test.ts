@@ -4,11 +4,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import type * as TimersPromises from "node:timers/promises";
 import { promisify } from "node:util";
-import type { ComputerRef, PortableFile, ProcessEvent } from "@rakazo/adapter-kit";
+import type { ComputerRef, PortableFile, ProcessEvent } from "@livingbot/adapter-kit";
 import {
   browserProfilePathForScreen,
   DEFAULT_DESKTOP_ENV,
-} from "@rakazo/core/node/desktop-runtime";
+} from "@livingbot/core/node/desktop-runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CHROME_OWNS_DEBUG_PORT_SCRIPT,

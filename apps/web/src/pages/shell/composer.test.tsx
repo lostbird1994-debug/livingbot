@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
 import { i18n } from "@lingui/core";
-import type { AgentSkillCatalogEntry, ThreadMessage } from "@rakazo/contracts";
-import type { ComposerMention } from "@rakazo/core";
-import { MODEL_REQUIRED_SEND_ERROR, resolveComposerSendPlan } from "@rakazo/core";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { AgentSkillCatalogEntry, ThreadMessage } from "@livingbot/contracts";
+import type { ComposerMention } from "@livingbot/core";
+import { MODEL_REQUIRED_SEND_ERROR, resolveComposerSendPlan } from "@livingbot/core";
 import type { ComponentProps, ReactNode } from "react";
 import { act, createRef } from "react";
 import type { Root } from "react-dom/client";
@@ -16,14 +17,21 @@ vi.mock("@lingui/react/macro", () => {
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
 
+vi.mock("../../lib/query", () => ({ useSpaceQueries: () => ({
+  capabilities: { list: { queryOptions: () => ({ queryKey: ["test-capabilities"], queryFn: async () => [], initialData: [], enabled: false }) } },
+  agentSkills: { list: { queryOptions: () => ({ queryKey: ["test-skills"], queryFn: async () => [], initialData: [], enabled: false }) } },
+}) }));
+
 import { dictation } from "../../lib/dictation";
 import { Composer } from "./composer";
 
 let root: Root | null = null;
+let queryClient: QueryClient;
 let container: HTMLDivElement | null = null;
 let composerProps: ComponentProps<typeof Composer>;
 
 beforeEach(() => {
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   i18n.load("en", {});
   i18n.activate("en");
 });
@@ -99,7 +107,7 @@ function renderComposer(
 
 function rerenderComposer(overrides: Partial<ComponentProps<typeof Composer>>) {
   composerProps = { ...composerProps, ...overrides };
-  act(() => root?.render(<Composer {...composerProps} />));
+  act(() => root?.render(<QueryClientProvider client={queryClient}><Composer {...composerProps} /></QueryClientProvider>));
 }
 
 it("shows a readable run error with raw details, while preserving send errors", () => {
@@ -541,7 +549,7 @@ describe("Composer", () => {
     type(textarea, `${textarea.value}then @Bo`);
     act(() => container?.querySelectorAll<HTMLButtonElement>('[role="option"]')[1]?.click());
     type(textarea, `${textarea.value}please`);
-    act(() => root?.render(<Composer key="restored" {...composerProps} />));
+    act(() => root?.render(<QueryClientProvider client={queryClient}><Composer key="restored" {...composerProps} /></QueryClientProvider>));
     textarea = container!.querySelector("textarea")!;
     expect(textarea.value).toBe("ask @Bob then @Bob please");
     expect(container?.querySelectorAll('[data-testid="mention-chip"]')).toHaveLength(2);

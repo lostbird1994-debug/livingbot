@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AdapterContext, AgentRunRequest, AgentRuntimeEvent } from "@rakazo/adapter-kit";
+import type { AdapterContext, AgentRunRequest, AgentRuntimeEvent } from "@livingbot/adapter-kit";
 import { OpenClawAgentRuntime } from "./openclaw-kernel.js";
 import type { NativeRecord, NativeStore } from "./openclaw-native-driver.js";
 

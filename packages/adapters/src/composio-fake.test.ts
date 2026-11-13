@@ -1,7 +1,7 @@
 import type { ConnectedAccountStatus } from "@composio/core";
-import type { AdapterContext, ConnectorEvent } from "@rakazo/adapter-kit";
-import { ConnectorAuthUnavailableError } from "@rakazo/adapter-kit";
-import { CONNECTOR_AUTH_UNAVAILABLE } from "@rakazo/contracts";
+import type { AdapterContext, ConnectorEvent } from "@livingbot/adapter-kit";
+import { ConnectorAuthUnavailableError } from "@livingbot/adapter-kit";
+import { CONNECTOR_AUTH_UNAVAILABLE } from "@livingbot/contracts";
 import { describe, expect, it } from "vitest";
 import { ComposioConnector, createConnectorStack } from "./composio-connector.js";
 import { FakeComposioClient } from "./composio-fake.js";

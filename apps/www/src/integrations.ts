@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
-import type { PluginCategory } from "@rakazo/core";
-import { PLUGIN_CATEGORIES } from "@rakazo/core";
+import type { PluginCategory } from "@livingbot/core";
+import { PLUGIN_CATEGORIES } from "@livingbot/core";
 import { z } from "zod";
 import { CATALOG_URL, SITE_URL } from "./site";
 
@@ -240,9 +240,9 @@ export function integrationsMarkdown(): string {
     (integration) =>
       `- [${integration.name}](${SITE_URL}${integrationPath(integration.slug)}): ${CATEGORY_LABELS[categoryOf(integration)]}, ${integration.actions.length} actions`,
   );
-  return `# Rakazo integrations
+  return `# LivingBot integrations
 
-Rakazo bots can connect to ${INTEGRATIONS.length} apps. Ask a bot to connect one and approve the sign-in it sends.
+LivingBot bots can connect to ${INTEGRATIONS.length} apps. Ask a bot to connect one and approve the sign-in it sends.
 
 ${lines.join("\n")}
 `;
@@ -257,7 +257,7 @@ export function integrationMarkdown(integration: Integration): string {
 
 ${integration.description}
 
-Category: ${CATEGORY_LABELS[categoryOf(integration)]}. Connect from any Rakazo bot at ${SITE_URL}${integrationPath(integration.slug)}.
+Category: ${CATEGORY_LABELS[categoryOf(integration)]}. Connect from any LivingBot bot at ${SITE_URL}${integrationPath(integration.slug)}.
 
 ## Actions
 

@@ -1,5 +1,5 @@
-import type { ProcessEvent } from "@rakazo/adapter-kit";
-import type { ComputerCommand } from "@rakazo/contracts";
+import type { ProcessEvent } from "@livingbot/adapter-kit";
+import type { ComputerCommand } from "@livingbot/contracts";
 import { afterEach, expect, it, vi } from "vitest";
 import type * as BotSecrets from "./bot-secrets.js";
 import type { RunContext } from "./run-context.js";

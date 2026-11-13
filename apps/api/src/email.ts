@@ -1,5 +1,5 @@
-import type { TransactionalEmailProvider } from "@rakazo/adapter-kit";
-import { ResendEmailProvider, SmtpEmailProvider } from "@rakazo/adapters";
+import type { TransactionalEmailProvider } from "@livingbot/adapter-kit";
+import { ResendEmailProvider, SmtpEmailProvider } from "@livingbot/adapters";
 import type { AppEnv } from "./env.js";
 
 export function configuredEmailProvider(

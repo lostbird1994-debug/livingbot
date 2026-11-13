@@ -1,5 +1,5 @@
 import { i18n } from "@lingui/core";
-import type { RunErrorTranslator } from "@rakazo/core";
+import type { RunErrorTranslator } from "@livingbot/core";
 
 /** Static descriptors keep shared run-error messages in Lingui extraction. */
 export const translateRunError: RunErrorTranslator = (message, values) => {
@@ -41,10 +41,10 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
         message: "Connect a model in Settings before running bots.",
         values,
       });
-    case "Connect your own API key in Models or choose Rakazo credits in Billing.":
+    case "Connect your own API key in Models or choose LivingBot credits in Billing.":
       return i18n._({
-        id: "Connect your own API key in Models or choose Rakazo credits in Billing.",
-        message: "Connect your own API key in Models or choose Rakazo credits in Billing.",
+        id: "Connect your own API key in Models or choose LivingBot credits in Billing.",
+        message: "Connect your own API key in Models or choose LivingBot credits in Billing.",
         values,
       });
     case "The model provider returned an error.":

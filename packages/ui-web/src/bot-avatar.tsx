@@ -1,5 +1,5 @@
-import type { BotAvatarSet } from "@rakazo/contracts";
-import type { BotColorDef, LogoAvatarActivity } from "@rakazo/core";
+import type { BotAvatarSet } from "@livingbot/contracts";
+import type { BotColorDef, LogoAvatarActivity } from "@livingbot/core";
 import {
   ACTIVE_RUN_STATUSES,
   avatarIdentitySeed,
@@ -13,8 +13,8 @@ import {
   SHIPPED_BOT_AVATAR_SHAPES,
   SHIPPED_BOT_AVATAR_VIEWBOX,
   shippedBotAvatarShapePath,
-} from "@rakazo/core";
-import { tokens } from "@rakazo/ui-tokens";
+} from "@livingbot/core";
+import { tokens } from "@livingbot/ui-tokens";
 import type { ComponentProps, CSSProperties } from "react";
 import { memo, useEffect, useId, useMemo, useSyncExternalStore } from "react";
 import { useBotAvatarActivity } from "./bot-avatar-activity.js";
@@ -244,7 +244,7 @@ export const BotAvatar = memo(function BotAvatar({
   );
 });
 
-/** Only live Rakazo consumers subscribe to public activity updates. */
+/** Only live LivingBot consumers subscribe to public activity updates. */
 function LiveLogoAvatar({
   status,
   ...props
@@ -287,7 +287,7 @@ function OrganicAvatar({
       ref={ref}
       viewBox="-60 -60 120 120"
       aria-hidden="true"
-      className={cn("rakazo-organic-avatar overflow-visible select-none", className)}
+      className={cn("livingbot-organic-avatar overflow-visible select-none", className)}
       data-working={isWorking}
       data-paused={!visible}
       data-shape-family={seed % 10}
@@ -301,7 +301,7 @@ function OrganicAvatar({
       {(["idle", "working"] as const).map((mode) => (
         <path
           key={mode}
-          className={`rakazo-organic-avatar-body rakazo-organic-avatar-body-${mode}`}
+          className={`livingbot-organic-avatar-body livingbot-organic-avatar-body-${mode}`}
           d={shapeA}
           fill={color}
           style={
@@ -329,7 +329,7 @@ function OrganicAvatar({
         {(["idle", "working"] as const).map((mode) => (
           <g
             key={mode}
-            className={`rakazo-organic-avatar-eyes rakazo-organic-avatar-eyes-${mode}`}
+            className={`livingbot-organic-avatar-eyes livingbot-organic-avatar-eyes-${mode}`}
             fill={tokens.background}
           >
             <rect x="-14" y="-12" width="7" height="24" rx="3.5" />

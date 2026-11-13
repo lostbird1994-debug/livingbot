@@ -1,20 +1,20 @@
 import { ORPCError } from "@orpc/server";
-import type { SecretStore } from "@rakazo/adapter-kit";
+import type { SecretStore } from "@livingbot/adapter-kit";
 import {
   forgetBotSecret,
   getBotSecretMetadata,
   listBotSecretMetadata,
   storeBotSecret,
-} from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
+} from "@livingbot/adapters";
+import type { Actor } from "@livingbot/contracts";
 import {
   AGENT_SECRET_NAME_PATTERN,
   BotSecretAuth,
   BotSecretName,
   commandVariableName,
   commandVariableProblem,
-} from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+} from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
 import { mapBotSecretInputError } from "./routes/bots.js";
 
 type AgentSecretDeps = {

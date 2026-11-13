@@ -1,4 +1,4 @@
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { beforeEach, describe, expect, it } from "vitest";
 import { assertSafeRemoteUrl, createSafeLookup } from "./remote-mcp.js";
 import { assertSafeWebUrl } from "./web-ssrf.js";

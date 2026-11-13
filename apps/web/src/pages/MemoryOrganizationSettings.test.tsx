@@ -54,7 +54,7 @@ vi.mock("../lib/model-catalog", () => ({
   parseModelOptionKey: () => ({ provider: "example-provider", modelId: "chosen-model" }),
 }));
 vi.mock("./ActivityList", () => ({ statusLabel: (value: string) => value }));
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@livingbot/ui-web", () => ({
   Button: ({ variant: _variant, ...props }: ComponentProps<"button"> & { variant?: string }) => (
     <button type="button" {...props} />
   ),

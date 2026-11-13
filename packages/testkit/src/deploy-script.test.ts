@@ -352,7 +352,7 @@ describe("production deploy script", () => {
     it("uses the GHCR image of the GitHub repository the checkout tracks by default", () => {
       const deploy = fixture();
       const next = commit(deploy.upstream, "next");
-      const github = "https://github.com/Example/Rakazo.git";
+      const github = "https://github.com/Example/LivingBot.git";
       git(deploy.checkout, "remote", "set-url", "origin", github);
       // The deploy runs with HOME set to the fixture root, so fetches still reach the local upstream.
       write(

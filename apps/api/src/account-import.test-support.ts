@@ -1,5 +1,5 @@
-import type { AccountExportManifest, AccountExportRecord } from "@rakazo/contracts";
-import { accountExportPaths } from "@rakazo/contracts";
+import type { AccountExportManifest, AccountExportRecord } from "@livingbot/contracts";
+import { accountExportPaths } from "@livingbot/contracts";
 import { Zip, ZipDeflate } from "fflate";
 
 export type ArchiveFile = [name: string, content: string | Uint8Array];

@@ -201,7 +201,7 @@ vi.mock("react-native", async () => {
   };
 });
 
-import { darkTokens, lightTokens, MAX_FONT_SCALE } from "@rakazo/ui-tokens";
+import { darkTokens, lightTokens, MAX_FONT_SCALE } from "@livingbot/ui-tokens";
 import { themes } from "prism-react-renderer";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";

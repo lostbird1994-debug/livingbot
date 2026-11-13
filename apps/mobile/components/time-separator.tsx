@@ -1,5 +1,5 @@
-import { formatTimeSeparator } from "@rakazo/core";
-import { typeScale } from "@rakazo/ui-tokens";
+import { formatTimeSeparator } from "@livingbot/core";
+import { typeScale } from "@livingbot/ui-tokens";
 import { Text } from "react-native";
 import { mobileTokens } from "../lib/appearance";
 import { dateLocaleForUi, useI18n } from "../lib/i18n";

@@ -1,4 +1,4 @@
-// Relative source path: Vercel functions cannot resolve the TypeScript exports of @rakazo/core.
+// Relative source path: Vercel functions cannot resolve the TypeScript exports of @livingbot/core.
 import { readBoundedJsonResponse } from "../../../packages/core/src/http-response.js";
 import { GITHUB_API_REPO } from "./site";
 

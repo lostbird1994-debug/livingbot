@@ -1,4 +1,4 @@
-import { isSecretAskBlock } from "@rakazo/core";
+import { isSecretAskBlock } from "@livingbot/core";
 import type { MobileMessage } from "./api";
 import { isCenteredAgentEvent } from "./message-presentation";
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { BOT_COLORS, BOT_SETTINGS_SECTIONS, botRoleCard } from "@rakazo/contracts";
+import { BOT_COLORS, BOT_SETTINGS_SECTIONS, botRoleCard } from "@livingbot/contracts";
 import type { ComponentProps, ReactNode } from "react";
 import { act, createElement, useEffect } from "react";
 import type { Root } from "react-dom/client";

@@ -1,15 +1,15 @@
 import { normalizeContext } from "@earendil-works/pi-ai";
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock } from "@livingbot/contracts";
 import {
   CLOUDFLARE_AI_GATEWAY_CONFIG_MESSAGE,
   CLOUDFLARE_WORKERS_AI_PROVIDER_ID,
   cloudflareModelConfigMessage,
   FLEET_TOOL_NAMES,
-} from "@rakazo/contracts";
-import { ONCE_ROUTINE_CRON } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { prioritizeConversation, RunHistoryWriteError } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+} from "@livingbot/contracts";
+import { ONCE_ROUTINE_CRON } from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
+import { prioritizeConversation, RunHistoryWriteError } from "@livingbot/db";
+import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { describe, expect, it, vi } from "vitest";
 import { builtinAgentTools } from "./builtin-tools.js";
 import { createRunExecutor as createExecutor } from "./executor.js";
@@ -50,7 +50,7 @@ import {
 } from "./tool-completion-audit.js";
 import { parseUpdateBotPatch } from "./update-bot-patch.js";
 
-vi.mock("@rakazo/db", async (importOriginal) => ({
+vi.mock("@livingbot/db", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   prioritizeConversation: vi.fn(async () => ({ blocked: false, continuationRunId: null })),
 }));
@@ -1424,7 +1424,7 @@ describe("userTurnInstructions", () => {
       archiveBot,
       "Connected plugins: none",
       "Agent skills",
-      expect.stringContaining("read the Rakazo skill"),
+      expect.stringContaining("read the LivingBot skill"),
       "Taught skills",
       ...stableTail,
       "Group context",

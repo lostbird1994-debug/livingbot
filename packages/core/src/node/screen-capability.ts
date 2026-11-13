@@ -3,7 +3,7 @@ import {
   ipVersion,
   isLocalhostOrLoopbackIp,
   isPrivateNetworkAddress,
-} from "@rakazo/contracts/network-host";
+} from "@livingbot/contracts/network-host";
 
 export const SCREEN_PROXY_TTL_MS = 60 * 60_000;
 export const SCREEN_TARGET_ENDPOINT = "/api/internal/screen-target";

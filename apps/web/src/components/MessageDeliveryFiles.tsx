@@ -1,6 +1,6 @@
-import type { ThreadMessage } from "@rakazo/contracts";
-import { localDocumentReferences } from "@rakazo/core";
-import { Button } from "@rakazo/ui-web";
+import type { ThreadMessage } from "@livingbot/contracts";
+import { localDocumentReferences } from "@livingbot/core";
+import { Button } from "@livingbot/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";

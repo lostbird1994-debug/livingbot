@@ -4,7 +4,7 @@ import http from "node:http";
 import net from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { resolveSupervisorToken } from "@rakazo/core";
+import { resolveSupervisorToken } from "@livingbot/core";
 import { describe, expect, it } from "vitest";
 import {
   MAX_SUPERVISOR_FILE_REQUEST_BYTES,
@@ -759,8 +759,8 @@ describe("sandbox supervisor input containment", () => {
   it("resets stale managed screens without killing unrelated container jobs", () => {
     const command = resetManagedScreensCommand();
     expect(command).toContain("chromium-bot-*");
-    expect(command).toContain("for marker in /tmp/rakazo/browser-profile-*");
-    expect(command).toContain("/tmp/rakazo/browser-pid-*");
+    expect(command).toContain("for marker in /tmp/livingbot/browser-profile-*");
+    expect(command).toContain("/tmp/livingbot/browser-pid-*");
     expect(command).not.toContain("pkill -9 -1");
   });
 
@@ -1020,7 +1020,7 @@ describe("sandbox supervisor input containment", () => {
     expect(primary).not.toContain("websockify");
     expect(primary).toContain("sockets/view-1-");
     expect(primary).toContain("sockets/control-1-");
-    expect(primary).toContain("rm -f /tmp/rakazo/control-token-1");
+    expect(primary).toContain("rm -f /tmp/livingbot/control-token-1");
     expect(primary).toContain("transport failed to stop");
 
     const extra = stopExtraScreenCommand(1, "researcher");
@@ -1039,7 +1039,7 @@ describe("sandbox supervisor input containment", () => {
     });
     expect(stop).toContain(`sockets/view-${index + 1}-`);
     expect(stop).toContain(`sockets/control-${index + 1}-`);
-    expect(stop).toContain(`rm -f /tmp/rakazo/control-token-${index + 1}`);
+    expect(stop).toContain(`rm -f /tmp/livingbot/control-token-${index + 1}`);
     expect(stop).not.toContain("--user-data-dir");
     expect(stop).not.toContain("browser-profile-");
     expect(stop).not.toContain("browser-launch-");

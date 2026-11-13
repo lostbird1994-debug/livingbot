@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock } from "@livingbot/contracts";
 import { describe, expect, it } from "vitest";
 import { approvalPresentation } from "./approval-presentation.js";
 

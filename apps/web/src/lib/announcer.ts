@@ -1,4 +1,4 @@
-import { speakable } from "@rakazo/core";
+import { speakable } from "@livingbot/core";
 import { speaker } from "./tts";
 
 /**

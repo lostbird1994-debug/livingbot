@@ -1,6 +1,6 @@
-import type { AgentRunRequest, AgentRuntime } from "@rakazo/adapter-kit";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { AgentRunRequest, AgentRuntime } from "@livingbot/adapter-kit";
+import type { Actor } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
 import { describe, expect, it, vi } from "vitest";
 import { createSpeechSummarizer } from "./speech-summary.js";
 

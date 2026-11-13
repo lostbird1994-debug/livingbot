@@ -17,7 +17,7 @@ import {
   DEFAULT_DESKTOP_ENV,
   ensureScreenCommand,
   TERMINAL_MENU_COMMAND,
-} from "@rakazo/core/node/desktop-runtime";
+} from "@livingbot/core/node/desktop-runtime";
 import type Docker from "dockerode";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
@@ -657,7 +657,7 @@ describe("graphical computer spec", () => {
         mkdirSync(path.dirname(menuPath), { recursive: true });
         writeFileSync(
           menuPath,
-          "[begin] (Desktop)\n[exec] (Browser) {/tmp/rakazo/browser-launch-1}\n[end]\n",
+          "[begin] (Desktop)\n[exec] (Browser) {/tmp/livingbot/browser-launch-1}\n[end]\n",
         );
         writeFileSync(initPath, init);
         const lines = generated.replaceAll("/tmp/fluxbox-home-1", fluxHome).split("\n");
@@ -682,7 +682,7 @@ describe("graphical computer spec", () => {
         expect(written).toBe(
           [
             "[begin] (Desktop)",
-            "[exec] (Browser) {/tmp/rakazo/browser-launch-1}",
+            "[exec] (Browser) {/tmp/livingbot/browser-launch-1}",
             terminalLine,
             "[end]",
             "",
@@ -2170,7 +2170,7 @@ describe("computer home storage", () => {
             'sleep() { echo "delay $1"; attempts=$((attempts + 1)); if [ "$attempts" -eq 2 ]; then exit 0; fi; }',
             loop
               ?.replace("/usr/local/bin/rakazo-computer-control", "control")
-              .replace(" >/tmp/rakazo/control.log 2>&1 &", ""),
+              .replace(" >/tmp/livingbot/control.log 2>&1 &", ""),
           ].join("\n"),
         ],
         { encoding: "utf8", timeout: 5_000 },

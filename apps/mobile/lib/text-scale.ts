@@ -1,4 +1,4 @@
-import { MAX_FONT_SCALE } from "@rakazo/ui-tokens";
+import { MAX_FONT_SCALE } from "@livingbot/ui-tokens";
 import { createElement } from "react";
 import type * as ReactNative from "react-native";
 import type { TextInputProps, TextProps } from "react-native";

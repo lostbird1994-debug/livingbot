@@ -1,8 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { Api, Context, Message, Model } from "@earendil-works/pi-ai";
-import type { AdapterContext, AgentRunRequest, AgentUsage } from "@rakazo/adapter-kit";
-import { DEFAULT_CONTEXT_STRATEGY } from "@rakazo/adapter-kit";
-import { getLogger } from "@rakazo/logging";
+import type { AdapterContext, AgentRunRequest, AgentUsage } from "@livingbot/adapter-kit";
+import { DEFAULT_CONTEXT_STRATEGY } from "@livingbot/adapter-kit";
+import { getLogger } from "@livingbot/logging";
 import { imagePartCount, normalizedImageLimit, pruneForRebuild } from "./context-pruning.js";
 import type { CacheRequest, ContextBudget } from "./context-selection.js";
 import {
@@ -436,7 +436,7 @@ export function createRuntimeContextPolicy(
       (message) =>
         (message as Message & OriginalMetadata).rakazoHistory &&
         !(message as Message & OriginalMetadata).rakazoMessageId &&
-        (text(message).startsWith("Rakazo-owned compacted context through message sequence ") ||
+        (text(message).startsWith("LivingBot-owned compacted context through message sequence ") ||
           text(message).startsWith(
             "Memory recalled from earlier conversations that fell outside the visible history.",
           )),

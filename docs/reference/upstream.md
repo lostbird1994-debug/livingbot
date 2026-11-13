@@ -1,13 +1,15 @@
+> Historical upstream reference. These downloads and hosted services are not LivingBot releases.
+
 # Rakazo
 
-[English](./README.md) | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
+[English](../../README.md) | [简体中文](../../README.zh-CN.md) | [日本語](../../README.ja.md)
 
 [![GitHub stars](https://img.shields.io/github/stars/elie222/rakazo?labelColor=black&style=for-the-badge&color=2563EB)](https://github.com/elie222/rakazo/stargazers)
 [![Discord](https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?labelColor=black&style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/RWwKa2Sn7h)
 [![Download on the App Store](https://img.shields.io/badge/App%20Store-Download%20for%20iPhone-black?labelColor=black&style=for-the-badge&logo=apple&logoColor=white)](https://apps.apple.com/app/rakazo/id6801531099)
 [![Download the Android APK](https://img.shields.io/badge/Android-Download%20APK-black?labelColor=black&style=for-the-badge&logo=android&logoColor=white)](https://github.com/elie222/rakazo/releases/download/android/rakazo.apk)
 
-![Rakazo — AI teammates you actually own](./docs/readme-hero.png)
+![Rakazo — AI teammates you actually own](../../docs/readme-hero.png)
 
 Rakazo is an open source AI agent for persistent teammates, and a self-hosted AI assistant you
 can run on your own machine. It is available on the web, as an Electron desktop app, and on
@@ -81,7 +83,7 @@ existing Compose files (`--local` / `RAKAZO_DOWNLOAD_SKIP_EXISTING`), or mirror 
 script URL — see
 [Restricted networks / mirror downloads](./docs/self-host.md#restricted-networks--mirror-downloads).
 
-For an agent-assisted install, use [SETUP_PROMPT.md](./SETUP_PROMPT.md).
+For an agent-assisted install, use [SETUP_PROMPT.md](../../SETUP_PROMPT.md).
 
 ## Run on a server
 
@@ -98,7 +100,7 @@ Put HTTPS in front of port 5173; [docs/self-host-production.md](./docs/self-host
 covers the Caddy setup and host hardening. In the desktop app choose **Existing instance** and enter
 the `https://` address.
 
-Or [deploy on Railway](https://railway.com/new/template/rakazo-template); see the [Railway setup guide](./infra/railway/README.md).
+Or [deploy on Railway](https://railway.com/new/template/rakazo-template); see the [Railway setup guide](../../infra/railway/README.md).
 
 ## Local development (source checkout)
 
@@ -166,8 +168,8 @@ Open the printed URL ([http://127.0.0.1:5173](http://127.0.0.1:5173) by default)
 your first bot.
 
 For deployment, provider selection, backups, and upgrades, see the
-[self-hosting guide](./docs/self-host.md), [production deployment](./docs/self-host-production.md),
-[backup and restore](./docs/self-host-backups.md), and [upgrading](./docs/self-host-upgrading.md).
+[self-hosting guide](../../docs/self-host.md), [production deployment](../../docs/self-host-production.md),
+[backup and restore](../../docs/self-host-backups.md), and [upgrading](../../docs/self-host-upgrading.md).
 
 To use CreateOS, set `SANDBOX_PROVIDER=createos` and `CREATEOS_SANDBOX_API_KEY`.
 Optional `CREATEOS_SANDBOX_BASE_URL`, `CREATEOS_SANDBOX_SHAPE`, and
@@ -234,7 +236,7 @@ saving returns to the previous instance. For development automation, set `RAKAZO
 the shell somewhere else without changing the saved instance, or `RAKAZO_FORCE_SETUP=1` to run
 setup again.
 
-Mobile build and release instructions live in [docs/mobile-release.md](./docs/mobile-release.md).
+Mobile build and release instructions live in [docs/mobile-release.md](../../docs/mobile-release.md).
 
 ## UI language
 
@@ -267,30 +269,30 @@ pnpm test:integration
 pnpm test:e2e
 ```
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow and test matrix.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the development workflow and test matrix.
 
 ## Documentation
 
-- [Self-hosting](./docs/self-host.md)
-- [Self-host configuration](./docs/self-host-configuration.md)
-- [Self-host secrets](./docs/self-host-secrets.md)
-- [Sign-in and accounts](./docs/self-host-accounts.md)
-- [Models](./docs/self-host-models.md)
-- [Tools and integrations](./docs/self-host-integrations.md)
-- [Computer providers](./docs/self-host-sandbox-providers.md)
-- [Docker computers](./docs/self-host-docker-computers.md)
-- [Storage and encryption](./docs/self-host-storage.md)
-- [Production deployment](./docs/self-host-production.md)
-- [Backup and restore](./docs/self-host-backups.md)
-- [Upgrading](./docs/self-host-upgrading.md)
-- [Logs and monitoring](./docs/self-host-observability.md)
-- [Apps and clients](./docs/self-host-clients.md)
-- [Billing](./docs/self-host-billing.md)
-- [Computer runtime and isolation](./docs/computer-runtime.md)
-- [Desktop releases](./docs/desktop-release.md)
-- [Mobile releases](./docs/mobile-release.md)
-- [Performance testing](./docs/performance.md)
-- [Manage the bots it creates](./docs/fleet-management.md)
+- [Self-hosting](../../docs/self-host.md)
+- [Self-host configuration](../../docs/self-host-configuration.md)
+- [Self-host secrets](../../docs/self-host-secrets.md)
+- [Sign-in and accounts](../../docs/self-host-accounts.md)
+- [Models](../../docs/self-host-models.md)
+- [Tools and integrations](../../docs/self-host-integrations.md)
+- [Computer providers](../../docs/self-host-sandbox-providers.md)
+- [Docker computers](../../docs/self-host-docker-computers.md)
+- [Storage and encryption](../../docs/self-host-storage.md)
+- [Production deployment](../../docs/self-host-production.md)
+- [Backup and restore](../../docs/self-host-backups.md)
+- [Upgrading](../../docs/self-host-upgrading.md)
+- [Logs and monitoring](../../docs/self-host-observability.md)
+- [Apps and clients](../../docs/self-host-clients.md)
+- [Billing](../../docs/self-host-billing.md)
+- [Computer runtime and isolation](../../docs/computer-runtime.md)
+- [Desktop releases](../../docs/desktop-release.md)
+- [Mobile releases](../../docs/mobile-release.md)
+- [Performance testing](../../docs/performance.md)
+- [Manage the bots it creates](../../docs/fleet-management.md)
 
 ## How Rakazo compares
 
@@ -304,10 +306,10 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow and test m
 
 ## Contributing
 
-Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull
-request. For security vulnerabilities, follow [SECURITY.md](./SECURITY.md) instead of filing a public
+Contributions are welcome. Please read [CONTRIBUTING.md](../../CONTRIBUTING.md) before opening a pull
+request. For security vulnerabilities, follow [SECURITY.md](../../SECURITY.md) instead of filing a public
 issue.
 
-Rakazo is licensed under the [Apache License 2.0](./LICENSE).
+Rakazo is licensed under the [Apache License 2.0](../../LICENSE).
 
 Questions and ideas are welcome in the [Rakazo Discord community](https://discord.gg/RWwKa2Sn7h).

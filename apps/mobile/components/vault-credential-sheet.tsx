@@ -1,5 +1,5 @@
-import type { BotSecretMetadata } from "@rakazo/contracts";
-import { commandVariableName } from "@rakazo/contracts";
+import type { BotSecretMetadata } from "@livingbot/contracts";
+import { commandVariableName } from "@livingbot/contracts";
 import { useRef, useState } from "react";
 import { Modal, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

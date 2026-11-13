@@ -32,7 +32,7 @@ vi.mock("../../components/DeliveryFileCard", () => ({
     </div>
   ),
 }));
-vi.mock("@rakazo/ui-web", async () => {
+vi.mock("@livingbot/ui-web", async () => {
   const React = await import("react");
   const TabsContext = React.createContext<(s: string) => void>(() => {});
   return {

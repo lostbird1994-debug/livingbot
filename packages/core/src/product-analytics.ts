@@ -1,4 +1,4 @@
-import type { AnalyticsScreen } from "@rakazo/contracts";
+import type { AnalyticsScreen } from "@livingbot/contracts";
 
 /** Convert navigation to a fixed vocabulary; never return paths, entity ids or search parameters. */
 export function analyticsScreen(pathname: string): AnalyticsScreen | undefined {

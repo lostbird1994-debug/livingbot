@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
+import { loadRootEnv } from "@livingbot/core/node/load-root-env";
 import { computerTestSandbox } from "../computer-test-config.js";
 import { disposableDatabaseEnv, startPostgres } from "./postgres.js";
 import { runProcess } from "./process.js";
@@ -40,11 +40,11 @@ async function main() {
     SIGNUP_ALLOWLIST: "",
   };
   try {
-    execFileSync("pnpm", ["--filter", "@rakazo/db", "generate"], {
+    execFileSync("pnpm", ["--filter", "@livingbot/db", "generate"], {
       stdio: "inherit",
       env,
     });
-    execFileSync("pnpm", ["--filter", "@rakazo/db", "exec", "prisma", "migrate", "deploy"], {
+    execFileSync("pnpm", ["--filter", "@livingbot/db", "exec", "prisma", "migrate", "deploy"], {
       stdio: "inherit",
       env,
       cwd: path.resolve("packages/db"),

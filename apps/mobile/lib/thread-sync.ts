@@ -1,4 +1,4 @@
-import { isRetryableError } from "@rakazo/core";
+import { isRetryableError } from "@livingbot/core";
 import { useFocusEffect } from "expo-router";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { useCallback, useEffect } from "react";

@@ -6,7 +6,7 @@ import {
   CLIENT_BUILD_HEADER,
   CLIENT_UPDATE_REQUIRED,
   SERVER_BUILD_HEADER,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 import { clientBuildMiddleware, readDeployedWebBuild } from "./client-build.js";

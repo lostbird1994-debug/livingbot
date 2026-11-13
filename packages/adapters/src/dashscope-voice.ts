@@ -12,7 +12,7 @@ import type {
   VoiceSynthesizeRequest,
   VoiceTranscribeRequest,
   VoiceVerifyResult,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import { MAX_SPEAK_CHARS } from "./voice-http.js";
 
 /**

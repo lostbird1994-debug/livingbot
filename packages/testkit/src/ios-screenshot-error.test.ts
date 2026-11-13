@@ -1,8 +1,8 @@
-import { createDb } from "@rakazo/db";
+import { createDb } from "@livingbot/db";
 import { describe, expect, it, vi } from "vitest";
 import { captureIosProviderLimitError } from "./cli/ios-screenshot-error.js";
 
-vi.mock("@rakazo/db", () => ({ createDb: vi.fn() }));
+vi.mock("@livingbot/db", () => ({ createDb: vi.fn() }));
 
 describe("provider limit screenshot section", () => {
   it.each([false, true])("restores the healthy run when capture fails: %s", async (fails) => {

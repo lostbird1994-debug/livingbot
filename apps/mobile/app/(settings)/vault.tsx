@@ -1,6 +1,6 @@
 import { MenuView } from "@expo/ui/community/menu";
-import type { BotSecretMetadata, VaultRevealed } from "@rakazo/contracts";
-import { isIdentityConfirmationRequired } from "@rakazo/contracts";
+import type { BotSecretMetadata, VaultRevealed } from "@livingbot/contracts";
+import { isIdentityConfirmationRequired } from "@livingbot/contracts";
 import * as Clipboard from "expo-clipboard";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";

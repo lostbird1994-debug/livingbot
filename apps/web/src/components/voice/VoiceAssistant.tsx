@@ -1,5 +1,5 @@
-import type { Bot } from "@rakazo/contracts";
-import { Button } from "@rakazo/ui-web";
+import type { Bot } from "@livingbot/contracts";
+import { Button } from "@livingbot/ui-web";
 import { Mic, MicOff, X } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { announcementLine, announcer } from "../../lib/announcer";

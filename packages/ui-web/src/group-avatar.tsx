@@ -1,4 +1,4 @@
-import type { BotAvatarSet } from "@rakazo/contracts";
+import type { BotAvatarSet } from "@livingbot/contracts";
 import type { CSSProperties } from "react";
 import { memo } from "react";
 import { BotAvatar } from "./bot-avatar.js";

@@ -7,11 +7,11 @@ import {
   SandboxUnavailableError,
   SandboxUnresponsiveError,
   VoiceAccountError,
-} from "@rakazo/adapter-kit";
-import { MODEL_IMAGE_INPUT_ERROR } from "@rakazo/core";
-import { IsolationError } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
-import { requestLogging } from "@rakazo/logging/hono";
+} from "@livingbot/adapter-kit";
+import { MODEL_IMAGE_INPUT_ERROR } from "@livingbot/core";
+import { IsolationError } from "@livingbot/db";
+import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
+import { requestLogging } from "@livingbot/logging/hono";
 import { Hono } from "hono";
 import { afterEach, describe, expect, it } from "vitest";
 import { handleRpcError, logUnexpectedRpcError } from "./app.js";

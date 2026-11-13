@@ -1,8 +1,8 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
-import type { createApp } from "@rakazo/api/app";
+import type { ComputerRef, SandboxProvider } from "@livingbot/adapter-kit";
+import type { createApp } from "@livingbot/api/app";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { computerTestSandbox } from "./computer-test-config.js";
 import { sessionCookieHeader } from "./index.js";
@@ -30,7 +30,7 @@ describeLive("real model and sandbox computer journey", () => {
       if (!process.env[key]) throw new Error(`${key} is required for pnpm test:computer`);
     }
     dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-computer-e2e-"));
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@livingbot/api/app");
     handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,
@@ -89,7 +89,7 @@ describeLive("real model and sandbox computer journey", () => {
       method: "POST",
       headers: { "content-type": "application/json", origin: "http://127.0.0.1:5173" },
       body: JSON.stringify({
-        email: `computer-${stamp}@rakazo.test`,
+        email: `computer-${stamp}@livingbot.test`,
         password: "password12",
         name: "Computer E2E",
       }),
@@ -217,7 +217,7 @@ async function installVisualFixture(sandbox: SandboxProvider, computer: Computer
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
-PAGE = b'''<!doctype html><meta charset="utf-8"><title>Rakazo visual test</title>
+PAGE = b'''<!doctype html><meta charset="utf-8"><title>LivingBot visual test</title>
 <style>body{font-family:sans-serif;text-align:center;padding-top:120px}button{width:760px;height:300px;font-size:58px;background:#2563eb;color:white;border:0;border-radius:24px}</style>
 <button onclick="fetch('/passed',{method:'POST'}).then(()=>document.body.innerHTML='<h1 style=font-size:72px>VISUAL E2E PASSED</h1>')">CLICK TO PASS</button>'''
 

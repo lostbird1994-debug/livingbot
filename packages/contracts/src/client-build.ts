@@ -16,9 +16,9 @@ export const CLIENT_KINDS = ["web", "mobile"] as const;
 export type ClientKind = (typeof CLIENT_KINDS)[number];
 export type MinimumClientBuilds = Partial<Record<ClientKind, string>>;
 
-export const IOS_APP_STORE_URL = "https://apps.apple.com/app/rakazo/id6801531099";
+export const IOS_APP_STORE_URL = "https://github.com/lostbird1994-debug/livingbot/releases";
 export const ANDROID_APK_URL =
-  "https://github.com/elie222/rakazo/releases/download/android/rakazo.apk";
+  "https://github.com/lostbird1994-debug/livingbot/releases";
 
 const BUILD_ID = /^\d{14}$/;
 

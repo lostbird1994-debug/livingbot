@@ -1,4 +1,4 @@
-import { isBackgroundRunTrigger, redactSecrets } from "@rakazo/core";
+import { isBackgroundRunTrigger, redactSecrets } from "@livingbot/core";
 import {
   connectAgent,
   messageConnectedAgent,

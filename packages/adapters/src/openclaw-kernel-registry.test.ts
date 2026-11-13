@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AgentRunRequest } from "@rakazo/adapter-kit";
+import type { AgentRunRequest } from "@livingbot/adapter-kit";
 import { nativeKernelModel, resolveKernelAgent } from "./openclaw-kernel-registry.js";
 import type { KernelEngineConfig } from "./openclaw-kernel-registry.js";
 const request: AgentRunRequest = {

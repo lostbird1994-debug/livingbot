@@ -1,6 +1,6 @@
 @import "tw-animate-css";
 @import "./shadcn.css";
-@import "@rakazo/ui-tokens/css";
+@import "@livingbot/ui-tokens/css";
 
 @source "./**/*.{ts,tsx}";
 
@@ -180,93 +180,93 @@
     0 0 10px color-mix(in srgb, var(--status-working) 60%, transparent);
 }
 
-.rakazo-organic-avatar-body {
+.livingbot-organic-avatar-body {
   transform-origin: center;
   transition: opacity 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.rakazo-organic-avatar-body-working {
+.livingbot-organic-avatar-body-working {
   opacity: 0;
 }
 
-.rakazo-organic-avatar[data-working="true"] .rakazo-organic-avatar-body-idle {
+.livingbot-organic-avatar[data-working="true"] .livingbot-organic-avatar-body-idle {
   opacity: 0;
 }
 
-.rakazo-organic-avatar[data-working="true"] .rakazo-organic-avatar-body-working {
+.livingbot-organic-avatar[data-working="true"] .livingbot-organic-avatar-body-working {
   opacity: 1;
 }
 
-.rakazo-organic-avatar-eyes {
+.livingbot-organic-avatar-eyes {
   transition: opacity 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.rakazo-organic-avatar-eyes-working {
+.livingbot-organic-avatar-eyes-working {
   opacity: 0;
 }
 
-.rakazo-organic-avatar[data-working="true"] .rakazo-organic-avatar-eyes-idle {
+.livingbot-organic-avatar[data-working="true"] .livingbot-organic-avatar-eyes-idle {
   opacity: 0;
 }
 
-.rakazo-organic-avatar[data-working="true"] .rakazo-organic-avatar-eyes-working {
+.livingbot-organic-avatar[data-working="true"] .livingbot-organic-avatar-eyes-working {
   opacity: 1;
 }
 
-.rakazo-organic-avatar[data-eye-pattern="0"] .rakazo-organic-avatar-eyes-working {
+.livingbot-organic-avatar[data-eye-pattern="0"] .livingbot-organic-avatar-eyes-working {
   animation: rakazo-organic-eyes-loop-0 6.6s ease-in-out infinite;
 }
 
-.rakazo-organic-avatar[data-eye-pattern="1"] .rakazo-organic-avatar-eyes-working {
+.livingbot-organic-avatar[data-eye-pattern="1"] .livingbot-organic-avatar-eyes-working {
   animation: rakazo-organic-eyes-loop-1 7.2s ease-in-out -1.4s infinite;
 }
 
-.rakazo-organic-avatar[data-eye-pattern="2"] .rakazo-organic-avatar-eyes-working {
+.livingbot-organic-avatar[data-eye-pattern="2"] .livingbot-organic-avatar-eyes-working {
   animation: rakazo-organic-eyes-loop-2 6.1s ease-in-out -3.2s infinite;
 }
 
-.rakazo-organic-avatar[data-eye-pattern="3"] .rakazo-organic-avatar-eyes-working {
+.livingbot-organic-avatar[data-eye-pattern="3"] .livingbot-organic-avatar-eyes-working {
   animation: rakazo-organic-eyes-loop-3 7.8s ease-in-out -2.1s infinite;
 }
 
-/* Durations mirror @rakazo/core WORKING_AVATAR_DURATIONS_MS (avatar-motion). */
-.rakazo-organic-avatar[data-shape-family="0"] .rakazo-organic-avatar-body-working {
+/* Durations mirror @livingbot/core WORKING_AVATAR_DURATIONS_MS (avatar-motion). */
+.livingbot-organic-avatar[data-shape-family="0"] .livingbot-organic-avatar-body-working {
   animation: rakazo-organic-float 1.8s ease-in-out infinite;
 }
 
-.rakazo-organic-avatar[data-shape-family="1"] .rakazo-organic-avatar-body-working {
+.livingbot-organic-avatar[data-shape-family="1"] .livingbot-organic-avatar-body-working {
   animation: rakazo-organic-stretch 1.35s ease-in-out infinite;
 }
 
-.rakazo-organic-avatar[data-shape-family="2"] .rakazo-organic-avatar-body-working,
-.rakazo-organic-avatar[data-shape-family="8"] .rakazo-organic-avatar-body-working {
+.livingbot-organic-avatar[data-shape-family="2"] .livingbot-organic-avatar-body-working,
+.livingbot-organic-avatar[data-shape-family="8"] .livingbot-organic-avatar-body-working {
   animation: rakazo-organic-sway 1.6s ease-in-out infinite;
 }
 
-.rakazo-organic-avatar[data-shape-family="3"] .rakazo-organic-avatar-body-working,
-.rakazo-organic-avatar[data-shape-family="4"] .rakazo-organic-avatar-body-working {
+.livingbot-organic-avatar[data-shape-family="3"] .livingbot-organic-avatar-body-working,
+.livingbot-organic-avatar[data-shape-family="4"] .livingbot-organic-avatar-body-working {
   animation: rakazo-organic-turn 2.4s ease-in-out infinite;
 }
 
-.rakazo-organic-avatar[data-shape-family="5"] .rakazo-organic-avatar-body-working,
-.rakazo-organic-avatar[data-shape-family="9"] .rakazo-organic-avatar-body-working {
+.livingbot-organic-avatar[data-shape-family="5"] .livingbot-organic-avatar-body-working,
+.livingbot-organic-avatar[data-shape-family="9"] .livingbot-organic-avatar-body-working {
   animation: rakazo-organic-squash 1.35s ease-in-out infinite;
 }
 
-.rakazo-organic-avatar[data-shape-family="6"] .rakazo-organic-avatar-body-working {
+.livingbot-organic-avatar[data-shape-family="6"] .livingbot-organic-avatar-body-working {
   animation: rakazo-organic-pulse 1.1s ease-in-out infinite;
 }
 
-.rakazo-organic-avatar[data-shape-family="7"] .rakazo-organic-avatar-body-working {
+.livingbot-organic-avatar[data-shape-family="7"] .livingbot-organic-avatar-body-working {
   transform-origin: center 20%;
   animation: rakazo-organic-ring 1.35s ease-in-out infinite;
 }
 
 /* Idle, offscreen and hidden avatars hold still: SVG motion repaints on the main thread. */
-.rakazo-organic-avatar[data-paused="true"] .rakazo-organic-avatar-body,
-.rakazo-organic-avatar[data-paused="true"] .rakazo-organic-avatar-eyes,
-.rakazo-organic-avatar[data-working="false"] .rakazo-organic-avatar-body-working,
-.rakazo-organic-avatar[data-working="false"] .rakazo-organic-avatar-eyes-working {
+.livingbot-organic-avatar[data-paused="true"] .livingbot-organic-avatar-body,
+.livingbot-organic-avatar[data-paused="true"] .livingbot-organic-avatar-eyes,
+.livingbot-organic-avatar[data-working="false"] .livingbot-organic-avatar-body-working,
+.livingbot-organic-avatar[data-working="false"] .livingbot-organic-avatar-eyes-working {
   animation-play-state: paused;
 }
 
@@ -457,13 +457,13 @@
     transition: none;
   }
 
-  .rakazo-organic-avatar[data-shape-family] .rakazo-organic-avatar-body {
+  .livingbot-organic-avatar[data-shape-family] .livingbot-organic-avatar-body {
     animation: none;
     d: var(--rakazo-organic-path);
     transition: none;
   }
 
-  .rakazo-organic-avatar[data-eye-pattern] .rakazo-organic-avatar-eyes {
+  .livingbot-organic-avatar[data-eye-pattern] .livingbot-organic-avatar-eyes {
     animation: none;
     transition: none;
   }

@@ -7,10 +7,10 @@ import {
   migrateLocalPushTokens,
   PrismaPushTokenStore,
   unwrapEnvFromKeyManager,
-} from "@rakazo/adapters";
-import { resolveEncryptionKey } from "@rakazo/core";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
-import { createDb } from "@rakazo/db";
+} from "@livingbot/adapters";
+import { resolveEncryptionKey } from "@livingbot/core";
+import { loadRootEnv } from "@livingbot/core/node/load-root-env";
+import { createDb } from "@livingbot/db";
 
 loadRootEnv();
 await unwrapEnvFromKeyManager();

@@ -10,20 +10,20 @@ import type {
   MemorySnapshot,
   MemoryStore,
   PortableFile,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import {
   isMemoryReviewPath,
   MEMORY_REVIEW_DIRECTORY,
   MEMORY_REVISION_CONFLICT_ERROR,
-} from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
+} from "@livingbot/adapter-kit";
+import type { PrismaClient } from "@livingbot/db";
 import {
   contentEncryptionOf,
   MEMORY_SEARCH_VERSION,
   normalizeMemorySearch,
   Prisma,
   withTransactionRetry,
-} from "@rakazo/db";
+} from "@livingbot/db";
 
 export class MarkdownMemoryStore implements MemoryStore {
   constructor(private readonly prisma: PrismaClient) {}

@@ -5,7 +5,7 @@ import type {
   ModelHeaderRow,
   SettingsScope,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   CLOUDFLARE_AI_GATEWAY_PROVIDER_ID,
   cloudflareModelRouting,
@@ -20,8 +20,8 @@ import {
   OPENAI_COMPATIBLE_PROVIDER_ID,
   openAiCompatibleProbeSuccessMessage,
   savedCompatibleEndpointMatches,
-} from "@rakazo/contracts";
-import type { ConnectionFormFields } from "@rakazo/core";
+} from "@livingbot/contracts";
+import type { ConnectionFormFields } from "@livingbot/core";
 import {
   clampCatalogThinkingLevel,
   compatibleConnectionReady,
@@ -35,8 +35,8 @@ import {
   modelConnectRequest,
   popularModelProvidersFirst,
   savedCompatibleModelIds,
-} from "@rakazo/core";
-import { fetchFresh } from "@rakazo/core/query";
+} from "@livingbot/core";
+import { fetchFresh } from "@livingbot/core/query";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useCopyText } from "../../lib/copy-text";

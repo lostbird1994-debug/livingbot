@@ -1,11 +1,11 @@
 import { randomBytes } from "node:crypto";
-import type { SecretStore } from "@rakazo/adapter-kit";
+import type { SecretStore } from "@livingbot/adapter-kit";
 import type {
   BotSecretDestination,
   LoginField,
   LoginSecretValue,
   SettingsScope,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   BotSecretAuth,
   BotSecretName,
@@ -23,10 +23,10 @@ import {
   loginCommandName,
   SecretHttpRequest,
   sameLoginFieldLabel,
-} from "@rakazo/contracts";
-import type { Prisma, PrismaClient } from "@rakazo/db";
-import { lockSpaceSettings, runLoginKind, settingsTarget, withTransactionRetry } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/contracts";
+import type { Prisma, PrismaClient } from "@livingbot/db";
+import { lockSpaceSettings, runLoginKind, settingsTarget, withTransactionRetry } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { z } from "zod";
 import { combineSignals, redactConnectorPayload } from "./connector-safety.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";

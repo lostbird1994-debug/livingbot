@@ -1,12 +1,12 @@
-import type { AccountExportRecord } from "@rakazo/contracts";
+import type { AccountExportRecord } from "@livingbot/contracts";
 import {
   ACCOUNT_EXPORT_MAX_HOME_FILE_BYTES,
   AccountExportManifestSchema,
   AccountExportRecordSchema,
   accountExportPaths,
-} from "@rakazo/contracts";
-import type { AccountExportSource } from "@rakazo/db";
-import { currentDbContext } from "@rakazo/db";
+} from "@livingbot/contracts";
+import type { AccountExportSource } from "@livingbot/db";
+import { currentDbContext } from "@livingbot/db";
 import { Unzip, UnzipInflate } from "fflate";
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";

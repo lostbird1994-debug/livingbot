@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import type { AdapterContext, SandboxProvider } from "@rakazo/adapter-kit";
-import { computerControlExpireJobKey } from "@rakazo/adapter-kit";
-import type { ComputerExecutionLease } from "@rakazo/adapters";
+import type { AdapterContext, SandboxProvider } from "@livingbot/adapter-kit";
+import { computerControlExpireJobKey } from "@livingbot/adapter-kit";
+import type { ComputerExecutionLease } from "@livingbot/adapters";
 import {
   acquireComputerExecutionLease,
   applyTeachingDesktopInput,
@@ -36,25 +36,25 @@ import {
   takeoverLeaseMs,
   toComputerRef,
   touchRunningComputer,
-} from "@rakazo/adapters";
-import type { Actor, ComputerReleaseReason, ComputerStatus } from "@rakazo/contracts";
+} from "@livingbot/adapters";
+import type { Actor, ComputerReleaseReason, ComputerStatus } from "@livingbot/contracts";
 import {
   attachmentMaxBytes,
   attachmentSizeLabel,
   ComputerCommandSchema,
   foldComputerCommands,
-} from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, scrollDirection } from "@rakazo/core";
-import { addScreenProxyCapability } from "@rakazo/core/node/screen-capability";
-import type { ComputerRunEnd, PrismaClient } from "@rakazo/db";
+} from "@livingbot/contracts";
+import { ACTIVE_RUN_STATUSES, scrollDirection } from "@livingbot/core";
+import { addScreenProxyCapability } from "@livingbot/core/node/screen-capability";
+import type { ComputerRunEnd, PrismaClient } from "@livingbot/db";
 import {
   createRepos,
   expireComputerExecutionLeases,
   IsolationError,
   parseComputerMode,
   recordComputerRunEnd,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { scrollPoint } from "../computer-input.js";
 import {
   executionBlocksUserTakeover,

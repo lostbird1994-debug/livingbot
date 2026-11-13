@@ -1,10 +1,10 @@
-import type { CodexLiveCatalog } from "@rakazo/adapters";
-import { mcpStdioRefusal, providerCatalogCache, validateBotModelChange } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import { canonicalPiProviderId, ModelConnectInputSchema } from "@rakazo/contracts";
-import type { createRepos } from "@rakazo/db";
-import { findModelCredential, Prisma } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { CodexLiveCatalog } from "@livingbot/adapters";
+import { mcpStdioRefusal, providerCatalogCache, validateBotModelChange } from "@livingbot/adapters";
+import type { Actor } from "@livingbot/contracts";
+import { canonicalPiProviderId, ModelConnectInputSchema } from "@livingbot/contracts";
+import type { createRepos } from "@livingbot/db";
+import { findModelCredential, Prisma } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { isAdmin } from "./admins.js";
 import type { AgentImportServices } from "./agent-import.js";
 import type { createMcpServers } from "./mcp-servers.js";

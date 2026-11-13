@@ -17,13 +17,13 @@ import type {
   ScreenSession,
   WorkspaceDirectoryRequest,
   WorkspaceExportLimits,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import {
   SandboxUnavailableError,
   SandboxUnresponsiveError,
   WorkspaceTooLargeError,
-} from "@rakazo/adapter-kit";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
+} from "@livingbot/adapter-kit";
+import { boundedSandboxCommandTimeoutMs } from "@livingbot/core";
 import { boundedComputerActions, computerObservation } from "./computer-support.js";
 import { normalizeDesktopWorkspacePath } from "./desktop-sandbox-paths.js";
 import { McpSession } from "./mcp-transport.js";

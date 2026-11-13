@@ -1,4 +1,4 @@
-import { isRetryableError } from "@rakazo/core";
+import { isRetryableError } from "@livingbot/core";
 import { useIsFocused, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";

@@ -3,9 +3,9 @@ import type {
   PaymentWalletCredential,
   PaymentWalletProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { PaymentWalletDisconnected } from "@rakazo/adapter-kit";
-import type { PaymentWallet, PrismaClient } from "@rakazo/db";
+} from "@livingbot/adapter-kit";
+import { PaymentWalletDisconnected } from "@livingbot/adapter-kit";
+import type { PaymentWallet, PrismaClient } from "@livingbot/db";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PaymentWalletDeps } from "./payment-wallets.js";
 import {
@@ -201,7 +201,7 @@ describe("payment wallet connection", () => {
       expiresAt: new Date(NOW.getTime() + 15 * 60_000).toISOString(),
     });
     expect(env.provider?.beginConnect).toHaveBeenCalledWith(
-      { clientName: "Rakazo" },
+      { clientName: "LivingBot" },
       expect.objectContaining({ userId: actor.userId }),
     );
     const [row] = env.rows;

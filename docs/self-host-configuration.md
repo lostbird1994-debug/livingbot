@@ -1,6 +1,6 @@
 # Configuration
 
-Rakazo reads its settings from environment variables, normally kept in the `.env` file next to
+LivingBot reads its settings from environment variables, normally kept in the `.env` file next to
 the Compose file.
 
 ## Where settings live
@@ -69,11 +69,11 @@ retries let long turns survive brief provider failures.
 | `TICKET_BOARD_ENABLED` | `false` | Turns on the ticket board. Set it on the API and worker. |
 | `USER_DEVICES_ENABLED` | on | `false` stops signed-in desktop apps from letting bots run commands on the user's own computer. Set it on the API and worker. |
 | `PI_SESSION_RECORDING` | off | `true` records agent sessions as JSONL under `DATA_DIR/pi-sessions`. The files are not encrypted, so do not use it on a shared or multi-tenant install. |
-| `PRIVACY_POLICY_URL` | Rakazo's policy | The privacy policy linked from the AI data-sharing notice. Set it on the API. |
+| `PRIVACY_POLICY_URL` | LivingBot's policy | The privacy policy linked from the AI data-sharing notice. Set it on the API. |
 
 ## Database roles
 
-Rakazo uses two Postgres logins:
+LivingBot uses two Postgres logins:
 
 - The owner (`POSTGRES_USER`, or `DATABASE_MIGRATION_URL` outside Compose) runs migrations and
   owns the tables.
@@ -81,7 +81,7 @@ Rakazo uses two Postgres logins:
   superuser, cannot bypass row-level security, cannot create objects, and can only read and write
   the app tables.
 
-`pnpm db:migrate` (in containers, its prebuilt form `pnpm --filter @rakazo/api db:deploy`, which the
+`pnpm db:migrate` (in containers, its prebuilt form `pnpm --filter @livingbot/api db:deploy`, which the
 one-shot `migrate` container runs before the API starts) applies the migrations and the job queue
 schema as the owner. Only that container gets the owner login, so code running in the API or
 worker cannot find one that bypasses row-level security. It then creates the app login named in `DATABASE_URL`, or updates its

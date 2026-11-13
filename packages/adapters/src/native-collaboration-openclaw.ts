@@ -84,7 +84,7 @@ interface PluginApi {
 }
 export default {
   id: "rakazo-collaboration",
-  name: "Rakazo collaboration",
+  name: "LivingBot collaboration",
   register(api: PluginApi) {
     // Installed extensions cannot register bundled-only trusted tool policies.
     // The supported before-tool hook enforces the same run-owned capability grant.
@@ -196,7 +196,7 @@ export default {
           } catch {
             respond(false, undefined, {
               code: "INVALID_REQUEST",
-              message: "Rakazo collaboration request rejected",
+              message: "LivingBot collaboration request rejected",
             });
           }
         },

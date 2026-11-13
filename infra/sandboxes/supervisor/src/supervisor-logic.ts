@@ -1,4 +1,4 @@
-import type { DesktopEnvironment } from "@rakazo/core/node/desktop-runtime";
+import type { DesktopEnvironment } from "@livingbot/core/node/desktop-runtime";
 import {
   ensureScreenCommand as coreEnsureScreenCommand,
   interactiveScreenCommand as coreInteractiveScreenCommand,
@@ -12,7 +12,7 @@ import {
   stopBrowserCommand,
   stopExtraScreenCommand,
   stopScreenTransportsCommand,
-} from "@rakazo/core/node/desktop-runtime";
+} from "@livingbot/core/node/desktop-runtime";
 
 export {
   browserProfilePathForScreen,
@@ -20,13 +20,13 @@ export {
   quiesceBrowserProfilesCommand,
   stopBrowserCommand,
   stopExtraScreenCommand,
-} from "@rakazo/core/node/desktop-runtime";
+} from "@livingbot/core/node/desktop-runtime";
 
 import { timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import { StringDecoder } from "node:string_decoder";
 import { pathToFileURL } from "node:url";
-import { canReleaseScreenLease, canTakeScreenLease } from "@rakazo/core";
+import { canReleaseScreenLease, canTakeScreenLease } from "@livingbot/core";
 import { z } from "zod";
 import type { SandboxInput } from "./computer-spec.js";
 import { xdotoolCommand } from "./computer-spec.js";
@@ -90,7 +90,7 @@ export const computerActionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("focus"), application: z.string(), uri: z.string().optional() }),
 ]);
 
-export { BROWSER_APPLICATIONS as DOCKER_BROWSER_ALIASES } from "@rakazo/core/node/desktop-runtime";
+export { BROWSER_APPLICATIONS as DOCKER_BROWSER_ALIASES } from "@livingbot/core/node/desktop-runtime";
 
 export function assertRequestIdentity(
   botId: string | undefined,

@@ -1,19 +1,19 @@
-import type { JobPublisher } from "@rakazo/adapter-kit";
+import type { JobPublisher } from "@livingbot/adapter-kit";
 import {
   routineJobKey,
   routineRetryJob,
   routineWakeupJob,
   runContinueJob,
   TransientModelError,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import {
   displayName,
   expandSkillReferencesInPrompt,
   isOneShotRoutineCrons,
   nextRoutineRunDateAcross,
-} from "@rakazo/core";
-import { getLogger } from "@rakazo/logging";
-import { sanitizedError } from "@rakazo/logging/monitoring";
+} from "@livingbot/core";
+import { getLogger } from "@livingbot/logging";
+import { sanitizedError } from "@livingbot/logging/monitoring";
 import { protectedComputerLifecycleRefusal } from "./desktop-command-guard.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { routineRunModelPin } from "./model-selection.js";

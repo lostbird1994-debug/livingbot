@@ -1,5 +1,5 @@
-import type { AdapterContext, MemorySnapshot, MemoryStore } from "@rakazo/adapter-kit";
-import { isMemoryArchivePath, isMemoryReviewPath } from "@rakazo/contracts";
+import type { AdapterContext, MemorySnapshot, MemoryStore } from "@livingbot/adapter-kit";
+import { isMemoryArchivePath, isMemoryReviewPath } from "@livingbot/contracts";
 import { charLength, truncateChars } from "./utf8.js";
 
 /**

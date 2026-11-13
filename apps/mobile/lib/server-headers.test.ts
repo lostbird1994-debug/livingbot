@@ -24,7 +24,7 @@ vi.mock("./live-notifications.js", () => ({
 }));
 vi.mock("./network-cache.js", () => ({ clearNetworkCache: vi.fn() }));
 
-const SERVER = "https://rakazo.example.test";
+const SERVER = "https://livingbot.example.test";
 const ACCESS = { "CF-Access-Client-Id": "id.access", "CF-Access-Client-Secret": "secret" };
 
 let store: Map<string, string>;
@@ -61,7 +61,7 @@ describe("server request headers", () => {
     );
     await fetchServer("https://other.example/rpc", init, SERVER, fetchImpl);
     expect(fetchImpl.mock.calls[2]?.[1]).toBe(init);
-    expect(serverHeadersForUrl("http://rakazo.example.test/rpc", SERVER)).toEqual({});
+    expect(serverHeadersForUrl("http://livingbot.example.test/rpc", SERVER)).toEqual({});
     expect(serverHeadersForUrl(`${SERVER}:8443/rpc`, SERVER)).toEqual({});
   });
 
@@ -71,7 +71,7 @@ describe("server request headers", () => {
     expect(serverHeaders(currentApiBase())).toEqual(ACCESS);
     expect(await authHeaders(null)).not.toHaveProperty("CF-Access-Client-Secret");
     expect(serverHeadersForUrl(`${SERVER}/rpc/me`, currentApiBase())).toEqual(ACCESS);
-    expect(serverHeadersForUrl("https://rakazo.example.test.evil/rpc", SERVER)).toEqual({});
+    expect(serverHeadersForUrl("https://livingbot.example.test.evil/rpc", SERVER)).toEqual({});
     expect(serverHeadersForUrl("https://other.example.test/rpc", SERVER)).toEqual({});
   });
 

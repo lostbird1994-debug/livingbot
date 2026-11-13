@@ -3,9 +3,9 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { createCuaHostScreen, cuaDriverConnector } from "@rakazo/adapters/cua-host-screen";
-import type { HostScreen } from "@rakazo/adapters/host-screen";
-import { HostScreenError } from "@rakazo/adapters/host-screen";
+import { createCuaHostScreen, cuaDriverConnector } from "@livingbot/adapters/cua-host-screen";
+import type { HostScreen } from "@livingbot/adapters/host-screen";
+import { HostScreenError } from "@livingbot/adapters/host-screen";
 
 export const SCREEN_LOCKED_MESSAGE =
   "The user's screen is locked, so their apps can't be seen or used. Ask them to unlock it, then try again.";

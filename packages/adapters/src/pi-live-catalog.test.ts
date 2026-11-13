@@ -1,4 +1,4 @@
-import { DEFAULT_MODEL_CONTEXT_WINDOW } from "@rakazo/contracts";
+import { DEFAULT_MODEL_CONTEXT_WINDOW } from "@livingbot/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CodexCatalogCache } from "./pi-codex-catalog.js";
 import { liveModelCatalogEnabled } from "./pi-live-cache.js";

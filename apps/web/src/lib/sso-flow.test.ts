@@ -24,8 +24,8 @@ function desktopWindow() {
   vi.stubGlobal("BroadcastChannel", FakeChannel);
   const popup = { closed: false, close: vi.fn(), location: { href: "about:blank" } };
   const location = {
-    href: "https://rakazo.example.test/sign-in",
-    origin: "https://rakazo.example.test",
+    href: "https://livingbot.example.test/sign-in",
+    origin: "https://livingbot.example.test",
     pathname: "/sign-in",
     search: "",
     assign: vi.fn(),
@@ -79,7 +79,7 @@ it.each(["/app", "/onboarding", "/app?settings=account", "/sign-in?error=SSO_UNA
     if (callback.includes("?error=")) landing += "&error=SSO_UNAVAILABLE";
     expect(land(landing)).toBe(true);
     await expect(flow).resolves.toBe(result);
-    expect(location.assign).toHaveBeenCalledWith(`https://rakazo.example.test${callback}`);
+    expect(location.assign).toHaveBeenCalledWith(`https://livingbot.example.test${callback}`);
     expect(close).toHaveBeenCalled();
     expect(popup.close).toHaveBeenCalled();
     expect(channels[0]?.close).toHaveBeenCalled();
@@ -97,9 +97,9 @@ it("ignores spoofed messages, mismatched nonces, foreign URLs and unrelated path
     null,
     {},
     { type: "mcp-oauth-complete", nonce },
-    { type: "sso-complete", nonce: "another-attempt", url: "https://rakazo.example.test/app" },
+    { type: "sso-complete", nonce: "another-attempt", url: "https://livingbot.example.test/app" },
     { type: "sso-complete", nonce, url: "https://other.example.test/app" },
-    { type: "sso-complete", nonce, url: "https://rakazo.example.test/unrelated" },
+    { type: "sso-complete", nonce, url: "https://livingbot.example.test/unrelated" },
     { type: "sso-complete", nonce, url: "invalid" },
   ])
     channels[0]?.onmessage?.({ data });
@@ -162,9 +162,9 @@ it("only broadcasts well-formed same-origin callback landings", () => {
     "?nonce=attempt",
     "?nonce=attempt&returnTo=invalid",
     "?nonce=attempt&returnTo=https://other.example.test/app",
-    `?nonce=attempt&returnTo=https://rakazo.example.test${SSO_CALLBACK_PATH}`,
+    `?nonce=attempt&returnTo=https://livingbot.example.test${SSO_CALLBACK_PATH}`,
   ]) {
-    expect(land(`https://rakazo.example.test${SSO_CALLBACK_PATH}${query}`)).toBe(true);
+    expect(land(`https://livingbot.example.test${SSO_CALLBACK_PATH}${query}`)).toBe(true);
   }
   expect(channels).toHaveLength(0);
 });
@@ -204,7 +204,7 @@ it.each([false, true])(
     await vi.advanceTimersByTimeAsync(0);
     expect(popup.location.href).toBe(result.data.url);
     channels[0]?.onmessage?.({
-      data: { type: "sso-complete", nonce: "old", url: "https://rakazo.example.test/app" },
+      data: { type: "sso-complete", nonce: "old", url: "https://livingbot.example.test/app" },
     });
     expect(location.assign).not.toHaveBeenCalled();
     land();

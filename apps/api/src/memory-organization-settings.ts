@@ -1,8 +1,8 @@
 import { ORPCError } from "@orpc/server";
-import { chiefMemoryRoutine } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { lockSpaceSettings, withTransactionRetry } from "@rakazo/db";
+import { chiefMemoryRoutine } from "@livingbot/adapters";
+import type { Actor } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import { lockSpaceSettings, withTransactionRetry } from "@livingbot/db";
 import { mapRoutine } from "./routines.js";
 
 const blockedTools = ["read_memory", "organize_memory"];

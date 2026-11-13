@@ -1,10 +1,10 @@
-import type { AgentRunRequest, AgentRuntimeEvent } from "@rakazo/adapter-kit";
+import type { AgentRunRequest, AgentRuntimeEvent } from "@livingbot/adapter-kit";
 import type { CollaborationTool } from "./native-collaboration-broker.js";
 import {
   isNativeKernelExcludedTool, isNativeKernelHostTool, NATIVE_COLLABORATION_TOOLS,
 } from "./native-collaboration-broker.js";
 
-// Engine-level ceiling for managed Rakazo agents. The session grant below still
+// Engine-level ceiling for managed LivingBot agents. The session grant below still
 // narrows these to the tools actually enabled for this Bot and channel.
 export const NATIVE_KERNEL_TOOL_ALLOWLIST = [
   "exec", "process", "read", "grep", "ls", "find", "write", "edit", "apply_patch",
@@ -46,7 +46,7 @@ export function nativeCollaboration(
       return {
         name: toolMode === "kernel" && name === "shell" ? "rakazo_shell" : hostFileTool ? `rakazo_${name}` : name,
         description: toolMode === "kernel" && name === "shell"
-          ? `Run a command with this Bot's managed credential environment and product computer permissions. Credentials are injected and redacted by Rakazo. ${shellNote} ${description}`
+          ? `Run a command with this Bot's managed credential environment and product computer permissions. Credentials are injected and redacted by LivingBot. ${shellNote} ${description}`
           : `${description}${fileNote}`,
         inputSchema,
       };
@@ -55,7 +55,7 @@ export function nativeCollaboration(
     !isNativeKernelHostTool(tool.name) && !isNativeKernelExcludedTool(tool.name)) : [];
   if (connected.length) tools.push({
     name: "rakazo_connected_tool",
-    description: "Call one of this Bot's connected tools. Each call keeps its original Rakazo permissions, approval and connector route. Available names and argument schemas:\n" +
+    description: "Call one of this Bot's connected tools. Each call keeps its original LivingBot permissions, approval and connector route. Available names and argument schemas:\n" +
       JSON.stringify(connected.map(({ name, description, inputSchema }) => ({ name, description, inputSchema }))),
     inputSchema: {
       type: "object", properties: {

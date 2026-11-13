@@ -7,11 +7,11 @@ import type {
   ArtifactStore,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { LocalAgentHomeStore } from "@rakazo/adapters";
-import type { AccountExportRecord, Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { asSystem, createDb } from "@rakazo/db";
+} from "@livingbot/adapter-kit";
+import { LocalAgentHomeStore } from "@livingbot/adapters";
+import type { AccountExportRecord, Actor } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import { asSystem, createDb } from "@livingbot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AccountImportError, importAccount } from "./account-import.js";
 import { buildArchive, chunked, exportFiles, manifestFor } from "./account-import.test-support.js";
@@ -280,7 +280,7 @@ describePostgres("account import (PostgreSQL)", () => {
   const actor: Actor = {
     userId,
     spaceId: baseSpaceId,
-    email: `${userId}@rakazo.test`,
+    email: `${userId}@livingbot.test`,
     isDeploymentOwner: false,
   };
   const stored = new Map<string, Uint8Array>();

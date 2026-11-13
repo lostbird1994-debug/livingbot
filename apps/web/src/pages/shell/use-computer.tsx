@@ -6,15 +6,15 @@ import type {
   Me,
   Run,
   ThreadSnapshot,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   createScreenReconnects,
   isRetryableError,
   SCREEN_RECONNECT_DELAY_MS,
   screenProbeUrl,
   waitForScreenPage,
-} from "@rakazo/core";
-import { Button, Spinner } from "@rakazo/ui-web";
+} from "@livingbot/core";
+import { Button, Spinner } from "@livingbot/ui-web";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ComputerMaintenanceActions } from "../../components/ComputerMaintenanceActions";

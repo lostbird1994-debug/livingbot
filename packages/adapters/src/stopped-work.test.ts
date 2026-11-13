@@ -1,4 +1,4 @@
-import type { ThreadStopContext } from "@rakazo/db";
+import type { ThreadStopContext } from "@livingbot/db";
 import { describe, expect, it } from "vitest";
 import {
   CANCELLED_HISTORY_NOTE,

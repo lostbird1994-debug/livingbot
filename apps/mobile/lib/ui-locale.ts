@@ -1,4 +1,4 @@
-import { matchUiLocale } from "@rakazo/core";
+import { matchUiLocale } from "@livingbot/core";
 
 export const UI_LOCALES = ["en", "zh-CN", "zh-TW", "ru", "de", "nl", "ja", "es"] as const;
 

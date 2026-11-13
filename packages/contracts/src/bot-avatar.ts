@@ -9,7 +9,7 @@ export function resolveBotAvatarSet(value?: string | null): BotAvatarSet {
   return value === "rakazo" ? "rakazo" : "organic";
 }
 
-/** Matches the eight shipped mascot shapes in `@rakazo/core`. */
+/** Matches the eight shipped mascot shapes in `@livingbot/core`. */
 export const BOT_AVATAR_SHAPE_COUNT = 8;
 
 /**

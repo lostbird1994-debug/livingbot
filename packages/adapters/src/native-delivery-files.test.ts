@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { localDocumentReferences } from "@rakazo/core";
+import { localDocumentReferences } from "@livingbot/core";
 import { verifyNativeDeliveryText } from "./native-delivery-files.js";
 const fs = vi.hoisted(() => ({ realpath: vi.fn(), stat: vi.fn() }));
 vi.mock("node:fs/promises", () => fs);

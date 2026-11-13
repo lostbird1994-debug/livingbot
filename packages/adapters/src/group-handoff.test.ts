@@ -1,5 +1,5 @@
-import type { PrismaClient } from "@rakazo/db";
-import { RunHistoryWriteError } from "@rakazo/db";
+import type { PrismaClient } from "@livingbot/db";
+import { RunHistoryWriteError } from "@livingbot/db";
 import { describe, expect, it, vi } from "vitest";
 import { handoffToGroupBot, loadBotGroupDirectory } from "./group-handoff.js";
 

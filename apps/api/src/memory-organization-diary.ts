@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
-import type { Actor, RoutineRunCursor } from "@rakazo/contracts";
-import { MemoryOrganizationChangeSchema, RunStatus } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { Actor, RoutineRunCursor } from "@livingbot/contracts";
+import { MemoryOrganizationChangeSchema, RunStatus } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
 
 /** Run records and durable tool receipts survive restarts, including silent checks. */
 export async function memoryOrganizationDiary(

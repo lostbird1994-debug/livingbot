@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import type { AdapterContext, AgentRunRequest, MemoryReadRequest } from "@rakazo/adapter-kit";
+import type { AdapterContext, AgentRunRequest, MemoryReadRequest } from "@livingbot/adapter-kit";
 import type { OpenClawKernelOptions } from "./openclaw-kernel.js";
 
 export interface KernelAgentEntry {
@@ -146,7 +146,7 @@ export class OpenClawKernelRegistry {
       this.options.configFile ?? join(homedir(), ".openclaw", "openclaw.json"), "utf8",
     ));
     let config = await loadConfig();
-    // Rakazo already owns profile creation. Engine template bootstrap mutates one
+    // LivingBot already owns profile creation. Engine template bootstrap mutates one
     // shared workspace state file and is unsafe to race across independent sessions.
     if (request.independentTask && config.agents?.defaults?.skipBootstrap !== true)
       throw new Error("Independent tasks require managed workspace bootstrap (agents.defaults.skipBootstrap=true).");

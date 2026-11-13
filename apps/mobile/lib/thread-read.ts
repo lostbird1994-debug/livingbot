@@ -1,5 +1,5 @@
-import type { ReadBoundary } from "@rakazo/core";
-import { createChatQueues, settleReadBoundary } from "@rakazo/core";
+import type { ReadBoundary } from "@livingbot/core";
+import { createChatQueues, settleReadBoundary } from "@livingbot/core";
 import { useNavigation } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Alert, AppState } from "react-native";

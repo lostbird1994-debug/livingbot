@@ -1,5 +1,5 @@
-import type { BotRoleCard } from "@rakazo/contracts";
-import { BOT_ROLE_TEXT_MAX_LENGTH, excludesSharedProfile } from "@rakazo/contracts";
+import type { BotRoleCard } from "@livingbot/contracts";
+import { BOT_ROLE_TEXT_MAX_LENGTH, excludesSharedProfile } from "@livingbot/contracts";
 import { Text, TextInput, View } from "react-native";
 import { useI18n } from "../lib/i18n";
 import { native, useMobileTokens } from "../lib/native";

@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock } from "@livingbot/contracts";
 import { speechFromBlocks } from "./speech-text.js";
 
 /** Voice mode uses normal chat bubbles; explicit phone calls retain their transcript card. */

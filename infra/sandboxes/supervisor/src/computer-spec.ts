@@ -5,7 +5,7 @@ import {
   COMPUTER_CACHE_ENV,
   MAX_DESKTOP_DISPLAY,
   screenPorts,
-} from "@rakazo/core/node/desktop-runtime";
+} from "@livingbot/core/node/desktop-runtime";
 import type Docker from "dockerode";
 
 /**

@@ -100,8 +100,8 @@ function fixture() {
           "flock() { :; }",
           `bash() { return ${failLifecycle ? 1 : 0}; }`,
           script
-            .replaceAll("/tmp/rakazo/desktop-assignments", root)
-            .replaceAll("/tmp/rakazo", root),
+            .replaceAll("/tmp/livingbot/desktop-assignments", root)
+            .replaceAll("/tmp/livingbot", root),
         ].join("\n"),
       ],
       { encoding: "utf8", timeout: 5000 },
@@ -126,11 +126,11 @@ describe("shared Linux desktop lifecycle", () => {
       const environment = { ...env, bindHost };
       const host = bindHost ?? "127.0.0.1";
       const command = terminalCommand("control", "terminal", "/work", environment);
-      expect(command).toContain(`--token-source=/tmp/rakazo/desktop-targets ${host}:6100 8>&-`);
+      expect(command).toContain(`--token-source=/tmp/livingbot/desktop-targets ${host}:6100 8>&-`);
       const pattern = command.match(/if ! pgrep -f '([^']+)'/)?.[1];
       expect(pattern).toBeDefined();
       const process = (address: string, source = "desktop-targets") =>
-        `/usr/bin/python3 /usr/bin/websockify --token-source=/tmp/rakazo/${source} ${address}:6100`;
+        `/usr/bin/python3 /usr/bin/websockify --token-source=/tmp/livingbot/${source} ${address}:6100`;
       expect(process(host)).toMatch(new RegExp(pattern!));
       expect(process("192x0x2x10")).not.toMatch(new RegExp(pattern!));
       expect(process(host, "view-target-1")).not.toMatch(new RegExp(pattern!));
@@ -150,7 +150,7 @@ describe("shared Linux desktop lifecycle", () => {
 
   it("binds IPv6 computer gateways and probes IPv6 loopback", () => {
     const command = terminalCommand("control", "terminal", "/work", { ...env, bindHost: "::" });
-    expect(command).toContain("--token-source=/tmp/rakazo/desktop-targets :::6100 8>&-");
+    expect(command).toContain("--token-source=/tmp/livingbot/desktop-targets :::6100 8>&-");
     expect(command).toContain("/dev/tcp/::1/6100");
   });
 
@@ -181,7 +181,7 @@ describe("shared Linux desktop lifecycle", () => {
     f.ensure("beto");
     const run = (bot: string, argv: string[]) => {
       const [program, ...args] = screenDisplayArgv(argv, bot, env.displayStart).map((word) =>
-        word.replaceAll("/tmp/rakazo/desktop-assignments", f.root),
+        word.replaceAll("/tmp/livingbot/desktop-assignments", f.root),
       );
       return spawnSync(program ?? "", args, {
         encoding: "utf8",
@@ -223,8 +223,8 @@ describe("shared Linux desktop lifecycle", () => {
     expect(f.ensure("a").status).toBe(0);
     expect(readdirSync(f.root).some((name) => name.endsWith(".slot"))).toBe(true);
     const script = releaseDesktopCommand("a", "run:1", env)
-      .replaceAll("/tmp/rakazo/desktop-assignments", f.root)
-      .replaceAll("/tmp/rakazo", f.root);
+      .replaceAll("/tmp/livingbot/desktop-assignments", f.root)
+      .replaceAll("/tmp/livingbot", f.root);
     const result = spawnSync(
       "bash",
       [
@@ -253,8 +253,8 @@ describe("shared Linux desktop lifecycle", () => {
     const f = fixture();
     expect(f.ensure("a").status).toBe(0);
     const script = releaseDesktopCommand("a", "run:1", env)
-      .replaceAll("/tmp/rakazo/desktop-assignments", f.root)
-      .replaceAll("/tmp/rakazo", f.root);
+      .replaceAll("/tmp/livingbot/desktop-assignments", f.root)
+      .replaceAll("/tmp/livingbot", f.root);
     const result = spawnSync(
       "bash",
       [
@@ -324,7 +324,7 @@ describe("shared Linux desktop lifecycle", () => {
     // biome-ignore lint/suspicious/noTemplateCurlyInString: generated shell parameter expansion
     expect(command).toContain("${_rest%%[: ]*}");
     expect(command).toContain("unset LD_PRELOAD");
-    expect(command).toContain('[ "$(cat /tmp/rakazo/desktop-targets/view-1)" != "$desired" ]');
+    expect(command).toContain('[ "$(cat /tmp/livingbot/desktop-targets/view-1)" != "$desired" ]');
     expect(command).toContain(
       "browser=$(command -v rakazo-browser || command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)",
     );
@@ -361,7 +361,7 @@ describe("shared Linux desktop lifecycle", () => {
           ...screenPorts(0),
           controlPort: String(address.port),
         })
-          .replaceAll("/tmp/rakazo", root)
+          .replaceAll("/tmp/livingbot", root)
           .replaceAll("/usr/share/novnc", root);
         const result = spawnSync(
           "bash",
@@ -394,7 +394,7 @@ describe("shared Linux desktop lifecycle", () => {
   it("fails without publishing a token when the input server cannot start", () => {
     const root = mkdtempSync("/tmp/rk-control-");
     roots.push(root);
-    const script = interactiveScreenCommand(true, "human").replaceAll("/tmp/rakazo", root);
+    const script = interactiveScreenCommand(true, "human").replaceAll("/tmp/livingbot", root);
     const result = spawnSync(
       "bash",
       [
@@ -466,7 +466,7 @@ describe("shared Linux desktop lifecycle", () => {
         [
           "pkill() { :; }; sleep() { :; }",
           `bash() { printf '%s\\n' "$5" >>${shellQuote(record)}; }`,
-          resetDesktopRuntimeCommand(env).replaceAll("/tmp/rakazo", f.root),
+          resetDesktopRuntimeCommand(env).replaceAll("/tmp/livingbot", f.root),
         ].join("\n"),
       ],
       { encoding: "utf8", timeout: 5000 },
@@ -489,7 +489,7 @@ describe("shared Linux desktop lifecycle", () => {
     expect(
       patterns.some((pattern) =>
         pattern.test(
-          "/usr/bin/x11vnc -display :21 -rfbport 0 -unixsock /tmp/rakazo/sockets/view-21-token -forever",
+          "/usr/bin/x11vnc -display :21 -rfbport 0 -unixsock /tmp/livingbot/sockets/view-21-token -forever",
         ),
       ),
     ).toBe(true);
@@ -604,7 +604,7 @@ describe("shared Linux desktop lifecycle", () => {
           homeDir: home,
           workspaceDir: home,
           browserProfilesDir: profiles,
-        }).replaceAll("/tmp/rakazo", path.join(root, "runtime"));
+        }).replaceAll("/tmp/livingbot", path.join(root, "runtime"));
         waitForReady(joinedReady);
         const result = spawnSync("bash", ["-eu", "-c", command], {
           encoding: "utf8",

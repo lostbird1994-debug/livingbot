@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { ORGANIC_AVATAR_LOOKS } from "@rakazo/core";
+import { ORGANIC_AVATAR_LOOKS } from "@livingbot/core";
 import type { ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";
@@ -81,7 +81,7 @@ describe("CreateBotDialog", () => {
     await render(onCreate);
     expect(button("Original").getAttribute("aria-selected")).toBe("true");
     const family = Number(
-      document.querySelector(".rakazo-organic-avatar")?.getAttribute("data-shape-family"),
+      document.querySelector(".livingbot-organic-avatar")?.getAttribute("data-shape-family"),
     );
     await typeName("Scout");
     await click(button("Create"));
@@ -100,7 +100,7 @@ describe("CreateBotDialog", () => {
     await typeName("Scout");
     await click(button("Create"));
     const input = onCreate.mock.lastCall![0];
-    const preview = document.querySelector(".rakazo-logo-avatar")!;
+    const preview = document.querySelector(".livingbot-logo-avatar")!;
     expect(input).toMatchObject({ name: "Scout", avatarSet: "rakazo" });
     expect(input).not.toHaveProperty("avatarFamily");
     expect(input.id).toMatch(/^c[a-z0-9]{24}$/);
@@ -126,7 +126,7 @@ describe("CreateBotDialog", () => {
     await render(onCreate);
     await click(button("Shape 2"));
     await click(button("Color #10B981"));
-    const preview = document.querySelector(".rakazo-organic-avatar");
+    const preview = document.querySelector(".livingbot-organic-avatar");
     const family = Number(preview?.getAttribute("data-shape-family"));
     await typeName("Scout");
     await click(button("Create"));
@@ -172,10 +172,10 @@ it("retains the preview identity and colour through rerenders, set toggles and a
     .mockRejectedValueOnce(new Error("Try again"));
   await render(onCreate);
   await click(button("LivingBot"));
-  const colour = document.querySelector(".rakazo-logo-avatar")!.getAttribute("data-color");
+  const colour = document.querySelector(".livingbot-logo-avatar")!.getAttribute("data-color");
   await typeName("First name");
   await render(onCreate);
-  expect(document.querySelector(".rakazo-logo-avatar")!.getAttribute("data-color")).toBe(colour);
+  expect(document.querySelector(".livingbot-logo-avatar")!.getAttribute("data-color")).toBe(colour);
   await click(button("Original"));
   await click(button("LivingBot"));
   await click(button("Create"));

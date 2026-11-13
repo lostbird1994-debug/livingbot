@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { ConversationUsage } from "@rakazo/contracts";
-import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@rakazo/ui-web";
+import type { ConversationUsage } from "@livingbot/contracts";
+import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@livingbot/ui-web";
 import { Activity, Database, Gauge } from "lucide-react";
 
 export function compactTokens(value: number): string {

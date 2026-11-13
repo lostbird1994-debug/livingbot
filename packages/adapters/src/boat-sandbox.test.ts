@@ -2,16 +2,16 @@ import { createHash } from "node:crypto";
 import type * as TimersPromises from "node:timers/promises";
 import type { FileUrlResponse, SandboxStateEnum } from "@boatdev/sdk";
 import { FetchError, ResponseError } from "@boatdev/sdk";
-import type { ComputerRef, PortableFile, StreamedPortableFile } from "@rakazo/adapter-kit";
+import type { ComputerRef, PortableFile, StreamedPortableFile } from "@livingbot/adapter-kit";
 import {
   SandboxDamagedError,
   SandboxRateLimitError,
   SandboxUnavailableError,
   SandboxUnresponsiveError,
   WorkspaceTooLargeError,
-} from "@rakazo/adapter-kit";
-import { screenDisplayArgv, shellQuote } from "@rakazo/core/node/desktop-runtime";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+} from "@livingbot/adapter-kit";
+import { screenDisplayArgv, shellQuote } from "@livingbot/core/node/desktop-runtime";
+import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { parse } from "shell-quote";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -102,7 +102,7 @@ function exportAll(provider: BoatSandboxProvider, computer: ComputerRef, signal?
 
 function archivesLeft(api: FakeBoatApi, computer: ComputerRef): string[] {
   return [...api.files(computer.id).keys()].filter((path) =>
-    path.startsWith("/tmp/rakazo-workspace-archive-"),
+    path.startsWith("/tmp/livingbot-workspace-archive-"),
   );
 }
 

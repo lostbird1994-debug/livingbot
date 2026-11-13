@@ -1,13 +1,13 @@
 import type { IncomingHttpHeaders } from "node:http";
 import { connect } from "node:net";
-import type { ScreenProxyTarget } from "@rakazo/core/node/screen-capability";
+import type { ScreenProxyTarget } from "@livingbot/core/node/screen-capability";
 import {
   isScreenProxyTarget,
   SCREEN_RECHECK_MS,
   SCREEN_TARGET_ENDPOINT,
   SCREEN_UNCONFIRMED_MAX_MS,
-} from "@rakazo/core/node/screen-capability";
-import { SCREEN_PROBE_PARAM } from "@rakazo/core/screen-reconnect";
+} from "@livingbot/core/node/screen-capability";
+import { SCREEN_PROBE_PARAM } from "@livingbot/core/screen-reconnect";
 
 const SENSITIVE_FORWARD_HEADERS = new Set([
   "authorization",

@@ -11,7 +11,7 @@ vi.mock("expo-web-browser", () => ({
 vi.mock("./api", () => ({
   authHeaders: vi.fn(async () => ({ authorization: "Bearer old-session" })),
   clearSpace: vi.fn(async () => true),
-  currentApiBase: vi.fn(() => "https://rakazo.example.test"),
+  currentApiBase: vi.fn(() => "https://livingbot.example.test"),
   fetchMobileJson: vi.fn(),
 }));
 vi.mock("./session", () => ({
@@ -25,7 +25,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(fetchMobileJson).mockReset();
   vi.mocked(replaceSessionTokenIfCurrent).mockReset().mockResolvedValue(true);
-  vi.mocked(currentApiBase).mockReturnValue("https://rakazo.example.test");
+  vi.mocked(currentApiBase).mockReturnValue("https://livingbot.example.test");
   vi.mocked(currentSessionGeneration).mockReturnValue(1);
   vi.mocked(clearSpace).mockResolvedValue(true);
   vi.mocked(fetchMobileJson).mockResolvedValue({

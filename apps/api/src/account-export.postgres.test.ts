@@ -2,15 +2,15 @@ import { randomBytes } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { JobPublisher, SandboxProvider } from "@rakazo/adapter-kit";
-import { LocalAgentHomeStore } from "@rakazo/adapters";
-import type { AccountExportRecord, Actor } from "@rakazo/contracts";
+import type { JobPublisher, SandboxProvider } from "@livingbot/adapter-kit";
+import { LocalAgentHomeStore } from "@livingbot/adapters";
+import type { AccountExportRecord, Actor } from "@livingbot/contracts";
 import {
   AccountExportManifestSchema,
   AccountExportRecordSchema,
   accountExportPaths,
-} from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+} from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
 import {
   createDb,
   createThreadMessage,
@@ -18,7 +18,7 @@ import {
   masterKeysFromEnv,
   readAccountExport,
   runAsSystem,
-} from "@rakazo/db";
+} from "@livingbot/db";
 import { unzipSync } from "fflate";
 import { Hono } from "hono";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -57,7 +57,7 @@ describePostgres("account export (PostgreSQL)", () => {
         data: [exporter, other, importer].map((id) => ({
           id,
           name: id,
-          email: `${id}@rakazo.test`,
+          email: `${id}@livingbot.test`,
           emailVerified: false,
         })),
       });
@@ -348,7 +348,7 @@ describePostgres("account export (PostgreSQL)", () => {
     const actor: Actor = {
       userId: importer,
       spaceId: importerSpace,
-      email: `${importer}@rakazo.test`,
+      email: `${importer}@livingbot.test`,
       isDeploymentOwner: false,
     };
     try {

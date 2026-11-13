@@ -1,15 +1,15 @@
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { ChatMarkdown, LinkifiedText, withBlockMentions } from "@rakazo/chat-ui/web";
+import { ChatMarkdown, LinkifiedText, withBlockMentions } from "@livingbot/chat-ui/web";
 import type {
   BotAvatarSet,
   LoginFieldInput,
   MessageReaction,
   ThreadMessage,
-} from "@rakazo/contracts";
-import type { ChildBotBlock, PeerExchange } from "@rakazo/core";
-import { isPeerReceiptBlocks, isSecretAskBlock, isToolActivityBlock } from "@rakazo/core";
-import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@rakazo/ui-web";
+} from "@livingbot/contracts";
+import type { ChildBotBlock, PeerExchange } from "@livingbot/core";
+import { isPeerReceiptBlocks, isSecretAskBlock, isToolActivityBlock } from "@livingbot/core";
+import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@livingbot/ui-web";
 import { UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import { memo, useCallback, useMemo } from "react";

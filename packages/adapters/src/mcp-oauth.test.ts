@@ -1,5 +1,5 @@
-import { MCP_OAUTH_CLIENT_REQUIRED } from "@rakazo/contracts";
-import { getLogger } from "@rakazo/logging";
+import { MCP_OAUTH_CLIENT_REQUIRED } from "@livingbot/contracts";
+import { getLogger } from "@livingbot/logging";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { OAuthMaterial } from "./mcp-oauth.js";
 import {
@@ -1110,7 +1110,7 @@ describe("MCP OAuth", () => {
       if (started.status !== "authorization_required") throw new Error("OAuth was not requested");
       const authorizationUrl = new URL(started.authorizationUrl);
 
-      expect(registration).toMatchObject({ client_name: "Rakazo", application_type: "native" });
+      expect(registration).toMatchObject({ client_name: "LivingBot", application_type: "native" });
       expect(authorizationUrl.origin).toBe("https://auth.example.test");
       expect(authorizationUrl.searchParams.get("client_id")).toBe("registered-client-id");
       expect(authorizationUrl.searchParams.get("code_challenge_method")).toBe("S256");

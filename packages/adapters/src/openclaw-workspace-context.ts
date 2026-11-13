@@ -136,9 +136,9 @@ export class NativeWorkspaceContext {
     if (!entry) return;
     return {
       appendSystemContext: [
-        `Your Rakazo bot ID is ${entry.botId}. Your actual workspace is ${entry.workspace}.`,
+        `Your LivingBot bot ID is ${entry.botId}. Your actual workspace is ${entry.workspace}.`,
         privateContextAllowed
-          ? `Workspace-shared user profile and memory are in ${entry.sharedWorkspace}; this is scoped to your Rakazo workspace and owner, never global.`
+          ? `Workspace-shared user profile and memory are in ${entry.sharedWorkspace}; this is scoped to your LivingBot workspace and owner, never global.`
           : "This channel has no access to workspace-shared or private profiles and memory.",
         !privateContextAllowed ? "" : entry.chief
           ? "You are this workspace's Chief. Maintain shared USER.md, MEMORY.md and shared memory/ here; preserve useful facts, revision history and sources."

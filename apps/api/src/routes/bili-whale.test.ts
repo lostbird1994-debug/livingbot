@@ -3,13 +3,13 @@ import type {
   CommandRequest,
   ComputerRef,
   PortableFile,
-} from "@rakazo/adapter-kit";
-import { BiliWhaleWindowSchema } from "@rakazo/contracts";
+} from "@livingbot/adapter-kit";
+import { BiliWhaleWindowSchema } from "@livingbot/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { biliWhaleRoutes, readBiliWhaleSettings } from "./bili-whale.js";
 import type { RouterContext } from "./context.js";
 
-vi.mock("@rakazo/adapters", () => ({
+vi.mock("@livingbot/adapters", () => ({
   acquireComputerExecutionLease: vi.fn(async () => ({ computerId: "computer-1", fence: 1 })),
   releaseComputerExecutionLease: vi.fn(async () => undefined),
   ComputerBusyError: class extends Error {},
@@ -18,7 +18,7 @@ vi.mock("@rakazo/adapters", () => ({
   resolveBotWorkspaceCwd: (_scope: string, id: string, file: string) =>
     file === "." ? `bots/${id}` : `bots/${id}/${file}`,
 }));
-vi.mock("@rakazo/db", () => ({ parseComputerMode: () => "team" }));
+vi.mock("@livingbot/db", () => ({ parseComputerMode: () => "team" }));
 
 const actor = { userId: "user-1", spaceId: "space-1" };
 const getBot = vi.fn();

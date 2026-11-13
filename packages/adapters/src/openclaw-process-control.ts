@@ -25,7 +25,7 @@ interface Owner {
 /**
  * The public Gateway cannot invoke the process tool. Keep this small host ABI
  * boundary version-pinned and fail closed on upgrades. It runs inside the engine;
- * importing its registry from the Rakazo process would create a different registry.
+ * importing its registry from the LivingBot process would create a different registry.
  */
 export async function loadNativeProcessBackend(): Promise<NativeProcessBackend> {
   const hostEntry = process.argv[1];

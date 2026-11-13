@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import type { AdapterContext, CommandRequest } from "@rakazo/adapter-kit";
-import { createAdapterContext } from "@rakazo/adapter-kit";
-import type { ComputerExecutionLease } from "@rakazo/adapters";
+import type { AdapterContext, CommandRequest } from "@livingbot/adapter-kit";
+import { createAdapterContext } from "@livingbot/adapter-kit";
+import type { ComputerExecutionLease } from "@livingbot/adapters";
 import {
   acquireComputerExecutionLease,
   ComputerBusyError,
@@ -10,10 +10,10 @@ import {
   resolveBotWorkspaceCwd,
   resolveBotWorkspacePath,
   toComputerRef,
-} from "@rakazo/adapters";
-import type { Actor, BiliWhaleSettings } from "@rakazo/contracts";
-import { BiliWhaleSettingsSchema } from "@rakazo/contracts";
-import { parseComputerMode } from "@rakazo/db";
+} from "@livingbot/adapters";
+import type { Actor, BiliWhaleSettings } from "@livingbot/contracts";
+import { BiliWhaleSettingsSchema } from "@livingbot/contracts";
+import { parseComputerMode } from "@livingbot/db";
 import { BILI_WHALE_FILE_SCRIPT } from "./bili-whale-computer.js";
 import type { RouterContext } from "./context.js";
 

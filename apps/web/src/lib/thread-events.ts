@@ -7,8 +7,8 @@ import type {
   ThreadMessage,
   ThreadMessagePage,
   ThreadSnapshot,
-} from "@rakazo/contracts";
-import { TaskResultSchema, RUN_TRIGGERS } from "@rakazo/contracts";
+} from "@livingbot/contracts";
+import { TaskResultSchema, RUN_TRIGGERS } from "@livingbot/contracts";
 import {
   isActive,
   isBackgroundRunTrigger,
@@ -26,7 +26,7 @@ import {
   takeLiveMessage,
   updateCloudAgentMessages,
   upsertMessageById,
-} from "@rakazo/core";
+} from "@livingbot/core";
 
 const runTriggers = new Set<string>(RUN_TRIGGERS);
 

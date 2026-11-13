@@ -1,4 +1,4 @@
-import type { RunActivityRow } from "@rakazo/contracts";
+import type { RunActivityRow } from "@livingbot/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { activityPreview, formatActivityRelativeTime } from "./activity";
 import { resetI18nForTests } from "./i18n";

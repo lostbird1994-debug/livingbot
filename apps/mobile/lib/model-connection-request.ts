@@ -1,4 +1,4 @@
-import type { ModelRoleChoice } from "@rakazo/contracts";
+import type { ModelRoleChoice } from "@livingbot/contracts";
 import type { Href } from "expo-router";
 import type { SettingsTarget } from "./settings-target";
 

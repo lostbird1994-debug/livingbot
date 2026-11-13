@@ -1,4 +1,4 @@
-import type { AgentRuntimeEvent, UsageOperationKind } from "@rakazo/adapter-kit";
+import type { AgentRuntimeEvent, UsageOperationKind } from "@livingbot/adapter-kit";
 import type { PrismaClient } from "./generated/prisma/client.js";
 import { hasFinalModelCost, settleModelCreditsTx } from "./model-credits.js";
 

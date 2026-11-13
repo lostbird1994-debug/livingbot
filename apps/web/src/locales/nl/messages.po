@@ -1778,8 +1778,8 @@ msgstr "Verbind eerst de aanbieder van dit model."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect your own API key in Models or choose Rakazo credits in Billing."
-msgstr "Verbind je eigen API-sleutel bij Modellen of kies Rakazo-tegoed bij Facturatie."
+msgid "Connect your own API key in Models or choose LivingBot credits in Billing."
+msgstr "Verbind je eigen API-sleutel bij Modellen of kies LivingBot-tegoed bij Facturatie."
 
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/integrations/IntegrationSetup.tsx
@@ -5172,7 +5172,7 @@ msgstr ""
 
 #: src/components/ModelCredits.tsx
 #: src/pages/Onboarding.tsx
-msgid "Rakazo credits"
+msgid "LivingBot credits"
 msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -6366,8 +6366,8 @@ msgid "Subscribe for {price} / month"
 msgstr "Abonneren voor {price} / maand"
 
 #: src/components/ModelCredits.tsx
-msgid "Subscribe to Rakazo credits"
-msgstr "Abonneren op Rakazo-tegoed"
+msgid "Subscribe to LivingBot credits"
+msgstr "Abonneren op LivingBot-tegoed"
 
 #: src/components/ModelCredits.tsx
 msgid "Subscribe with your own AI"
@@ -7013,7 +7013,7 @@ msgid "Use Protected input for passwords."
 msgstr "Gebruik Beveiligde invoer voor wachtwoorden."
 
 #: src/components/ModelCredits.tsx
-msgid "Use Rakazo credits"
+msgid "Use LivingBot credits"
 msgstr ""
 
 #: src/pages/model-settings/space-bots-model.tsx

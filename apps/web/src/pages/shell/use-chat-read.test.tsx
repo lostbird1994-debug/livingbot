@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { Bot, Group } from "@rakazo/contracts";
+import type { Bot, Group } from "@livingbot/contracts";
 import { act, useState } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";

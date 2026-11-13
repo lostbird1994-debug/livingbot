@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { SandboxProvider } from "@rakazo/adapter-kit";
-import type { ComputerCommand } from "@rakazo/contracts";
-import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@rakazo/contracts";
-import { redactSecrets, sandboxCommandTimeoutMs } from "@rakazo/core";
-import { RunHistoryWriteError } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { SandboxProvider } from "@livingbot/adapter-kit";
+import type { ComputerCommand } from "@livingbot/contracts";
+import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@livingbot/contracts";
+import { redactSecrets, sandboxCommandTimeoutMs } from "@livingbot/core";
+import { RunHistoryWriteError } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { redactShellStreams } from "./agent-environment.js";
 import { resolveLoginFill, shellCommandEnvironment } from "./bot-secrets.js";
 import {

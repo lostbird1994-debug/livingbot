@@ -1,4 +1,4 @@
-import { GROUP_MEMBER_MAX } from "@rakazo/contracts";
+import { GROUP_MEMBER_MAX } from "@livingbot/contracts";
 import { describe, expect, it } from "vitest";
 import { resolveRosterDrop } from "./roster-drop";
 

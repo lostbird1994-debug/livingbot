@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { oauthPopupSessionPreferences, shouldOpenInAppPopup } from "./window-open.js";
 
-const appOrigin = "https://rakazo.example.com";
+const appOrigin = "https://livingbot.example.com";
 
 describe("desktop child windows", () => {
   it("keeps same-origin app routes in Electron", () => {

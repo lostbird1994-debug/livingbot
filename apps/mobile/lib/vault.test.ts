@@ -1,4 +1,4 @@
-import { decodeLoginSecret } from "@rakazo/contracts";
+import { decodeLoginSecret } from "@livingbot/contracts";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./i18n", () => ({ t: (text: string) => text }));

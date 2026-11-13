@@ -1,8 +1,8 @@
 import type {
   AdapterContext, MemoryCommitRequest, MemoryExportRequest, MemoryReadRequest,
   MemoryRemoveRequest, MemoryRevision, MemorySearchRequest, MemoryStore, PortableFile,
-} from "@rakazo/adapter-kit";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@livingbot/adapter-kit";
 import {
   listNativeMemoryFiles, nativeWorkspacePath, readNativeWorkspaceFile, writeNativeWorkspaceFile,
 } from "./openclaw-workspace-files.js";

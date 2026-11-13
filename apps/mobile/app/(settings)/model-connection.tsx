@@ -3,7 +3,7 @@ import type {
   ModelHeaderRow,
   ModelOAuthBegin,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   CLOUDFLARE_AI_GATEWAY_PROVIDER_ID,
   cloudflareModelRouting,
@@ -19,7 +19,7 @@ import {
   OPENAI_COMPATIBLE_BASE_URL_HINT,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   savedCompatibleEndpointMatches,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   clampCatalogThinkingLevel,
   compatibleConnectionReady,
@@ -33,7 +33,7 @@ import {
   modelConnectRequest,
   savedCompatibleModelIds,
   toggleEnabledModelId,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import * as Clipboard from "expo-clipboard";
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";

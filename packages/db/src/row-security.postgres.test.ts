@@ -133,7 +133,7 @@ describePostgres("row-level security (PostgreSQL)", () => {
     });
     for (const t of tenants) {
       await o.user.create({
-        data: { id: t.userId, name: t.name, email: `${t.userId}@rakazo.test`, emailVerified: true },
+        data: { id: t.userId, name: t.name, email: `${t.userId}@livingbot.test`, emailVerified: true },
       });
       await o.space.create({ data: { id: t.spaceId, organizationId, name: t.name } });
       await o.bot.create({

@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
-import type { Bot, SpaceMemoryConfig } from "@rakazo/contracts";
-import { UPSTREAM_UPDATES_ENABLED } from "@rakazo/contracts";
+import type { Bot, SpaceMemoryConfig } from "@livingbot/contracts";
+import { UPSTREAM_UPDATES_ENABLED } from "@livingbot/contracts";
 import {
   Button,
   Dialog,
@@ -9,7 +9,7 @@ import {
   DialogTitle,
   NativeSelect,
   NativeSelectOption,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
 import type { ReactNode } from "react";

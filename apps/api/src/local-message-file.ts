@@ -4,9 +4,9 @@ import { homedir } from "node:os";
 import { basename, join } from "node:path";
 import { promisify } from "node:util";
 import { ORPCError } from "@orpc/server";
-import type { MessageBlock } from "@rakazo/contracts";
-import { expandToolStepNotes, localDocumentPath, localDocumentReferences } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+import type { MessageBlock } from "@livingbot/contracts";
+import { expandToolStepNotes, localDocumentPath, localDocumentReferences } from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
 
 export async function resolveLocalMessageFile(
   deps: {

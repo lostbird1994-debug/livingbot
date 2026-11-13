@@ -18,9 +18,9 @@ import type {
   ScreenRequest,
   ScreenSession,
   TerminalRequest,
-} from "@rakazo/adapter-kit";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
-import { COMPUTER_CACHE_ENV } from "@rakazo/core/node/desktop-runtime";
+} from "@livingbot/adapter-kit";
+import { boundedSandboxCommandTimeoutMs } from "@livingbot/core";
+import { COMPUTER_CACHE_ENV } from "@livingbot/core/node/desktop-runtime";
 import { normalizeWorkspacePath, shellQuote, workspacePath } from "./computer-support.js";
 import { LinuxDesktop, onBotScreen } from "./linux-desktop.js";
 import { sandboxCommandArgv } from "./sandbox-command-environment.js";
@@ -69,7 +69,7 @@ export interface KubernetesSandboxOptions {
   podLabels?: Record<string, string>;
   readyTimeoutMs?: number;
   /**
-   * Claim in the sandbox namespace that holds the Rakazo data directory. When
+   * Claim in the sandbox namespace that holds the LivingBot data directory. When
    * set, each Computer mounts only its own `homes/<bot id>` directory at the
    * workspace, so the home persists in place and is never copied in or out.
    * The claim's volume is ReadWriteOnce, so the pod must also be placed with
@@ -478,7 +478,7 @@ export class KubernetesSandboxProvider implements SandboxProvider {
     let stderr = "";
     // Kata can stall large stdout while exec also has stdin attached. Stage the
     // NUL-delimited file list separately so the archive exec only reads stdout.
-    const listPath = `/tmp/rakazo-workspace-${randomUUID()}`;
+    const listPath = `/tmp/livingbot-workspace-${randomUUID()}`;
     try {
       const staged = await this.collectExec(
         computer,

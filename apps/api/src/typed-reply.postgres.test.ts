@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { Actor, MessageBlock } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { Actor, MessageBlock } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
 import {
   answerRunInput,
   asSystem,
@@ -10,7 +10,7 @@ import {
   provisionMessagingIdentity,
   runAsSystem,
   runAsTenant,
-} from "@rakazo/db";
+} from "@livingbot/db";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ThreadTarget } from "./thread-target.js";
 import { sendThreadMessage } from "./thread-target.js";

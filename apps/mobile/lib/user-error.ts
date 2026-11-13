@@ -2,8 +2,8 @@ import {
   CONNECTOR_AUTH_UNAVAILABLE,
   isVoiceAccountErrorCode,
   MCP_OAUTH_CLIENT_REQUIRED,
-} from "@rakazo/contracts";
-import type { CredentialField } from "@rakazo/core";
+} from "@livingbot/contracts";
+import type { CredentialField } from "@livingbot/core";
 import {
   authErrorMessage,
   isServerUnreachable,
@@ -12,7 +12,7 @@ import {
   MODEL_IMAGE_INPUT_ERROR,
   MODEL_IMAGE_INPUT_UNKNOWN,
   userErrorMessage,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import { t } from "./i18n";
 
 /** Text for a failure: human messages pass through; network and implementation detail become copy. */

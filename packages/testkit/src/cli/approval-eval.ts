@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import type { AutoReviewProvider, ModelCallObserver } from "@rakazo/adapter-kit";
-import { ModelConnectInputSchema } from "@rakazo/contracts";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
+import type { AutoReviewProvider, ModelCallObserver } from "@livingbot/adapter-kit";
+import { ModelConnectInputSchema } from "@livingbot/contracts";
+import { loadRootEnv } from "@livingbot/core/node/load-root-env";
 import type { ApprovalCaseResult } from "../evals/approval.js";
 import {
   APPROVAL_CASES,

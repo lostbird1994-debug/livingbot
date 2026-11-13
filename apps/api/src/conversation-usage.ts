@@ -1,6 +1,6 @@
-import type { Actor, ConversationUsage } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { Prisma } from "@rakazo/db";
+import type { Actor, ConversationUsage } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import { Prisma } from "@livingbot/db";
 
 type Totals = ConversationUsage["total"];
 type Aggregate = {

@@ -1,4 +1,4 @@
-import { EmailEmulator } from "@rakazo/adapters";
+import { EmailEmulator } from "@livingbot/adapters";
 import { describe, expect, it, vi } from "vitest";
 import { marketingEmailRoutes, sendWelcomeEmail, unsubscribeUrl } from "./marketing-email.js";
 
@@ -68,7 +68,7 @@ describe("sendWelcomeEmail", () => {
     const url = unsubscribeUrl(origin, secret, "user-1");
     expect(email.sent[0]).toMatchObject({
       to: "new@example.test",
-      subject: "Welcome to Rakazo",
+      subject: "Welcome to LivingBot",
       headers: {
         "List-Unsubscribe": `<${url}>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

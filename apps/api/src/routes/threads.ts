@@ -1,8 +1,8 @@
 import { findConversationHistory } from "../conversation-find.js";
 import { ORPCError } from "@orpc/server";
-import { runContinueJob, runJobKey } from "@rakazo/adapter-kit";
-import { validateBotModelChange, settleCallRequest } from "@rakazo/adapters";
-import type { Actor, ProductEvent } from "@rakazo/contracts";
+import { runContinueJob, runJobKey } from "@livingbot/adapter-kit";
+import { validateBotModelChange, settleCallRequest } from "@livingbot/adapters";
+import type { Actor, ProductEvent } from "@livingbot/contracts";
 import {
   AttachmentValidationError,
   CALL_CLIENT_NONCE_PREFIX,
@@ -10,8 +10,8 @@ import {
   expandSkillReferencesInPrompt,
   MODEL_REQUIRED_SEND_ERROR,
   QUEUE_HOLDING_RUN_STATUSES,
-} from "@rakazo/core";
-import type { Prisma } from "@rakazo/db";
+} from "@livingbot/core";
+import type { Prisma } from "@livingbot/db";
 import {
   AnswerTooLongError,
   appendEventInTransaction,
@@ -20,8 +20,8 @@ import {
   IsolationError,
   lockOwnedGroup,
   touchGroupUpdatedAt,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { openLocalMessageFile, resolveLocalMessageFile } from "../local-message-file.js";
 import type { RouterDeps } from "../router.js";
 import { createRoutineTestRun, routineTestRunNonce, routineTestTarget } from "../routines.js";

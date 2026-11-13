@@ -1,4 +1,4 @@
-import type { AdapterContext, ProcessEvent } from "@rakazo/adapter-kit";
+import type { AdapterContext, ProcessEvent } from "@livingbot/adapter-kit";
 import { describe, expect, it } from "vitest";
 import { EvalSandboxProvider } from "./sandbox.js";
 

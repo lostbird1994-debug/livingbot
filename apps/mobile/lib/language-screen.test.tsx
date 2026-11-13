@@ -13,7 +13,7 @@ import { UI_LOCALE_LABELS, UI_LOCALE_STORAGE_KEY, UI_LOCALES } from "./ui-locale
 
 vi.mock("./side-insets", () => ({ useSideInsets: () => ({}) }));
 vi.mock("./api", () => ({
-  currentApiBase: () => "https://rakazo.test",
+  currentApiBase: () => "https://livingbot.test",
   loadSessionToken: async () => "token",
   selectedSpaceId: () => "space-1",
 }));
@@ -117,7 +117,7 @@ it.each(["ru", "de", "zh-TW"] as const)(
       await vi.mocked(i18n.setUiLocale).mock.results[0]!.value;
     });
     expect(i18n.getActiveUiLocale()).toBe(locale);
-    expect(resumeLiveNotifications).toHaveBeenCalledWith("https://rakazo.test", "token", "space-1");
+    expect(resumeLiveNotifications).toHaveBeenCalledWith("https://livingbot.test", "token", "space-1");
     expectSelected(UI_LOCALE_LABELS[locale]);
     expect(row("English").getAttribute("aria-pressed")).toBe("false");
     expect([...container.querySelectorAll("button")].every((button) => !button.disabled)).toBe(

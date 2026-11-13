@@ -12,9 +12,9 @@ import type {
   SandboxProvider,
   ScreenRequest,
   TerminalRequest,
-} from "@rakazo/adapter-kit";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
-import { COMPUTER_CACHE_ENV } from "@rakazo/core/node/desktop-runtime";
+} from "@livingbot/adapter-kit";
+import { boundedSandboxCommandTimeoutMs } from "@livingbot/core";
+import { COMPUTER_CACHE_ENV } from "@livingbot/core/node/desktop-runtime";
 import type { ConnectOptions, SandboxStatus } from "railway";
 import {
   RailwayGraphQLError,
@@ -553,7 +553,7 @@ export class RailwaySandboxProvider implements SandboxProvider {
 
 /**
  * Railway destroys an idle sandbox, so it must outlast the checkpointing idle sleep. When no
- * finite timeout can, Railway never idles it out and Rakazo's own idle sleep stops it.
+ * finite timeout can, Railway never idles it out and LivingBot's own idle sleep stops it.
  */
 function railwayIdleTimeoutMinutes() {
   if (!computerIdleSleepEnabled()) return 0;
@@ -703,7 +703,7 @@ function railwayCwd(cwd: string | undefined) {
 
 const PREPARE_RAILWAY_DESKTOP = [
   "set -eu",
-  "exec 9>/tmp/rakazo-prepare.lock; flock -w 300 9",
+  "exec 9>/tmp/livingbot-prepare.lock; flock -w 300 9",
   PREPARE_LINUX_DESKTOP,
   INSTALL_LINUX_BROWSER,
   `mkdir -p ${WORKSPACE}/.browser-profiles`,

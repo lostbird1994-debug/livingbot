@@ -1,15 +1,15 @@
-import type { NotificationMessage } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
+import type { NotificationMessage } from "@livingbot/adapter-kit";
+import type { MessageBlock } from "@livingbot/contracts";
 import {
   isBackgroundRunTrigger,
   plainTextFromMarkdown,
   redactSecrets,
   truncatedPlainText,
   truncatePlainText,
-} from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { countUnreadInboxChats } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
+import { countUnreadInboxChats } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 
 export async function runNotificationsEnabled(

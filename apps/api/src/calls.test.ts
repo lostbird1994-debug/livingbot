@@ -1,5 +1,5 @@
 import { createRouterClient } from "@orpc/server";
-import type { Actor } from "@rakazo/contracts";
+import type { Actor } from "@livingbot/contracts";
 import { describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";
@@ -7,7 +7,7 @@ import { createRouter } from "./router.js";
 const actor: Actor = {
   spaceId: "space-1",
   userId: "user-1",
-  email: "user@rakazo.test",
+  email: "user@livingbot.test",
   isDeploymentOwner: true,
 };
 

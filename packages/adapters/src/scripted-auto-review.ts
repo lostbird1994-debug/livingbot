@@ -5,7 +5,7 @@ import type {
   AutoReviewProvider,
   AutoReviewRequest,
   AutoReviewResult,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 
 const DEFAULT_RESULT: AutoReviewResult = {
   decision: "pass",

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import type { SettingsScope } from "@rakazo/contracts";
-import { encodeLoginSecret } from "@rakazo/contracts";
+import type { SettingsScope } from "@livingbot/contracts";
+import { encodeLoginSecret } from "@livingbot/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
@@ -19,7 +19,7 @@ const vault = vi.hoisted(() => ({
 // The dialog itself is tested on its own; here it is a pair of buttons that settle it.
 vi.mock("./ConfirmIdentityDialog", async () => {
   const { useState } = await import("react");
-  const { runWithIdentityConfirmation } = await import("@rakazo/contracts");
+  const { runWithIdentityConfirmation } = await import("@livingbot/contracts");
   return {
     useIdentityConfirmation: () => {
       const [settle, setSettle] = useState<((confirmed: boolean) => void) | null>(null);
@@ -55,7 +55,7 @@ vi.mock("@lingui/react/macro", () => {
     parts.reduce((text, part, index) => `${text}${index > 0 ? values[index - 1] : ""}${part}`, "");
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@livingbot/ui-web", () => ({
   Button: ({
     variant: _variant,
     size: _size,

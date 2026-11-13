@@ -7,7 +7,7 @@ import {
   ServerError,
   TooManyRequestsError,
 } from "@modelcontextprotocol/sdk/server/auth/errors.js";
-import { createLogger, createTestSink, getLogger, installLogger } from "@rakazo/logging";
+import { createLogger, createTestSink, getLogger, installLogger } from "@livingbot/logging";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectorRegistry } from "./composio-connector.js";
 import { InfisicalSecretStore } from "./infisical-secret-store.js";

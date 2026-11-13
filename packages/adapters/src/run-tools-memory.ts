@@ -1,12 +1,12 @@
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@livingbot/adapter-kit";
 import {
   HistoryReadInputSchema,
   HistorySearchInputSchema,
   isMemoryArchivePath,
   isMemoryReviewPath,
-} from "@rakazo/contracts";
-import { redactSecrets } from "@rakazo/core";
-import { readHistory, searchHistory } from "@rakazo/db";
+} from "@livingbot/contracts";
+import { redactSecrets } from "@livingbot/core";
+import { readHistory, searchHistory } from "@livingbot/db";
 import { sharedMemorySaveError } from "./builtin-tools.js";
 import { redactConnectorPayload } from "./connector-safety.js";
 import { MAX_RECALLED_MEMORIES } from "./history-compaction.js";

@@ -1,4 +1,4 @@
-import type { ModelApiProtocol, ModelCatalogEntry } from "@rakazo/contracts";
+import type { ModelApiProtocol, ModelCatalogEntry } from "@livingbot/contracts";
 import {
   canonicalPiProviderId,
   DEFAULT_MODEL_MAX_TOKENS,
@@ -6,7 +6,7 @@ import {
   OPENAI_COMPATIBLE_PROVIDER_ID,
   selectCompatibleModelCredential,
   withConnectionName,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import { matchesSearchQuery } from "./search.js";
 
 /** Effort choices an OpenAI-compatible endpoint stores when reasoning is enabled. */

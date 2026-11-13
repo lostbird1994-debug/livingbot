@@ -12,7 +12,7 @@ import {
   savePairedDevice,
 } from "./user-device.js";
 
-const origin = "https://rakazo.example.com";
+const origin = "https://livingbot.example.com";
 const other = "https://other.example.com";
 
 // Reversible stand-in for OS encryption that still keeps the plaintext off disk.
@@ -160,7 +160,7 @@ describe("remote computer access", () => {
     const first = clients[0]!.authorize();
     const second = clients[0]!.authorize();
     await vi.waitFor(() => expect(confirm).toHaveBeenCalledTimes(1));
-    expect(confirm).toHaveBeenCalledWith("rakazo.example.com");
+    expect(confirm).toHaveBeenCalledWith("livingbot.example.com");
     answer(true);
     expect(await Promise.all([first, second])).toEqual([true, true]);
     expect(await clients[0]!.authorize()).toBe(true);

@@ -1,6 +1,6 @@
-import type { Bot, ConversationUsage, LoginFieldInput, ModelCatalogEntry, TaskSession, ThreadMessage, ThreadSnapshot } from "@rakazo/contracts";
-import { answerableAskMessageIds, chatUserBubbleColors, dismissableAskMessageIds, foldPeerReplies, newClientId } from "@rakazo/core";
-import { toast, Button, Dialog, DialogContent, DialogHeader, DialogTitle } from "@rakazo/ui-web";
+import type { Bot, ConversationUsage, LoginFieldInput, ModelCatalogEntry, TaskSession, ThreadMessage, ThreadSnapshot } from "@livingbot/contracts";
+import { answerableAskMessageIds, chatUserBubbleColors, dismissableAskMessageIds, foldPeerReplies, newClientId } from "@livingbot/core";
+import { toast, Button, Dialog, DialogContent, DialogHeader, DialogTitle } from "@livingbot/ui-web";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { clearConnectorScope, readConnectorScope, scopeKeyForTarget } from "../../lib/connector-scope";

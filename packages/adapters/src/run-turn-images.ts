@@ -1,7 +1,7 @@
-import type { AgentRunRequest, AgentSteeringMessage } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { ATTACHMENT_MAX_BYTES, isAttachmentImageMimeType } from "@rakazo/contracts";
-import { blocksToAgentHistoryText } from "@rakazo/core";
+import type { AgentRunRequest, AgentSteeringMessage } from "@livingbot/adapter-kit";
+import type { MessageBlock } from "@livingbot/contracts";
+import { ATTACHMENT_MAX_BYTES, isAttachmentImageMimeType } from "@livingbot/contracts";
+import { blocksToAgentHistoryText } from "@livingbot/core";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { loadReplyContext } from "./reply-context.js";
 import { currentTurnFilesInstruction, listCurrentTurnFiles } from "./thread-artifacts.js";

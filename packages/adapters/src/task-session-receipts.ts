@@ -1,7 +1,7 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+import type { MessageBlock } from "@livingbot/contracts";
+import type { PrismaClient, ThreadEvents } from "@livingbot/db";
 import { appendEventInTransaction, createThreadMessageInTransaction, runAsSystem, runAsTenant,
-  THREAD_LOCK_TRANSACTION_OPTIONS } from "@rakazo/db";
+  THREAD_LOCK_TRANSACTION_OPTIONS } from "@livingbot/db";
 
 /** The terminal Run is the durable delivery intent. Receipt and card commit together. */
 export async function publishTaskSessionReceipts(deps: { prisma: PrismaClient; events: ThreadEvents }) {

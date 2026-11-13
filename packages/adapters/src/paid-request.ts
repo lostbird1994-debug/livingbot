@@ -3,11 +3,11 @@ import type {
   AdapterContext,
   HttpPaymentAuthorization,
   PaymentWalletProvider,
-} from "@rakazo/adapter-kit";
-import { PaidRequestInput } from "@rakazo/contracts";
-import { stableJsonValue } from "@rakazo/core/node/approval-effect-key";
-import type { Purchase } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/adapter-kit";
+import { PaidRequestInput } from "@livingbot/contracts";
+import { stableJsonValue } from "@livingbot/core/node/approval-effect-key";
+import type { Purchase } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { redactConnectorPayload } from "./connector-safety.js";
 import type { PurchaseDeps } from "./purchase-service.js";
 import {

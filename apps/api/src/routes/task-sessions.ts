@@ -1,11 +1,11 @@
 import { ORPCError } from "@orpc/server";
-import { validateBotModelChange } from "@rakazo/adapters";
-import { runContinueJob } from "@rakazo/adapter-kit";
-import type { Actor, TaskSession } from "@rakazo/contracts";
-import { MODEL_REQUIRED_SEND_ERROR } from "@rakazo/core";
-import type { BotTaskSession } from "@rakazo/db";
+import { validateBotModelChange } from "@livingbot/adapters";
+import { runContinueJob } from "@livingbot/adapter-kit";
+import type { Actor, TaskSession } from "@livingbot/contracts";
+import { MODEL_REQUIRED_SEND_ERROR } from "@livingbot/core";
+import type { BotTaskSession } from "@livingbot/db";
 import { availableInSpace, appendEventInTransaction, createThreadMessageInTransaction, IsolationError,
-  THREAD_LOCK_TRANSACTION_OPTIONS } from "@rakazo/db";
+  THREAD_LOCK_TRANSACTION_OPTIONS } from "@livingbot/db";
 import { buildSendPrompt, buildUserMessageBlocks, resolveSendAttachments } from "../artifacts.js";
 import { withSerializableRetry } from "../serializable-retry.js";
 import { stopThreadRuns, resolveThreadTarget } from "../thread-target.js";

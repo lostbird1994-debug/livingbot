@@ -1,5 +1,5 @@
-import { getLogger, monitoringUserId } from "@rakazo/logging";
-import type { MonitoringConfig } from "@rakazo/logging/monitoring";
+import { getLogger, monitoringUserId } from "@livingbot/logging";
+import type { MonitoringConfig } from "@livingbot/logging/monitoring";
 import { Hono } from "hono";
 import type { AppEnv } from "./env.js";
 import { sanitizeNativeEnvelope } from "./native-monitoring.js";

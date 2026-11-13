@@ -3,8 +3,8 @@ import {
   CLOUDFLARE_AI_GATEWAY_PROVIDER_ID,
   MODEL_KEY_FORMAT_ERROR,
   ModelConnectInputSchema,
-} from "@rakazo/contracts";
-import { canUseCompatibleModelAsDefault } from "@rakazo/core";
+} from "@livingbot/contracts";
+import { canUseCompatibleModelAsDefault } from "@livingbot/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildModelConnectPlaintext,

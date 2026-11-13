@@ -3,12 +3,12 @@ import type {
   AgentImportInstruction,
   AgentImportPlan,
   AgentImportSource,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   AGENT_IMPORT_MAX_FILE_LENGTH,
   AGENT_IMPORT_MAX_FILES,
   AGENT_IMPORT_MAX_TOTAL_LENGTH,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import { AgentImportArchiveError } from "./archive.js";
 import {
   AGENT_IMPORT_CONFIG_FILES,

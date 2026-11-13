@@ -86,7 +86,7 @@
       "bundleIdentifier": "com.rakazo.app",
       "buildNumber": "1",
       "supportsTablet": true,
-      "icon": "../../packages/ui-tokens/assets/Rakazo.icon",
+      "icon": "../../packages/ui-tokens/assets/LivingBot.icon",
       "config": {
         "usesNonExemptEncryption": false
       },

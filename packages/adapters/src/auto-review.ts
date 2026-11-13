@@ -9,9 +9,9 @@ import type {
   AutoReviewRequest,
   AutoReviewResult,
   CacheCapabilities,
-} from "@rakazo/adapter-kit";
-import type { AutoReviewJudgeDecision } from "@rakazo/core";
-import { escapePromptData, redactSecrets } from "@rakazo/core";
+} from "@livingbot/adapter-kit";
+import type { AutoReviewJudgeDecision } from "@livingbot/core";
+import { escapePromptData, redactSecrets } from "@livingbot/core";
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import { LOCAL_PROVIDER_ID } from "./pi-local-provider.js";

@@ -2,10 +2,10 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import type { AdapterContext, AgentRunRequest } from "@rakazo/adapter-kit";
-import { botRoleCard } from "@rakazo/contracts";
-import { WORKSPACE_CHIEF_SPAWN_KEY } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+import type { AdapterContext, AgentRunRequest } from "@livingbot/adapter-kit";
+import { botRoleCard } from "@livingbot/contracts";
+import { WORKSPACE_CHIEF_SPAWN_KEY } from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
 import { connectOpenClawSdk } from "./openclaw-gateway.js";
 import { NATIVE_KERNEL_TOOL_ALLOWLIST } from "./native-collaboration.js";
 import type { KernelAgentEntry } from "./openclaw-kernel-registry.js";
@@ -80,7 +80,7 @@ export class OpenClawKernelProvisioner {
         id: model.id, name: model.id, api,
         reasoning: model.reasoning ?? false, input: model.acceptsImages ? ["text", "image"] : ["text"],
         contextWindow: model.contextWindow ?? 128_000, maxTokens: model.maxTokens ?? 8192,
-        // Required engine metadata; Rakazo never presents these unknown prices as a billed cost.
+        // Required engine metadata; LivingBot never presents these unknown prices as a billed cost.
         cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       };
       config.models.providers[provider] = {

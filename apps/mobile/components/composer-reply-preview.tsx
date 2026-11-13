@@ -1,5 +1,5 @@
-import type { ReplyPreview } from "@rakazo/contracts";
-import { replyLabel } from "@rakazo/core";
+import type { ReplyPreview } from "@livingbot/contracts";
+import { replyLabel } from "@livingbot/core";
 import { Text, View } from "react-native";
 import { mobileTokens } from "../lib/appearance";
 import type { MobileArtifactTarget } from "../lib/artifact-open";

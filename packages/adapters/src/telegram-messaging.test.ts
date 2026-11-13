@@ -1,5 +1,5 @@
 import { createTelegramAdapter } from "@chat-adapter/telegram";
-import type { AdapterContext, MessagingInboundEvent } from "@rakazo/adapter-kit";
+import type { AdapterContext, MessagingInboundEvent } from "@livingbot/adapter-kit";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ChatSdkMessagingSurface } from "./chat-sdk-surface.js";
 import { splitOutboundBody } from "./messaging-platforms.js";
@@ -231,7 +231,7 @@ describe("Telegram bots side by side", () => {
   }
 
   const webhook = (secret: string, text: string) =>
-    new Request("https://rakazo.test/api/v1/messaging/webhook/x", {
+    new Request("https://livingbot.test/api/v1/messaging/webhook/x", {
       method: "POST",
       headers: {
         "content-type": "application/json",

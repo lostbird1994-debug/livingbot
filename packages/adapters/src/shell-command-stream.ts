@@ -1,6 +1,6 @@
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
-import type { ProcessEvent } from "@rakazo/adapter-kit";
-import { redactSecrets } from "@rakazo/core";
+import type { ProcessEvent } from "@livingbot/adapter-kit";
+import { redactSecrets } from "@livingbot/core";
 import { redactShellStreams } from "./agent-environment.js";
 import { shortenPlainText } from "./context-selection.js";
 import { TOOL_RESULT_TEXT_LIMIT } from "./pi-runtime-limits.js";

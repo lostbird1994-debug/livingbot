@@ -1,4 +1,4 @@
-import { ThreadStoppedPayloadSchema } from "@rakazo/contracts";
+import { ThreadStoppedPayloadSchema } from "@livingbot/contracts";
 import type { PrismaClient } from "./client.js";
 
 export interface ThreadStopContext {

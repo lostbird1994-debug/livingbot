@@ -8,14 +8,14 @@ import type {
   DesktopReachability,
   DesktopSetup,
   DesktopSetupState,
-  RakazoSetup,
-} from "@rakazo/contracts";
+  LivingBotSetup,
+} from "@livingbot/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 
-type DesktopSetupResult = Awaited<ReturnType<RakazoSetup["save"]>>;
+type DesktopSetupResult = Awaited<ReturnType<LivingBotSetup["save"]>>;
 
 const DEFAULT_LOCAL_URL = "http://127.0.0.1:6130";
-const CLOUD_URL = "https://cloud.rakazo.example";
+const CLOUD_URL = "https://cloud.livingbot.example";
 
 // The jsdom environment replaces the global URL, so resolve the sibling files via Node's.
 const srcDir = path.dirname(fileURLToPath(import.meta.url));
@@ -97,7 +97,7 @@ function mount(saved: DesktopSetup | null): Harness {
   const saves: DesktopSetup[] = [];
   const saveCalls: Array<Deferred<DesktopSetupResult>> = [];
 
-  const bridge: RakazoSetup = {
+  const bridge: LivingBotSetup = {
     platform: "linux",
     state: () => {
       const call = deferred<DesktopSetupState>();
@@ -129,7 +129,7 @@ function mount(saved: DesktopSetup | null): Harness {
       },
     },
   };
-  (window as { rakazoSetup?: RakazoSetup }).rakazoSetup = bridge;
+  (window as { rakazoSetup?: LivingBotSetup }).rakazoSetup = bridge;
   // Run the plain script the same way setup.html's script tag does.
   new Function(setupScript)();
 
@@ -169,7 +169,7 @@ async function boot(saved: DesktopSetup | null): Promise<Harness> {
 describe("setup", () => {
   afterEach(() => {
     document.body.innerHTML = "";
-    delete (window as { rakazoSetup?: RakazoSetup }).rakazoSetup;
+    delete (window as { rakazoSetup?: LivingBotSetup }).rakazoSetup;
   });
 
   it("keeps an address edited while the connection check is pending", async () => {

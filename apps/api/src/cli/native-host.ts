@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { startHostComputerServer } from "@rakazo/adapters/host-computer-server";
+import { startHostComputerServer } from "@livingbot/adapters/host-computer-server";
 const root = process.env.RAKAZO_NATIVE_ROOT;
 if (!root) throw new Error("Native root is required");
 const config = JSON.parse(await readFile(path.join(root, "native-host.json"), "utf8"));

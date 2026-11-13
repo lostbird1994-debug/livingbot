@@ -1,4 +1,4 @@
-import type { AnalyticsBotSetting, UpdateBotInput } from "@rakazo/contracts";
+import type { AnalyticsBotSetting, UpdateBotInput } from "@livingbot/contracts";
 
 type Field = Exclude<keyof UpdateBotInput, "botId">;
 

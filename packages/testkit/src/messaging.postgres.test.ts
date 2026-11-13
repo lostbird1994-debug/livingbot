@@ -6,8 +6,8 @@ import {
   ChatSdkMessagingSurface,
   createEmulatedSendbluePlatform,
   SendBlueEmulator,
-} from "@rakazo/adapters";
-import { formatMessagingLinkCode, issueMessagingLinkCode } from "@rakazo/db";
+} from "@livingbot/adapters";
+import { formatMessagingLinkCode, issueMessagingLinkCode } from "@livingbot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { asSystem } from "./system-db.js";
 
@@ -48,7 +48,7 @@ describeMessaging("messaging surface journeys", () => {
     });
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@livingbot/api/app");
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,
@@ -435,7 +435,7 @@ describeMessaging("messaging surface journeys", () => {
       content: "legacy path",
       handle: `legacy-dm-${stamp}`,
     });
-    const res = await app.request("https://rakazo.test/api/v1/phone/webhook", {
+    const res = await app.request("https://livingbot.test/api/v1/phone/webhook", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -452,7 +452,7 @@ describeMessaging("messaging surface journeys", () => {
     const stranger = uniqueNumber();
     // A mistaken parser that unwraps `data` would treat this as a message and
     // provision. The SendBlue inbound shape is flat; nested envelopes are ignored.
-    const res = await app.request("https://rakazo.test/api/v1/phone/webhook", {
+    const res = await app.request("https://livingbot.test/api/v1/phone/webhook", {
       method: "POST",
       headers: {
         "content-type": "application/json",

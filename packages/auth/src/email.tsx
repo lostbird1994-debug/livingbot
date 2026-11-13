@@ -1,7 +1,7 @@
 /** @jsxRuntime automatic */
-import type { TransactionalEmail } from "@rakazo/adapter-kit";
-import { displayName } from "@rakazo/core";
-import { webLightTokens as lightTokens, webDarkTokens } from "@rakazo/ui-tokens";
+import type { TransactionalEmail } from "@livingbot/adapter-kit";
+import { displayName } from "@livingbot/core";
+import { webLightTokens as lightTokens, webDarkTokens } from "@livingbot/ui-tokens";
 import type { ReactNode } from "react";
 import {
   Body,
@@ -101,14 +101,14 @@ export const linkStyle = { color: lightTokens.primary, textDecoration: "underlin
 export function verificationEmail(email: string, url: string): Promise<TransactionalEmail> {
   return message(
     email,
-    "Verify your Rakazo email",
+    "Verify your LivingBot email",
     <>
       <Text>
         <Link href={url} style={linkStyle}>
           Verify email
         </Link>
       </Text>
-      <Text>Then return to Rakazo to sign in.</Text>
+      <Text>Then return to LivingBot to sign in.</Text>
       <Text>This link expires in one hour. If you did not register, ignore this email.</Text>
     </>,
   );
@@ -117,9 +117,9 @@ export function verificationEmail(email: string, url: string): Promise<Transacti
 export function signInCodeEmail(email: string, code: string): Promise<TransactionalEmail> {
   return message(
     email,
-    "Your Rakazo sign-in code",
+    "Your LivingBot sign-in code",
     <>
-      <Text>Enter this code to sign in to Rakazo:</Text>
+      <Text>Enter this code to sign in to LivingBot:</Text>
       <Text>
         <strong>{code}</strong>
       </Text>
@@ -134,10 +134,10 @@ export function passwordResetEmail(
 ): Promise<TransactionalEmail> {
   return message(
     user.email,
-    "Reset your Rakazo password",
+    "Reset your LivingBot password",
     <>
       <Text>Hi {displayName(user.name, "there")},</Text>
-      <Text>Reset your Rakazo password:</Text>
+      <Text>Reset your LivingBot password:</Text>
       <Text>
         <Link href={resetUrl} style={linkStyle}>
           Reset password
@@ -153,9 +153,9 @@ export function passwordResetEmail(
 export function accountDeletionEmail(email: string, code: string): Promise<TransactionalEmail> {
   return message(
     email,
-    "Confirm Rakazo account deletion",
+    "Confirm LivingBot account deletion",
     <>
-      <Text>Enter this code in Rakazo to delete your account:</Text>
+      <Text>Enter this code in LivingBot to delete your account:</Text>
       <Text>{code}</Text>
       <Text>
         This code expires in ten minutes. If you did not request deletion, ignore this email.
@@ -167,9 +167,9 @@ export function accountDeletionEmail(email: string, code: string): Promise<Trans
 export function identityCodeEmail(email: string, code: string): Promise<TransactionalEmail> {
   return message(
     email,
-    "Your Rakazo confirmation code",
+    "Your LivingBot confirmation code",
     <>
-      <Text>Enter this code in Rakazo to confirm it's you:</Text>
+      <Text>Enter this code in LivingBot to confirm it's you:</Text>
       <Text>
         <strong>{code}</strong>
       </Text>

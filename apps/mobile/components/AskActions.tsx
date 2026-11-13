@@ -1,4 +1,4 @@
-import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo/contracts";
+import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@livingbot/contracts";
 import { useState } from "react";
 import type { ViewProps } from "react-native";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";

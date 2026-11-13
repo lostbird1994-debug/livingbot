@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("./events.js", () => ({ appendEventInTransaction: vi.fn() }));
 vi.mock("./bot-instructions.js", () => ({ writeBotInstructions: vi.fn() }));
 
-import { botRoleCard } from "@rakazo/contracts";
+import { botRoleCard } from "@livingbot/contracts";
 import { writeBotInstructions } from "./bot-instructions.js";
 import { botProfileLabelsChanged, commitBotUpdate, RoleCardConflictError } from "./bot-update.js";
 

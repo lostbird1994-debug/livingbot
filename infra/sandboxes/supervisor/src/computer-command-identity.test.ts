@@ -1,5 +1,5 @@
 import { Duplex, Readable, Writable } from "node:stream";
-import { resolveSupervisorToken } from "@rakazo/core";
+import { resolveSupervisorToken } from "@livingbot/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { computerCommandEnv } from "./supervisor-logic.js";
 

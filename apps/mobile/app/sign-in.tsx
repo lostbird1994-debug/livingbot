@@ -1,4 +1,4 @@
-import { credentialIssue, MAX_PASSWORD_LENGTH, PASSWORD_RULES } from "@rakazo/core";
+import { credentialIssue, MAX_PASSWORD_LENGTH, PASSWORD_RULES } from "@livingbot/core";
 import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {

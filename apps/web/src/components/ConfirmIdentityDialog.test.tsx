@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { ORPCError } from "@orpc/client";
-import type { AccountSecurity } from "@rakazo/contracts";
-import { IDENTITY_CONFIRMATION_REQUIRED } from "@rakazo/contracts";
+import type { AccountSecurity } from "@livingbot/contracts";
+import { IDENTITY_CONFIRMATION_REQUIRED } from "@livingbot/contracts";
 import type { ComponentProps, ReactNode } from "react";
 import { act, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -18,7 +18,7 @@ vi.mock("@lingui/react/macro", () => ({
   useLingui: () => ({ t: (strings: TemplateStringsArray) => strings.join("") }),
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
-vi.mock("@rakazo/ui-web", () => {
+vi.mock("@livingbot/ui-web", () => {
   const Plain = ({ children }: { children?: ReactNode }) => <>{children}</>;
   return {
     Button: ({ variant: _variant, ...props }: ComponentProps<"button"> & { variant?: string }) => (

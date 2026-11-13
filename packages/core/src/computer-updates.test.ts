@@ -1,4 +1,4 @@
-import type { ComputerUpdate } from "@rakazo/contracts";
+import type { ComputerUpdate } from "@livingbot/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createComputerUpdates } from "./computer-updates.js";
 

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { ComposioConnector, FakeComposioClient } from "@rakazo/adapters";
+import { ComposioConnector, FakeComposioClient } from "@livingbot/adapters";
 import { describe, expect, it } from "vitest";
 import { discardBotIntroRun } from "./discard-bot-intro.js";
 import { sessionCookieHeader } from "./index.js";
@@ -58,7 +58,7 @@ describe.skipIf(!databaseAvailable)("offline Pi product journey", () => {
         method: "POST",
         headers: { "content-type": "application/json", origin: fixtureOrigin },
         body: JSON.stringify({
-          email: `offline-pi-${randomUUID()}@rakazo.test`,
+          email: `offline-pi-${randomUUID()}@livingbot.test`,
           password: "password12",
           name: "Offline fixture",
         }),

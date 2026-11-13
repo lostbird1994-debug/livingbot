@@ -1,5 +1,5 @@
-import type { Actor, ExternalConversation, ExternalConversationPolicy } from "@rakazo/contracts";
-import { AutomatedSenderPoliciesSchema } from "@rakazo/contracts";
+import type { Actor, ExternalConversation, ExternalConversationPolicy } from "@livingbot/contracts";
+import { AutomatedSenderPoliciesSchema } from "@livingbot/contracts";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 import { withNewestThreadMessages } from "./preview-messages.js";

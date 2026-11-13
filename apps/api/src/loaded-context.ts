@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/server";
-import type { MemoryStore } from "@rakazo/adapter-kit";
+import type { MemoryStore } from "@livingbot/adapter-kit";
 import {
   loadAgentScratchpadContext,
   MEMORY_DOCUMENT_MAX_CHARS,
@@ -8,11 +8,11 @@ import {
   MEMORY_TOTAL_MAX_CHARS,
   previewAgentMemoryContext,
   runIdentityInstruction,
-} from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import { botRoleCard, excludesSharedProfile } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import type { BotWorkspaceProfiles, NativeBootstrapPreview } from "@rakazo/adapters";
+} from "@livingbot/adapters";
+import type { Actor } from "@livingbot/contracts";
+import { botRoleCard, excludesSharedProfile } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import type { BotWorkspaceProfiles, NativeBootstrapPreview } from "@livingbot/adapters";
 
 /** An ordinary private-chat preview, never a claim about a previously sent model request. */
 export async function loadedBotContext(

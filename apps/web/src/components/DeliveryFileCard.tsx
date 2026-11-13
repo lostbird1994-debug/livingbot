@@ -1,12 +1,12 @@
 import { HighlightedText } from "./HighlightedText";
-import { fileSizeParts } from "@rakazo/core";
+import { fileSizeParts } from "@livingbot/core";
 import {
   Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { Copy, Download, ExternalLink, FileText, FolderOpen, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { errorText } from "../lib/user-error";

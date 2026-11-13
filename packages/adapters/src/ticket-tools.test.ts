@@ -2,7 +2,7 @@ import {
   TICKET_COMMENT_MAX_LENGTH,
   TICKET_DESCRIPTION_MAX_LENGTH,
   TICKET_TITLE_MAX_LENGTH,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import { describe, expect, it, vi } from "vitest";
 import {
   commentTicket,

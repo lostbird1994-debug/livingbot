@@ -4,14 +4,14 @@ import type {
   ConversationFindFilters,
   ConversationFindItem,
   MessageBlock,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   inferAttachmentMimeType,
   localDocumentReferences,
   plainTextFromMarkdown,
   snippetAroundMatch,
-} from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+} from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
 
 const BATCH = 100,
   SCAN_BUDGET = 1000,

@@ -1,10 +1,10 @@
-import type { AgentRunRequest, ComputerRef } from "@rakazo/adapter-kit";
-import { SandboxRateLimitError, SandboxUnresponsiveError } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+import type { AgentRunRequest, ComputerRef } from "@livingbot/adapter-kit";
+import { SandboxRateLimitError, SandboxUnresponsiveError } from "@livingbot/adapter-kit";
+import type { MessageBlock } from "@livingbot/contracts";
+import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@rakazo/db", async importOriginal => ({
+vi.mock("@livingbot/db", async importOriginal => ({
   ...await importOriginal<Record<string, unknown>>(),
   prioritizeConversation: vi.fn(async () => ({ blocked: false, continuationRunId: null })),
 }));

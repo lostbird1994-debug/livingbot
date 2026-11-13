@@ -1,11 +1,11 @@
-import type { ThreadScrollState } from "@rakazo/core";
+import type { ThreadScrollState } from "@livingbot/core";
 import {
   foldPeerReplies,
   jumpTargetId,
   leaveThreadWindow,
   openThreadWindow,
   peerExchangeLines,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import type { MobileSnapshot } from "./api";
 import { rpc } from "./api";

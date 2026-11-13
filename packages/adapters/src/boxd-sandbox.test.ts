@@ -1,7 +1,7 @@
 import { RateLimitError } from "@boxd-sh/sdk";
-import type { AdapterContext, ComputerRef, ProcessEvent } from "@rakazo/adapter-kit";
-import { SandboxRateLimitError, WorkspaceTooLargeError } from "@rakazo/adapter-kit";
-import { screenDisplayArgv, shellQuote } from "@rakazo/core/node/desktop-runtime";
+import type { AdapterContext, ComputerRef, ProcessEvent } from "@livingbot/adapter-kit";
+import { SandboxRateLimitError, WorkspaceTooLargeError } from "@livingbot/adapter-kit";
+import { screenDisplayArgv, shellQuote } from "@livingbot/core/node/desktop-runtime";
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { BOXD_COMPUTER_SNAPSHOT, BoxdSandboxProvider } from "./boxd-sandbox.js";
 import { BOXD_WORKSPACE, FakeBoxd, fakeBoxdProvider } from "./boxd-sandbox.test-support.js";

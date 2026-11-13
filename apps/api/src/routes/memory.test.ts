@@ -1,6 +1,6 @@
 import { createRouterClient, implement } from "@orpc/server";
-import type { Actor } from "@rakazo/contracts";
-import { appContract } from "@rakazo/contracts";
+import type { Actor } from "@livingbot/contracts";
+import { appContract } from "@livingbot/contracts";
 import { describe, expect, it, vi } from "vitest";
 import type { RouterContext } from "./context.js";
 import { memoryRoutes } from "./memory.js";

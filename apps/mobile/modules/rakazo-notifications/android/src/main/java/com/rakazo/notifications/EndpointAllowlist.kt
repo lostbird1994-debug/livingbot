@@ -4,7 +4,7 @@ import java.net.URI
 
 /**
  * The same decision the app makes before it saves a server URL: https anywhere, http only to
- * `isPrivateNetworkHost` from `@rakazo/contracts/network-host`. Cases shared with the JS test live
+ * `isPrivateNetworkHost` from `@livingbot/contracts/network-host`. Cases shared with the JS test live
  * in src/test/resources/endpoint-allowlist-cases.json. IP literals are parsed by hand so a host
  * name is never resolved.
  */

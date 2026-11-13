@@ -1,4 +1,4 @@
-import type { AgentRunRequest, AgentRuntimeEvent } from "@rakazo/adapter-kit";
+import type { AgentRunRequest, AgentRuntimeEvent } from "@livingbot/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import type * as NativeModelStream from "./openclaw-model-stream.js";
 

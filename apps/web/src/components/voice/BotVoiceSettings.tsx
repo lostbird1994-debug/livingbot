@@ -1,5 +1,5 @@
-import type { Bot } from "@rakazo/contracts";
-import { Button, Input, SectionHeading, Switch } from "@rakazo/ui-web";
+import type { Bot } from "@livingbot/contracts";
+import { Button, Input, SectionHeading, Switch } from "@livingbot/ui-web";
 import { useId, useState } from "react";
 import type { BotVoicePreferences } from "../../lib/voice-assistant-pref";
 import { readBotVoicePreferences, writeBotVoicePreferences } from "../../lib/voice-assistant-pref";

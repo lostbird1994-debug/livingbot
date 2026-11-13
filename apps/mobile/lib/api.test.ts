@@ -2,12 +2,12 @@ import { getArtifactById } from "./artifacts";
 
 vi.mock("./ai-consent", () => ({ promptAiConsent: vi.fn() }));
 
-import type { RpcInput } from "@rakazo/contracts";
+import type { RpcInput } from "@livingbot/contracts";
 import {
   dismissableAskMessageIds,
   isServerUnreachable,
   withLiveStreamingProgress,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import * as SecureStore from "expo-secure-store";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { promptAiConsent } from "./ai-consent";
@@ -177,7 +177,7 @@ describe("mobile API authentication", () => {
   describe.each([
     {
       name: "password reset",
-      request: () => requestPasswordReset("ada@example.test", "https://rakazo.test/reset-password"),
+      request: () => requestPasswordReset("ada@example.test", "https://livingbot.test/reset-password"),
       fallback: "Could not send reset email",
     },
     {
@@ -344,7 +344,7 @@ describe("mobile API authentication", () => {
           passwordAuth: true,
           sso: null,
           passwordReset: true,
-          resetUrl: "https://rakazo.test/reset-password",
+          resetUrl: "https://livingbot.test/reset-password",
         }),
       )
       .mockResolvedValueOnce(jsonResponse({ status: true }));
@@ -354,9 +354,9 @@ describe("mobile API authentication", () => {
       passwordAuth: true,
       sso: null,
       passwordReset: true,
-      resetUrl: "https://rakazo.test/reset-password",
+      resetUrl: "https://livingbot.test/reset-password",
     });
-    await requestPasswordReset("ada@example.test", "https://rakazo.test/reset-password");
+    await requestPasswordReset("ada@example.test", "https://livingbot.test/reset-password");
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
@@ -365,7 +365,7 @@ describe("mobile API authentication", () => {
         method: "POST",
         body: JSON.stringify({
           email: "ada@example.test",
-          redirectTo: "https://rakazo.test/reset-password",
+          redirectTo: "https://livingbot.test/reset-password",
         }),
       }),
     );
@@ -377,7 +377,7 @@ describe("mobile API authentication", () => {
       vi.fn(async () =>
         jsonResponse({
           passwordReset: true,
-          resetUrl: "https://rakazo.test/reset-password",
+          resetUrl: "https://livingbot.test/reset-password",
           billing: false,
         }),
       ),
@@ -386,7 +386,7 @@ describe("mobile API authentication", () => {
       passwordAuth: true,
       sso: null,
       passwordReset: true,
-      resetUrl: "https://rakazo.test/reset-password",
+      resetUrl: "https://livingbot.test/reset-password",
       billing: false,
     });
   });

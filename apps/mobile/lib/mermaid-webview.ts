@@ -1,4 +1,4 @@
-import type { ChatMermaidConfig } from "@rakazo/chat-ui/mermaid";
+import type { ChatMermaidConfig } from "@livingbot/chat-ui/mermaid";
 
 /** Served by the API (`apps/api/src/diagram-script.ts`), so the app does not bundle Mermaid. */
 export const DIAGRAM_SCRIPT_PATH = "/api/v1/assets/mermaid.js";

@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock } from "@livingbot/contracts";
 import {
   appendTextSegment,
   appendToolCallSegment,
@@ -7,8 +7,8 @@ import {
   isBackgroundRunTrigger,
   noteLastToolStep,
   redactSecretsAfter,
-} from "@rakazo/core";
-import type { Run } from "@rakazo/db";
+} from "@livingbot/core";
+import type { Run } from "@livingbot/db";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { ReplyState, RunContext } from "./run-context.js";
 import { publishMessage } from "./run-messages.js";

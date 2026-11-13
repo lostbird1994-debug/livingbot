@@ -7,14 +7,14 @@ import type {
   SandboxProvider,
   SemanticMemoryProvider,
   WebProvider,
-} from "@rakazo/adapter-kit";
-import type { ComputerMode, MessageBlock } from "@rakazo/contracts";
-import type { ToolCallStreak } from "@rakazo/core";
-import { createStreamingRedactor } from "@rakazo/core";
-import { toolEffectIdempotencyKey } from "@rakazo/core/node/approval-effect-key";
-import type { Bot, Computer, effectiveMemoryScope, Run, Task, Thread } from "@rakazo/db";
-import { dropRunTurnCheckpoint, saveRunTurnCheckpoint } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/adapter-kit";
+import type { ComputerMode, MessageBlock } from "@livingbot/contracts";
+import type { ToolCallStreak } from "@livingbot/core";
+import { createStreamingRedactor } from "@livingbot/core";
+import { toolEffectIdempotencyKey } from "@livingbot/core/node/approval-effect-key";
+import type { Bot, Computer, effectiveMemoryScope, Run, Task, Thread } from "@livingbot/db";
+import { dropRunTurnCheckpoint, saveRunTurnCheckpoint } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import type { ApprovalPausedToolResult, ApprovedEffectReplayQueue } from "./approval-effect.js";
 import { approvalPausedToolResult, approvedEffectOccurrence } from "./approval-effect.js";
 import type { loadBotMessageContext } from "./bot-messages.js";

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { AgentRunModel, AgentRunRequest, AgentRuntime } from "@rakazo/adapter-kit";
+import type { AgentRunModel, AgentRunRequest, AgentRuntime } from "@livingbot/adapter-kit";
 
 export type JudgeInput = { rubric: string; evidence: unknown };
 export type Judgment = { pass: boolean; reason: string };

@@ -1,8 +1,8 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ORPCError } from "@orpc/client";
-import type { Bot, BotRoleCard } from "@rakazo/contracts";
-import { BOT_ROLE_TEXT_MAX_LENGTH, botRoleCard } from "@rakazo/contracts";
-import { Button, Disclosure, SectionHeading, Textarea } from "@rakazo/ui-web";
+import type { Bot, BotRoleCard } from "@livingbot/contracts";
+import { BOT_ROLE_TEXT_MAX_LENGTH, botRoleCard } from "@livingbot/contracts";
+import { Button, Disclosure, SectionHeading, Textarea } from "@livingbot/ui-web";
 import type { ReactNode } from "react";
 import { useId, useState } from "react";
 import { InstructionSettings } from "../components/InstructionSettings";

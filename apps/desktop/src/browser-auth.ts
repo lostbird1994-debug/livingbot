@@ -1,6 +1,6 @@
 import type { Server } from "node:http";
 import { createServer } from "node:http";
-import type { RakazoDesktopOAuthCallback } from "@rakazo/contracts";
+import type { LivingBotDesktopOAuthCallback } from "@livingbot/contracts";
 import { LOOPBACK_HOSTS } from "./oauth-callback.js";
 
 /** Native transport only: providers still own PKCE, token exchange and persistence. */
@@ -9,7 +9,7 @@ export async function openBrowserAuth(
   options: {
     signal: AbortSignal;
     openExternal: (url: string) => Promise<unknown>;
-    onCallback: (callback: RakazoDesktopOAuthCallback) => void;
+    onCallback: (callback: LivingBotDesktopOAuthCallback) => void;
     onClose?: () => void;
   },
 ): Promise<void> {

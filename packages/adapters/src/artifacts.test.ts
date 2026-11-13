@@ -2,8 +2,8 @@ import { randomBytes } from "node:crypto";
 import { copyFile, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { SpaceKeyRecord, SpaceKeyStore } from "@rakazo/db";
-import { ContentKeyRing, LocalKeyProvider } from "@rakazo/db";
+import type { SpaceKeyRecord, SpaceKeyStore } from "@livingbot/db";
+import { ContentKeyRing, LocalKeyProvider } from "@livingbot/db";
 import { afterEach, describe, expect, it } from "vitest";
 import { LocalArtifactStore } from "./artifacts.js";
 

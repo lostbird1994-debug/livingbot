@@ -1,5 +1,5 @@
-import type { Actor, MessageBlock, SearchHit } from "@rakazo/contracts";
-import { GROUP_MEMBER_MIN } from "@rakazo/contracts";
+import type { Actor, MessageBlock, SearchHit } from "@livingbot/contracts";
+import { GROUP_MEMBER_MIN } from "@livingbot/contracts";
 import {
   displayName,
   escapeJsonSearchWildcards,
@@ -7,9 +7,9 @@ import {
   extractLinksFromText,
   matchesSearchQuery,
   snippetAroundMatch,
-} from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { contentEncryptionOf, INDEXED_MESSAGE, Prisma, UNINDEXED_MESSAGE } from "@rakazo/db";
+} from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
+import { contentEncryptionOf, INDEXED_MESSAGE, Prisma, UNINDEXED_MESSAGE } from "@livingbot/db";
 
 const SEARCH_LIMIT = 25;
 /** Cap name matches so content hits (messages/files/links/routines) keep most of the budget. */

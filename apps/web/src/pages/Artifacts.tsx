@@ -1,9 +1,9 @@
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
-import type { Artifact, Bot } from "@rakazo/contracts";
-import { isAttachmentImageMimeType } from "@rakazo/contracts";
-import { writeSaved } from "@rakazo/core/query";
+import { ChatMarkdown } from "@livingbot/chat-ui/web";
+import type { Artifact, Bot } from "@livingbot/contracts";
+import { isAttachmentImageMimeType } from "@livingbot/contracts";
+import { writeSaved } from "@livingbot/core/query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +22,7 @@ import {
   Spinner,
   ToggleGroup,
   ToggleGroupItem,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { skipToken, useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft,

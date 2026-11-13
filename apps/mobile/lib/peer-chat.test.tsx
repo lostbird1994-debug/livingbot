@@ -33,7 +33,7 @@ vi.mock("./native", () => ({
 }));
 vi.mock("./i18n", () => ({ useI18n: () => ({ t: (text: string) => text }) }));
 vi.mock("../components/glass-title", () => ({ glassHeaderOptions: () => ({}) }));
-vi.mock("@rakazo/chat-ui/native", () => ({
+vi.mock("@livingbot/chat-ui/native", () => ({
   ChatMarkdown: ({ children }: { children: ReactNode }) => createElement("p", null, children),
 }));
 vi.mock("expo-router", () => ({

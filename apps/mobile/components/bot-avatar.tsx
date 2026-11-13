@@ -1,5 +1,5 @@
-import type { BotAvatarSet } from "@rakazo/contracts";
-import type { AvatarMotionMode, LogoAvatarActivity } from "@rakazo/core";
+import type { BotAvatarSet } from "@livingbot/contracts";
+import type { AvatarMotionMode, LogoAvatarActivity } from "@livingbot/core";
 import {
   AVATAR_LID_CLOSE,
   AVATAR_MOTION_UNITS,
@@ -20,8 +20,8 @@ import {
   SHIPPED_BOT_AVATAR_CENTER,
   SHIPPED_BOT_AVATAR_VIEWBOX,
   usesLogoAvatar,
-} from "@rakazo/core";
-import { botEyeColor } from "@rakazo/ui-tokens";
+} from "@livingbot/core";
+import { botEyeColor } from "@livingbot/ui-tokens";
 import { memo, useSyncExternalStore } from "react";
 import { Image, Pressable, View } from "react-native";
 import Animated, {
@@ -126,12 +126,12 @@ export interface BotAvatarProps {
 /** Missing set metadata deliberately preserves every existing avatar. */
 export const BotAvatar = memo(function BotAvatar(props: BotAvatarProps) {
   if (usesLogoAvatar(props)) {
-    return <RakazoBotAvatar {...props} />;
+    return <LivingBotBotAvatar {...props} />;
   }
   return <LegacyBotAvatar {...props} />;
 });
 
-function RakazoBotAvatar({
+function LivingBotBotAvatar({
   color,
   identity,
   size = 54,

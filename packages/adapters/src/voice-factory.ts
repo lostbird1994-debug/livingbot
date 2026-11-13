@@ -1,5 +1,5 @@
-import type { VoiceProvider } from "@rakazo/adapter-kit";
-import type { VoiceCatalogEntry } from "@rakazo/contracts";
+import type { VoiceProvider } from "@livingbot/adapter-kit";
+import type { VoiceCatalogEntry } from "@livingbot/contracts";
 import { CartesiaVoiceProvider } from "./cartesia-voice.js";
 import {
   DASHSCOPE_VOICE_CATALOG_ENTRY,

@@ -2,7 +2,7 @@ import type * as NodeFsPromises from "node:fs/promises";
 import http from "node:http";
 import path from "node:path";
 import { Readable } from "node:stream";
-import { resolveSupervisorToken } from "@rakazo/core";
+import { resolveSupervisorToken } from "@livingbot/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   COMPUTER_IMAGE,
@@ -58,7 +58,7 @@ beforeEach(async () => {
   vi.resetAllMocks();
   mocks.verifyRestrictedEgress.mockResolvedValue(undefined);
   vi.stubEnv("HOSTNAME", "");
-  vi.stubEnv("DATA_DIR", "/tmp/rakazo-loopback-test");
+  vi.stubEnv("DATA_DIR", "/tmp/livingbot-loopback-test");
   vi.stubEnv("SANDBOX_SCREEN_NETWORK", "published");
   vi.stubEnv("SANDBOX_SCREEN_HOST", "127.0.0.1");
   screen = http.createServer((_req, res) => res.end("ok"));
@@ -1194,7 +1194,7 @@ describe("screen release status", () => {
       expect(setupCommand).toContain("browser-profile-1");
       expect(setupCommand).toContain("if ! browser_running; then");
       expect(setupCommand).not.toContain("Browser.close");
-      expect(setupCommand).not.toContain("for marker in /tmp/rakazo/browser-profile-*");
+      expect(setupCommand).not.toContain("for marker in /tmp/livingbot/browser-profile-*");
     },
   );
 
@@ -1399,7 +1399,7 @@ describe("computer deletion", () => {
       inspect: vi.fn().mockRejectedValue(dockerError(404)),
     });
     const resets = () =>
-      commands.filter((command) => command.includes("for marker in /tmp/rakazo/browser-profile-*"))
+      commands.filter((command) => command.includes("for marker in /tmp/livingbot/browser-profile-*"))
         .length;
     return { container, resets };
   }
@@ -1520,11 +1520,11 @@ describe("screen registry across run boundaries", () => {
     expect(registry.get("failed-first-setup")?.get("writer")).toMatchObject({ index: 0 });
     expect(boots.get("failed-first-setup")).toBe("boot-2");
     expect(
-      commands.filter((command) => command.includes("for marker in /tmp/rakazo/browser-profile-*")),
+      commands.filter((command) => command.includes("for marker in /tmp/livingbot/browser-profile-*")),
     ).toHaveLength(2);
     expect((await view()).status).toBe(200);
     expect(
-      commands.filter((command) => command.includes("for marker in /tmp/rakazo/browser-profile-*")),
+      commands.filter((command) => command.includes("for marker in /tmp/livingbot/browser-profile-*")),
     ).toHaveLength(2);
   });
 
@@ -1560,13 +1560,13 @@ describe("screen registry across run boundaries", () => {
           if (claiming) {
             const [, boots] = currentScreens.mock.calls.at(-1)!;
             expect(boots.has("mid-claim")).toBe(
-              !command.includes("for marker in /tmp/rakazo/browser-profile-*"),
+              !command.includes("for marker in /tmp/livingbot/browser-profile-*"),
             );
           }
           commands.push(command);
           const restartsDuringCommand =
             phase === "reset"
-              ? command.includes("for marker in /tmp/rakazo/browser-profile-*")
+              ? command.includes("for marker in /tmp/livingbot/browser-profile-*")
               : command.includes("computer browser CDP not ready");
           if (restartsDuringCommand && restart) {
             boot += 1;
@@ -1593,7 +1593,7 @@ describe("screen registry across run boundaries", () => {
       expect(response.status).toBe(continuous ? 400 : 200);
       expect(
         commands.filter((command) =>
-          command.includes("for marker in /tmp/rakazo/browser-profile-*"),
+          command.includes("for marker in /tmp/livingbot/browser-profile-*"),
         ).length,
       ).toBe(continuous ? 3 : 2);
       if (continuous) {
@@ -1604,12 +1604,12 @@ describe("screen registry across run boundaries", () => {
       expect(next.status).toBe(200);
       if (!continuous) expect(await next.json()).toEqual(await response.json());
       const resets = commands.filter((command) =>
-        command.includes("for marker in /tmp/rakazo/browser-profile-*"),
+        command.includes("for marker in /tmp/livingbot/browser-profile-*"),
       ).length;
       expect((await view()).status).toBe(200);
       expect(
         commands.filter((command) =>
-          command.includes("for marker in /tmp/rakazo/browser-profile-*"),
+          command.includes("for marker in /tmp/livingbot/browser-profile-*"),
         ).length,
       ).toBe(resets);
     },
@@ -1698,11 +1698,11 @@ describe("screen registry across run boundaries", () => {
     expect(boots.has(existing.id)).toBe(false);
     // Let the mock answer for the old ID to observe whether its registry was forgotten.
     const resets = commands.filter((command) =>
-      command.includes("for marker in /tmp/rakazo/browser-profile-*"),
+      command.includes("for marker in /tmp/livingbot/browser-profile-*"),
     ).length;
     expect((await view()).status).toBe(200);
     expect(
-      commands.filter((command) => command.includes("for marker in /tmp/rakazo/browser-profile-*"))
+      commands.filter((command) => command.includes("for marker in /tmp/livingbot/browser-profile-*"))
         .length,
     ).toBe(resets + 1);
   });
@@ -1771,7 +1771,7 @@ describe("screen registry across run boundaries", () => {
         });
       const resets = () =>
         commands.filter((command) =>
-          command.includes("for marker in /tmp/rakazo/browser-profile-*"),
+          command.includes("for marker in /tmp/livingbot/browser-profile-*"),
         ).length;
       expect((await view()).status).toBe(200);
       blockCommand = true;
@@ -1847,7 +1847,7 @@ describe("screen registry across run boundaries", () => {
         body: JSON.stringify({ interactive: false, revokeControl: false }),
       });
     const resets = () =>
-      commands.filter((command) => command.includes("for marker in /tmp/rakazo/browser-profile-*"))
+      commands.filter((command) => command.includes("for marker in /tmp/livingbot/browser-profile-*"))
         .length;
 
     expect((await view()).status).toBe(200);
@@ -2210,7 +2210,7 @@ describe("computer network reclaim", () => {
       const network = botNetwork();
       network.remove.mockRejectedValue(error);
       mocks.docker.getNetwork.mockReturnValue(network);
-      const { getLogger } = await import("@rakazo/logging");
+      const { getLogger } = await import("@livingbot/logging");
       const logError = vi.spyOn(getLogger(), "error").mockImplementation(() => undefined);
 
       expect((await stop()).status).toBe(200);

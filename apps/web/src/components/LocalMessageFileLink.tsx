@@ -1,5 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
-import { Button } from "@rakazo/ui-web";
+import { Button } from "@livingbot/ui-web";
 import { FolderOpen } from "lucide-react";
 import { useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";

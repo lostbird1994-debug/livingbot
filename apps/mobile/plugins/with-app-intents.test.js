@@ -6,10 +6,10 @@ const mobile = join(import.meta.dirname, "..");
 const read = (file) => readFileSync(join(mobile, file), "utf8");
 const constant = (file, name) => read(file).match(new RegExp(`${name} = "([^"]+)"`))?.[1];
 
-describe("RakazoIntents", () => {
+describe("LivingBotIntents", () => {
   // The intents read what the app saved; renaming a key on one side would break them silently.
   it("reads the secure-store keys the app writes", () => {
-    const swift = read("ios-intents/RakazoIntents.swift");
+    const swift = read("ios-intents/LivingBotIntents.swift");
     for (const [file, name] of [
       ["lib/session.ts", "SESSION_KEY"],
       ["lib/server-config.ts", "API_BASE_STORAGE_KEY"],
@@ -25,12 +25,12 @@ describe("RakazoIntents", () => {
   });
 
   it("hands a voice chat to the module that reads it", () => {
-    const swift = read("ios-intents/RakazoIntents.swift");
-    const module = read("modules/rakazo-voice-chat/ios/RakazoVoiceChatModule.swift");
+    const swift = read("ios-intents/LivingBotIntents.swift");
+    const module = read("modules/rakazo-voice-chat/ios/LivingBotVoiceChatModule.swift");
     expect(swift).toContain('"rakazo.pending_voice_chat"');
     expect(module).toContain('"rakazo.pending_voice_chat"');
     for (const source of [swift, module]) {
-      expect(source).toContain('Notification.Name("RakazoPendingVoiceChat")');
+      expect(source).toContain('Notification.Name("LivingBotPendingVoiceChat")');
     }
   });
 

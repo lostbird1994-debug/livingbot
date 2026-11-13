@@ -14,7 +14,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { AgentHomeStore } from "@rakazo/adapter-kit";
+import type { AgentHomeStore } from "@livingbot/adapter-kit";
 import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { LocalAgentHomeStore, removeAgentHome } from "./home.js";
 

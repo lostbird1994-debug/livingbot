@@ -12,7 +12,7 @@ import {
   releaseDesktopCommand,
   screenPorts,
   stopAllDesktopBrowsersCommand,
-} from "@rakazo/core/node/desktop-runtime";
+} from "@livingbot/core/node/desktop-runtime";
 import { expect, it } from "vitest";
 import {
   browserProfilePathForScreen,
@@ -42,7 +42,7 @@ it.skipIf(process.env.VERIFY_DOCKER_TEAM_SCREENS !== "1").each([false, true])(
       const commands: Record<string, string> = {
         reset: resetManagedScreensCommand(),
         seed: managed
-          ? `python3 -c 'from pathlib import Path; d=Path("/tmp/rakazo/desktop-assignments"); [(d / ("fixture-%s.slot" % i)).write_text(str(i) + "\\n") for i in range(1, 99)]'`
+          ? `python3 -c 'from pathlib import Path; d=Path("/tmp/livingbot/desktop-assignments"); [(d / ("fixture-%s.slot" % i)).write_text(str(i) + "\\n") for i in range(1, 99)]'`
           : "true",
         closeall: stopAllDesktopBrowsersCommand(env),
         viewPort: screenPorts(0, env).viewPort,

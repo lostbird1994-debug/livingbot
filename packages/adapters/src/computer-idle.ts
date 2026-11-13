@@ -4,7 +4,7 @@ import type {
   ComputerRef,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import {
   computerSleepJob,
   runJobKey,
@@ -12,10 +12,10 @@ import {
   SandboxUnavailableError,
   SandboxUnresponsiveError,
   WorkspaceTooLargeError,
-} from "@rakazo/adapter-kit";
-import { COMPUTER_ALLOWANCE_USED_ERROR } from "@rakazo/contracts";
-import { QUEUE_HOLDING_RUN_STATUSES, withAbort } from "@rakazo/core";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@livingbot/adapter-kit";
+import { COMPUTER_ALLOWANCE_USED_ERROR } from "@livingbot/contracts";
+import { QUEUE_HOLDING_RUN_STATUSES, withAbort } from "@livingbot/core";
+import type { PrismaClient, ThreadEvents } from "@livingbot/db";
 import {
   appendEventInTransaction,
   clearEndedExecutionRunBinding,
@@ -23,8 +23,8 @@ import {
   createThreadMessageInTransaction,
   recordComputerRunEnd,
   recordComputerRunSeen,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import { activeCodingAgent } from "./coding-agent-activity.js";
 import { expireComputerControl, hasActiveComputerControl } from "./computer-control.js";
 import { screenLeaseIdForRun, toComputerRef } from "./computer-lifecycle.js";
@@ -56,7 +56,7 @@ export const ABANDONED_SUSPEND_CLAIM_MS = 60 * 60 * 1000;
 const IDLE_SWEEP_INTERVAL_MS = 10 * 60 * 1000;
 const STATUS_CHECK_TIMEOUT_MS = 15_000;
 const EXECUTING_RUN_STATUSES = ["leased", "running"] as const;
-const BACKGROUND_WORK_MARKER_PREFIX = "/tmp/rakazo-background-";
+const BACKGROUND_WORK_MARKER_PREFIX = "/tmp/livingbot-background-";
 const BACKGROUND_WORK_IDLE_SENTINEL = "rakazo-background-idle";
 
 export const BACKGROUND_WORK_LAUNCH = [

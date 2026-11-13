@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { decodeLoginSecret, LOGIN_FIELD_LIMIT } from "@rakazo/contracts";
+import { decodeLoginSecret, LOGIN_FIELD_LIMIT } from "@livingbot/contracts";
 import type { ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";

@@ -53,3 +53,7 @@ apps/web/public/wuying/sdk/
 
 # Local: alternate build output used for the file-protocol experiment; never source.
 apps/*/dist-local-file-candidate/
+
+# Personal plans, review evidence and isolated validation builds
+local/
+apps/*/dist-branding-check/

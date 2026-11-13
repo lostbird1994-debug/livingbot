@@ -1,5 +1,5 @@
 import { realpath, stat } from "node:fs/promises";
-import type { PrismaClient } from "@rakazo/db";
+import type { PrismaClient } from "@livingbot/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { openLocalMessageFile, resolveLocalMessageFile } from "./local-message-file.js";
 

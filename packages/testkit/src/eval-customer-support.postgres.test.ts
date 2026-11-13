@@ -70,7 +70,7 @@ describe.skipIf(!databaseAvailable)("offline Slack customer-support eval", () =>
     });
     const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-customer-eval-"));
     try {
-      const { createApp } = await import("@rakazo/api/app");
+      const { createApp } = await import("@livingbot/api/app");
       const scenario = EVAL_CASES.find((candidate) => candidate.id === "slack-customer-update")!;
       const result = await runTrial(scenario, 1, {
         connection: {

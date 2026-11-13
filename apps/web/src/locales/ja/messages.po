@@ -795,7 +795,7 @@ msgstr "このプロバイダーにはサブスクリプションのログイン
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "An existing Honcho peer to read from. LivingBot never writes to it."
-msgstr "読み取り元となる既存のHonchoピアです。Rakazoが書き込むことはありません。"
+msgstr "読み取り元となる既存のHonchoピアです。LivingBotが書き込むことはありません。"
 
 #: src/lib/agent-import-errors.ts
 msgid "An imported API key could not be checked. Try again."
@@ -1468,7 +1468,7 @@ msgstr "フォルダを選択"
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
 msgid "Choose how to use LivingBot"
-msgstr "Rakazoの使い方を選択"
+msgstr "LivingBotの使い方を選択"
 
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Choose image"
@@ -1778,8 +1778,8 @@ msgstr "先にこのモデルのプロバイダーを接続してください。
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect your own API key in Models or choose Rakazo credits in Billing."
-msgstr "モデルで自分のAPIキーを接続するか、請求でRakazoクレジットを選択してください。"
+msgid "Connect your own API key in Models or choose LivingBot credits in Billing."
+msgstr "モデルで自分のAPIキーを接続するか、請求でLivingBotクレジットを選択してください。"
 
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/integrations/IntegrationSetup.tsx
@@ -2529,7 +2529,7 @@ msgstr "スペースを作成"
 
 #: src/pages/Auth.tsx
 msgid "Create your LivingBot"
-msgstr "Rakazoを作成"
+msgstr "LivingBotを作成"
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -3501,7 +3501,7 @@ msgstr "チームの規模は？"
 
 #: src/components/SignupSurvey.tsx
 msgid "How did you hear about us?"
-msgstr "Rakazoを何で知りましたか？"
+msgstr "LivingBotを何で知りましたか？"
 
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
@@ -3517,7 +3517,7 @@ msgstr "確認方法"
 
 #: src/components/SignupSurvey.tsx
 msgid "How will you use LivingBot?"
-msgstr "Rakazoをどのように使いますか？"
+msgstr "LivingBotをどのように使いますか？"
 
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
@@ -4633,7 +4633,7 @@ msgstr "インポートされていません"
 
 #: src/pages/shell/import-status.ts
 msgid "Not in LivingBot's catalog"
-msgstr "Rakazoのカタログにありません"
+msgstr "LivingBotのカタログにありません"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
@@ -4654,11 +4654,11 @@ msgstr "今はしない"
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/import-status.ts
 msgid "Not supported in LivingBot"
-msgstr "Rakazoでは未対応です"
+msgstr "LivingBotでは未対応です"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Not used by LivingBot"
-msgstr "Rakazoでは使用しません"
+msgstr "LivingBotでは使用しません"
 
 #: src/components/McpServerHealthLine.tsx
 msgid "Not working"
@@ -4953,7 +4953,7 @@ msgstr "新しいキーを貼り付け"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Paste the OpenAI-compatible address from your server. LivingBot adds /v1 if needed."
-msgstr "サーバーのOpenAI互換アドレスを貼り付けてください。必要に応じてRakazoが/v1を追加します。"
+msgstr "サーバーのOpenAI互換アドレスを貼り付けてください。必要に応じてLivingBotが/v1を追加します。"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -5172,12 +5172,12 @@ msgstr ""
 
 #: src/components/ModelCredits.tsx
 #: src/pages/Onboarding.tsx
-msgid "Rakazo credits"
-msgstr "Rakazoクレジット"
+msgid "LivingBot credits"
+msgstr "LivingBotクレジット"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for LivingBot."
-msgstr "rakazo-sharedおよびbot-で始まるIDはRakazo用に予約されています。"
+msgstr "rakazo-sharedおよびbot-で始まるIDはLivingBot用に予約されています。"
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -5607,7 +5607,7 @@ msgstr "{0}との通話に戻る"
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/SlackInstallCallback.tsx
 msgid "Return to LivingBot"
-msgstr "Rakazoに戻る"
+msgstr "LivingBotに戻る"
 
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Review completed; no documents changed"
@@ -6122,7 +6122,7 @@ msgstr "<0>{0}</0> でサインインし、表示されたコードをここに�
 
 #: src/pages/Auth.tsx
 msgid "Sign in to LivingBot"
-msgstr "Rakazoにログイン"
+msgstr "LivingBotにログイン"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
@@ -6366,8 +6366,8 @@ msgid "Subscribe for {price} / month"
 msgstr "月額 {price} で登録"
 
 #: src/components/ModelCredits.tsx
-msgid "Subscribe to Rakazo credits"
-msgstr "Rakazo クレジットに申し込む"
+msgid "Subscribe to LivingBot credits"
+msgstr "LivingBot クレジットに申し込む"
 
 #: src/components/ModelCredits.tsx
 msgid "Subscribe with your own AI"
@@ -6694,7 +6694,7 @@ msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in LivingBot yet. Use a deployment credential or choose another provider."
-msgstr "このサブスクリプションでのログインはRakazoではまだ利用できません。デプロイメントの認証情報を使用するか、別のプロバイダーを選択してください。"
+msgstr "このサブスクリプションでのログインはLivingBotではまだ利用できません。デプロイメントの認証情報を使用するか、別のプロバイダーを選択してください。"
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
@@ -7013,8 +7013,8 @@ msgid "Use Protected input for passwords."
 msgstr "パスワードには保護された入力を使用してください。"
 
 #: src/components/ModelCredits.tsx
-msgid "Use Rakazo credits"
-msgstr "Rakazoクレジットを使用"
+msgid "Use LivingBot credits"
+msgstr "LivingBotクレジットを使用"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"
@@ -7190,7 +7190,7 @@ msgstr "週末"
 
 #: src/components/SignupSurvey.tsx
 msgid "Welcome to LivingBot"
-msgstr "Rakazoへようこそ"
+msgstr "LivingBotへようこそ"
 
 #: src/pages/shell/dialogs.tsx
 msgid "What about its memories?"
@@ -7202,7 +7202,7 @@ msgstr ""
 
 #: src/components/SignupSurvey.tsx
 msgid "What do you most want LivingBot to help with?"
-msgstr "Rakazoに最も手伝ってほしいことは何ですか？"
+msgstr "LivingBotに最も手伝ってほしいことは何ですか？"
 
 #: src/pages/shell/message-cards.tsx
 msgid "What do you want me on first?"

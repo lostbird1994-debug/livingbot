@@ -1,4 +1,4 @@
-import { parseServerHeaders } from "@rakazo/contracts";
+import { parseServerHeaders } from "@livingbot/contracts";
 import * as SecureStore from "expo-secure-store";
 
 const SERVER_HEADERS_KEY = "rakazo.server_headers";

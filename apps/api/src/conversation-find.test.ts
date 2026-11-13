@@ -1,5 +1,5 @@
-import type { ConversationFindFilters } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { ConversationFindFilters } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
 import { describe, expect, it, vi } from "vitest";
 import { findConversationHistory } from "./conversation-find.js";
 

@@ -1,5 +1,5 @@
-import { InMemoryRealtimeFanout } from "@rakazo/adapters";
-import type { PrismaClient } from "@rakazo/db";
+import { InMemoryRealtimeFanout } from "@livingbot/adapters";
+import type { PrismaClient } from "@livingbot/db";
 
 /** Capture progress at publication: finalization deletes these transient database rows. */
 export class SilenceObserver extends InMemoryRealtimeFanout {

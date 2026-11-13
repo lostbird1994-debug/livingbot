@@ -1,4 +1,4 @@
-import { Button, Textarea } from "@rakazo/ui-web";
+import { Button, Textarea } from "@livingbot/ui-web";
 import { useState } from "react";
 import { useSpaceRpc } from "../lib/space-rpc";
 import { errorText } from "../lib/user-error";

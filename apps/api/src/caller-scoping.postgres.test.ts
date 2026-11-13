@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { RPCHandler } from "@orpc/server/fetch";
-import type { SecretStore } from "@rakazo/adapter-kit";
-import type { Actor, MessageBlock } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { asSystem, createDb, runAsSystem, runAsTenant } from "@rakazo/db";
+import type { SecretStore } from "@livingbot/adapter-kit";
+import type { Actor, MessageBlock } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import { asSystem, createDb, runAsSystem, runAsTenant } from "@livingbot/db";
 import { Hono } from "hono";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { queueMcpConnectedRun } from "./mcp-approval.js";
@@ -40,7 +40,7 @@ describePostgres("caller and tenant scoping (PostgreSQL)", () => {
   const actorA: Actor = {
     userId: userA,
     spaceId: shared,
-    email: `${userA}@rakazo.test`,
+    email: `${userA}@livingbot.test`,
     isDeploymentOwner: false,
   };
 
@@ -53,7 +53,7 @@ describePostgres("caller and tenant scoping (PostgreSQL)", () => {
     system = asSystem(runtime.prisma);
     for (const user of [userA, userB])
       await system.user.create({
-        data: { id: user, name: user, email: `${user}@rakazo.test`, emailVerified: true },
+        data: { id: user, name: user, email: `${user}@livingbot.test`, emailVerified: true },
       });
     await system.organization.create({
       data: { id: organizationId, name: "Scoping", slug: organizationId, createdAt: new Date() },

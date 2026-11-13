@@ -6,13 +6,13 @@ import type {
   IntegrationCatalogResult,
   IntegrationCatalogSurface,
   PluginMarketplaceEntry,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   CONNECTION_LABEL_MAX_LENGTH,
   PluginPreviewSchema,
   SUBMIT_PLUGIN_URL,
-} from "@rakazo/contracts";
-import type { PluginCategory } from "@rakazo/core";
+} from "@livingbot/contracts";
+import type { PluginCategory } from "@livingbot/core";
 import {
   buildFeaturedConnectorTiles,
   CONNECTION_CATALOG_PAGE_SIZE,
@@ -29,8 +29,8 @@ import {
   matchesWordPrefixes,
   OTHER_PLUGINS,
   PLUGIN_CATEGORIES,
-} from "@rakazo/core";
-import { fetchFresh, writeSaved } from "@rakazo/core/query";
+} from "@livingbot/core";
+import { fetchFresh, writeSaved } from "@livingbot/core/query";
 import {
   Badge,
   Button,
@@ -53,7 +53,7 @@ import {
   NativeSelectOption,
   SectionHeading,
   Spinner,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { queryOptions, skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, ChevronDown, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import type { ReactNode } from "react";

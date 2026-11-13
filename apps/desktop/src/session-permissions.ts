@@ -1,4 +1,4 @@
-import { isLoopbackHost } from "@rakazo/contracts/network-host";
+import { isLoopbackHost } from "@livingbot/contracts/network-host";
 import type { Session, WebContents } from "electron";
 
 type AppPermissionTarget = {

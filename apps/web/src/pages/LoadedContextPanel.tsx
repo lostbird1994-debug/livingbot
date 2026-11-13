@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { Bot } from "@rakazo/contracts";
-import { Button, SectionHeading, Spinner } from "@rakazo/ui-web";
+import type { Bot } from "@livingbot/contracts";
+import { Button, SectionHeading, Spinner } from "@livingbot/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, RotateCw } from "lucide-react";
 import type { ReactNode } from "react";

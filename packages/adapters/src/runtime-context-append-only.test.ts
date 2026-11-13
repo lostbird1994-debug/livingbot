@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Api, Context, Message, Model } from "@earendil-works/pi-ai";
-import type { AgentRunRequest } from "@rakazo/adapter-kit";
+import type { AgentRunRequest } from "@livingbot/adapter-kit";
 import { describe, expect, it } from "vitest";
 import {
   ContextCacheTracker,

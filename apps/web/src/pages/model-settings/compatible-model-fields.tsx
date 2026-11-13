@@ -1,12 +1,12 @@
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import type { ThinkingLevel } from "@rakazo/contracts";
-import { isOllamaCloudBaseUrl } from "@rakazo/contracts";
+import type { ThinkingLevel } from "@livingbot/contracts";
+import { isOllamaCloudBaseUrl } from "@livingbot/contracts";
 import {
   compatibleThinkingLevels,
   MODEL_SEARCH_THRESHOLD,
   matchesSearchQuery,
   toggleEnabledModelId,
-} from "@rakazo/core";
+} from "@livingbot/core";
 import {
   Button,
   Checkbox,
@@ -19,7 +19,7 @@ import {
   ModelThinkingOptions,
   NativeSelect,
   NativeSelectOption,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ModelPreflightFeedback } from "../../components/ModelConnectionPreflightNotice";

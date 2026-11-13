@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { PluginSubmission } from "@rakazo/contracts";
+import type { PluginSubmission } from "@livingbot/contracts";
 import { captureScreenshot, completeOnboarding, makeAdmin, signup } from "./helpers";
 
 const LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#888"/></svg>`;
@@ -26,7 +26,7 @@ test("an admin reviews plugin submissions from the emailed admin link", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `plugin-admin-${stamp}@rakazo.test`, "password12", `Plugin Admin ${stamp}`);
+  await signup(page, `plugin-admin-${stamp}@livingbot.test`, "password12", `Plugin Admin ${stamp}`);
   await completeOnboarding(page);
 
   let submissions = [

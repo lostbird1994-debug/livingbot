@@ -1,13 +1,13 @@
-import type { AppearancePreference, ResolvedAppearance } from "@rakazo/ui-tokens";
+import type { AppearancePreference, ResolvedAppearance } from "@livingbot/ui-tokens";
 import {
   appearanceColorScheme,
   persistAppearancePreference,
   resolveAppearance,
   resolveAppearancePreference,
   webTokensForAppearance,
-} from "@rakazo/ui-tokens";
+} from "@livingbot/ui-tokens";
 
-export { APPEARANCE_PREFERENCES } from "@rakazo/ui-tokens";
+export { APPEARANCE_PREFERENCES } from "@livingbot/ui-tokens";
 export type { AppearancePreference, ResolvedAppearance };
 
 const THEME_COLOR_META = 'meta[name="theme-color"]';

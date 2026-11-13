@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { ChatModelChoice } from "@rakazo/core";
-import { groupModelChoices, MODEL_SEARCH_THRESHOLD } from "@rakazo/core";
+import type { ChatModelChoice } from "@livingbot/core";
+import { groupModelChoices, MODEL_SEARCH_THRESHOLD } from "@livingbot/core";
 import {
   Command,
   CommandEmpty,
@@ -13,7 +13,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { ChevronDownIcon } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { TextOnlyMark } from "../../components/TextOnlyMark";

@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { createRouterClient } from "@orpc/server";
-import { EncryptedSecretStore, withSecretPersistence } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { createDb, runAsSystem, runAsTenant } from "@rakazo/db";
+import { EncryptedSecretStore, withSecretPersistence } from "@livingbot/adapters";
+import type { Actor } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import { createDb, runAsSystem, runAsTenant } from "@livingbot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";

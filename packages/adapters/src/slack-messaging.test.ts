@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import type * as SlackAdapterModule from "@chat-adapter/slack";
-import type { AdapterContext, MessagingInboundMessage } from "@rakazo/adapter-kit";
+import type { AdapterContext, MessagingInboundMessage } from "@livingbot/adapter-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatSdkMessagingSurface } from "./chat-sdk-surface.js";
 import { messagingPlatformsFromEnv } from "./messaging-platforms.js";
@@ -93,7 +93,7 @@ function mentionWebhook(retryNum?: number): Request {
   const signature = createHmac("sha256", signingSecret)
     .update(`v0:${timestamp}:${body}`)
     .digest("hex");
-  return new Request("https://rakazo.test/api/v1/messaging/webhook/slack", {
+  return new Request("https://livingbot.test/api/v1/messaging/webhook/slack", {
     method: "POST",
     headers: {
       "content-type": "application/json",

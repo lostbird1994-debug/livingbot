@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import path from "node:path";
-import { startHostComputerServer } from "@rakazo/adapters/host-computer-server";
+import { startHostComputerServer } from "@livingbot/adapters/host-computer-server";
 import { readPrivateFile, writePrivateFile } from "./setup-store.js";
 
 /** App-private credentials and consent, never sent to a renderer or a connected remote server. */

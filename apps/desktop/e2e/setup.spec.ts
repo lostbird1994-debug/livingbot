@@ -7,7 +7,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import type { ElectronApplication, Page } from "@playwright/test";
 import { _electron as electron, expect, test } from "@playwright/test";
-import type { RakazoDesktop } from "@rakazo/contracts";
+import type { LivingBotDesktop } from "@livingbot/contracts";
 
 const APP_MARKER = "Existing LivingBot instance ready";
 /** Outlasts the shell's 20s wait for a mounted app before it rejects the server. */
@@ -94,7 +94,7 @@ function launch(extraEnv: Record<string, string> = {}) {
   });
 }
 
-test("first run offers Rakazo Cloud first, with local and existing instances", async () => {
+test("first run offers LivingBot Cloud first, with local and existing instances", async () => {
   app = await launch();
   if (process.env.RAKAZO_E2E_EXECUTABLE) {
     expect(await app.evaluate(({ app }) => app.isPackaged)).toBe(true);
@@ -103,13 +103,13 @@ test("first run offers Rakazo Cloud first, with local and existing instances", a
 
   await expect(setup.getByRole("heading", { name: "Welcome to LivingBot" })).toBeVisible();
   await expect(setup.getByText("Choose which server this app should use.")).toBeVisible();
-  await expect(setup.getByText("Rakazo Cloud")).toBeVisible();
+  await expect(setup.getByText("LivingBot Cloud")).toBeVisible();
   await expect(setup.getByText("This computer")).toBeVisible();
   await expect(setup.getByText("Existing instance")).toBeVisible();
   await expect(setup.locator(".card")).toHaveCount(0);
 
   // Cloud is the default: one click opens the hosted app, with nothing to fill in.
-  await expect(setup.getByRole("radio", { name: /Rakazo Cloud/ })).toBeChecked();
+  await expect(setup.getByRole("radio", { name: /LivingBot Cloud/ })).toBeChecked();
   await expect(setup.locator("#panel-new")).toBeHidden();
   await expect(setup.locator("#panel-existing")).toBeHidden();
   await expect(setup.getByRole("button", { name: "Check connection" })).toBeHidden();
@@ -159,10 +159,10 @@ test("first run offers Rakazo Cloud first, with local and existing instances", a
   }
 });
 
-test("Rakazo Cloud saves the hosted address and is reselected when saved", async () => {
+test("LivingBot Cloud saves the hosted address and is reselected when saved", async () => {
   app = await launch();
   const setup = await app.firstWindow();
-  await expect(setup.getByRole("radio", { name: /Rakazo Cloud/ })).toBeChecked();
+  await expect(setup.getByRole("radio", { name: /LivingBot Cloud/ })).toBeChecked();
   await expect(setup.getByRole("button", { name: "Continue" })).toBeEnabled();
 
   // Capture the request instead of reaching the hosted server, so CI stays offline.
@@ -200,7 +200,7 @@ test("Rakazo Cloud saves the hosted address and is reselected when saved", async
     }));
   }, cloudUrl);
   await setup.reload();
-  await expect(setup.getByRole("radio", { name: /Rakazo Cloud/ })).toBeChecked();
+  await expect(setup.getByRole("radio", { name: /LivingBot Cloud/ })).toBeChecked();
   await expect(setup.locator("#panel-existing")).toBeHidden();
 });
 
@@ -696,7 +696,7 @@ test("the app window stays on its server when a link redirects to another site",
   const openSignIn = (page: Page) =>
     page.evaluate(
       (url) =>
-        (window as typeof window & { rakazoDesktop: RakazoDesktop }).rakazoDesktop.oauth
+        (window as typeof window & { rakazoDesktop: LivingBotDesktop }).rakazoDesktop.oauth
           .open(url)
           .then(
             () => "opened",

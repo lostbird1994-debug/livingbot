@@ -1,11 +1,11 @@
 import { setImmediate } from "node:timers/promises";
-import type { JobPublisher, NotificationProvider } from "@rakazo/adapter-kit";
-import { messagingDeliverJob, routineWakeupJob, runContinueJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { stuckWorkStatusMessages } from "@rakazo/core";
-import type { Pool, PrismaClient, ThreadEvents } from "@rakazo/db";
-import { reconcileComputerRuns } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { JobPublisher, NotificationProvider } from "@livingbot/adapter-kit";
+import { messagingDeliverJob, routineWakeupJob, runContinueJob } from "@livingbot/adapter-kit";
+import type { MessageBlock } from "@livingbot/contracts";
+import { stuckWorkStatusMessages } from "@livingbot/core";
+import type { Pool, PrismaClient, ThreadEvents } from "@livingbot/db";
+import { reconcileComputerRuns } from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 import type { PoolClient } from "pg";
 import { returnBotMessageOutcome } from "./bot-messages.js";
 import { reconcileCallRequests } from "./call-request.js";
@@ -24,7 +24,7 @@ const CONTROL_LOOKAHEAD_MS = 60_000;
  * finishing a failed attempt holds it for seconds before Graphile unlocks it.
  */
 const ABANDONED_QUEUED_LOCK_MS = 5 * 60_000;
-// Two keys give Rakazo's lock a namespace without relying on a hash that might collide
+// Two keys give LivingBot's lock a namespace without relying on a hash that might collide
 // with an application using the one-key advisory-lock API.
 const RECONCILIATION_LOCK_NAMESPACE = 1_380_019_075;
 const RECONCILIATION_LOCK_ID = 1;

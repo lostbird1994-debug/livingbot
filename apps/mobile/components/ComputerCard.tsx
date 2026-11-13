@@ -1,6 +1,6 @@
-import { ChatMarkdown } from "@rakazo/chat-ui/native";
-import type { MessageBlock } from "@rakazo/contracts";
-import { typeScale } from "@rakazo/ui-tokens";
+import { ChatMarkdown } from "@livingbot/chat-ui/native";
+import type { MessageBlock } from "@livingbot/contracts";
+import { typeScale } from "@livingbot/ui-tokens";
 import type { ViewProps } from "react-native";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useI18n } from "../lib/i18n";

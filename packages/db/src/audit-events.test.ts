@@ -1,4 +1,4 @@
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installAuditEventStore, listAuditEvents, recordAuditEvent } from "./audit-events.js";
 import { recordSecurityEvent, withSecurityRequest } from "./security-events.js";

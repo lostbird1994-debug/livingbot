@@ -4,8 +4,8 @@ import type {
   SecretStore,
   VoiceProvider,
   VoiceSynthesizeRequest,
-} from "@rakazo/adapter-kit";
-import { VoiceAccountError } from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
+import { VoiceAccountError } from "@livingbot/adapter-kit";
 import {
   createOpenAiCompatibleFetch,
   createVoiceProvider,
@@ -21,17 +21,17 @@ import {
   parseOpenAiCompatibleVoiceSecret,
   serializeOpenAiCompatibleVoiceSecret,
   voiceCatalogEntry,
-} from "@rakazo/adapters";
+} from "@livingbot/adapters";
 import type {
   Actor,
   SettingsScope,
   VoiceAccountErrorCode,
   VoiceCredential,
   VoiceStatus,
-} from "@rakazo/contracts";
-import { SettingsScopeSchema } from "@rakazo/contracts";
-import { readBoundedJsonResponse, speakable, toUtterances } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+} from "@livingbot/contracts";
+import { SettingsScopeSchema } from "@livingbot/contracts";
+import { readBoundedJsonResponse, speakable, toUtterances } from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
 import {
   deleteUnreferencedCredentialSecret,
   findDefaultVoiceCredential,
@@ -46,9 +46,9 @@ import {
   saveVoicePreference,
   selectVoicePreference,
   voicePreferenceTarget,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
-import { markExpectedFailure } from "@rakazo/logging/hono";
+} from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
+import { markExpectedFailure } from "@livingbot/logging/hono";
 import type { Context, Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
 import { withSerializableRetry } from "./serializable-retry.js";

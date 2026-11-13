@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { claimTaskSessionSlot, createDb, runAsSystem, runAsTenant } from "@rakazo/db";
-import { acquireDedicatedScreenLeaseFence, ComputerBusyError } from "@rakazo/adapters";
+import type { Actor } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import { claimTaskSessionSlot, createDb, runAsSystem, runAsTenant } from "@livingbot/db";
+import { acquireDedicatedScreenLeaseFence, ComputerBusyError } from "@livingbot/adapters";
 import { publishTaskSessionReceipts } from "../../../../packages/adapters/src/task-session-receipts.js";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { resolveThreadTarget, sendThreadMessage } from "../thread-target.js";

@@ -1,8 +1,8 @@
 import { mkdtemp, mkdir, readFile, readdir, realpath, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { AdapterContext, MemoryCommitRequest, MemoryReadRequest, MemoryStore } from "@rakazo/adapter-kit";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
+import type { AdapterContext, MemoryCommitRequest, MemoryReadRequest, MemoryStore } from "@livingbot/adapter-kit";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@livingbot/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import { readNativeWorkspaceFile, writeNativeWorkspaceFile } from "./openclaw-workspace-files.js";
 import { OpenClawWorkspaceMemoryStore } from "./openclaw-workspace-memory.js";

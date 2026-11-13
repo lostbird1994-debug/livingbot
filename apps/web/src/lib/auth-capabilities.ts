@@ -1,8 +1,8 @@
-import type { AuthCapabilities } from "@rakazo/contracts";
-import { authCapabilitiesSchema, legacyAuthCapabilitiesSchema } from "@rakazo/contracts";
-import { ResponseBodyTooLargeError, readBoundedJsonResponse } from "@rakazo/core";
+import type { AuthCapabilities } from "@livingbot/contracts";
+import { authCapabilitiesSchema, legacyAuthCapabilitiesSchema } from "@livingbot/contracts";
+import { ResponseBodyTooLargeError, readBoundedJsonResponse } from "@livingbot/core";
 
-export type { AuthCapabilities } from "@rakazo/contracts";
+export type { AuthCapabilities } from "@livingbot/contracts";
 
 const TIMEOUT_MS = 8_000;
 const MAX_RESPONSE_BYTES = 64 * 1024;

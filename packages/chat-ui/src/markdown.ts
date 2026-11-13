@@ -1,7 +1,7 @@
 /// <reference path="./linkify-it.d.ts" />
 
-import type { MessageBlock } from "@rakazo/contracts";
-import { urlSite } from "@rakazo/core/egress";
+import type { MessageBlock } from "@livingbot/contracts";
+import { urlSite } from "@livingbot/core/egress";
 import LinkifyIt from "linkify-it";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useSyncExternalStore } from "react";
@@ -407,7 +407,7 @@ export function linkFaviconOrigin(href: string): string | undefined {
 }
 
 /**
- * Where link icons come from. Apps load them through the Rakazo API, which fetches and caches
+ * Where link icons come from. Apps load them through the LivingBot API, which fetches and caches
  * them, so a device never contacts the linked site or an icon service. `globe` is the native
  * fallback glyph; web draws its own.
  */

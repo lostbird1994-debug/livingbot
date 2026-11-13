@@ -2,20 +2,20 @@
 
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
-import { Button } from "@rakazo/ui-web/components/ui/button";
-import { Input } from "@rakazo/ui-web/components/ui/input";
-import { Separator } from "@rakazo/ui-web/components/ui/separator";
+import { Button } from "@livingbot/ui-web/components/ui/button";
+import { Input } from "@livingbot/ui-web/components/ui/input";
+import { Separator } from "@livingbot/ui-web/components/ui/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@rakazo/ui-web/components/ui/sheet";
-import { Skeleton } from "@rakazo/ui-web/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@rakazo/ui-web/components/ui/tooltip";
-import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
-import { cn } from "@rakazo/ui-web/lib/utils";
+} from "@livingbot/ui-web/components/ui/sheet";
+import { Skeleton } from "@livingbot/ui-web/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@livingbot/ui-web/components/ui/tooltip";
+import { useIsMobile } from "@livingbot/ui-web/hooks/use-mobile";
+import { cn } from "@livingbot/ui-web/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";

@@ -1,7 +1,7 @@
-import type { BackgroundJob, BackgroundJobHandlers } from "@rakazo/adapter-kit";
-import { messagingDeliverJob, routineWakeupJob } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
-import { createPool, currentDbContext, runAsTenant } from "@rakazo/db";
+import type { BackgroundJob, BackgroundJobHandlers } from "@livingbot/adapter-kit";
+import { messagingDeliverJob, routineWakeupJob } from "@livingbot/adapter-kit";
+import type { PrismaClient } from "@livingbot/db";
+import { createPool, currentDbContext, runAsTenant } from "@livingbot/db";
 import { Pool } from "pg";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {

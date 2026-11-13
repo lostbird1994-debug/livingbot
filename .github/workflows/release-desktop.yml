@@ -128,7 +128,7 @@ jobs:
         env:
           DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
       - name: Build renderer and Electron main process
-        run: pnpm --filter @rakazo/web build && pnpm --filter @rakazo/desktop build
+        run: pnpm --filter @livingbot/web build && pnpm --filter @livingbot/desktop build
         env:
           RAKAZO_ALLOW_DEV_SECRETS: "1"
           RAKAZO_DESKTOP_RELEASE: "1"
@@ -206,7 +206,7 @@ jobs:
             # The main app alone gets the association; helpers keep entitlementsInherit.
             passkeys=("-c.mac.entitlements=$PASSKEY_ENTITLEMENTS" "-c.mac.provisioningProfile=$PASSKEY_PROFILE")
           fi
-          pnpm --filter @rakazo/desktop exec electron-builder \
+          pnpm --filter @livingbot/desktop exec electron-builder \
             --mac --universal --publish never -c.forceCodeSigning=true "${passkeys[@]}"
       - name: Remove the App Store Connect API key from the runner
         if: always() && runner.os == 'macOS'
@@ -221,7 +221,7 @@ jobs:
           PASSKEY_ENTITLEMENTS: ${{ steps.passkeys.outputs.entitlements }}
         run: |
           set -euo pipefail
-          app="apps/desktop/out/mac-universal/Rakazo.app"
+          app="apps/desktop/out/mac-universal/LivingBot.app"
           codesign --verify --deep --strict --verbose=2 "$app"
           # Without this entitlement the hardened runtime silences the microphone.
           # Check the app and every helper it signs, and require the value to be true.
@@ -258,7 +258,7 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          app="apps/desktop/out/mac-universal/Rakazo.app"
+          app="apps/desktop/out/mac-universal/LivingBot.app"
           native="$app/Contents/Resources/app.asar.unpacked/node_modules"
           lipo "$native/@koromix/koffi-darwin-x64/darwin_x64/koffi.node" -verify_arch x86_64
           lipo "$native/@koromix/koffi-darwin-arm64/darwin_arm64/koffi.node" -verify_arch arm64
@@ -272,7 +272,7 @@ jobs:
           test "$(/usr/libexec/PlistBuddy -c "Print :com.apple.security.device.audio-input" "$entitlements")" = true
           rm -f "$entitlements"
           "$speech" xx < /dev/null | grep -Fq '"language-not-supported"'
-          ELECTRON_RUN_AS_NODE=1 "$app/Contents/MacOS/Rakazo" -e '
+          ELECTRON_RUN_AS_NODE=1 "$app/Contents/MacOS/LivingBot" -e '
             const { createRequire } = require("node:module");
             const appRequire = createRequire(`${process.argv[1]}/Contents/Resources/app.asar/package.json`);
             const koffi = appRequire("koffi");
@@ -319,7 +319,7 @@ jobs:
           SIGNING_PUBLISHER: ${{ vars.DESKTOP_WIN_PUBLISHER }}
         run: |
           set -euo pipefail
-          pnpm --filter @rakazo/desktop exec electron-builder \
+          pnpm --filter @livingbot/desktop exec electron-builder \
             --win --x64 --publish never -c.forceCodeSigning=true \
             "-c.win.azureSignOptions.endpoint=$SIGNING_ENDPOINT" \
             "-c.win.azureSignOptions.codeSigningAccountName=$SIGNING_ACCOUNT" \
@@ -328,7 +328,7 @@ jobs:
       - name: Package unsigned x64 Windows app
         if: runner.os == 'Windows' && needs.validate.outputs.windows_signed != 'true'
         run: >-
-          pnpm --filter @rakazo/desktop exec electron-builder
+          pnpm --filter @livingbot/desktop exec electron-builder
           --win --x64 --publish never
       - name: Verify Windows Authenticode signature and publisher-bound update feed
         if: runner.os == 'Windows'
@@ -372,7 +372,7 @@ jobs:
       - name: Package x64 Linux AppImage
         if: runner.os == 'Linux'
         run: >-
-          pnpm --filter @rakazo/desktop exec electron-builder
+          pnpm --filter @livingbot/desktop exec electron-builder
           --linux --x64 --publish never
       - name: Verify Linux update feed is pinned to the official GitHub channel
         if: runner.os == 'Linux'
@@ -483,7 +483,7 @@ jobs:
           RELEASE_TAG: ${{ needs.validate.outputs.tag }}
         run: >-
           gh release create "$RELEASE_TAG" release-artifacts/*
-          --draft --generate-notes --title "Rakazo $RELEASE_TAG" --verify-tag
+          --draft --generate-notes --title "LivingBot $RELEASE_TAG" --verify-tag
       - name: Publish the completed release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

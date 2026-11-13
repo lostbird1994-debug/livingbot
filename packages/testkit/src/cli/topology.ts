@@ -1,9 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { createServer } from "node:net";
 import path from "node:path";
-import type { RunsListOutput, ThreadSnapshot } from "@rakazo/contracts";
-import { isTerminal } from "@rakazo/core";
-import { computerNetworkNameFor } from "@rakazo/sandbox-supervisor/computer-spec";
+import type { RunsListOutput, ThreadSnapshot } from "@livingbot/contracts";
+import { isTerminal } from "@livingbot/core";
+import { computerNetworkNameFor } from "@livingbot/sandbox-supervisor/computer-spec";
 
 const composeFile = path.resolve("infra/compose/docker-compose.topology.yml");
 const keep = process.argv.includes("--keep");
@@ -146,7 +146,7 @@ async function signup(baseUrl: string) {
     method: "POST",
     headers: { "content-type": "application/json", origin: baseUrl },
     body: JSON.stringify({
-      email: `topology-${Date.now()}@rakazo.test`,
+      email: `topology-${Date.now()}@livingbot.test`,
       password: "password12",
       name: "Topology",
     }),

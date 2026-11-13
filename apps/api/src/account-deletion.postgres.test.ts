@@ -9,14 +9,14 @@ import type {
   JobPublisher,
   PortableFile,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
+} from "@livingbot/adapter-kit";
 import {
   checkpointAndRecordComputerWorkspace,
   ObjectAgentHomeStore,
   PrismaAgentHomeRecords,
   teamBrowserProfileName,
-} from "@rakazo/adapters";
-import type { PrismaClient, SpaceKeyRecord, SpaceKeyStore } from "@rakazo/db";
+} from "@livingbot/adapters";
+import type { PrismaClient, SpaceKeyRecord, SpaceKeyStore } from "@livingbot/db";
 import {
   asSystem,
   ContentKeyRing,
@@ -28,7 +28,7 @@ import {
   lockSpaceForContentCreation,
   runAsSystem,
   SpaceDeletionInProgressError,
-} from "@rakazo/db";
+} from "@livingbot/db";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryObjectStorage } from "../../../packages/adapters/src/object-storage.test-support.js";
 import { deleteAccountContent } from "./account-deletion.js";
@@ -128,7 +128,7 @@ describePostgres("account deletion on bot computers (PostgreSQL)", () => {
       data: [ids.leaver, ids.stayer].map((id) => ({
         id,
         name: id,
-        email: `${id}@rakazo.test`,
+        email: `${id}@livingbot.test`,
         emailVerified: false,
       })),
     });

@@ -1,8 +1,8 @@
 import { ORPCError } from "@orpc/server";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
-import { isScratchpadStatus, listScratchpadItems, mapScratchpadItem } from "@rakazo/adapters";
-import { isDeletableMemoryDocument } from "@rakazo/contracts";
-import { findSpaceMemoryConfig, IsolationError } from "@rakazo/db";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@livingbot/adapter-kit";
+import { isScratchpadStatus, listScratchpadItems, mapScratchpadItem } from "@livingbot/adapters";
+import { isDeletableMemoryDocument } from "@livingbot/contracts";
+import { findSpaceMemoryConfig, IsolationError } from "@livingbot/db";
 import { loadedBotContext } from "../loaded-context.js";
 import { memoryOrganizationDiary } from "../memory-organization-diary.js";
 import {

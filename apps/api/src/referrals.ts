@@ -1,8 +1,8 @@
 import { randomInt } from "node:crypto";
-import type { BillingProvider } from "@rakazo/adapter-kit";
-import type { BillingStatus } from "@rakazo/contracts";
-import { BYOK_MONTHLY_PRICE_CENTS } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { BillingProvider } from "@livingbot/adapter-kit";
+import type { BillingStatus } from "@livingbot/contracts";
+import { BYOK_MONTHLY_PRICE_CENTS } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
 import {
   billingAccountForOrganization,
   extendByokFreePeriod,
@@ -10,8 +10,8 @@ import {
   hasBillingAccess,
   Prisma,
   reconcileCreditPurchase,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/db";
+import { getLogger } from "@livingbot/logging";
 
 const CODE_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
 const CODE_LENGTH = 8;

@@ -1,10 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { SignupSurvey as SignupSurveyAnswers } from "@rakazo/contracts";
+import type { SignupSurvey as SignupSurveyAnswers } from "@livingbot/contracts";
 import {
   SIGNUP_SURVEY_TEAM_SIZES,
   signupSurveyAsksTeamSize,
   signupSurveyTeamSizeLabel,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 import {
   Button,
   Input,
@@ -12,7 +12,7 @@ import {
   Textarea,
   ToggleGroup,
   ToggleGroupItem,
-} from "@rakazo/ui-web";
+} from "@livingbot/ui-web";
 import { useId, useState } from "react";
 import { rpc } from "../lib/rpc";
 

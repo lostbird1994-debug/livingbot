@@ -9,9 +9,9 @@ import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
-class RakazoNotificationsModule : Module() {
+class LivingBotNotificationsModule : Module() {
   override fun definition() = ModuleDefinition {
-    Name("RakazoNotifications")
+    Name("LivingBotNotifications")
 
     AsyncFunction("getSettings") {
       NotificationStorage(context()).settings.toMap()
@@ -30,16 +30,16 @@ class RakazoNotificationsModule : Module() {
       storage.locale = locale
       storage.settings = NotificationSettings.fromMap(value)
       if (storage.settings.liveConnection && endpoint.isNotBlank() && token.isNotBlank()) {
-        RakazoNotificationService.start(context)
+        LivingBotNotificationService.start(context)
       } else {
-        RakazoNotificationService.stop(context)
+        LivingBotNotificationService.stop(context)
       }
     }
 
     AsyncFunction("resume") { endpoint: String, token: String, spaceId: String, locale: String, headers: String ->
       val context = context()
       if (endpoint.isNotBlank() && !isAllowedNotificationEndpoint(endpoint)) {
-        RakazoNotificationService.stop(context)
+        LivingBotNotificationService.stop(context)
       } else {
         val storage = NotificationStorage(context)
         storage.endpoint = endpoint
@@ -48,7 +48,7 @@ class RakazoNotificationsModule : Module() {
         storage.spaceId = spaceId
         storage.locale = locale
         if (storage.settings.liveConnection && endpoint.isNotBlank() && token.isNotBlank()) {
-          RakazoNotificationService.start(context)
+          LivingBotNotificationService.start(context)
         }
       }
     }
@@ -56,26 +56,26 @@ class RakazoNotificationsModule : Module() {
     AsyncFunction("stop") { clearSession: Boolean ->
       val context = context()
       if (clearSession) {
-        RakazoNotificationService.clearSession(context)
+        LivingBotNotificationService.clearSession(context)
         val storage = NotificationStorage(context)
         storage.token = ""
         storage.headers = ""
         storage.spaceId = ""
       } else {
-        RakazoNotificationService.stop(context)
+        LivingBotNotificationService.stop(context)
       }
     }
 
     AsyncFunction("setOpenThread") { botId: String?, threadId: String? ->
-      RakazoNotificationService.setOpenThread(context(), botId, threadId)
+      LivingBotNotificationService.setOpenThread(context(), botId, threadId)
     }
 
     AsyncFunction("startCall") { title: String, promise: Promise ->
-      RakazoCallService.start(context(), title) { started -> promise.resolve(started) }
+      LivingBotCallService.start(context(), title) { started -> promise.resolve(started) }
     }
 
     AsyncFunction("stopCall") {
-      RakazoCallService.stop(context())
+      LivingBotCallService.stop(context())
     }
 
     AsyncFunction("openSettings") {

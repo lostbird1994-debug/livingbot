@@ -1,5 +1,5 @@
 import { createHash, createHmac, generateKeyPairSync, sign } from "node:crypto";
-import type * as Db from "@rakazo/db";
+import type * as Db from "@livingbot/db";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Auth, AuthEnv } from "./index.js";
@@ -9,13 +9,13 @@ import { encryptStoredOAuthTokens, openIdToken, sealIdToken } from "./token-stor
 
 const state = vi.hoisted(() => ({ db: {} as Record<string, Record<string, unknown>[]> }));
 vi.mock("better-auth/adapters/prisma", () => ({ prismaAdapter: () => memoryAdapter(state.db) }));
-vi.mock("@rakazo/db", async (original) => ({
+vi.mock("@livingbot/db", async (original) => ({
   ...(await original<typeof Db>()),
   bootstrapUserSpace: vi.fn(),
 }));
 
 const issuer = "https://identity.example.test";
-const origin = "https://rakazo.example.test";
+const origin = "https://livingbot.example.test";
 const secret = "offline-test-secret-with-at-least-32-characters";
 const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const jwk = { ...publicKey.export({ format: "jwk" }), kid: "test-key", alg: "RS256", use: "sig" };

@@ -1,4 +1,4 @@
-import type { AttachmentMimeType, MessageBlock } from "@rakazo/contracts";
+import type { AttachmentMimeType, MessageBlock } from "@livingbot/contracts";
 import {
   ARTIFACT_NAME_MAX_LENGTH,
   ATTACHMENT_COUNT_CEILING,
@@ -7,7 +7,7 @@ import {
   attachmentSizeLabel,
   isAllowedAttachmentMimeType,
   isAttachmentImageMimeType,
-} from "@rakazo/contracts";
+} from "@livingbot/contracts";
 
 export class AttachmentValidationError extends Error {
   constructor(message: string) {

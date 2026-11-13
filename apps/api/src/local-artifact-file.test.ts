@@ -1,8 +1,8 @@
 import { mkdtemp, readdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { ArtifactStore } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
+import type { ArtifactStore } from "@livingbot/adapter-kit";
+import type { PrismaClient } from "@livingbot/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   localArtifactFileName,

@@ -104,7 +104,7 @@ export const NL_MESSAGES: Record<string, string> = {
   "Your model provider": "Jouw modelaanbieder",
   "Connect a model in Settings before running bots.":
     "Verbind een model in Instellingen voordat je bots uitvoert.",
-  "Connect your own API key in Models or choose Rakazo credits in Billing.":
+  "Connect your own API key in Models or choose LivingBot credits in Billing.":
     "Verbind je eigen API-sleutel bij Modellen of kies LivingBot-tegoed bij Facturatie.",
   "The model provider returned an error.": "De modelaanbieder heeft een fout teruggegeven.",
   "{provider} is rate limiting requests. Try again shortly.":
@@ -995,13 +995,13 @@ export const NL_MESSAGES: Record<string, string> = {
   Subscribe: "Abonneren",
   "Monthly credits expire at renewal. Top-ups do not expire.":
     "Maandelijks tegoed vervalt bij verlenging. Los gekocht tegoed verloopt niet.",
-  "Use Rakazo credits": "LivingBot-tegoed gebruiken",
+  "Use LivingBot credits": "LivingBot-tegoed gebruiken",
   "Choose a plan": "Kies een abonnement",
   "Change plan": "Abonnement wijzigen",
   Plan: "Abonnement",
   None: "Geen",
   "Free trial": "Gratis proefperiode",
-  "Rakazo credits": "LivingBot-tegoed",
+  "LivingBot credits": "LivingBot-tegoed",
   "Free until": "Gratis tot",
   Ends: "Eindigt op",
   Renews: "Verlengt op",

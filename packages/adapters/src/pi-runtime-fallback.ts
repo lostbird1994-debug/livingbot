@@ -9,21 +9,21 @@ import type {
 } from "@earendil-works/pi-ai";
 import { getSupportedThinkingLevels } from "@earendil-works/pi-ai";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
-import type { AgentRunRequest, ConnectorTool } from "@rakazo/adapter-kit";
+import type { AgentRunRequest, ConnectorTool } from "@livingbot/adapter-kit";
 import {
   isModelCredentialRejected,
   isRetryableProviderUnavailable,
   isTransientModelError,
-} from "@rakazo/adapter-kit";
-import type { ModelBackupOutcome } from "@rakazo/core";
+} from "@livingbot/adapter-kit";
+import type { ModelBackupOutcome } from "@livingbot/core";
 import {
   abortableDelay,
   MODEL_CONTEXT_TOO_SMALL_ERROR,
   MODEL_OUTPUT_CUT_ERROR,
   MODEL_OUTPUT_LIMIT_ERROR,
   MODEL_REQUEST_LIMIT_ERROR,
-} from "@rakazo/core";
-import { getLogger } from "@rakazo/logging";
+} from "@livingbot/core";
+import { getLogger } from "@livingbot/logging";
 import { ModelImageLimitError, pruneForRebuild } from "./context-pruning.js";
 import { groqRequestContextWindow } from "./groq-request-budget.js";
 import { estimateModelContextTokens } from "./model-context.js";

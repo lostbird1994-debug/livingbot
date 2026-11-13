@@ -3,7 +3,7 @@ import { createServer, Socket } from "node:net";
 import {
   SCREEN_UNCONFIRMED_MAX_MS,
   sealScreenCapability,
-} from "@rakazo/core/node/screen-capability";
+} from "@livingbot/core/node/screen-capability";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ScreenCheck } from "./screen-proxy.js";
 import {

@@ -7,16 +7,16 @@ import {
   ComputerBusyError,
   DestinationEmulator,
   releaseComputerExecutionLease,
-} from "@rakazo/adapters";
-import type { createApp } from "@rakazo/api/app";
-import { approvalEffectKey } from "@rakazo/core/node/approval-effect-key";
+} from "@livingbot/adapters";
+import type { createApp } from "@livingbot/api/app";
+import { approvalEffectKey } from "@livingbot/core/node/approval-effect-key";
 import {
   createThreadEvents,
   createThreadMessage,
   loadRunHistoryMessages,
   runAsSystem,
   runAsTenant,
-} from "@rakazo/db";
+} from "@livingbot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { discardBotIntroFromCreate } from "./discard-bot-intro.js";
 import { asSystem } from "./system-db.js";
@@ -36,7 +36,7 @@ describeIntegration("run executor lifecycle", () => {
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@livingbot/api/app");
     handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,
@@ -120,7 +120,7 @@ describeIntegration("run executor lifecycle", () => {
   it("records an uncertain result without replaying an interrupted external effect", async () => {
     const prompt = "write this to the destination crm as a note";
     const seeded = await seedRun("uncertain-effect", prompt);
-    const args = { collection: "notes", title: "Rakazo result", body: prompt };
+    const args = { collection: "notes", title: "LivingBot result", body: prompt };
     const executionId = approvalEffectKey(seeded.run.id, "destination.write", args);
     await db.externalEffect.create({
       data: {
@@ -160,7 +160,7 @@ describeIntegration("run executor lifecycle", () => {
   it("recreates the approval pause when an intended effect was interrupted before the card", async () => {
     const prompt = "write this to the destination crm as a note";
     const seeded = await seedRun("interrupted-before-approval", prompt);
-    const args = { collection: "notes", title: "Rakazo result", body: prompt };
+    const args = { collection: "notes", title: "LivingBot result", body: prompt };
     const executionId = approvalEffectKey(seeded.run.id, "destination.write", args);
     const effect = await db.externalEffect.create({
       data: {
@@ -624,7 +624,7 @@ describeIntegration("run executor lifecycle", () => {
 
   it("applies the same no-parallel-run rule to the targeted group member", async () => {
     const cookie = await signup(
-      `executor-group-steering-${stamp}@rakazo.test`,
+      `executor-group-steering-${stamp}@livingbot.test`,
       "Executor group steering",
     );
     const me = await rpc<{ userId: string; spaceId: string }>(cookie, "me");
@@ -1320,7 +1320,7 @@ describeIntegration("run executor lifecycle", () => {
     } = {},
     computerMode?: "team" | "dedicated",
   ) {
-    const cookie = await signup(`executor-${label}-${stamp}@rakazo.test`, `Executor ${label}`);
+    const cookie = await signup(`executor-${label}-${stamp}@livingbot.test`, `Executor ${label}`);
     const me = await rpc<{ userId: string; spaceId: string }>(cookie, "me");
     const bot = await rpc<{ id: string }>(cookie, "bots/create", {
       name: `Executor ${label}`,

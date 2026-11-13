@@ -13,7 +13,7 @@ No tool arguments or prompt text grant authority to select another sender.
 OpenClaw requires the bundled `native-collaboration-openclaw.ts` extension and
 its adjacent `.plugin.json` manifest. Enable startup activation and permit the
 plugin in any applicable tool allowlist. Gateway registration and tool discovery
-must share the process-scoped broker. Tools appear only for a registered Rakazo
+must share the process-scoped broker. Tools appear only for a registered LivingBot
 session; ordinary OpenClaw sessions receive no collaboration tools.
 
 Codex and ACP hosts inject a per-session stdio MCP server using

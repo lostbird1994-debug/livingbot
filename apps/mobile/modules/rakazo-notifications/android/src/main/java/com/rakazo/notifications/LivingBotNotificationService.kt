@@ -59,7 +59,7 @@ private data class RunRecord(
 
 private class ApiException(val status: Int) : IOException()
 
-class RakazoNotificationService : Service() {
+class LivingBotNotificationService : Service() {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private lateinit var manager: NotificationManager
   private var pollJob: Job? = null
@@ -427,7 +427,7 @@ class RakazoNotificationService : Service() {
   }
 
   companion object {
-    private const val TAG = "RakazoNotifications"
+    private const val TAG = "LivingBotNotifications"
     private const val LIVE_NOTIFICATION_ID = 1101
     private const val ACTION_THREAD_CHANGED = "com.rakazo.notifications.THREAD_CHANGED"
     private const val PROMOTED_ONGOING_EXTRA = "android.requestPromotedOngoing"
@@ -444,7 +444,7 @@ class RakazoNotificationService : Service() {
     private var openThreadId: String? = null
 
     fun start(context: Context, resetToken: Boolean = true, action: String? = null) {
-      val intent = Intent(context, RakazoNotificationService::class.java)
+      val intent = Intent(context, LivingBotNotificationService::class.java)
         .putExtra(EXTRA_RESET_TOKEN, resetToken)
       if (action != null) intent.action = action
       runCatching { context.startService(intent) }
@@ -452,7 +452,7 @@ class RakazoNotificationService : Service() {
     }
 
     fun stop(context: Context) {
-      context.stopService(Intent(context, RakazoNotificationService::class.java))
+      context.stopService(Intent(context, LivingBotNotificationService::class.java))
     }
 
     fun setOpenThread(context: Context, botId: String?, threadId: String?) {

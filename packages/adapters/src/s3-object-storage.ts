@@ -10,7 +10,7 @@ import {
   S3Client,
   UploadPartCommand,
 } from "@aws-sdk/client-s3";
-import type { ObjectStorage } from "@rakazo/adapter-kit";
+import type { ObjectStorage } from "@livingbot/adapter-kit";
 
 /** Upload part size: large enough that most homes are one request, small enough to hold in memory. */
 const PART_BYTES = 16 * 1024 * 1024;

@@ -1,13 +1,13 @@
-import type { AgentRunRequest, SecretStore } from "@rakazo/adapter-kit";
+import type { AgentRunRequest, SecretStore } from "@livingbot/adapter-kit";
 import type {
   ModelRole,
   ModelRoleChoice,
   ModelRoleSettings,
   SettingsScope,
-} from "@rakazo/contracts";
-import { backupChoiceKey, usableModelId } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { appliedModelRole } from "@rakazo/db";
+} from "@livingbot/contracts";
+import { backupChoiceKey, usableModelId } from "@livingbot/contracts";
+import type { PrismaClient } from "@livingbot/db";
+import { appliedModelRole } from "@livingbot/db";
 import { resolveAutoReviewChecker } from "./auto-review.js";
 import type { ModelChoice, ModelCredential } from "./model-selection.js";
 import { findConnectedModelCredential } from "./model-selection.js";

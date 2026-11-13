@@ -2,7 +2,7 @@
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { HTML_VIEWER_PATH } from "@rakazo/contracts/content-security-policy";
+import { HTML_VIEWER_PATH } from "@livingbot/contracts/content-security-policy";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";

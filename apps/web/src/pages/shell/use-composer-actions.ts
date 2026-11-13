@@ -7,17 +7,17 @@ import type {
   MessageReaction,
   ThreadMessage,
   ThreadSnapshot,
-} from "@rakazo/contracts";
-import { attachmentMaxBytes, attachmentMaxCount, attachmentSizeLabel } from "@rakazo/contracts";
-import type { ComposerMention } from "@rakazo/core";
+} from "@livingbot/contracts";
+import { attachmentMaxBytes, attachmentMaxCount, attachmentSizeLabel } from "@livingbot/contracts";
+import type { ComposerMention } from "@livingbot/core";
 import {
   attachmentsForThread,
   inferAttachmentMimeType,
   isImageInputConfirmation,
   newClientId,
   resolveComposerSendPlan,
-} from "@rakazo/core";
-import { toast } from "@rakazo/ui-web";
+} from "@livingbot/core";
+import { toast } from "@livingbot/ui-web";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { requestBrowserNotificationPermission } from "../../lib/browser-notifications";

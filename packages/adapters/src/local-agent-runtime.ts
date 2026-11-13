@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { AdapterContext, AgentRunRequest, AgentRuntimeEvent } from "@rakazo/adapter-kit";
+import type { AdapterContext, AgentRunRequest, AgentRuntimeEvent } from "@livingbot/adapter-kit";
 import { parseLocalAgentSelection } from "./local-agent-model.js";
 import { nativeCollaboration } from "./native-collaboration.js";
 import {
