@@ -1,5 +1,12 @@
 # Run dispatch and response timing
 
+Native tasks have no default wall-clock deadline. The engine receives `timeout: 0`,
+and admission never cancels an older invocation solely because thirty minutes passed.
+Explicit deadlines and manual stops still require confirmed termination. Only final
+tool results establish detached background work; foreground progress handles do not.
+Cancellation attempts every recorded background command even if one fails, and
+reconciliation preserves the original diagnostic after confirming termination.
+
 A run starts in the process that makes it due. When the API commits a message, a new
 bot's greeting, or an answer, `RunJobPublisher` records the run's wake time and
 `RunStarter` begins executing it in that same API process as an independent task;
@@ -27,6 +34,15 @@ steers that run instead of waiting. Background runs that need the computer while
 another run of the same bot holds it stay queued; the run that releases the computer
 starts the next one waiting, and recovery leaves them untouched until then.
 Execution timing starts after computer ownership is acquired.
+
+Steering counts as answered only when the turn that claimed it answered it. A runtime
+that accepts the claim but cannot hand the instruction to its engine — an external
+kernel that refuses steering, for instance — releases the message back to the queue,
+and the continuation after that turn answers it. That release happens once per
+message: a runtime that refuses every delivery does not get a fresh run each time.
+A conversational turn that fails without writing anything records the reason in the
+conversation, so an unanswered message never disappears with only the run row to say
+why.
 
 Graphile remains responsible for scheduled and maintenance jobs. Those jobs can
 create runs, which use the same direct dispatch path. Legacy run deliveries remain

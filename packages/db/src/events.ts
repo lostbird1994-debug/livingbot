@@ -99,6 +99,7 @@ export interface ThreadEvents {
   answerRunInput(input: AnswerRunInput): Promise<boolean>;
   append(input: AppendEventInput): Promise<ProductEvent>;
   claimSteering(input: ClaimSteeringInput): Promise<ClaimedSteeringMessage[]>;
+  releaseUndeliveredSteering(input: ReleaseUndeliveredSteeringInput): Promise<void>;
   clearThread(input: ClearThreadInput): Promise<ClearThreadResult>;
   finalizeComputerControlRelease(
     input: FinalizeComputerControlReleaseInput,
@@ -146,6 +147,15 @@ export interface ClaimSteeringInput {
   leaseOwner: string;
   leaseFence: number;
   seenIds: string[];
+}
+
+export interface ReleaseUndeliveredSteeringInput {
+  threadId: string;
+  botId: string;
+  runId: string;
+  leaseOwner: string;
+  leaseFence: number;
+  steeringIds: string[];
 }
 
 export interface ClaimedSteeringMessage {
@@ -349,6 +359,7 @@ export function createThreadEvents(
     answerRunInput: (input) => answerRunInput(prisma, input, realtime, options.runSecretWriter),
     append: (input) => appendEvent(prisma, input, realtime, options.analytics),
     claimSteering: (input) => claimSteering(prisma, input),
+    releaseUndeliveredSteering: (input) => releaseUndeliveredSteering(prisma, input),
     clearThread: (input) => clearThread(prisma, input, realtime),
     finalizeComputerControlRelease: (input) =>
       finalizeComputerControlRelease(prisma, input, realtime),
@@ -766,6 +777,59 @@ async function claimSteeringOnce(
               : ("member" as const),
     }));
   }, THREAD_LOCK_TRANSACTION_OPTIONS);
+}
+
+/**
+ * Steering the runtime claimed but could not hand to its engine. Leaving it claimed makes the
+ * run's completion discard it as answered, so the person's message disappears unread; releasing
+ * it puts the message back in the queue for the continuation that answers what this run did not.
+ * One automatic retry only: a runtime that refuses every delivery must not spin a run per attempt.
+ */
+export async function releaseUndeliveredSteering(
+  prisma: PrismaClient,
+  input: ReleaseUndeliveredSteeringInput,
+): Promise<void> {
+  if (input.steeringIds.length === 0) return;
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const run = await tx.run.findFirst({
+      where: {
+        id: input.runId,
+        threadId: input.threadId,
+        botId: input.botId,
+        status: "running",
+        leaseOwner: input.leaseOwner,
+        leaseFence: input.leaseFence,
+      },
+      select: { id: true },
+    });
+    // A newer claim owns the run, and with it whatever happened to these messages.
+    if (!run) return;
+    const held = await tx.steeringMessage.findMany({
+      where: { id: { in: input.steeringIds }, runId: input.runId, botId: input.botId },
+      select: { id: true, messageId: true },
+    });
+    if (held.length === 0) return;
+    const retried = new Set(
+      (
+        await tx.run.findMany({
+          where: {
+            botId: input.botId,
+            id: { not: input.runId },
+            trigger: "follow_up",
+            status: { in: ["completed", "failed"] },
+            sourceMessageId: { in: held.map((row) => row.messageId) },
+          },
+          select: { sourceMessageId: true },
+        })
+      ).flatMap((row) => (row.sourceMessageId ? [row.sourceMessageId] : [])),
+    );
+    const release = held.filter((row) => !retried.has(row.messageId)).map((row) => row.id);
+    if (release.length === 0) return;
+    await tx.steeringMessage.updateMany({
+      where: { id: { in: release }, runId: input.runId, botId: input.botId },
+      data: { runId: null, claimedAt: null },
+    });
+  });
 }
 
 async function findPendingAsk(
@@ -1705,6 +1769,14 @@ export async function appendEvent(
   return productEvent;
 }
 
+/**
+ * A failed turn needs a line in the conversation only when a person is waiting on it there:
+ * scheduled, webhook and background work reports elsewhere, and a reaction may end unanswered.
+ */
+function failureGoesUnnoticed(trigger: string | null): boolean {
+  return Boolean(trigger) && isConversationalRun(trigger) && trigger !== "reaction";
+}
+
 export async function finalizeRun(
   prisma: PrismaClient,
   input: FinalizeRunInput,
@@ -1763,7 +1835,7 @@ async function finalizeRunOnce(
 } | null> {
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.$queryRaw`SELECT id FROM threads WHERE id = ${input.threadId} FOR UPDATE`;
-    let writableRun: { startedAt: Date | null; userId: string } | undefined;
+    let writableRun: { startedAt: Date | null; userId: string; trigger: string | null } | undefined;
     try {
       writableRun = await assertRunCanWriteHistory(tx, input.runId);
     } catch (error) {
@@ -1844,11 +1916,20 @@ async function finalizeRunOnce(
       });
     }
     let firstResponse = false;
-    const replyBlocks = expandToolStepNotes(
+    let replyBlocks = expandToolStepNotes(
       input.outcome === "completed"
         ? completedRunBlocks(input.blocks, writableRun?.startedAt ?? null, now)
         : (input.partialReply ?? []),
     );
+    // A failed turn that wrote nothing leaves the person's message unanswered with no trace of
+    // why; that only exists on a reload in the run row. Keep the reason where the conversation is.
+    if (
+      input.outcome === "failed" &&
+      replyBlocks.length === 0 &&
+      failureGoesUnnoticed(writableRun?.trigger ?? null) &&
+      (await tx.message.count({ where: { runId: input.runId, role: "bot" } })) === 0
+    )
+      replyBlocks = [{ kind: "text", text: input.error }];
     if (replyBlocks.length > 0) {
       const message = await createThreadMessageInTransaction(tx, {
         threadId: input.threadId,

@@ -1,8 +1,9 @@
 import { useLingui } from "@lingui/react/macro";
 import { Button, Spinner } from "@livingbot/ui-web";
-import { ChevronRight, FileText, Folder, FolderOpen, RotateCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronRight, Folder, FolderOpen, RotateCw } from "lucide-react";
 import { useState } from "react";
+import { FileTypeIcon } from "../../components/FileTypeIcon";
 import { useSpaceQueries } from "../../lib/query";
 import { useSpaceRpc } from "../../lib/space-rpc";
 import { errorText } from "../../lib/user-error";
@@ -139,7 +140,7 @@ function BotDirectory({ botId }: { botId: string }) {
                   </button>
                 ) : (
                   <>
-                    <FileText aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+                    <FileTypeIcon name={entry.path} className="size-4 shrink-0" />
                     <button
                       type="button"
                       disabled={busy === entry.path}

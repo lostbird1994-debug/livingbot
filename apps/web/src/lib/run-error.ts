@@ -4,10 +4,24 @@ import type { RunErrorTranslator } from "@livingbot/core";
 /** Static descriptors keep shared run-error messages in Lingui extraction. */
 export const translateRunError: RunErrorTranslator = (message, values) => {
   switch (message) {
+    case "The task stopped. Check its results before retrying.":
+      return i18n._({
+        id: "The task stopped. Check its results before retrying.",
+        message: "The task stopped. Check its results before retrying.",
+        values,
+      });
     case "The local engine connection lacks required permissions.":
-      return i18n._({ id: "The local engine connection lacks required permissions.", message: "The local engine connection lacks required permissions.", values });
+      return i18n._({
+        id: "The local engine connection lacks required permissions.",
+        message: "The local engine connection lacks required permissions.",
+        values,
+      });
     case "The previous task is unresolved. Check its status before continuing.":
-      return i18n._({ id: "The previous task is unresolved. Check its status before continuing.", message: "The previous task is unresolved. Check its status before continuing.", values });
+      return i18n._({
+        id: "The previous task is unresolved. Check its status before continuing.",
+        message: "The previous task is unresolved. Check its status before continuing.",
+        values,
+      });
 
     case "This connection's request limit is too small. Choose another model.":
       return i18n._({

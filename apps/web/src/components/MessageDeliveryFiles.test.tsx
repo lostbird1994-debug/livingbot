@@ -25,12 +25,17 @@ vi.mock("./DeliveryFileCard", () => ({
   }) => (
     <div>
       {name}:{size}
-      <button type="button" onClick={() => void onOpen()}>open</button>
-      <button type="button" onClick={() => void onReveal()}>folder</button>
+      <button type="button" onClick={() => void onOpen()}>
+        open
+      </button>
+      <button type="button" onClick={() => void onReveal()}>
+        folder
+      </button>
     </div>
   ),
 }));
 
+import { DocumentTabsProvider } from "../lib/document-tabs";
 import { MessageDeliveryFiles, messageFileReferences } from "./MessageDeliveryFiles";
 
 it("deduplicates exact references and does not treat ordinary text as a delivered file", () => {
@@ -39,6 +44,49 @@ it("deduplicates exact references and does not treat ordinary text as a delivere
       { kind: "text", text: "普通说明 /Users/test/a.md 与 `/Users/test/a.md`" },
     ]),
   ).toEqual(["/Users/test/a.md"]);
+});
+
+it("opens a referenced Markdown file in a tab while keeping its original authorization scope", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  api.fileAction.mockClear();
+  const openDocument = vi.fn();
+  const host = document.createElement("div");
+  const root = createRoot(host);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const target = { botId: "bot", taskSessionId: "task" };
+  try {
+    await act(async () =>
+      root.render(
+        <QueryClientProvider client={client}>
+          <DocumentTabsProvider value={openDocument}>
+            <MessageDeliveryFiles
+              target={target}
+              message={
+                {
+                  id: "msg",
+                  role: "bot",
+                  blocks: [{ kind: "text", text: "`/bots/bot/report.md`" }],
+                } as never
+              }
+            />
+          </DocumentTabsProvider>
+        </QueryClientProvider>,
+      ),
+    );
+    await act(async () => host.querySelector("button")!.click());
+    expect(openDocument).toHaveBeenCalledWith({
+      kind: "message",
+      name: "report.md",
+      target,
+      messageId: "msg",
+      path: "/bots/bot/report.md",
+    });
+    expect(api.fileAction).not.toHaveBeenCalled();
+  } finally {
+    await act(async () => root.unmount());
+    client.clear();
+    vi.unstubAllGlobals();
+  }
 });
 it("reads real metadata and routes both operations through the original message path", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);

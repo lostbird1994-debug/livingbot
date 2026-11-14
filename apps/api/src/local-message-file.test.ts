@@ -1,11 +1,16 @@
-import { realpath, stat } from "node:fs/promises";
+import { open, realpath, stat } from "node:fs/promises";
 import type { PrismaClient } from "@livingbot/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { openLocalMessageFile, resolveLocalMessageFile } from "./local-message-file.js";
+import {
+  openLocalMessageFile,
+  previewLocalMessageFile,
+  resolveLocalMessageFile,
+} from "./local-message-file.js";
 
 vi.mock("node:fs/promises", () => ({
   realpath: vi.fn(async (path) => path),
   stat: vi.fn(async () => ({ isFile: () => true })),
+  open: vi.fn(),
 }));
 const path = "/Users/test/财务 报告.docx";
 function fixture() {
@@ -75,26 +80,117 @@ describe("local message file actions", () => {
   });
 });
 
-it.each(["open", "reveal"] as const)("%s resolves a truncated Bot path through the authorized workspace", async action => {
-  const f = fixture();
-  const abbreviated = "/bots/bot-2/feishu/report.md";
-  f.findFirst.mockResolvedValue({ blocks: [{ kind: "text", text: `文件在：\`...${abbreviated}\`` }] });
-  vi.mocked(realpath).mockRejectedValueOnce(Error("missing prefix"));
-  const resolveDocument = vi.fn(async () => "/Users/test/owned-bot/feishu/report.md");
-  await openLocalMessageFile({ ...f.deps, resolveDocument }, "thread-1", { messageId: "message-1", path: abbreviated, action });
-  expect(resolveDocument).toHaveBeenCalledWith(abbreviated);
-  expect(f.open).toHaveBeenCalledWith("/Users/test/owned-bot/feishu/report.md", action);
-});
+it.each(["open", "reveal"] as const)(
+  "%s resolves a truncated Bot path through the authorized workspace",
+  async (action) => {
+    const f = fixture();
+    const abbreviated = "/bots/bot-2/feishu/report.md";
+    f.findFirst.mockResolvedValue({
+      blocks: [{ kind: "text", text: `文件在：\`...${abbreviated}\`` }],
+    });
+    vi.mocked(realpath).mockRejectedValueOnce(Error("missing prefix"));
+    const resolveDocument = vi.fn(async () => "/Users/test/owned-bot/feishu/report.md");
+    await openLocalMessageFile({ ...f.deps, resolveDocument }, "thread-1", {
+      messageId: "message-1",
+      path: abbreviated,
+      action,
+    });
+    expect(resolveDocument).toHaveBeenCalledWith(abbreviated);
+    expect(f.open).toHaveBeenCalledWith("/Users/test/owned-bot/feishu/report.md", action);
+  },
+);
 
 it("does not recover a path absent from the message", async () => {
-  const f = fixture(); const resolveDocument = vi.fn();
-  await expect(openLocalMessageFile({ ...f.deps, resolveDocument }, "thread-1", { messageId: "message-1", path: "/bots/other/secret.md", action: "open" })).rejects.toMatchObject({code:"NOT_FOUND"});
-  expect(resolveDocument).not.toHaveBeenCalled(); expect(f.open).not.toHaveBeenCalled();
+  const f = fixture();
+  const resolveDocument = vi.fn();
+  await expect(
+    openLocalMessageFile({ ...f.deps, resolveDocument }, "thread-1", {
+      messageId: "message-1",
+      path: "/bots/other/secret.md",
+      action: "open",
+    }),
+  ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  expect(resolveDocument).not.toHaveBeenCalled();
+  expect(f.open).not.toHaveBeenCalled();
 });
 
 it("returns verified metadata without invoking the Mac launcher", async () => {
- const f=fixture();
- const info=await resolveLocalMessageFile(f.deps,'thread-1',{messageId:'message-1',path,action:'open'});
- expect(info).toMatchObject({path,name:'财务 报告.docx'});
- expect(f.open).not.toHaveBeenCalled();
+  const f = fixture();
+  const info = await resolveLocalMessageFile(f.deps, "thread-1", {
+    messageId: "message-1",
+    path,
+    action: "open",
+  });
+  expect(info).toMatchObject({ path, name: "财务 报告.docx" });
+  expect(f.open).not.toHaveBeenCalled();
+});
+
+describe("Markdown message previews", () => {
+  const markdownPath = "/Users/test/report.md";
+  function markdownFixture(bytes = Buffer.from("# Report\n\n内容")) {
+    const f = fixture();
+    f.findFirst.mockResolvedValue({ blocks: [{ kind: "text", text: `MEDIA:${markdownPath}` }] });
+    let offset = 0;
+    const handle = {
+      stat: vi.fn(async () => ({ isFile: () => true, size: bytes.length })),
+      read: vi.fn(async (buffer: Buffer, start: number, length: number) => {
+        const count = Math.min(length, bytes.length - offset);
+        bytes.copy(buffer, start, offset, offset + count);
+        offset += count;
+        return { bytesRead: count, buffer };
+      }),
+      close: vi.fn(async () => {}),
+    };
+    vi.mocked(open).mockResolvedValue(handle as never);
+    return { ...f, handle, input: { messageId: "message-1", path: markdownPath } };
+  }
+
+  it("reads UTF-8 without launching another app and closes the file", async () => {
+    const f = markdownFixture();
+    await expect(previewLocalMessageFile(f.deps, "thread-1", f.input)).resolves.toEqual({
+      name: "report.md",
+      text: "# Report\n\n内容",
+    });
+    expect(f.open).not.toHaveBeenCalled();
+    expect(f.handle.close).toHaveBeenCalledOnce();
+  });
+
+  it("rejects paths outside the message before reading", async () => {
+    const f = markdownFixture();
+    vi.mocked(open).mockClear();
+    await expect(
+      previewLocalMessageFile(f.deps, "thread-1", { ...f.input, path: "/Users/test/secret.md" }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it("rejects symlinks resolving to a different document type", async () => {
+    const f = markdownFixture();
+    vi.mocked(realpath).mockResolvedValueOnce("/Users/test/private.txt");
+    vi.mocked(open).mockClear();
+    await expect(previewLocalMessageFile(f.deps, "thread-1", f.input)).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it.each(["oversized", "invalid UTF-8", "growing"] as const)(
+    "rejects %s and closes the handle",
+    async (kind) => {
+      const f = markdownFixture(
+        kind === "invalid UTF-8"
+          ? Buffer.from([0xff])
+          : kind === "growing"
+            ? Buffer.alloc(2 * 1024 * 1024 + 1)
+            : undefined,
+      );
+      if (kind === "oversized")
+        f.handle.stat.mockResolvedValue({ isFile: () => true, size: 3 * 1024 * 1024 });
+      if (kind === "growing") f.handle.stat.mockResolvedValue({ isFile: () => true, size: 1 });
+      await expect(previewLocalMessageFile(f.deps, "thread-1", f.input)).rejects.toMatchObject({
+        code: "BAD_REQUEST",
+      });
+      expect(f.handle.close).toHaveBeenCalledOnce();
+    },
+  );
 });

@@ -24,6 +24,7 @@ import {
   followThreadEvents,
   pauseRunForInput,
   pauseRunForTakeover,
+  releaseUndeliveredSteering,
   sendUserMessage,
   settleReleasedTakeoverCards,
 } from "./events.js";
@@ -232,13 +233,67 @@ describe("finalizeRun", () => {
     );
   });
 
-  it("saves no message for a failure without a partial reply", async () => {
+  it("saves the failure reason when the turn wrote nothing at all", async () => {
+    const create = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+      ...data,
+      id: "message-failed",
+    }));
+    const tx = {
+      externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      $queryRaw: vi.fn(async () => []),
+      run: {
+        findUnique: vi.fn(async () => ({ status: "failed", startedAt: null, trigger: "user" })),
+        findUniqueOrThrow: vi.fn(async () => ({ sourceMessage: null })),
+        findFirst: vi.fn(async () => null),
+        updateMany: vi.fn(async () => ({ count: 1 })),
+      },
+      attempt: { updateMany: vi.fn(async () => ({ count: 1 })) },
+      task: { updateMany: vi.fn(async () => ({ count: 1 })) },
+      thread: { update: vi.fn(async () => ({ nextEventSeq: 1, nextMessageSeq: 5 })) },
+      secret: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      event: {
+        create: vi.fn(async () => ({ threadId: "thread-1", seq: 0 })),
+        deleteMany: vi.fn(async () => ({ count: 0 })),
+      },
+      steeringMessage: {
+        findMany: vi.fn(async () => []),
+        updateMany: vi.fn(async () => ({ count: 0 })),
+      },
+      message: { findFirst: vi.fn(async () => null), count: vi.fn(async () => 0), create },
+      bot: { update: vi.fn(async () => ({})) },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+
+    await finalizeRun(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      runId: "run-1",
+      taskId: "task-1",
+      attemptId: "attempt-1",
+      leaseOwner: "worker-1",
+      leaseFence: 1,
+      outcome: "failed",
+      error: "terminated",
+    });
+    expect(create).toHaveBeenCalledExactlyOnceWith({
+      data: expect.objectContaining({
+        role: "bot",
+        blocks: [{ kind: "text", text: "terminated" }],
+        runId: "run-1",
+      }),
+    });
+  });
+
+  it("saves no message for a scheduled failure, which reports elsewhere", async () => {
     const create = vi.fn();
     const tx = {
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       $queryRaw: vi.fn(async () => []),
       run: {
-        findUnique: vi.fn(async () => ({ status: "failed", startedAt: null })),
+        findUnique: vi.fn(async () => ({ status: "failed", startedAt: null, trigger: "routine" })),
         findUniqueOrThrow: vi.fn(async () => ({ sourceMessage: null })),
         findFirst: vi.fn(async () => null),
         updateMany: vi.fn(async () => ({ count: 1 })),
@@ -255,7 +310,7 @@ describe("finalizeRun", () => {
         findMany: vi.fn(async () => []),
         updateMany: vi.fn(async () => ({ count: 0 })),
       },
-      message: { findFirst: vi.fn(async () => null), create },
+      message: { findFirst: vi.fn(async () => null), count: vi.fn(async () => 0), create },
       bot: { update: vi.fn(async () => ({})) },
     };
     const prisma = {
@@ -275,6 +330,85 @@ describe("finalizeRun", () => {
       error: "terminated",
     });
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it("releases steering the engine never accepted, so a continuation answers it", async () => {
+    const findFirst = vi.fn(async () => ({ id: "run-1" }));
+    const updateMany = vi.fn(async () => ({ count: 1 }));
+    const tx = {
+      run: { findFirst, findMany: vi.fn(async () => []) },
+      steeringMessage: {
+        findMany: vi.fn(async () => [{ id: "steering-1", messageId: "message-1" }]),
+        updateMany,
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+
+    await releaseUndeliveredSteering(prisma, {
+      threadId: "thread-1",
+      botId: "bot-1",
+      runId: "run-1",
+      leaseOwner: "worker-1",
+      leaseFence: 1,
+      steeringIds: ["steering-1"],
+    });
+    expect(updateMany).toHaveBeenCalledExactlyOnceWith({
+      where: { id: { in: ["steering-1"] }, runId: "run-1", botId: "bot-1" },
+      data: { runId: null, claimedAt: null },
+    });
+  });
+
+  it("stops releasing an instruction a previous continuation already failed to accept", async () => {
+    const updateMany = vi.fn(async () => ({ count: 1 }));
+    const tx = {
+      run: {
+        findFirst: vi.fn(async () => ({ id: "run-1" })),
+        findMany: vi.fn(async () => [{ sourceMessageId: "message-1" }]),
+      },
+      steeringMessage: {
+        findMany: vi.fn(async () => [{ id: "steering-1", messageId: "message-1" }]),
+        updateMany,
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+
+    await releaseUndeliveredSteering(prisma, {
+      threadId: "thread-1",
+      botId: "bot-1",
+      runId: "run-1",
+      leaseOwner: "worker-1",
+      leaseFence: 1,
+      steeringIds: ["steering-1"],
+    });
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+
+  it("leaves steering alone when a newer claim owns the run", async () => {
+    const updateMany = vi.fn(async () => ({ count: 1 }));
+    const tx = {
+      run: { findFirst: vi.fn(async () => null), findMany: vi.fn(async () => []) },
+      steeringMessage: {
+        findMany: vi.fn(async () => [{ id: "steering-1", messageId: "message-1" }]),
+        updateMany,
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+
+    await releaseUndeliveredSteering(prisma, {
+      threadId: "thread-1",
+      botId: "bot-1",
+      runId: "run-1",
+      leaseOwner: "worker-1",
+      leaseFence: 1,
+      steeringIds: ["steering-1"],
+    });
+    expect(updateMany).not.toHaveBeenCalled();
   });
 
   it("resumes a held messaging inbound as a messaging run", async () => {
@@ -1492,20 +1626,18 @@ describe("answerRunInput", () => {
           updateMany: vi.fn(),
         },
         message: {
-          findFirst: vi
-            .fn()
-            .mockResolvedValue({
-              id: "message-1",
-              blocks: [
-                {
-                  kind: "ask",
-                  text: "Confirm",
-                  status: "pending",
-                  actions: [{ id: "allow-once", label: "允许一次" }],
-                  ...fields,
-                },
-              ],
-            }),
+          findFirst: vi.fn().mockResolvedValue({
+            id: "message-1",
+            blocks: [
+              {
+                kind: "ask",
+                text: "Confirm",
+                status: "pending",
+                actions: [{ id: "allow-once", label: "允许一次" }],
+                ...fields,
+              },
+            ],
+          }),
           update: vi.fn(),
         },
       };

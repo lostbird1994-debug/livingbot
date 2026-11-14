@@ -139,6 +139,7 @@ export async function assertRunCanWriteHistory(
       firstResponseAt: Date | null;
       userId: string;
       leaseOwner: string | null;
+      trigger: string | null;
     }
   | undefined
 > {
@@ -154,6 +155,7 @@ export async function assertRunCanWriteHistory(
       userId: true,
       leaseOwner: true,
       leaseFence: true,
+      trigger: true,
     },
   });
   if (!run || (run.status === "cancelled" && !options?.allowCancelled)) {

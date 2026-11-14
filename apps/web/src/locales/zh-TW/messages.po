@@ -4714,6 +4714,10 @@ msgstr ""
 msgid "Ollama API key"
 msgstr "Ollama API 金鑰"
 
+#: src/pages/RoutineEditor.tsx
+msgid "Other"
+msgstr "其他"
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Ollama Cloud"
@@ -7614,3 +7618,9 @@ msgstr "重掷今晚计划"
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "重试"
 msgstr "重试"
+
+msgid "The task stopped. Check its results before retrying."
+msgstr "任務已停止。請先核實已有結果，再決定是否重試。"
+
+msgid "The previous task is unresolved. Check its status before continuing."
+msgstr "上一項任務的狀態尚未確認，請先核實後再繼續。"

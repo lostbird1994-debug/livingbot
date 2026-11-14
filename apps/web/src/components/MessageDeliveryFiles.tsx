@@ -4,6 +4,7 @@ import { Button } from "@livingbot/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
+import { isMarkdownFile, useOpenDocument } from "../lib/document-tabs";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 import { ArtifactFileCard } from "./ArtifactFileCard";
@@ -71,6 +72,7 @@ function LocalDeliveryFile({
   messageId: string;
   target: ArtifactTarget;
 }) {
+  const openDocument = useOpenDocument();
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -106,7 +108,15 @@ function LocalDeliveryFile({
         disabled={!info.data}
         error={info.isError ? errorText(info.error) : undefined}
         onOpen={async () => {
-          await rpc.threads.fileAction({ ...target, messageId, path, action: "open" });
+          if (openDocument && isMarkdownFile(path)) {
+            openDocument({
+              kind: "message",
+              name: info.data?.name ?? path.split("/").at(-1) ?? path,
+              target,
+              messageId,
+              path,
+            });
+          } else await rpc.threads.fileAction({ ...target, messageId, path, action: "open" });
         }}
         onReveal={async () => {
           await rpc.threads.fileAction({ ...target, messageId, path, action: "reveal" });

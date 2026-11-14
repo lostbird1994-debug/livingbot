@@ -27,6 +27,7 @@ vi.mock("@lingui/core/macro", () => ({
 vi.mock("./PdfViewer", () => ({ PdfViewer: () => null }));
 vi.mock("@livingbot/chat-ui/web", () => ({ ChatMarkdown: () => null }));
 
+import { DocumentTabsProvider } from "../lib/document-tabs";
 import { ArtifactFileCard } from "./ArtifactFileCard";
 
 let root: ReturnType<typeof createRoot> | undefined;
@@ -56,44 +57,49 @@ afterEach(async () => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
-it.each(["audio/mpeg", "audio/wav", "audio/ogg", "audio/mp4"])(
-  "renders %s controls, keeps download, and revokes playback URL",
-  async (mimeType) => {
-    await act(async () =>
-      root?.render(
-        <ArtifactFileCard
-          target={{ botId: "bot-1" }}
-          artifactId="audio-1"
-          name="clip"
-          mimeType={mimeType}
-          size={3}
-        />,
-      ),
-    );
-    expect(mocks.fetch).not.toHaveBeenCalled();
-    expect(container.querySelector("audio")).toBeNull();
-    await act(async () =>
-      container.querySelector<HTMLButtonElement>('button[aria-label="Play clip"]')?.click(),
-    );
-    const audio = container.querySelector("audio");
-    expect(audio?.hasAttribute("controls")).toBe(true);
-    expect(audio?.getAttribute("preload")).toBe("metadata");
-    expect(audio?.getAttribute("aria-label")).toBe("clip");
-    expect(audio?.getAttribute("src")).toBe("blob:audio-preview");
-    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
-    expect(mocks.create.mock.calls[0]?.[0].type).toBe(mimeType);
-    expect(mocks.fetch).toHaveBeenCalledWith({ botId: "bot-1" }, "audio-1");
-    const download = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Download clip"]',
-    );
-    expect(download).not.toBeNull();
-    await act(async () => download?.click());
-    expect(mocks.download).toHaveBeenCalledWith({ botId: "bot-1" }, "audio-1", "clip", mimeType);
-    await act(async () => root?.unmount());
-    root = undefined;
-    expect(mocks.revoke).toHaveBeenCalledExactlyOnceWith("blob:audio-preview");
-  },
-);
+it.each([
+  ["audio/mpeg", "mp3"],
+  ["audio/wav", "wav"],
+  ["audio/ogg", "ogg"],
+  ["audio/mp4", "m4a"],
+])("renders %s controls, keeps download, and revokes playback URL", async (mimeType, extension) => {
+  await act(async () =>
+    root?.render(
+      <ArtifactFileCard
+        target={{ botId: "bot-1" }}
+        artifactId="audio-1"
+        name="clip"
+        mimeType={mimeType}
+        size={3}
+      />,
+    ),
+  );
+  expect(mocks.fetch).not.toHaveBeenCalled();
+  expect(container.querySelector("audio")).toBeNull();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('button[aria-label="Play clip"]')?.click(),
+  );
+  const audio = container.querySelector("audio");
+  expect(audio?.hasAttribute("controls")).toBe(true);
+  expect(audio?.getAttribute("preload")).toBe("metadata");
+  expect(audio?.getAttribute("aria-label")).toBe("clip");
+  expect(audio?.getAttribute("src")).toBe("blob:audio-preview");
+  expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+  expect(mocks.create.mock.calls[0]?.[0].type).toBe(mimeType);
+  expect(mocks.fetch).toHaveBeenCalledWith({ botId: "bot-1" }, "audio-1");
+  const download = container.querySelector<HTMLButtonElement>('button[aria-label="Download clip"]');
+  expect(download).not.toBeNull();
+  await act(async () => download?.click());
+  expect(mocks.download).toHaveBeenCalledWith(
+    { botId: "bot-1" },
+    "audio-1",
+    `clip.${extension}`,
+    mimeType,
+  );
+  await act(async () => root?.unmount());
+  root = undefined;
+  expect(mocks.revoke).toHaveBeenCalledExactlyOnceWith("blob:audio-preview");
+});
 it("retains the download control when playback bytes fail to load", async () => {
   mocks.fetch.mockRejectedValueOnce(new Error("unavailable"));
   await act(async () =>
@@ -120,7 +126,7 @@ it("retains the download control when playback bytes fail to load", async () => 
   expect(mocks.download).toHaveBeenCalledWith(
     { groupId: "group-1" },
     "audio-1",
-    "clip",
+    "clip.mp3",
     "audio/mpeg",
   );
 });
@@ -202,22 +208,54 @@ it("keeps controls when automatic playback is rejected", async () => {
 it("translates every size unit and rolls up instead of 1,024.0 KB or 1,536.0 MB", async () => {
   await act(async () =>
     root?.render(
-      <>
-        {[512, 1024, 1048575, 1610612736, 1.5 * 1024 ** 4].map((size) => (
-          <ArtifactFileCard
-            key={size}
-            target={{ botId: "b" }}
-            artifactId={`a${size}`}
-            name={`f${size}.zip`}
-            mimeType="application/zip"
-            size={size}
-          />
-        ))}
-      </>,
+      [512, 1024, 1048575, 1610612736, 1.5 * 1024 ** 4].map((size) => (
+        <ArtifactFileCard
+          key={size}
+          target={{ botId: "b" }}
+          artifactId={`a${size}`}
+          name={`f${size}.zip`}
+          mimeType="application/zip"
+          size={size}
+        />
+      )),
     ),
   );
-  const sizes = [...container.querySelectorAll("button span:last-child")].map(
+  const sizes = [...container.querySelectorAll("div.mt-1 > span:last-child")].map(
     (el) => el.textContent,
   );
   expect(sizes).toEqual(["«512 B»", "«1 KB»", "«1 MB»", "«1.5 GB»", "«1.5 TB»"]);
 });
+
+it.each([true, false])(
+  "opens Markdown in a document tab (compact=%s) without fetching a modal",
+  async (compact) => {
+    const openDocument = vi.fn();
+    const target = { botId: "bot", taskSessionId: "task" };
+    await act(async () =>
+      root?.render(
+        <DocumentTabsProvider value={openDocument}>
+          <ArtifactFileCard
+            compact={compact}
+            target={target}
+            artifactId="md"
+            name="report.md"
+            mimeType="text/markdown"
+          />
+        </DocumentTabsProvider>,
+      ),
+    );
+    const button = container.querySelector<HTMLButtonElement>(
+      compact ? 'button[title="report.md"]' : 'button[aria-label="Preview report.md"]',
+    );
+    expect(button).not.toBeNull();
+    await act(async () => button!.click());
+    expect(openDocument).toHaveBeenCalledWith({
+      kind: "artifact",
+      artifactId: "md",
+      name: "report.md",
+      target,
+    });
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(document.querySelector("[role=dialog]")).toBeNull();
+  },
+);

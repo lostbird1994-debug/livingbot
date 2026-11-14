@@ -1,19 +1,19 @@
-import { verifyNativeDeliveryText } from "./native-delivery-files.js";
 import { join } from "node:path";
 import { runAsTenant } from "@livingbot/db";
 import { getLogger } from "@livingbot/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { connectLocalAgentBridge } from "./local-agent-runtime.js";
+import type { NativeRunResult } from "./native-collaboration-broker.js";
+import { verifyNativeDeliveryText } from "./native-delivery-files.js";
 import {
   assertAllowedOpenAiCompatibleUrl,
   assertHttpsForKeyedOpenAiCompatibleUrl,
 } from "./openai-compatible-url.js";
 import { connectOpenClawSdk, NativeRunJournal } from "./openclaw-gateway.js";
-import type { NativeRunResult } from "./native-collaboration-broker.js";
 import type { NativePeer, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
 import {
-  confirmsNativeAbort,
   confirmNativeBackgroundWorkStopped,
+  confirmsNativeAbort,
   isNativeCancelled,
   isNativeTerminal,
   nativeRunIndexKey,
@@ -23,9 +23,12 @@ import {
 import { resolveConnectedRunModel } from "./run-model.js";
 
 const settledError = (record: NativeRecord, productStatus: string) =>
-  record.status === "failed" ? record.error ?? "底层任务已中断；此前操作可能已执行，请核实结果。"
-    : productStatus === "cancelled" ? "底层任务已结束；取消前的操作可能已经执行。"
-      : "底层任务已结束；请查看原生会话结果。";
+  record.error ??
+  (record.status === "failed"
+    ? "底层任务已中断；此前操作可能已执行，请核实结果。"
+    : productStatus === "cancelled"
+      ? "底层任务已结束；取消前的操作可能已经执行。"
+      : "底层任务已结束；请查看原生会话结果。");
 
 /** Status-only recovery: never dispatch a new agent run or automatically approve a request. */
 export async function reconcileNativeExecution(input: {
@@ -45,9 +48,16 @@ export async function reconcileNativeExecution(input: {
     await stopNativeBackgroundWork(peer, record);
     record.backgroundProcesses = [];
   }
-  let result = await peer.request<{ status: string; stopReason?: string; unconfirmed?: boolean; reason?: string; error?: string }>(
+  let result = await peer.request<{
+    status: string;
+    stopReason?: string;
+    unconfirmed?: boolean;
+    reason?: string;
+    error?: string;
+  }>(
     record.toolMode === "kernel" ? "rakazo.run.status" : "agent.wait",
-    record.toolMode === "kernel" ? { ...params, startedAt: record.startedAt, engineInstanceId: record.engineInstanceId }
+    record.toolMode === "kernel"
+      ? { ...params, startedAt: record.startedAt, engineInstanceId: record.engineInstanceId }
       : { runId: record.runId, timeoutMs: 1000 },
     { timeoutMs: 6000 },
   );
@@ -64,7 +74,8 @@ export async function reconcileNativeExecution(input: {
   if (!terminal) return "unconfirmed";
   let status: NativeRecord["status"] = !terminal
     ? "unconfirmed"
-    : (record.toolMode !== "kernel" && confirmsNativeAbort(abort, record.runId)) || isNativeCancelled(result)
+    : (record.toolMode !== "kernel" && confirmsNativeAbort(abort, record.runId)) ||
+        isNativeCancelled(result)
       ? "cancelled"
       : result.status === "error"
         ? "failed"
@@ -72,10 +83,12 @@ export async function reconcileNativeExecution(input: {
   // A status-only recovery cannot invent a missing final answer. If the native
   // turn completed, fetch its canonical result before allowing any replay.
   let text = record.text;
-  let error = result.error;
+  let error = result.error ?? record.error;
   if (status === "done" && record.toolMode === "kernel") {
     const receipt = await peer.request<{ result: NativeRunResult | null }>(
-      "rakazo.run.result", params, { timeoutMs: 6000 },
+      "rakazo.run.result",
+      params,
+      { timeoutMs: 6000 },
     );
     text = receipt.result?.text ?? "";
     if (!text) {
@@ -84,7 +97,8 @@ export async function reconcileNativeExecution(input: {
     }
     text = await verifyNativeDeliveryText(text);
     if (receipt.result?.blockedTools?.length)
-      text += "\n\nLivingBot 提示：本轮有工具操作被权限阻止，相关步骤尚未完成。请查看执行记录并处理授权后再继续。";
+      text +=
+        "\n\nLivingBot 提示：本轮有工具操作被权限阻止，相关步骤尚未完成。请查看执行记录并处理授权后再继续。";
   } else if (status === "done") {
     const history = await peer.request<{
       messages?: Array<{
@@ -110,14 +124,27 @@ export async function reconcileNativeExecution(input: {
     ...record,
     status,
     text,
-    error: terminal ? status === "failed" ? error ?? "Native execution failed" : undefined : "Native execution remains unconfirmed",
+    error: terminal
+      ? status === "failed"
+        ? (error ?? "Native execution failed")
+        : record.error
+      : "Native execution remains unconfirmed",
   };
   if (terminal) delete recovered.approval;
   await store.write(key, recovered);
   // Keep the active invocation index consistent with the recovered execution.
   let identity: unknown;
-  try { identity = JSON.parse(key); } catch { /* Legacy owner records lack an execution key. */ }
-  if (Array.isArray(identity) && identity.length === 2 && typeof identity[0] === "string" && Number.isInteger(identity[1])) {
+  try {
+    identity = JSON.parse(key);
+  } catch {
+    /* Legacy owner records lack an execution key. */
+  }
+  if (
+    Array.isArray(identity) &&
+    identity.length === 2 &&
+    typeof identity[0] === "string" &&
+    Number.isInteger(identity[1])
+  ) {
     const activeKey = nativeRunIndexKey(identity[0]);
     const active = await store.read(activeKey);
     if (active?.runId === record.runId && active.executionKey === key)
@@ -146,19 +173,33 @@ export function createOpenClawReconciler(
     if (deps.shutdownSignal?.aborted) return;
     const runs = await deps.prisma.run.findMany({
       where: {
-        ...(deps.nativeExecution ? {} : { modelProvider: "openai-compatible",
-        OR: [
-          { modelId: { startsWith: "openclaw/" } },
-          { modelId: { in: ["native/codex", "native/workbuddy"] } },
-          { modelId: { startsWith: "native/codex/" } },
-          { modelId: { startsWith: "native/workbuddy/" } },
-        ] }),
+        ...(deps.nativeExecution
+          ? {}
+          : {
+              modelProvider: "openai-compatible",
+              OR: [
+                { modelId: { startsWith: "openclaw/" } },
+                { modelId: { in: ["native/codex", "native/workbuddy"] } },
+                { modelId: { startsWith: "native/codex/" } },
+                { modelId: { startsWith: "native/workbuddy/" } },
+              ],
+            }),
         status: { in: ["waiting_input", "cancelled", "failed"] },
         ...(selection ? { id: { in: selection.runIds } } : cursor ? { id: { gt: cursor } } : {}),
       },
       orderBy: { id: "asc" },
       take: 25,
-      select: { id: true, botId: true, userId: true, spaceId: true, status: true, error: true, modelId: true, taskSlotHeld: true, resourceWaitReason: true },
+      select: {
+        id: true,
+        botId: true,
+        userId: true,
+        spaceId: true,
+        status: true,
+        error: true,
+        modelId: true,
+        taskSlotHeld: true,
+        resourceWaitReason: true,
+      },
     });
     if (!selection) cursor = runs.length === 25 ? runs.at(-1)!.id : undefined;
 
@@ -199,7 +240,12 @@ export function createOpenClawReconciler(
           // an unresolved state is evidence the user still needs, so it is never erased here.
           // Computer admission ignores finished runs, so keeping it cannot block the queue.
           if (run.status === "cancelled" && run.resourceWaitReason === "stopping")
-            await runAsTenant(run, () => deps.prisma.run.updateMany({ where: { id: run.id, status: "cancelled" }, data: { resourceWaitReason: null } }));
+            await runAsTenant(run, () =>
+              deps.prisma.run.updateMany({
+                where: { id: run.id, status: "cancelled" },
+                data: { resourceWaitReason: null },
+              }),
+            );
           continue;
         }
         if (["done", "failed", "cancelled"].includes(record.status)) {
@@ -208,10 +254,18 @@ export function createOpenClawReconciler(
           // "unconfirmed" error forever, without marking business work successful.
           const error = settledError(record, run.status);
           if (deps.nativeExecution && (run.error !== error || run.resourceWaitReason))
-            await runAsTenant(run, () => deps.prisma.run.updateMany({
-              where: { id: run.id, spaceId: run.spaceId, userId: run.userId, status: run.status, error: run.error },
-              data: { error, resourceWaitReason: null },
-            }));
+            await runAsTenant(run, () =>
+              deps.prisma.run.updateMany({
+                where: {
+                  id: run.id,
+                  spaceId: run.spaceId,
+                  userId: run.userId,
+                  status: run.status,
+                  error: run.error,
+                },
+                data: { error, resourceWaitReason: null },
+              }),
+            );
           continue;
         }
         // An explicit stop is the only reason to interrupt a native run here. A run that
@@ -228,16 +282,33 @@ export function createOpenClawReconciler(
             const peer = await deps.nativeExecution.connect(run);
             let status: NativeRecord["status"];
             try {
-              status = await reconcileNativeExecution({ key, record, cancel: stopRequested, store, peer });
-            } finally { peer.stop(); }
+              status = await reconcileNativeExecution({
+                key,
+                record,
+                cancel: stopRequested,
+                store,
+                peer,
+              });
+            } finally {
+              peer.stop();
+            }
             await deps.prisma.run.updateMany({
-              where: { id: run.id, spaceId: run.spaceId, userId: run.userId, status: run.status, error: run.error },
+              where: {
+                id: run.id,
+                spaceId: run.spaceId,
+                userId: run.userId,
+                status: run.status,
+                error: run.error,
+              },
               // An unconfirmed native result stays visible even on a finished run: it is the
               // user's only retry entry. Blocking is decided by admission, not by this marker.
-              data: { resourceWaitReason: status === "unconfirmed" ? "unconfirmed" : null,
-                error: status === "unconfirmed"
-                  ? "底层任务状态未确认，请先核实，勿重复提交。"
-                  : settledError((await store.read(key))!, run.status) },
+              data: {
+                resourceWaitReason: status === "unconfirmed" ? "unconfirmed" : null,
+                error:
+                  status === "unconfirmed"
+                    ? "底层任务状态未确认，请先核实，勿重复提交。"
+                    : settledError((await store.read(key))!, run.status),
+              },
             });
             return;
           }
@@ -310,7 +381,10 @@ export function createOpenClawReconciler(
               status: run.status,
               error: run.error,
             },
-            data: { error: "底层任务状态未确认，请先核实，勿重复提交。", resourceWaitReason: "unconfirmed" },
+            data: {
+              error: "底层任务状态未确认，请先核实，勿重复提交。",
+              resourceWaitReason: "unconfirmed",
+            },
           }),
         ).catch(() => undefined);
       }

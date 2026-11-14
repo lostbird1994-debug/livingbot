@@ -1,7 +1,5 @@
-import { findConversationHistory } from "../conversation-find.js";
-import { ORPCError } from "@orpc/server";
 import { runContinueJob, runJobKey } from "@livingbot/adapter-kit";
-import { validateBotModelChange, settleCallRequest } from "@livingbot/adapters";
+import { settleCallRequest, validateBotModelChange } from "@livingbot/adapters";
 import type { Actor, ProductEvent } from "@livingbot/contracts";
 import {
   AttachmentValidationError,
@@ -22,7 +20,13 @@ import {
   touchGroupUpdatedAt,
 } from "@livingbot/db";
 import { getLogger } from "@livingbot/logging";
-import { openLocalMessageFile, resolveLocalMessageFile } from "../local-message-file.js";
+import { ORPCError } from "@orpc/server";
+import { findConversationHistory } from "../conversation-find.js";
+import {
+  openLocalMessageFile,
+  previewLocalMessageFile,
+  resolveLocalMessageFile,
+} from "../local-message-file.js";
 import type { RouterDeps } from "../router.js";
 import { createRoutineTestRun, routineTestRunNonce, routineTestTarget } from "../routines.js";
 import { withSerializableRetry } from "../serializable-retry.js";
@@ -104,23 +108,38 @@ export function threadsRoutes(ctx: RouterContext) {
         )?.botId ?? target.memberBotIds[0]!);
   const send = async (
     actor: Actor,
-    input: Parameters<typeof sendThreadMessage>[3] & { botId?: string; groupId?: string; taskSessionId?: string },
+    input: Parameters<typeof sendThreadMessage>[3] & {
+      botId?: string;
+      groupId?: string;
+      taskSessionId?: string;
+    },
     startRoutines?: Parameters<typeof sendThreadMessage>[5],
   ) => {
     const setup = await modelSetup(deps, actor);
     const target = await resolveThreadTarget(deps.prisma, actor, input);
-    const modelRequested = input.modelProvider !== undefined || input.modelId !== undefined || input.thinkingLevel !== undefined;
+    const modelRequested =
+      input.modelProvider !== undefined ||
+      input.modelId !== undefined ||
+      input.thinkingLevel !== undefined;
     if (modelRequested) {
       if (target.kind !== "bot" || !target.taskSessionId || !target.taskModel)
-        throw new ORPCError("BAD_REQUEST", { message: "Per-task model choices require an independent task." });
+        throw new ORPCError("BAD_REQUEST", {
+          message: "Per-task model choices require an independent task.",
+        });
       const choice = await validateBotModelChange(ctx.botModelValidation(actor), {
-        spaceId: actor.spaceId, userId: actor.userId,
+        spaceId: actor.spaceId,
+        userId: actor.userId,
         provider: input.modelProvider ?? target.taskModel.modelProvider,
-        model: input.modelId ?? target.taskModel.modelId, thinkingLevel: input.thinkingLevel,
+        model: input.modelId ?? target.taskModel.modelId,
+        thinkingLevel: input.thinkingLevel,
         current: { provider: target.taskModel.modelProvider, model: target.taskModel.modelId },
       });
       if (!choice.ok) throw new ORPCError("BAD_REQUEST", { message: choice.error });
-      target.taskModel = { modelProvider: choice.provider, modelId: choice.model, thinkingLevel: choice.thinkingLevel };
+      target.taskModel = {
+        modelProvider: choice.provider,
+        modelId: choice.model,
+        thinkingLevel: choice.thinkingLevel,
+      };
     }
     // A bot with its own runnable model needs no main model.
     if (
@@ -166,24 +185,61 @@ export function threadsRoutes(ctx: RouterContext) {
   return {
     threads: {
       find: authed.threads.find.handler(async ({ context, input }) => {
-        const target = await resolveThreadTarget(deps.prisma, context.actor, input, { includeArchived: true });
-        return findConversationHistory(deps.prisma, context.actor, target.threadId, input, context.signal);
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input, {
+          includeArchived: true,
+        });
+        return findConversationHistory(
+          deps.prisma,
+          context.actor,
+          target.threadId,
+          input,
+          context.signal,
+        );
       }),
       fileInfo: authed.threads.fileInfo.handler(async ({ context, input }) => {
-        const target = await resolveThreadTarget(deps.prisma, context.actor, input, { includeArchived: true });
-        return resolveLocalMessageFile({ prisma: deps.prisma, localHost: deps.env.sandboxProvider === "desktop",
-          resolveDocument: deps.botWorkspace?.resolveDocument
-            ? reference => deps.botWorkspace!.resolveDocument!(context.actor, reference) : undefined,
-        }, target.threadId, { ...input, action: "open" });
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input, {
+          includeArchived: true,
+        });
+        return resolveLocalMessageFile(
+          {
+            prisma: deps.prisma,
+            localHost: deps.env.sandboxProvider === "desktop",
+            resolveDocument: deps.botWorkspace?.resolveDocument
+              ? (reference) => deps.botWorkspace!.resolveDocument!(context.actor, reference)
+              : undefined,
+          },
+          target.threadId,
+          { ...input, action: "open" },
+        );
+      }),
+      filePreview: authed.threads.filePreview.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input, {
+          includeArchived: true,
+        });
+        return previewLocalMessageFile(
+          {
+            prisma: deps.prisma,
+            localHost: deps.env.sandboxProvider === "desktop",
+            resolveDocument: deps.botWorkspace?.resolveDocument
+              ? (reference) => deps.botWorkspace!.resolveDocument!(context.actor, reference)
+              : undefined,
+          },
+          target.threadId,
+          input,
+        );
       }),
       fileAction: authed.threads.fileAction.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input, {
           includeArchived: true,
         });
         return openLocalMessageFile(
-          { prisma: deps.prisma, localHost: deps.env.sandboxProvider === "desktop",
+          {
+            prisma: deps.prisma,
+            localHost: deps.env.sandboxProvider === "desktop",
             resolveDocument: deps.botWorkspace?.resolveDocument
-              ? reference => deps.botWorkspace!.resolveDocument!(context.actor, reference) : undefined },
+              ? (reference) => deps.botWorkspace!.resolveDocument!(context.actor, reference)
+              : undefined,
+          },
           target.threadId,
           input,
         );
@@ -371,7 +427,10 @@ export function threadsRoutes(ctx: RouterContext) {
         return { ok: true as const, ...stopped };
       }),
       clear: authed.threads.clear.handler(async ({ context, input }) => {
-        if (input.taskSessionId) throw new ORPCError("BAD_REQUEST", { message: "Task history is preserved. Close its tab instead." });
+        if (input.taskSessionId)
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Task history is preserved. Close its tab instead.",
+          });
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         const contextBotId = target.kind === "bot" ? target.botId : target.memberBotIds[0];
         if (!contextBotId) throw new IsolationError();

@@ -65,6 +65,14 @@ export type ColorTokens = {
   success: string;
   warning: string;
   statusWorking: string;
+  fileSheet: string;
+  fileDocument: string;
+  filePdf: string;
+  fileSlide: string;
+  fileCode: string;
+  fileImage: string;
+  fileMedia: string;
+  fileArchive: string;
   /** Unread dot. The one blue in the inbox, in both themes. */
   unread: string;
   /** Working dot on a busy bot's avatar. The one green, in both themes. */
@@ -75,6 +83,14 @@ export type ColorTokens = {
 };
 
 export const darkTokens = {
+  fileSheet: "#4ade80",
+  fileDocument: "#60a5fa",
+  filePdf: "#f87171",
+  fileSlide: "#fb923c",
+  fileCode: "#a78bfa",
+  fileImage: "#2dd4bf",
+  fileMedia: "#f472b6",
+  fileArchive: "#fbbf24",
   background: "#141414",
   dialog: "#1E1E1E",
   foreground: "#FFFFFF",
@@ -120,6 +136,14 @@ export const darkTokens = {
 } as const satisfies ColorTokens;
 
 export const lightTokens = {
+  fileSheet: "#15803d",
+  fileDocument: "#2563eb",
+  filePdf: "#dc2626",
+  fileSlide: "#ea580c",
+  fileCode: "#7c3aed",
+  fileImage: "#0d9488",
+  fileMedia: "#db2777",
+  fileArchive: "#d97706",
   background: "#FCFCFC",
   dialog: "#FFFFFF",
   foreground: "#000000",
@@ -310,6 +334,7 @@ export const webPorcelainTokens: WebThemeColorTokens = {
  */
 
 export const webIndigoTokens: WebColorTokens = {
+  ...darkTokens,
   chatRoutine: darkTokens.chatRoutine,
   background: "#0C5670",
   dialog: "#2C6476",
@@ -357,6 +382,7 @@ export const webIndigoTokens: WebColorTokens = {
 };
 
 export const webMalachiteTokens: WebColorTokens = {
+  ...darkTokens,
   chatRoutine: darkTokens.chatRoutine,
   background: "#1B6A67",
   dialog: "#3A7978",
@@ -404,6 +430,7 @@ export const webMalachiteTokens: WebColorTokens = {
 };
 
 export const webDaiTokens: WebColorTokens = {
+  ...darkTokens,
   chatRoutine: darkTokens.chatRoutine,
   background: "#425066",
   dialog: "#596175",

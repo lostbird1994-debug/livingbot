@@ -39,6 +39,7 @@ import { ChatBackgroundLayer } from "../components/ChatBackgroundLayer";
 import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
+import { MarkdownDocumentView } from "../components/MarkdownDocumentView";
 import { PageLoading } from "../components/PageLoading";
 import { VoiceAssistant } from "../components/voice/VoiceAssistant";
 import type { ArtifactTarget } from "../lib/artifact-open";
@@ -57,6 +58,7 @@ import {
 } from "../lib/composer-enter-to-send-pref";
 import { computersAreUnavailable } from "../lib/computer-sandbox";
 import { desktopBridge } from "../lib/desktop";
+import { DocumentTabsProvider, useDocumentTabs } from "../lib/document-tabs";
 import { hasOpenDialog } from "../lib/has-open-dialog";
 import { markAfterPaint, markOnce } from "../lib/performance";
 import { usePreloadRecoveryState } from "../lib/preload-recovery";
@@ -485,8 +487,30 @@ function SpaceShell() {
     closeMobileSidebar: () => setMobileSidebarOpen(false),
   });
 
-  const taskTabs = useBotTaskTabs(inGroup ? undefined : active, rpc, `${shellSpaceId}:${userId ?? ""}`, searchParamsRef.current.get("task"));
+  const taskTabs = useBotTaskTabs(
+    inGroup ? undefined : active,
+    rpc,
+    `${shellSpaceId}:${userId ?? ""}`,
+    searchParamsRef.current.get("task"),
+  );
   const selectedTask = taskTabs.enabled ? taskTabs.selected : null;
+  const documentTabs = useDocumentTabs(
+    `${shellSpaceId}:${userId ?? ""}:${groupId ?? active?.id ?? ""}`,
+  );
+  useEffect(() => {
+    documentTabs.select(null);
+  }, [selectedTask, documentTabs.select]);
+  const sessionTabs = {
+    ...taskTabs,
+    select: (key: string | null) => {
+      documentTabs.select(null);
+      taskTabs.select(key);
+    },
+    create: () => {
+      documentTabs.select(null);
+      taskTabs.create();
+    },
+  };
   const activeSnapshot = inGroup
     ? snapshot?.groupId === groupId
       ? snapshot
@@ -1039,10 +1063,16 @@ function SpaceShell() {
             phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
             inCall={Boolean(active) && call?.botId === active?.id}
             panelOpen={chatPanelOpen}
-            sessionActions={taskTabs.enabled && taskTabs.opened.length === 0
-              ? <SessionActions state={taskTabs} variant="floating" />
-              : null}
-            onFind={() => selectedTask ? taskTabs.requestFind() : setPanel(panel === "find" ? null : "find")}
+            sessionActions={
+              taskTabs.enabled &&
+              taskTabs.opened.length === 0 &&
+              documentTabs.opened.length === 0 ? (
+                <SessionActions state={sessionTabs} variant="floating" />
+              ) : null
+            }
+            onFind={() =>
+              selectedTask ? taskTabs.requestFind() : setPanel(panel === "find" ? null : "find")
+            }
             onOpenNavigation={() => setMobileSidebarOpen(true)}
             onTogglePanel={() => {
               if (chatPanelOpen) setPanel(null);
@@ -1061,69 +1091,96 @@ function SpaceShell() {
               callBot(bot);
             }}
           />
-          <TaskTabs state={taskTabs} />
-          {selectedTask && active ? (
-            <TaskConversation key={`${active.id}:${selectedTask}`} bot={active} tabKey={selectedTask}
-              session={taskTabs.tasks.find(task => task.id === selectedTask)} rpc={rpc}
-              scope={`${shellSpaceId}:${userId ?? ""}`} userId={userId ?? ""} enterToSend={enterToSend}
-              findRequest={taskTabs.findRequest} onStarted={taskTabs.adopt} onChanged={taskTabs.refresh} onOpenBot={openBot}
-              onOpenComputer={() => computerControls.onOpenComputer(active.id)} />
-          ) : !active && !activeGroup && initialBotsLoaded ? (
-            <div className="grid flex-1 place-items-center">
-              <Button onClick={() => dialogs.setCreateBotOpen(true)}>
-                <Plus size={16} aria-hidden="true" />
-                <Trans>New bot</Trans>
-              </Button>
-            </div>
-          ) : (
-            <Transcript
-              key={activeSnapshot?.threadId}
-              scrollRef={thread.messageScroll}
-              scrollRequest={scrollRequest}
-              onScrollRequestHandled={clearScrollRequest}
-              followRequest={composer.sentCount}
-              artifactTarget={transcriptArtifactTarget}
-              markedUnreadMessageId={read.markedUnreadMessageId}
-              transcript={transcript}
-              showToolActivity={showToolActivity}
-              olderCursor={activeSnapshot?.olderCursor ?? null}
-              unreadAfterSeq={read.unreadAfterSeq}
-              loadingOlder={loadingOlder}
-              answerableAskIds={answerableAskIds}
-              dismissableAskIds={dismissableAskIds}
-              running={transcriptRunning}
-              workingBots={workingBots}
-              userBubble={userBubble}
-              onCallBack={
-                bootstrapMe?.phoneCallsEnabled && !inGroup && active
-                  ? () => callBot(active)
-                  : undefined
-              }
-              onLoadOlder={loadOlder}
-              onOpenBot={openBot}
-              onAnswer={composer.answerMessage}
-              onReply={replyToMessage}
-              onMarkUnread={markMessageUnread}
-              onQuote={quoteMessage}
-              onReact={composer.reactToMessage}
-              onJumpToMessage={jumpToReplyMessage}
-              onOpenPeerMessages={openPeerMessages}
-              memberName={resolveTranscriptMemberName}
-              peerBot={resolveTranscriptBot}
-              onRefresh={refreshActiveThread}
-              onBotChanged={refreshBots}
-              onAddRoutine={addSkillRoutine}
-              voiceReady={Boolean(voiceStatus?.ready)}
-              speakingMessageId={speakingMessageId}
-              onSpeak={speakMessage}
-              onOpenComputer={computerControls.onOpenComputer}
-              onOpenImportSetup={openImportSetup}
+          <TaskTabs
+            state={sessionTabs}
+            documents={documentTabs.opened}
+            selectedDocument={documentTabs.selected?.id}
+            onSelectDocument={documentTabs.select}
+            onCloseDocument={documentTabs.close}
+          />
+          {documentTabs.selected ? (
+            <MarkdownDocumentView
+              key={documentTabs.selected.id}
+              document={documentTabs.selected}
+              rpc={rpc}
             />
-          )}
+          ) : null}
+          <div className={documentTabs.selected ? "hidden" : "flex min-h-0 flex-1 flex-col"}>
+            {selectedTask && active ? (
+              <TaskConversation
+                key={`${active.id}:${selectedTask}`}
+                bot={active}
+                tabKey={selectedTask}
+                session={taskTabs.tasks.find((task) => task.id === selectedTask)}
+                rpc={rpc}
+                scope={`${shellSpaceId}:${userId ?? ""}`}
+                userId={userId ?? ""}
+                enterToSend={enterToSend}
+                findRequest={taskTabs.findRequest}
+                onStarted={taskTabs.adopt}
+                onChanged={taskTabs.refresh}
+                onOpenBot={openBot}
+                onOpenComputer={() => computerControls.onOpenComputer(active.id)}
+              />
+            ) : !active && !activeGroup && initialBotsLoaded ? (
+              <div className="grid flex-1 place-items-center">
+                <Button onClick={() => dialogs.setCreateBotOpen(true)}>
+                  <Plus size={16} aria-hidden="true" />
+                  <Trans>New bot</Trans>
+                </Button>
+              </div>
+            ) : (
+              <Transcript
+                key={activeSnapshot?.threadId}
+                scrollRef={thread.messageScroll}
+                scrollRequest={scrollRequest}
+                onScrollRequestHandled={clearScrollRequest}
+                followRequest={composer.sentCount}
+                artifactTarget={transcriptArtifactTarget}
+                markedUnreadMessageId={read.markedUnreadMessageId}
+                transcript={transcript}
+                showToolActivity={showToolActivity}
+                olderCursor={activeSnapshot?.olderCursor ?? null}
+                unreadAfterSeq={read.unreadAfterSeq}
+                loadingOlder={loadingOlder}
+                answerableAskIds={answerableAskIds}
+                dismissableAskIds={dismissableAskIds}
+                running={transcriptRunning}
+                workingBots={workingBots}
+                userBubble={userBubble}
+                onCallBack={
+                  bootstrapMe?.phoneCallsEnabled && !inGroup && active
+                    ? () => callBot(active)
+                    : undefined
+                }
+                onLoadOlder={loadOlder}
+                onOpenBot={openBot}
+                onAnswer={composer.answerMessage}
+                onReply={replyToMessage}
+                onMarkUnread={markMessageUnread}
+                onQuote={quoteMessage}
+                onReact={composer.reactToMessage}
+                onJumpToMessage={jumpToReplyMessage}
+                onOpenPeerMessages={openPeerMessages}
+                memberName={resolveTranscriptMemberName}
+                peerBot={resolveTranscriptBot}
+                onRefresh={refreshActiveThread}
+                onBotChanged={refreshBots}
+                onAddRoutine={addSkillRoutine}
+                voiceReady={Boolean(voiceStatus?.ready)}
+                speakingMessageId={speakingMessageId}
+                onSpeak={speakMessage}
+                onOpenComputer={computerControls.onOpenComputer}
+                onOpenImportSetup={openImportSetup}
+              />
+            )}
+          </div>
         </div>
         {(active || activeGroup) && !selectedTask ? (
           // Let messages continue behind the composer's rounded top corners.
-          <div className="pointer-events-none relative z-30 -mt-7">
+          <div
+            className={documentTabs.selected ? "hidden" : "pointer-events-none relative z-30 -mt-7"}
+          >
             {recordingSkill ? (
               <div className="pointer-events-auto bg-background px-6 pb-2 text-center text-[13px] text-destructive">
                 <Trans>Teaching in progress. Stop teaching before sending a new message.</Trans>
@@ -1381,5 +1438,9 @@ function SpaceShell() {
   );
 
   // Empty chrome until the first bot list lands would flash "Select a bot" before the chat.
-  return initialBotsLoaded || initialLoadFailed ? shell : <PageLoading />;
+  return initialBotsLoaded || initialLoadFailed ? (
+    <DocumentTabsProvider value={documentTabs.open}>{shell}</DocumentTabsProvider>
+  ) : (
+    <PageLoading />
+  );
 }

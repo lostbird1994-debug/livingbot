@@ -1,12 +1,13 @@
 import { execFile } from "node:child_process";
-import { realpath, stat } from "node:fs/promises";
+import { constants } from "node:fs";
+import { open as openFile, realpath, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
 import { promisify } from "node:util";
-import { ORPCError } from "@orpc/server";
 import type { MessageBlock } from "@livingbot/contracts";
 import { expandToolStepNotes, localDocumentPath, localDocumentReferences } from "@livingbot/core";
 import type { PrismaClient } from "@livingbot/db";
+import { ORPCError } from "@orpc/server";
 
 export async function resolveLocalMessageFile(
   deps: {
@@ -41,8 +42,9 @@ export async function resolveLocalMessageFile(
   const requested = input.path.startsWith("~/") ? join(homedir(), input.path.slice(2)) : input.path;
   let path: string;
   try {
-    try { path = await realpath(requested); }
-    catch {
+    try {
+      path = await realpath(requested);
+    } catch {
       const recovered = await deps.resolveDocument?.(input.path);
       if (!recovered) throw new Error("missing document");
       path = await realpath(recovered);
@@ -57,7 +59,8 @@ export async function resolveLocalMessageFile(
 }
 
 export async function openLocalMessageFile(
-  deps: Parameters<typeof resolveLocalMessageFile>[0], threadId: string,
+  deps: Parameters<typeof resolveLocalMessageFile>[0],
+  threadId: string,
   input: { messageId: string; path: string; action: "open" | "reveal" },
 ) {
   const { path } = await resolveLocalMessageFile(deps, threadId, input);
@@ -72,4 +75,42 @@ export async function openLocalMessageFile(
     });
   await open(path, input.action);
   return { ok: true as const };
+}
+
+/** Read only Markdown explicitly referenced by a message in the authorized thread. */
+export async function previewLocalMessageFile(
+  deps: Parameters<typeof resolveLocalMessageFile>[0],
+  threadId: string,
+  input: { messageId: string; path: string },
+) {
+  const file = await resolveLocalMessageFile(deps, threadId, { ...input, action: "open" });
+  if (!/\.md$/i.test(input.path) || !/\.md$/i.test(file.path))
+    throw new ORPCError("BAD_REQUEST", { message: "Only Markdown files can be previewed." });
+  const maximumBytes = 2 * 1024 * 1024;
+  const handle = await openFile(file.path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const metadata = await handle.stat();
+    if (!metadata.isFile() || metadata.size > maximumBytes)
+      throw new ORPCError("BAD_REQUEST", { message: "This file is too large to preview." });
+    // Bound reads even if another process grows the file after the size check.
+    const buffer = Buffer.alloc(maximumBytes + 1);
+    let length = 0;
+    while (length < buffer.length) {
+      const { bytesRead } = await handle.read(buffer, length, buffer.length - length, null);
+      if (!bytesRead) break;
+      length += bytesRead;
+    }
+    if (length > maximumBytes)
+      throw new ORPCError("BAD_REQUEST", { message: "This file is too large to preview." });
+    try {
+      return {
+        name: file.name,
+        text: new TextDecoder("utf-8", { fatal: true }).decode(buffer.subarray(0, length)),
+      };
+    } catch {
+      throw new ORPCError("BAD_REQUEST", { message: "This file is not valid UTF-8 text." });
+    }
+  } finally {
+    await handle.close();
+  }
 }

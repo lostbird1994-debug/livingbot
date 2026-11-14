@@ -7693,6 +7693,9 @@ msgstr "Includes model calls during tool use and subagents. Speed excludes tool 
 msgid "The local engine connection lacks required permissions."
 msgstr "The local engine connection lacks required permissions."
 
+msgid "The task stopped. Check its results before retrying."
+msgstr "The task stopped. Check its results before retrying."
+
 msgid "The previous task is unresolved. Check its status before continuing."
 msgstr "The previous task is unresolved. Check its status before continuing."
 

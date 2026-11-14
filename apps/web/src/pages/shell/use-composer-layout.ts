@@ -4,6 +4,8 @@ import { useLayoutEffect, useRef, useState } from "react";
 const COMPOSER_SINGLE_LINE_MAX_PX = 36;
 /** One-line `gap-x-3.5`, subtracted on each side of the text. */
 const COMPOSER_ONE_LINE_GAP_PX = 14;
+/** `gap-1.5` between a chip and the text sharing its line. */
+const COMPOSER_CHIP_GAP_PX = 6;
 /** Narrower than the expand check so a draft at the edge cannot flip. */
 const COMPOSER_COLLAPSE_SLACK_PX = 16;
 
@@ -27,12 +29,28 @@ function readComposerLayout(
 function measureTextareaHeight(textarea: HTMLTextAreaElement, width?: number) {
   const { style } = textarea;
   style.overflowY = "hidden";
-  if (width !== undefined) style.width = `${width}px`;
+  if (width !== undefined) style.width = `${Math.max(1, width)}px`;
   style.height = "0px";
   const height = textarea.scrollHeight;
   style.overflowY = "";
   style.width = "";
   return height;
+}
+
+/**
+ * Width the field's other children (mention/skill/connector chips, the dictation
+ * strip) take from the text beside them. They are the same size in both grid
+ * states, so this reads the same before and after expanding.
+ */
+function reserveBesideText(field: HTMLElement | null, line: HTMLElement | null) {
+  if (!field || !line) return 0;
+  let reserved = 0;
+  for (const child of field.children) {
+    // The text keeps its own slot; a hidden sibling (idle dictation input) uses no width.
+    if (child === line || !(child instanceof HTMLElement) || child.offsetWidth === 0) continue;
+    reserved += child.offsetWidth + COMPOSER_CHIP_GAP_PX;
+  }
+  return reserved;
 }
 
 export function spaceBetween(
@@ -89,16 +107,22 @@ export function useComposerLayout(draft: string, hasChips: boolean) {
       const attach = attachButtonRef.current;
       const actions = composerActionsRef.current;
       if (!attach || !actions) return;
-      const besideControls =
+      // Everything the text does not get in the one-row grid: the controls either
+      // side (both columns keep their width in either state) and the chips on its
+      // line. Asking the width it would have *before* expanding keeps the decision
+      // independent of the state it produces — asking the expanded width made a
+      // draft that only fits once expanded flip the layout forever.
+      const besideChips =
         spaceBetween(attach.getBoundingClientRect(), actions.getBoundingClientRect()) -
-        2 * COMPOSER_ONE_LINE_GAP_PX;
+        2 * COMPOSER_ONE_LINE_GAP_PX -
+        reserveBesideText(composerFieldRef.current, textarea.parentElement);
       const heightBeside = measureTextareaHeight(
         textarea,
-        besideControls - COMPOSER_COLLAPSE_SLACK_PX,
+        besideChips - COMPOSER_COLLAPSE_SLACK_PX,
       );
       textarea.style.height = `${contentHeight}px`;
       syncMirror(textarea, mirrorRef.current);
-      if (heightBeside <= COMPOSER_SINGLE_LINE_MAX_PX) setComposerExpanded(false);
+      setComposerExpanded(heightBeside > COMPOSER_SINGLE_LINE_MAX_PX);
     }
 
     const scrolled = () => syncMirror(el, mirrorRef.current);

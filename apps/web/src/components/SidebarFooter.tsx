@@ -10,6 +10,7 @@ import {
 } from "@livingbot/ui-web";
 import {
   BookOpen,
+  ChevronRight,
   Download,
   FolderOpen,
   Gauge,
@@ -18,7 +19,6 @@ import {
   Plug,
   ScrollText,
   Settings,
-  ChevronRight,
   SquareKanban,
   UserPlus,
   UserRound,
@@ -114,7 +114,17 @@ export function SidebarFooter({
       data-testid="sidebar-footer"
       className={`flex shrink-0 items-center gap-2 bg-transparent ${mini ? "flex-col px-1 py-2" : "px-2.5 py-3"}`}
     >
-      <Popover open={open} onOpenChange={onOpenChange}>
+      <Popover
+        open={open}
+        onOpenChange={(next) => {
+          // A closed menu forgets the submenu, so reopening starts from the rows.
+          if (!next) {
+            window.clearTimeout(settingsHoverTimer.current);
+            setSettingsOpen(false);
+          }
+          onOpenChange(next);
+        }}
+      >
         <PopoverTrigger
           data-testid="user-menu-trigger"
           aria-label={t`Account menu for ${name}`}
@@ -159,50 +169,57 @@ export function SidebarFooter({
                 <Trans>Connect apps</Trans>
               </Button>
             ) : null}
-            <div
-              data-testid="account-menu-settings"
-              onMouseEnter={() => {
-                window.clearTimeout(settingsHoverTimer.current);
-                setSettingsOpen(true);
-              }}
-              onMouseLeave={() => {
-                window.clearTimeout(settingsHoverTimer.current);
-                settingsHoverTimer.current = window.setTimeout(() => setSettingsOpen(false), 140);
-              }}
-            >
-              <Button
-                variant="ghost"
-                className="h-9 w-full justify-start gap-2.5 font-normal"
+            {/* The panels open beside the row: expanding them inside would push the rows below. */}
+            <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <PopoverTrigger
+                data-testid="account-menu-settings"
                 aria-label={t`Settings`}
-                aria-expanded={settingsOpen}
-                onClick={() => setSettingsOpen((open) => !open)}
+                onMouseEnter={() => {
+                  window.clearTimeout(settingsHoverTimer.current);
+                  setSettingsOpen(true);
+                }}
+                onMouseLeave={() => {
+                  window.clearTimeout(settingsHoverTimer.current);
+                  settingsHoverTimer.current = window.setTimeout(() => setSettingsOpen(false), 140);
+                }}
+                className={`${buttonVariants({ variant: "ghost" })} h-9 w-full justify-start gap-2.5 font-normal`}
               >
                 <Settings className="text-muted-foreground" strokeWidth={1.75} />
                 <Trans>Settings</Trans>
                 <ChevronRight
-                  className={`ms-auto size-3.5 text-muted-foreground transition-transform ${settingsOpen ? "rotate-90" : ""}`}
+                  className="ms-auto size-3.5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
-              </Button>
-              {settingsOpen ? (
-                <div className="ms-4 border-s border-border ps-1.5" data-testid="settings-panels">
-                  {SETTINGS_PANELS.map((panel) => (
-                    <Button
-                      key={panel}
-                      variant="ghost"
-                      className="h-8 w-full justify-start gap-2 font-normal"
-                      data-testid={`settings-panel-${panel}`}
-                      onClick={() => {
-                        setSettingsOpen(false);
-                        onSettings(panel);
-                      }}
-                    >
-                      <span className="text-[13px]">{panelLabels[panel]}</span>
-                    </Button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+              </PopoverTrigger>
+              <PopoverContent
+                data-testid="settings-panels"
+                side="inline-end"
+                align="start"
+                sideOffset={6}
+                collisionAvoidance={{ side: "shift", align: "shift" }}
+                onMouseEnter={() => window.clearTimeout(settingsHoverTimer.current)}
+                onMouseLeave={() => {
+                  window.clearTimeout(settingsHoverTimer.current);
+                  settingsHoverTimer.current = window.setTimeout(() => setSettingsOpen(false), 140);
+                }}
+                className="w-[180px] gap-0 p-1"
+              >
+                {SETTINGS_PANELS.map((panel) => (
+                  <Button
+                    key={panel}
+                    variant="ghost"
+                    className="h-8 w-full justify-start gap-2 font-normal"
+                    data-testid={`settings-panel-${panel}`}
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      onSettings(panel);
+                    }}
+                  >
+                    <span className="text-[13px]">{panelLabels[panel]}</span>
+                  </Button>
+                ))}
+              </PopoverContent>
+            </Popover>
             <Button
               variant="ghost"
               className="h-9 w-full justify-start gap-2.5 font-normal"

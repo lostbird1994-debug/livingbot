@@ -12,14 +12,16 @@ test("agent-attached files appear as cards with previews and downloads", async (
   await composer.fill("write notes/result.txt and attach it to the thread");
   await page.keyboard.press("Enter");
 
-  // Scope to ArtifactFileCard text (name + mime); sidebar bot status can also
-  // include the prompt path notes/result.txt once status syncs immediately.
-  const fileCard = page.getByRole("button", { name: /result\.txt text\/plain/ });
+  const fileCard = page
+    .getByTestId("message-delivery-files")
+    .getByRole("button", { name: /result\.txt/ })
+    .first();
   await expect(fileCard).toBeVisible({ timeout: 30_000 });
   await captureScreenshot(page, testInfo, "current-file-card");
 
   const downloadPromise = page.waitForEvent("download");
-  await fileCard.click();
+  await page.getByRole("button", { name: "result.txt 的操作", exact: true }).click();
+  await page.getByRole("menuitem", { name: "下载", exact: true }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe("result.txt");
 
@@ -29,7 +31,9 @@ test("agent-attached files appear as cards with previews and downloads", async (
   );
   await page.keyboard.press("Enter");
 
-  const previewButton = page.getByRole("button", { name: "Preview preview.md" });
+  const previewButton = page
+    .locator('[data-testid="message-delivery-files"] button[title="preview.md"]')
+    .first();
   await expect(previewButton).toBeVisible({ timeout: 30_000 });
   await captureScreenshot(page, testInfo, "markdown-file-card");
   let releasePreview = () => {};
@@ -42,35 +46,38 @@ test("agent-attached files appear as cards with previews and downloads", async (
   });
   await previewButton.click();
 
-  const dialog = page.getByRole("dialog", { name: "preview.md" });
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("status", { name: "Loading preview…" })).toBeVisible();
-  await expect(dialog).not.toContainText("Loading preview…");
+  const document = page.getByRole("tabpanel", { name: "preview.md" });
+  await expect(document).toBeVisible();
+  await expect(document.getByRole("status", { name: "Loading preview…" })).toBeVisible();
+  await expect(document).not.toContainText("Loading preview…");
   await captureScreenshot(page, testInfo, "markdown-preview-loading-spinner");
   releasePreview();
-  await expect(dialog.getByRole("heading", { name: "Project preview" })).toBeVisible();
-  const closeButton = dialog.getByRole("button", { name: "Close preview" });
-  const downloadButton = dialog.getByRole("button", { name: "Download preview.md" });
-  await expect(closeButton).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(downloadButton).toBeFocused();
-  await page.keyboard.press("Shift+Tab");
-  await expect(closeButton).toBeFocused();
+  await expect(document.getByRole("heading", { name: "Project preview" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "preview.md", exact: true })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   await captureScreenshot(page, testInfo, "markdown-preview-open");
 
+  await page.getByRole("button", { name: "Close preview preview.md", exact: true }).click();
+  await expect(document).toHaveCount(0);
+  await expect(previewButton).toBeVisible();
+
   const markdownDownloadPromise = page.waitForEvent("download");
-  await downloadButton.click();
+  await page.getByRole("button", { name: "preview.md 的操作", exact: true }).click();
+  await page.getByRole("menuitem", { name: "下载", exact: true }).click();
   const markdownDownload = await markdownDownloadPromise;
   expect(markdownDownload.suggestedFilename()).toBe("preview.md");
 
-  await page.keyboard.press("Escape");
-  await expect(dialog).toHaveCount(0);
-  await expect(previewButton).toBeFocused();
-
   await expect(page.getByRole("button", { name: "Send" })).toBeVisible({ timeout: 30_000 });
-  await composer.fill(
-    "write path notes/page.html and attach it to the thread says <h1>Rendered page</h1><p id=ran></p><script>document.getElementById('ran').textContent = 'script ran'</script>",
-  );
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "page.html",
+    mimeType: "text/html",
+    buffer: Buffer.from(
+      "<h1>Rendered page</h1><p id=ran></p><script>document.getElementById('ran').textContent = 'script ran'</script>",
+    ),
+  });
+  await composer.fill("Review the attached HTML.");
   await page.keyboard.press("Enter");
 
   const htmlPreviewButton = page.getByRole("button", { name: "Preview page.html" });

@@ -1,4 +1,3 @@
-import { publishTaskSessionReceipts } from "./task-session-receipts.js";
 import type { AgentRunRequest, ComputerRef, SemanticMemoryProvider } from "@livingbot/adapter-kit";
 import {
   DEFAULT_CONTEXT_STRATEGY,
@@ -36,8 +35,8 @@ import {
   userTurnMessageForRun,
 } from "@livingbot/core";
 import {
-  claimTaskSessionSlot,
   availableInSpace,
+  claimTaskSessionSlot,
   effectiveMemoryScope,
   isPartialReplyClientNonce,
   isTooManyDatabaseConnections,
@@ -206,6 +205,7 @@ import {
   takeoverContinuePlan,
 } from "./takeover-resume.js";
 import { TASK_CATALOG_GUIDANCE } from "./task-catalog.js";
+import { publishTaskSessionReceipts } from "./task-session-receipts.js";
 import { parsePlaybook } from "./teaching-session.js";
 import {
   currentTurnFilesInstruction,
@@ -249,10 +249,15 @@ const independentTaskToolInstruction = (offered: readonly string[]) => {
       ? "rakazo_shell"
       : ["write_file", "read_file", "list_files"].includes(name)
         ? `rakazo_${name}`
-        : name);
-  const files = [...new Set(renamed)].filter((name) =>
-    name.startsWith("rakazo_") || ["attach_file", "user_computer_shell", "user_computer_observe",
-      "user_computer_act"].includes(name));
+        : name,
+  );
+  const files = [...new Set(renamed)].filter(
+    (name) =>
+      name.startsWith("rakazo_") ||
+      ["attach_file", "user_computer_shell", "user_computer_observe", "user_computer_act"].includes(
+        name,
+      ),
+  );
   const listed = files.length
     ? `Your file and command tools in this run are: ${files.join(", ")}; call them by those exact names.`
     : "This run offers no file or command tools at all.";
@@ -331,7 +336,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
       }
       const independentTask = Boolean(run.thread?.taskBotId);
       if (independentTask && !(await claimTaskSessionSlot(deps.prisma, runId, run.botId))) {
-        if (run.status === "queued") await deps.jobs.enqueue({ ...runContinueJob(runId), availableAt: new Date(Date.now() + 2000) });
+        if (run.status === "queued")
+          await deps.jobs.enqueue({
+            ...runContinueJob(runId),
+            availableAt: new Date(Date.now() + 2000),
+          });
         return;
       }
       let { resumeCheckpoint, heldForTakeover, takeoverResume } = takeoverContinuePlan(run);
@@ -419,24 +428,28 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
       }
       let computerLease: ComputerExecutionLease | null = null;
       try {
-        const retainedResource = independentTask && await deps.prisma.computerExecutionLease.findFirst({ where: { runId, botId: run.botId } });
+        const retainedResource =
+          independentTask &&
+          (await deps.prisma.computerExecutionLease.findFirst({
+            where: { runId, botId: run.botId },
+          }));
         if (!independentTask || retainedResource) {
-        computerLease = await acquireComputerExecutionLease(deps.prisma, {
-          computerId: leaseTarget.computerId,
-          runId,
-          botId: run.botId,
-          workerId,
-          runFence: fence,
-        });
-        if (!computerLease && leaseTarget.computer?.scope === "dedicated") {
-          computerLease = await acquireDedicatedScreenLeaseFence(deps.prisma, {
+          computerLease = await acquireComputerExecutionLease(deps.prisma, {
             computerId: leaseTarget.computerId,
             runId,
             botId: run.botId,
             workerId,
             runFence: fence,
           });
-        }
+          if (!computerLease && leaseTarget.computer?.scope === "dedicated") {
+            computerLease = await acquireDedicatedScreenLeaseFence(deps.prisma, {
+              computerId: leaseTarget.computerId,
+              runId,
+              botId: run.botId,
+              workerId,
+              runFence: fence,
+            });
+          }
         }
       } catch (error) {
         if (!(error instanceof ComputerBusyError)) throw error;
@@ -591,7 +604,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             where: { id: "default" },
           }),
           deps.runtime.describe().capabilities.workspaceContext === true
-            ? Promise.resolve(null) : deps.memoryProviders.resolve(run.spaceId),
+            ? Promise.resolve(null)
+            : deps.memoryProviders.resolve(run.spaceId),
           deps.prisma.taughtSkill.findMany({
             where: { botId: run.botId, spaceId: run.spaceId, status: "saved" },
           }),
@@ -670,25 +684,44 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           acquiringResource ??= (async () => {
             for (;;) {
               runAbortController!.signal.throwIfAborted();
-              const stillOwns = await deps.prisma.run.findFirst({ where: {
-                id: runId, status: "running", leaseOwner: workerId, leaseFence: fence,
-              }, select: { id: true } });
+              const stillOwns = await deps.prisma.run.findFirst({
+                where: {
+                  id: runId,
+                  status: "running",
+                  leaseOwner: workerId,
+                  leaseFence: fence,
+                },
+                select: { id: true },
+              });
               if (!stillOwns) throw new Error("Run stopped while waiting for its computer");
               try {
                 computerLease = await acquireComputerExecutionLease(deps.prisma, {
-                  computerId: leaseTarget.computerId!, botId: run.botId, runId, workerId, runFence: fence,
+                  computerId: leaseTarget.computerId!,
+                  botId: run.botId,
+                  runId,
+                  workerId,
+                  runFence: fence,
                 });
                 if (!computerLease && leaseTarget.computer?.scope === "dedicated")
                   computerLease = await acquireDedicatedScreenLeaseFence(deps.prisma, {
-                    computerId: leaseTarget.computerId!, botId: run.botId, runId, workerId, runFence: fence,
+                    computerId: leaseTarget.computerId!,
+                    botId: run.botId,
+                    runId,
+                    workerId,
+                    runFence: fence,
                   });
-                await deps.prisma.run.updateMany({ where: { id: runId, leaseOwner: workerId, leaseFence: fence }, data: { resourceWaitReason: null } });
+                await deps.prisma.run.updateMany({
+                  where: { id: runId, leaseOwner: workerId, leaseFence: fence },
+                  data: { resourceWaitReason: null },
+                });
                 context.screenLeaseId = screenLeaseIdForRun(computerLease, runId, fence);
                 return;
               } catch (error) {
                 if (!(error instanceof ComputerBusyError)) throw error;
-                await deps.prisma.run.updateMany({ where: { id: runId, status: "running", leaseOwner: workerId, leaseFence: fence },
-                  data: { resourceWaitReason: "computer" } });
+                await deps.prisma.run.updateMany({
+                  where: { id: runId, status: "running", leaseOwner: workerId, leaseFence: fence },
+                  data: { resourceWaitReason: "computer" },
+                });
                 await abortableDelay(500, runAbortController!.signal);
               }
             }
@@ -880,12 +913,15 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const runtimeFallback = runtimeFallbackModel(deps.runtime);
         // A captured deployment model uses its existing deployment connection,
         // without requiring a separate personal credential for the same provider.
-        const deploymentTask = independentTask && Boolean(runDeployment && modelChoice.modelProvider === runDeployment.provider);
+        const deploymentTask =
+          independentTask &&
+          Boolean(runDeployment && modelChoice.modelProvider === runDeployment.provider);
         const pinError =
           run.modelPinned &&
-          !(deploymentTask ||
-            (await modelCreditBillingEnabled(deps)) &&
-            modelChoice.modelProvider === runDeployment?.provider
+          !(
+            deploymentTask ||
+            ((await modelCreditBillingEnabled(deps)) &&
+              modelChoice.modelProvider === runDeployment?.provider)
           )
             ? pinnedModelCredentialError(modelChoice, overrideCredential)
             : undefined;
@@ -893,9 +929,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           override: modelChoice,
           overrideCredential,
           main,
-          hostedProvider: deploymentTask ? runDeployment!.provider : (await modelCreditBillingEnabled(deps))
-            ? resolveDeploymentModel().provider
-            : undefined,
+          hostedProvider: deploymentTask
+            ? runDeployment!.provider
+            : (await modelCreditBillingEnabled(deps))
+              ? resolveDeploymentModel().provider
+              : undefined,
           defaults: { settings, deployment: runDeployment },
         });
         const selectedProvider = selected.provider ?? runtimeFallback?.provider;
@@ -1034,12 +1072,14 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           resolved,
         } = start;
         runSecrets.push(...resolved.redact);
-        const nativeWorkspaceContext = deps.runtime.describe().capabilities.workspaceContext === true;
-        const memoryContext = messagingChannelRun || nativeWorkspaceContext
-          ? undefined
-          : await loadAgentMemoryContext(deps.memory, bot.id, context, {
-              excludeSharedProfile: excludesSharedProfile(bot.roleCard),
-            });
+        const nativeWorkspaceContext =
+          deps.runtime.describe().capabilities.workspaceContext === true;
+        const memoryContext =
+          messagingChannelRun || nativeWorkspaceContext
+            ? undefined
+            : await loadAgentMemoryContext(deps.memory, bot.id, context, {
+                excludeSharedProfile: excludesSharedProfile(bot.roleCard),
+              });
         // A pin stays as it was created. Unpinned runs still record the model they
         // used; modelPinned is what keeps that record from becoming the next choice.
         if (!run.modelPinned) {
@@ -1724,7 +1764,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                     leaseFence: fence,
                     status: { in: ["running", "cancelled", "waiting_input"] },
                   },
-                  data: { error: "底层任务状态未确认，请先核实，勿重复提交。", resourceWaitReason: "unconfirmed" },
+                  data: {
+                    error: "底层任务状态未确认，请先核实，勿重复提交。",
+                    resourceWaitReason: "unconfirmed",
+                  },
                 });
               },
               verbatimMcpServers,
@@ -1748,7 +1791,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               contextStrategy: deps.contextStrategy,
               instructions: [
                 ...userTurnInstructions({
-                  botInstructions: nativeWorkspaceContext ? "" : runIdentityInstruction(bot, run.trigger),
+                  botInstructions: nativeWorkspaceContext
+                    ? ""
+                    : runIdentityInstruction(bot, run.trigger),
                   groupContext,
                   messagingContext,
                   redactedMemoryContext: memoryContext
@@ -1763,7 +1808,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   hasHistoricalContext: historicalContext.length > 0,
                   historyRetrievalEnabled: contextStrategy !== "current",
                   computerInstruction: nativeWorkspaceContext
-                    ? (independentTask ? independentTaskToolInstruction(tools.map(tool => tool.name)) : "Answer directly when the conversation is sufficient. Use native filesystem and exec tools for local work; use LivingBot's connected product tools for collaboration, tasks, approvals, attachments and app connections.")
+                    ? independentTask
+                      ? independentTaskToolInstruction(tools.map((tool) => tool.name))
+                      : "Answer directly when the conversation is sufficient. Use native filesystem and exec tools for local work; use LivingBot's connected product tools for collaboration, tasks, approvals, attachments and app connections."
                     : computerInstruction,
                   pageBrowserAllowed,
                   taskCatalogInstruction,
@@ -1928,6 +1975,17 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                     hasImages: Boolean(currentTurnImages?.length),
                   },
                 ),
+              onSteeringUndelivered: (steeringIds) =>
+                deps.events
+                  .releaseUndeliveredSteering({
+                    threadId: thread.id,
+                    botId: bot.id,
+                    runId,
+                    leaseOwner: workerId,
+                    leaseFence: fence,
+                    steeringIds,
+                  })
+                  .catch((error) => getLogger().error("steering release", error)),
             },
             context,
           );
@@ -2023,7 +2081,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         detachShutdown?.();
         clearInterval(heartbeat);
         if (independentTask) {
-          const ending = await deps.prisma.run.findUnique({ where: { id: runId }, select: { resourceWaitReason: true } });
+          const ending = await deps.prisma.run.findUnique({
+            where: { id: runId },
+            select: { resourceWaitReason: true },
+          });
           if (ending?.resourceWaitReason === "unconfirmed") lease.retainComputer = true;
         }
         if (!lease.retainComputer) {

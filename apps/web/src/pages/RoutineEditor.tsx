@@ -44,7 +44,6 @@ import {
   GitBranch,
   Globe,
   MessageSquare,
-  Pause,
   Plus,
   SlidersHorizontal,
   X,
@@ -57,6 +56,8 @@ import {
   parseModelOptionKey,
   thinkingLevelLabel,
 } from "../lib/model-catalog";
+import type { RoutineScheduleGroup } from "../lib/routine-schedule";
+import { groupRoutinesBySchedule } from "../lib/routine-schedule";
 import { rpc } from "../lib/rpc";
 import { RoutineRunHistory } from "./RoutineRunHistory";
 import { RoutineSchedule } from "./RoutineSchedule";
@@ -243,6 +244,19 @@ export function routineTriggerSummary(
   return parts.length > 0 ? parts.join(", ") : t`No trigger`;
 }
 
+function routineGroupLabel(group: RoutineScheduleGroup) {
+  switch (group) {
+    case "daily":
+      return <Trans>Every day</Trans>;
+    case "weekly":
+      return <Trans>Every week</Trans>;
+    case "monthly":
+      return <Trans>Monthly</Trans>;
+    case "other":
+      return <Trans>Other</Trans>;
+  }
+}
+
 export function RoutineList({
   routines,
   runningRoutineId,
@@ -256,13 +270,14 @@ export function RoutineList({
   onEdit: (routine: Routine) => void;
   onStop: () => void;
 }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
+  const sections = groupRoutinesBySchedule(routines, cronLabels(i18n.locale), i18n.locale);
   return (
     <section>
-      <SectionHeading className="mb-3 flex items-center justify-between gap-2">
+      <SectionHeading className="mb-2 flex items-center justify-between gap-2">
         <span className="flex items-center gap-2">
           <Trans>Routines</Trans>
-          <span className="text-xs font-normal tabular-nums text-muted-foreground">
+          <span className="font-normal tabular-nums text-label text-muted-foreground">
             {routines.length}
           </span>
         </span>
@@ -278,20 +293,34 @@ export function RoutineList({
           <Trans>Add</Trans>
         </Button>
       </SectionHeading>
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-background p-2">
-        {!routines.length ? (
-          <p className="px-3 py-5 text-sm text-muted-foreground">
-            <Trans>No routines yet</Trans>
-          </p>
-        ) : null}
-        {routines.map((routine) => (
-          <RoutineListRow
-            key={routine.id}
-            routine={routine}
-            running={runningRoutineId === routine.id}
-            onOpen={() => onEdit(routine)}
-            onStop={onStop}
-          />
+      {!routines.length ? (
+        <p className="py-4 text-body2 text-muted-foreground">
+          <Trans>No routines yet</Trans>
+        </p>
+      ) : null}
+      <div className="space-y-4">
+        {sections.map((section) => (
+          <div key={section.group}>
+            <SectionHeading variant="label" as="h4" className="flex items-center gap-1.5 pb-1">
+              {routineGroupLabel(section.group)}
+              <span className="text-caption font-normal tabular-nums text-muted-foreground/70">
+                {section.rows.length}
+              </span>
+            </SectionHeading>
+            <ul>
+              {section.rows.map((row) => (
+                <li key={row.routine.id}>
+                  <RoutineListRow
+                    routine={row.routine}
+                    detail={row.detail}
+                    running={runningRoutineId === row.routine.id}
+                    onOpen={() => onEdit(row.routine)}
+                    onStop={onStop}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
       </div>
     </section>
@@ -300,59 +329,65 @@ export function RoutineList({
 
 function RoutineListRow({
   routine,
+  detail,
   running,
   onOpen,
   onStop,
 }: {
   routine: Routine;
+  detail: string;
   running: boolean;
   onOpen: () => void;
   onStop: () => void;
 }) {
-  const { i18n } = useLingui();
-  const scheduleLabels = cronLabels(i18n.locale);
+  const { t, i18n } = useLingui();
+  const schedule = detail || routineTriggerSummary(routine, cronLabels(i18n.locale));
   return (
-    <div className="flex w-full items-center gap-2 rounded-lg px-3 py-3 transition-colors hover:bg-muted/60 motion-reduce:transition-none">
+    // The hover surface bleeds past the text so a row reads as one target without a card.
+    <div className="-mx-2 flex items-center gap-1 rounded-lg px-2 transition-colors hover:bg-muted/60 motion-reduce:transition-none">
       <button
         type="button"
         onClick={onOpen}
-        className="flex min-w-0 flex-1 items-center gap-3 rounded-md text-start focus-visible:outline-2 focus-visible:outline-ring"
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 text-start focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
       >
-        <span className="grid h-5 w-5 place-items-center">
-          {routine.active ? (
-            <Clock size={16} strokeWidth={1.6} className="text-muted-foreground" aria-hidden />
-          ) : (
-            <Pause size={14} className="text-muted-foreground" />
-          )}
+        <span
+          dir="auto"
+          title={routine.name}
+          className={`min-w-0 flex-1 truncate text-body2 ${
+            routine.active ? "text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          {routine.name}
         </span>
-        <span className="min-w-0 flex-1">
-          <span
-            className="block break-words text-sm font-medium leading-relaxed text-foreground"
-            dir="auto"
-          >
-            {routine.name}
+        {routine.active ? null : (
+          <span className="me-1 shrink-0 text-caption text-muted-foreground/60">
+            <Trans>Paused</Trans>
           </span>
-          <span className="flex min-w-0 gap-2 text-[12.5px] text-muted-foreground/80">
-            <span className="truncate">{routineTriggerSummary(routine, scheduleLabels)}</span>
-            {routine.modelProvider && routine.modelId ? (
-              <span className="truncate">{routine.modelId}</span>
-            ) : null}
-          </span>
-        </span>
-      </button>
-      {running ? (
-        <>
-          <span className="shrink-0 text-[12.5px] text-warning">
+        )}
+        {running ? (
+          <span className="sr-only">
             <Trans>Running</Trans>
           </span>
-          <Button
-            size="xs"
-            onClick={onStop}
-            className="shrink-0 bg-warning/15 text-warning hover:bg-warning/25"
+        ) : (
+          <span
+            dir="auto"
+            className="max-w-[44%] shrink-0 truncate tabular-nums text-label text-muted-foreground"
           >
-            <Trans>Stop</Trans>
-          </Button>
-        </>
+            {schedule}
+          </span>
+        )}
+      </button>
+      {running ? (
+        <Button
+          variant="ghost"
+          size="xs"
+          aria-label={t`Stop`}
+          title={t`Stop`}
+          onClick={onStop}
+          className="h-[18px] shrink-0 rounded-md bg-warning/12 px-1.5 text-caption text-warning hover:bg-warning/25 hover:text-warning"
+        >
+          <Trans>Stop</Trans>
+        </Button>
       ) : null}
     </div>
   );

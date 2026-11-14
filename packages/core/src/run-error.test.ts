@@ -868,6 +868,26 @@ describe("the one action that fixes a failed run", () => {
 });
 
 describe("local execution failures", () => {
+  it.each([
+    "Native process ownership is not confirmed",
+    "External task exceeded its execution deadline\nowned: Native process scope is not confirmed",
+    "Background command cancellation could not be confirmed; do not retry this task",
+  ])("does not blame the provider for unconfirmed process cleanup: %s", (details) => {
+    expect(normalizeRunError(details)).toEqual({
+      summary: "The previous task is unresolved. Check its status before continuing.",
+      details,
+    });
+  });
+  it.each([
+    "External task exceeded its execution deadline",
+    "底层任务已结束；请查看原生会话结果。",
+    "底层任务已结束；取消前的操作可能已经执行。",
+  ])("preserves a stopped task diagnostic: %s", (details) => {
+    expect(normalizeRunError(details)).toEqual({
+      summary: "The task stopped. Check its results before retrying.",
+      details,
+    });
+  });
   it("identifies local permissions without suggesting model or API key changes", () => {
     expect(normalizeRunError("missing scope: operator.admin")).toEqual({
       summary: "The local engine connection lacks required permissions.",
@@ -875,9 +895,11 @@ describe("local execution failures", () => {
     });
   });
   it("explains the unresolved session without suggesting a blind retry", () => {
-    const details = "An earlier task in this native session is unresolved; inspect it before submitting another task";
+    const details =
+      "An earlier task in this native session is unresolved; inspect it before submitting another task";
     expect(normalizeRunError(details)).toEqual({
-      summary: "The previous task is unresolved. Check its status before continuing.", details,
+      summary: "The previous task is unresolved. Check its status before continuing.",
+      details,
     });
   });
 });

@@ -603,6 +603,11 @@ export interface AgentRunRequest {
   onToolCompleted?: (completion: AgentToolCompletion) => Promise<void> | void;
   /** Atomically claim durable user steering at the runtime's next safe turn boundary. */
   claimSteering?: (seenIds: string[]) => Promise<AgentSteeringMessage[]>;
+  /**
+   * Steering this runtime claimed but could not hand to its engine. It stays the person's
+   * unanswered message, so the run must release it instead of finishing as if it answered.
+   */
+  onSteeringUndelivered?: (steeringIds: string[]) => void | Promise<void>;
 }
 
 export interface ScriptedTurn {

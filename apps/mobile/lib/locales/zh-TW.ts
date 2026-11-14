@@ -1,4 +1,8 @@
 export const ZH_TW_MESSAGES: Record<string, string> = {
+  "The task stopped. Check its results before retrying.":
+    "任務已停止。請先核實已有結果，再決定是否重試。",
+  "The previous task is unresolved. Check its status before continuing.":
+    "上一項任務的狀態尚未確認，請先核實後再繼續。",
   "Loaded context": "載入內容",
   Identity: "身分",
   Personality: "性格",

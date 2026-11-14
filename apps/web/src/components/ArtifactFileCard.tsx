@@ -4,16 +4,25 @@ import { useLingui } from "@lingui/react/macro";
 import { ChatMarkdown } from "@livingbot/chat-ui/web";
 import { isAttachmentAudioMimeType } from "@livingbot/contracts";
 import { attachmentFileName, fileSizeParts } from "@livingbot/core";
-import { Button, Dialog, DialogClose, DialogContent, DialogTitle, Spinner } from "@livingbot/ui-web";
-import { Code2, Download, FileText, FolderOpen, Play, X } from "lucide-react";
+import {
+  Button,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+  Spinner,
+} from "@livingbot/ui-web";
+import { Download, FolderOpen, Play, X } from "lucide-react";
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
+import { isMarkdownFile, useOpenDocument } from "../lib/document-tabs";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
-import { DeliveryFileCard } from "./DeliveryFileCard";
 import { BuiCard } from "./ai/primitives";
+import { DeliveryFileCard } from "./DeliveryFileCard";
+import { FileTypeIcon } from "./FileTypeIcon";
 import { IconTooltip } from "./IconTooltip";
 import { PdfViewer } from "./PdfViewer";
 import { SandboxedHtmlViewer } from "./SandboxedHtmlViewer";
@@ -41,8 +50,12 @@ const TEXT_MIME_TYPES = new Set(["text/markdown", "text/html"]);
 
 export function ArtifactFileCard(props: ArtifactFileCardProps) {
   const { t } = useLingui();
+  const openDocument = useOpenDocument();
   const fileName = attachmentFileName(props.name, props.mimeType);
-  const previewable = PREVIEWABLE_MIME_TYPES.has(props.mimeType) || props.mimeType.startsWith("image/");
+  const previewable =
+    PREVIEWABLE_MIME_TYPES.has(props.mimeType) ||
+    props.mimeType.startsWith("image/") ||
+    (openDocument !== null && isMarkdownFile(fileName, props.mimeType));
   const previewButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -51,6 +64,17 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
   // state: a failed open must not look like a failed download.
   const [fileBusy, setFileBusy] = useState(false);
   const [fileError, setFileError] = useState("");
+
+  function preview() {
+    if (openDocument && isMarkdownFile(fileName, props.mimeType)) {
+      openDocument({
+        kind: "artifact",
+        name: fileName,
+        target: props.target,
+        artifactId: props.artifactId,
+      });
+    } else setPreviewOpen(true);
+  }
 
   async function startDownload() {
     setDownloadError(null);
@@ -66,7 +90,9 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
     setFileBusy(true);
     setFileError("");
     try {
-      await rpc.artifacts.fileAction({ artifactId: props.artifactId, action,
+      await rpc.artifacts.fileAction({
+        artifactId: props.artifactId,
+        action,
         ...(props.preferPreview && action === "open" ? { version: "attachment" as const } : {}),
       });
     } catch (error) {
@@ -76,18 +102,34 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
     }
   }
 
-  if (props.compact) return <>
-    <DeliveryFileCard name={fileName} size={props.size} nameHighlight={props.nameHighlight} wrapName={props.wrapName}
-      onOpen={async () => { if (props.preferPreview && previewable) setPreviewOpen(true); else await openOnThisMac("open"); }}
-      onReveal={props.sourceAvailable === false ? undefined : () => openOnThisMac("reveal")}
-      onDownload={startDownload} error={fileError || downloadError || undefined} />
-    <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-      <DialogContent showCloseButton={false} initialFocus={closeButton}
-        className="flex h-[min(88vh,900px)] w-[min(960px,94vw)] flex-col gap-0 overflow-hidden p-0 sm:max-w-none">
-        <FilePreview {...props} closeButtonRef={closeButton} />
-      </DialogContent>
-    </Dialog>
-  </>;
+  if (props.compact)
+    return (
+      <>
+        <DeliveryFileCard
+          name={fileName}
+          size={props.size}
+          nameHighlight={props.nameHighlight}
+          wrapName={props.wrapName}
+          onOpen={async () => {
+            if (openDocument && isMarkdownFile(fileName, props.mimeType)) preview();
+            else if (props.preferPreview && previewable) preview();
+            else await openOnThisMac("open");
+          }}
+          onReveal={props.sourceAvailable === false ? undefined : () => openOnThisMac("reveal")}
+          onDownload={startDownload}
+          error={fileError || downloadError || undefined}
+        />
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent
+            showCloseButton={false}
+            initialFocus={closeButton}
+            className="flex h-[min(88vh,900px)] w-[min(960px,94vw)] flex-col gap-0 overflow-hidden p-0 sm:max-w-none"
+          >
+            <FilePreview {...props} closeButtonRef={closeButton} />
+          </DialogContent>
+        </Dialog>
+      </>
+    );
 
   if (isAttachmentAudioMimeType(props.mimeType)) {
     return (
@@ -147,15 +189,11 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
             ref={previewButton}
             type="button"
             aria-label={t`Preview ${props.name}`}
-            onClick={() => setPreviewOpen(true)}
+            onClick={preview}
             className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-accent"
           >
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-muted text-foreground">
-              {props.mimeType === "text/html" ? (
-                <Code2 size={21} strokeWidth={1.8} />
-              ) : (
-                <FileText size={21} strokeWidth={1.8} />
-              )}
+              <FileTypeIcon name={props.name} mimeType={props.mimeType} size={21} />
             </span>
             <span className="min-w-0">
               <span className="block truncate text-[14px] font-medium">{props.name}</span>
@@ -457,9 +495,20 @@ function formatSize(bytes: number | undefined): string {
   }
 }
 
-function ImagePreview({ bytes, name, mimeType }: { bytes: Uint8Array; name: string; mimeType: string }) {
+function ImagePreview({
+  bytes,
+  name,
+  mimeType,
+}: {
+  bytes: Uint8Array;
+  name: string;
+  mimeType: string;
+}) {
   const [src, setSrc] = useState<string>();
-  useEffect(() => { const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: mimeType }));
-    setSrc(url); return () => URL.revokeObjectURL(url); }, [bytes, mimeType]);
+  useEffect(() => {
+    const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: mimeType }));
+    setSrc(url);
+    return () => URL.revokeObjectURL(url);
+  }, [bytes, mimeType]);
   return <img src={src} alt={name} className="mx-auto h-full max-w-full object-contain p-4" />;
 }

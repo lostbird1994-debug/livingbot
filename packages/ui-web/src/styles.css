@@ -72,6 +72,14 @@
   --color-link: var(--link);
   --color-favicon-plate: var(--favicon-plate);
   --color-success: var(--success);
+  --color-file-sheet: var(--file-sheet);
+  --color-file-document: var(--file-document);
+  --color-file-pdf: var(--file-pdf);
+  --color-file-slide: var(--file-slide);
+  --color-file-code: var(--file-code);
+  --color-file-image: var(--file-image);
+  --color-file-media: var(--file-media);
+  --color-file-archive: var(--file-archive);
   --color-warning: var(--warning);
   --color-status-working: var(--status-working);
   --color-unread: var(--unread);

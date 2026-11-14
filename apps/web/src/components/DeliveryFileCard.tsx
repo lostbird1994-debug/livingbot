@@ -1,4 +1,3 @@
-import { HighlightedText } from "./HighlightedText";
 import { fileSizeParts } from "@livingbot/core";
 import {
   Button,
@@ -7,9 +6,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@livingbot/ui-web";
-import { Copy, Download, ExternalLink, FileText, FolderOpen, MoreHorizontal } from "lucide-react";
+import { Copy, Download, ExternalLink, FolderOpen, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { errorText } from "../lib/user-error";
+import { FileTypeIcon } from "./FileTypeIcon";
+import { HighlightedText } from "./HighlightedText";
 
 export function DeliveryFileCard({
   name,
@@ -58,7 +59,7 @@ export function DeliveryFileCard({
       data-testid="delivery-file-card"
     >
       <div className="flex min-w-0 items-center gap-3">
-        <FileText aria-hidden="true" className="size-8 shrink-0 text-primary" />
+        <FileTypeIcon name={name} className="size-8 shrink-0" />
         <button
           type="button"
           className="min-w-0 flex-1 text-left disabled:opacity-60"
@@ -66,7 +67,11 @@ export function DeliveryFileCard({
           onClick={() => void run(onOpen)}
           title={name}
         >
-          <span className={`block text-sm font-medium ${wrapName ? "line-clamp-2 break-words" : "truncate"}`}><HighlightedText text={name} query={nameHighlight ?? ""} /></span>
+          <span
+            className={`block text-sm font-medium ${wrapName ? "line-clamp-2 break-words" : "truncate"}`}
+          >
+            <HighlightedText text={name} query={nameHighlight ?? ""} />
+          </span>
           <span className="mt-1 block text-xs text-muted-foreground">
             {busy ? "处理中…" : bytes}
           </span>
@@ -85,10 +90,12 @@ export function DeliveryFileCard({
             <MoreHorizontal />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-52 whitespace-nowrap">
-            {onReveal ? <DropdownMenuItem onClick={() => void run(onReveal)}>
-              <FolderOpen />
-              打开源文件夹
-            </DropdownMenuItem> : null}
+            {onReveal ? (
+              <DropdownMenuItem onClick={() => void run(onReveal)}>
+                <FolderOpen />
+                打开源文件夹
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuItem onClick={() => void run(onOpen)}>
               <ExternalLink />
               在默认应用打开

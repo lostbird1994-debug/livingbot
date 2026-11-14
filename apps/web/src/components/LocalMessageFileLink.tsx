@@ -3,6 +3,7 @@ import { Button } from "@livingbot/ui-web";
 import { FolderOpen } from "lucide-react";
 import { useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
+import { isMarkdownFile, useOpenDocument } from "../lib/document-tabs";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 
@@ -20,6 +21,7 @@ export function LocalMessageFileLink({
   inline?: boolean;
 }) {
   const { t } = useLingui();
+  const openDocument = useOpenDocument();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const act = async (action: "open" | "reveal") => {
@@ -43,23 +45,33 @@ export function LocalMessageFileLink({
         aria-disabled={busy}
         onClick={(event) => {
           event.preventDefault();
-          void act("open");
+          if (openDocument && isMarkdownFile(path)) {
+            openDocument({
+              kind: "message",
+              name: path.split("/").at(-1) || path,
+              target,
+              messageId,
+              path,
+            });
+          } else void act("open");
         }}
         onAuxClick={(event) => event.preventDefault()}
       >
         {label || path.split("/").at(-1) || path}
       </a>
-      {!inline ? <Button
-        type="button"
-        variant="ghost"
-        size="xs"
-        disabled={busy}
-        title={t`Open containing folder`}
-        onClick={() => void act("reveal")}
-      >
-        <FolderOpen className="size-3.5" />
-        {t`Open folder`}
-      </Button> : null}
+      {!inline ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          disabled={busy}
+          title={t`Open containing folder`}
+          onClick={() => void act("reveal")}
+        >
+          <FolderOpen className="size-3.5" />
+          {t`Open folder`}
+        </Button>
+      ) : null}
       {error ? (
         <span role="alert" className="w-full text-xs text-destructive">
           {error}

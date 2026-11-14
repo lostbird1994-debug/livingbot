@@ -4726,6 +4726,10 @@ msgstr "离线"
 msgid "Ollama API key"
 msgstr "Ollama API 密钥"
 
+#: src/pages/RoutineEditor.tsx
+msgid "Other"
+msgstr "其他"
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Ollama Cloud"
@@ -7720,6 +7724,9 @@ msgstr "本地执行引擎连接权限不足。"
 
 msgid "The previous task is unresolved. Check its status before continuing."
 msgstr "上一项任务的状态尚未确认，请先核实后再继续。"
+
+msgid "The task stopped. Check its results before retrying."
+msgstr "任务已停止。请先核实已有结果，再决定是否重试。"
 
 msgid "Workspace files"
 msgstr "工作区文件"

@@ -230,11 +230,30 @@ export function normalizeRunError(
 } {
   const trimmed = details.trim();
   if (/^missing scope: operator\.[a-z]+$/.test(trimmed)) {
-    return { summary: translate("The local engine connection lacks required permissions."), details };
+    return {
+      summary: translate("The local engine connection lacks required permissions."),
+      details,
+    };
   }
-  if (trimmed === "An earlier task in this native session is unresolved; inspect it before submitting another task" ||
-      trimmed === "底层任务状态未确认，请先核实，勿重复提交。") {
-    return { summary: translate("The previous task is unresolved. Check its status before continuing."), details };
+  if (
+    trimmed ===
+      "An earlier task in this native session is unresolved; inspect it before submitting another task" ||
+    trimmed === "底层任务状态未确认，请先核实，勿重复提交。" ||
+    /(?:Native process (?:ownership|scope) is not confirmed|Background command cancellation could not be confirmed|Background process control (?:timed out|failed))/.test(
+      trimmed,
+    )
+  ) {
+    return {
+      summary: translate("The previous task is unresolved. Check its status before continuing."),
+      details,
+    };
+  }
+  if (
+    trimmed === "External task exceeded its execution deadline" ||
+    trimmed === "底层任务已结束；请查看原生会话结果。" ||
+    trimmed === "底层任务已结束；取消前的操作可能已经执行。"
+  ) {
+    return { summary: translate("The task stopped. Check its results before retrying."), details };
   }
   if ([MODEL_IMAGE_INPUT_ERROR, MODEL_IMAGE_INPUT_UNKNOWN].includes(trimmed)) {
     return {

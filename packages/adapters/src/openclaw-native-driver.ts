@@ -1,8 +1,8 @@
-import { nativeToolProgress } from "./native-tool-progress.js";
 import { createHash } from "node:crypto";
 import { isToolPauseResult } from "./approval-effect.js";
 import type { NativeCollaboration } from "./native-collaboration.js";
 import type { CollaborationCall, NativeRunResult } from "./native-collaboration-broker.js";
+import { nativeToolProgress } from "./native-tool-progress.js";
 
 export interface NativeFrame {
   event: string;
@@ -83,6 +83,8 @@ export interface NativeInput {
       attachments?: unknown[];
     }>
   >;
+  /** Steering the engine never accepted; the person's message is still unanswered. */
+  onSteeringUndelivered?: (steeringIds: string[]) => void | Promise<void>;
   onSteered?: (fromRunUser: boolean) => void;
 }
 export interface NativeOptions {
@@ -90,10 +92,11 @@ export interface NativeOptions {
   connect(onEvent: (frame: NativeFrame) => void): Promise<NativePeer>;
   connectMs?: number;
   dispatchMs?: number;
+  /** Optional total execution deadline; omitted or zero means no deadline. */
   runMs?: number;
   cancelMs?: number;
   pollMs?: number;
-  /** Deadline for requesting cancellation of an earlier invocation, never proof of exit. */
+  /** Earlier-owner deadline; defaults to runMs. Zero disables automatic cancellation. */
   staleMs?: number;
   /** Inconclusive status polls tolerated before the session is held as unconfirmed. */
   unconfirmedPolls?: number;
@@ -118,21 +121,32 @@ export interface NativeRunStatus {
   reason?: string;
   error?: string;
 }
-export const isNativeTerminal = (result: NativeRunStatus) => result.unconfirmed !== true &&
+export const isNativeTerminal = (result: NativeRunStatus) =>
+  result.unconfirmed !== true &&
   (["ok", "error", "aborted"].includes(result.status) || isNativeCancelled(result));
 
 /** A stop request is not a completion receipt. Wait only for the exact run. */
 export async function waitForNativeTermination(
-  peer: NativePeer, record: NativeRecord, waitMs: number, initial?: NativeRunStatus,
+  peer: NativePeer,
+  record: NativeRecord,
+  waitMs: number,
+  initial?: NativeRunStatus,
 ): Promise<NativeRunStatus> {
   const deadline = Date.now() + Math.max(0, waitMs);
-  const read = () => peer.request<NativeRunStatus>("rakazo.run.status", {
-    sessionKey: record.sessionKey, runId: record.runId,
-    startedAt: record.startedAt, engineInstanceId: record.engineInstanceId,
-  }, { timeoutMs: Math.max(1, Math.min(6000, deadline - Date.now())) });
-  let result = initial ?? await read();
+  const read = () =>
+    peer.request<NativeRunStatus>(
+      "rakazo.run.status",
+      {
+        sessionKey: record.sessionKey,
+        runId: record.runId,
+        startedAt: record.startedAt,
+        engineInstanceId: record.engineInstanceId,
+      },
+      { timeoutMs: Math.max(1, Math.min(6000, deadline - Date.now())) },
+    );
+  let result = initial ?? (await read());
   while (!isNativeTerminal(result) && Date.now() < deadline) {
-    await new Promise(resolve => setTimeout(resolve, Math.min(100, deadline - Date.now())));
+    await new Promise((resolve) => setTimeout(resolve, Math.min(100, deadline - Date.now())));
     if (Date.now() < deadline) result = await read();
   }
   return result;
@@ -170,41 +184,72 @@ const bounded = <T>(promise: Promise<T>, ms: number, label: string): Promise<T> 
   });
 
 /** Reused by the live producer and recovery after an API/worker restart. */
-export async function stopNativeBackgroundWork(peer: NativePeer, record: NativeRecord, timeoutMs = 10_000) {
+export async function stopNativeBackgroundWork(
+  peer: NativePeer,
+  record: NativeRecord,
+  timeoutMs = 10_000,
+) {
+  const errors: string[] = [];
   for (const processId of record.backgroundProcesses ?? []) {
-    const invoke = (action: "kill" | "poll") => bounded(peer.request<any>(
-      "rakazo.process.control",
-      { action, sessionId: processId, sessionKey: record.sessionKey, runId: record.runId },
-      { timeoutMs },
-    ), timeoutMs, "Background process control timed out");
-    await invoke("kill");
-    const deadline = Date.now() + timeoutMs;
-    let terminal = false;
-    do {
-      const details = await invoke("poll");
-      terminal = ["completed", "failed"].includes(details?.status);
-      if (!terminal) await new Promise(resolve => setTimeout(resolve, Math.min(100, timeoutMs)));
-    } while (!terminal && Date.now() < deadline);
-    if (!terminal) throw new NativeExecutionError(
-      "Background command cancellation could not be confirmed; do not retry this task", "unconfirmed",
-    );
+    const invoke = (action: "kill" | "poll") =>
+      bounded(
+        peer.request<any>(
+          "rakazo.process.control",
+          { action, sessionId: processId, sessionKey: record.sessionKey, runId: record.runId },
+          { timeoutMs },
+        ),
+        timeoutMs,
+        "Background process control timed out",
+      );
+    try {
+      await invoke("kill");
+      const deadline = Date.now() + timeoutMs;
+      let terminal = false;
+      do {
+        const details = await invoke("poll");
+        terminal = ["completed", "failed"].includes(details?.status);
+        if (!terminal)
+          await new Promise((resolve) => setTimeout(resolve, Math.min(100, timeoutMs)));
+      } while (!terminal && Date.now() < deadline);
+      if (!terminal)
+        throw new Error(
+          "Background command cancellation could not be confirmed; do not retry this task",
+        );
+    } catch (error) {
+      errors.push(
+        `${processId}: ${error instanceof Error ? error.message : "Background process control failed"}`,
+      );
+    }
   }
+  if (errors.length) throw new NativeExecutionError(errors.join("\n"), "unconfirmed");
 }
 
 /** Read-only confirmation; losing a process registry is not proof of exit. */
 export async function confirmNativeBackgroundWorkStopped(peer: NativePeer, record: NativeRecord) {
   for (const sessionId of record.backgroundProcesses ?? []) {
-    const result = await peer.request<{ status: string }>("rakazo.process.control", {
-      sessionKey: record.sessionKey, runId: record.runId, sessionId, action: "poll",
-    }, { timeoutMs: 6000 });
+    const result = await peer.request<{ status: string }>(
+      "rakazo.process.control",
+      {
+        sessionKey: record.sessionKey,
+        runId: record.runId,
+        sessionId,
+        action: "poll",
+      },
+      { timeoutMs: 6000 },
+    );
     if (!["completed", "failed"].includes(result.status))
-      throw new NativeExecutionError("原任务的后台命令尚未确认停止，请先核实该命令。", "unconfirmed");
+      throw new NativeExecutionError(
+        "原任务的后台命令尚未确认停止，请先核实该命令。",
+        "unconfirmed",
+      );
   }
 }
 
 /** One durable native invocation, never an automatically retried model request. */
 export async function runNativeAgent(input: NativeInput, options: NativeOptions): Promise<string> {
-  const runMs = options.runMs ?? 30 * 60_000;
+  // Zero is the engine's no-timeout protocol value. Long tasks stay cancellable
+  // without imposing a wall-clock deadline on otherwise healthy execution.
+  const runMs = options.runMs ?? 0;
   const pollMs = options.pollMs ?? 15_000;
   const cancelMs = options.cancelMs ?? 10_000;
   const sessionKey = nativeSessionKey(input.scope, input.agentId);
@@ -223,7 +268,8 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     (saved.sessionKey !== sessionKey ||
       saved.runId !== runId ||
       saved.modelId !== input.modelId ||
-      (saved.inputHash !== inputHash && saved.status !== "approval" &&
+      (saved.inputHash !== inputHash &&
+        saved.status !== "approval" &&
         !(saved.toolMode === "kernel" && input.collaboration?.toolMode === "kernel")))
   )
     throw new NativeExecutionError(
@@ -235,8 +281,11 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     input.onUsage?.(saved.usage);
     return saved.text;
   }
-  if (saved && (["failed", "cancelled"].includes(saved.status) ||
-    (saved.status === "unconfirmed" && input.collaboration?.toolMode !== "kernel")))
+  if (
+    saved &&
+    (["failed", "cancelled"].includes(saved.status) ||
+      (saved.status === "unconfirmed" && input.collaboration?.toolMode !== "kernel"))
+  )
     throw new NativeExecutionError(
       saved.error ?? "External task requires an explicit new run",
       saved.status,
@@ -254,31 +303,54 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     await new Promise((resolve) => setTimeout(resolve, Math.min(100, cancelMs)));
     owner = await options.store.read(sessionOwnerKey);
   }
-  if (!input.signal?.aborted && owner && owner.runId !== runId && owner.toolMode === "kernel" &&
-    ["dispatching", "running", "approval", "unconfirmed"].includes(owner.status)) {
+  if (
+    !input.signal?.aborted &&
+    owner &&
+    owner.runId !== runId &&
+    owner.toolMode === "kernel" &&
+    ["dispatching", "running", "approval", "unconfirmed"].includes(owner.status)
+  ) {
     // Recovery only observes the old invocation. Never register its tools or
     // replay its agent request while trying to admit a different task.
     input.onNotice?.({ type: "progress", text: "正在核对上一轮任务的结束状态…" });
     let recoveryPeer: NativePeer | undefined;
     let finished = false;
     try {
-      const recoveryConnection: NativePeer = await bounded(options.connect(() => {}).then(peer => {
-        if (finished) peer.stop();
-        return peer;
-      }), options.connectMs ?? 15_000, "Native recovery connection timed out");
+      const recoveryConnection: NativePeer = await bounded(
+        options
+          .connect(() => {})
+          .then((peer) => {
+            if (finished) peer.stop();
+            return peer;
+          }),
+        options.connectMs ?? 15_000,
+        "Native recovery connection timed out",
+      );
       recoveryPeer = recoveryConnection;
       // Deferred to the recovery path to avoid a static driver/reconciler cycle.
       const { reconcileNativeExecution } = await import("./openclaw-reconciler.js");
       const recoveryKey = owner.executionKey ?? sessionOwnerKey;
-      const recoveryRecord = recoveryKey === sessionOwnerKey ? owner : await options.store.read(recoveryKey);
-      if (!recoveryRecord || recoveryRecord.runId !== owner.runId || recoveryRecord.sessionKey !== sessionKey)
+      const recoveryRecord =
+        recoveryKey === sessionOwnerKey ? owner : await options.store.read(recoveryKey);
+      if (
+        !recoveryRecord ||
+        recoveryRecord.runId !== owner.runId ||
+        recoveryRecord.sessionKey !== sessionKey
+      )
         throw new Error("Native recovery owner identity changed");
       await reconcileNativeExecution({
-        key: recoveryKey, record: recoveryRecord,
-        cancel: false, store: options.store, peer: recoveryConnection,
+        key: recoveryKey,
+        record: recoveryRecord,
+        cancel: false,
+        store: options.store,
+        peer: recoveryConnection,
       });
-    } catch { /* Unavailable evidence must leave the existing owner in place. */ }
-    finally { finished = true; recoveryPeer?.stop(); }
+    } catch {
+      /* Unavailable evidence must leave the existing owner in place. */
+    } finally {
+      finished = true;
+      recoveryPeer?.stop();
+    }
     owner = await options.store.read(sessionOwnerKey);
   }
   if (
@@ -290,8 +362,12 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     // release the session. Do not replace the full execution with its summary.
     const staleRunId = owner.runId;
     const staleKey = owner.executionKey ?? sessionOwnerKey;
-    const staleMs = options.staleMs ?? 30 * 60_000;
-    if (owner.status === "approval" || Date.now() - (owner.startedAt ?? 0) < staleMs)
+    const staleMs = options.staleMs ?? runMs;
+    if (
+      owner.status === "approval" ||
+      staleMs <= 0 ||
+      Date.now() - (owner.startedAt ?? 0) < staleMs
+    )
       throw new NativeExecutionError(
         "An earlier task in this native session is unresolved; inspect it before submitting another task",
         "unconfirmed",
@@ -300,24 +376,41 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     let staleFinished = false;
     let stalePeer: NativePeer | undefined;
     try {
-      const connected: NativePeer = await bounded(options.connect(() => {}).then(peer => {
-        if (staleFinished) peer.stop();
-        return peer;
-      }), options.connectMs ?? 15_000, "Native timeout recovery connection timed out");
+      const connected: NativePeer = await bounded(
+        options
+          .connect(() => {})
+          .then((peer) => {
+            if (staleFinished) peer.stop();
+            return peer;
+          }),
+        options.connectMs ?? 15_000,
+        "Native timeout recovery connection timed out",
+      );
       stalePeer = connected;
       const staleRecord = staleKey === sessionOwnerKey ? owner : await options.store.read(staleKey);
       if (!staleRecord || staleRecord.runId !== staleRunId || staleRecord.sessionKey !== sessionKey)
         throw new Error("Native recovery owner identity changed");
       const { reconcileNativeExecution } = await import("./openclaw-reconciler.js");
       await reconcileNativeExecution({
-        key: staleKey, record: staleRecord,
-        cancel: true, cancelWaitMs: cancelMs, store: options.store, peer: connected,
+        key: staleKey,
+        record: staleRecord,
+        cancel: true,
+        cancelWaitMs: cancelMs,
+        store: options.store,
+        peer: connected,
       });
-    } catch { /* Keep the previous record and its process handles until confirmed. */ }
-    finally { staleFinished = true; stalePeer?.stop(); }
+    } catch {
+      /* Keep the previous record and its process handles until confirmed. */
+    } finally {
+      staleFinished = true;
+      stalePeer?.stop();
+    }
     owner = await options.store.read(sessionOwnerKey);
-    if (owner && owner.runId !== runId &&
-      ["dispatching", "running", "approval", "unconfirmed"].includes(owner.status))
+    if (
+      owner &&
+      owner.runId !== runId &&
+      ["dispatching", "running", "approval", "unconfirmed"].includes(owner.status)
+    )
       throw new NativeExecutionError(
         "An earlier task in this native session is unresolved; inspect it before submitting another task",
         "unconfirmed",
@@ -343,6 +436,14 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     text: "",
   };
   let pending = Promise.resolve();
+  /**
+   * The engine never took this instruction. Recording it only for the notice left the durable
+   * message claimed by a run that cannot answer it, so it has to go back to the queue now.
+   */
+  const markSteeringUndelivered = async (id: string) => {
+    record.unconfirmedSteeringIds = [...(record.unconfirmedSteeringIds ?? []), id];
+    await input.onSteeringUndelivered?.([id]);
+  };
   const persist = () => {
     const snapshot = structuredClone(record);
     const writeOwner = snapshot.status !== lastStoredStatus;
@@ -375,7 +476,11 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
           (snapshot.status === "dispatching" &&
             ["done", "failed", "cancelled"].includes(current.status))
         )
-          await options.store.write(sessionOwnerKey, { ...snapshot, text: "", executionKey: input.key });
+          await options.store.write(sessionOwnerKey, {
+            ...snapshot,
+            text: "",
+            executionKey: input.key,
+          });
       }
     });
     return pending;
@@ -472,8 +577,10 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         }
       }
       if (p.stream === "compaction") {
-        input.onNotice?.({ type: "progress", text: p.data?.phase === "start"
-          ? "正在整理较长的会话记录…" : "会话记录已整理，继续处理…" });
+        input.onNotice?.({
+          type: "progress",
+          text: p.data?.phase === "start" ? "正在整理较长的会话记录…" : "会话记录已整理，继续处理…",
+        });
       }
       if (p.stream === "tool") {
         const name = String(p.data?.name ?? "tool");
@@ -482,9 +589,12 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         if (phase === "start" && typeof callId === "string" && !observedTools.has(callId)) {
           observedTools.add(callId);
           input.onTool?.({
-            name, executionId: `native-observed:${hash(`${runId}:${callId}`)}`,
-            args: p.data?.args && typeof p.data.args === "object" && !Array.isArray(p.data.args)
-              ? p.data.args : {},
+            name,
+            executionId: `native-observed:${hash(`${runId}:${callId}`)}`,
+            args:
+              p.data?.args && typeof p.data.args === "object" && !Array.isArray(p.data.args)
+                ? p.data.args
+                : {},
           });
         }
         const details = (p.data?.result ?? p.data?.partialResult)?.details;
@@ -492,7 +602,10 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         if (typeof processId === "string" && processId.length <= 256) {
           const owned = new Set(record.backgroundProcesses ?? []);
           const before = owned.size;
-          if (name === "exec" && details.status === "running") owned.add(processId);
+          // Updates describe foreground execution too. Only a returned background
+          // handle is registered by the engine's trusted after-tool hook.
+          if (name === "exec" && ["result", "end"].includes(phase) && details.status === "running")
+            owned.add(processId);
           if (["completed", "failed"].includes(details.status)) owned.delete(processId);
           if (owned.size !== before) {
             record.backgroundProcesses = [...owned];
@@ -546,19 +659,36 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     // that already returned a background handle. Cancel only handles observed
     // on this run, through the same session's process-tool isolation boundary.
     await pending;
-    await stopNativeBackgroundWork(peer, record, cancelMs);
+    try {
+      await stopNativeBackgroundWork(peer, record, cancelMs);
+    } catch (error) {
+      throw new NativeExecutionError(
+        `${reason}\n${error instanceof Error ? error.message : "Background process control failed"}`,
+        "unconfirmed",
+      );
+    }
     record.backgroundProcesses = [];
     // Kernel cancellation must finish, not merely acknowledge the request.
     if (kernel) {
       const terminal = await waitForNativeTermination(peer, record, cancelMs);
       if (!isNativeTerminal(terminal))
-        throw new NativeExecutionError("停止请求已发出，但尚未确认结束；请使用“停止旧任务”恢复。", "unconfirmed");
+        throw new NativeExecutionError(
+          "停止请求已发出，但尚未确认结束；请使用“停止旧任务”恢复。",
+          "unconfirmed",
+        );
       outcome = "cancelled";
     } else if (confirmsNativeAbort(result, runId)) outcome = "cancelled";
     if (!kernel && !result.aborted && !outcome) {
       const current = await peer.request<any>(
         kernel ? "rakazo.run.status" : "agent.wait",
-        kernel ? { runId, sessionKey, startedAt: record.startedAt, engineInstanceId: record.engineInstanceId } : { runId, timeoutMs: Math.min(cancelMs, 1000) },
+        kernel
+          ? {
+              runId,
+              sessionKey,
+              startedAt: record.startedAt,
+              engineInstanceId: record.engineInstanceId,
+            }
+          : { runId, timeoutMs: Math.min(cancelMs, 1000) },
         { timeoutMs: cancelMs },
       );
       if (
@@ -575,7 +705,14 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       const terminal = await bounded(
         peer.request<any>(
           kernel ? "rakazo.run.status" : "agent.wait",
-          kernel ? { runId, sessionKey, startedAt: record.startedAt, engineInstanceId: record.engineInstanceId } : { runId, timeoutMs: cancelMs },
+          kernel
+            ? {
+                runId,
+                sessionKey,
+                startedAt: record.startedAt,
+                engineInstanceId: record.engineInstanceId,
+              }
+            : { runId, timeoutMs: cancelMs },
           { timeoutMs: cancelMs + 1000 },
         ),
         cancelMs + 1000,
@@ -608,15 +745,19 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     peer = connection;
     const collaboration = input.collaboration;
     if (collaboration) {
-      const registration = await connection.request<{ engineInstanceId?: string }>("rakazo.tools.register", {
-        sessionKey,
-        runId,
-        tools: collaboration.tools,
-        ...(collaboration.toolMode ? { toolMode: collaboration.toolMode } : {}),
-        ...(collaboration.nativeTools ? { nativeTools: collaboration.nativeTools } : {}),
-        ...(collaboration.privateContextAllowed !== undefined
-          ? { privateContextAllowed: collaboration.privateContextAllowed } : {}),
-      });
+      const registration = await connection.request<{ engineInstanceId?: string }>(
+        "rakazo.tools.register",
+        {
+          sessionKey,
+          runId,
+          tools: collaboration.tools,
+          ...(collaboration.toolMode ? { toolMode: collaboration.toolMode } : {}),
+          ...(collaboration.nativeTools ? { nativeTools: collaboration.nativeTools } : {}),
+          ...(collaboration.privateContextAllowed !== undefined
+            ? { privateContextAllowed: collaboration.privateContextAllowed }
+            : {}),
+        },
+      );
       if (!saved && typeof registration?.engineInstanceId === "string")
         record.engineInstanceId = registration.engineInstanceId;
     } else if (record.approval?.kind === "collaboration") {
@@ -687,52 +828,65 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       // The attachment validator looks up provider and bare model separately.
       // Keep the qualified reference in our record, but split it on the wire.
       const separator = input.modelId?.indexOf("/") ?? -1;
-      const modelOverride = input.modelId === undefined ? {} : separator > 0
-        ? { provider: input.modelId.slice(0, separator), model: input.modelId.slice(separator + 1) }
-        : { model: input.modelId };
+      const modelOverride =
+        input.modelId === undefined
+          ? {}
+          : separator > 0
+            ? {
+                provider: input.modelId.slice(0, separator),
+                model: input.modelId.slice(separator + 1),
+              }
+            : { model: input.modelId };
       input.onNotice?.({ type: "progress", text: "正在分析请求…" });
       setThinking(true);
-      if (input.signal?.aborted) throw new NativeExecutionError("External task cancelled before dispatch", "cancelled");
+      if (input.signal?.aborted)
+        throw new NativeExecutionError("External task cancelled before dispatch", "cancelled");
       dispatchAttempted = true;
-      const accepted = await connection.request<any>(
-        "agent",
-        {
-          agentId: input.agentId,
-          ...modelOverride,
-          ...(input.thinking !== undefined ? { thinking: input.thinking } : {}),
-          sessionKey,
-          // LivingBot owns delivery. Mark its internal engine session as webchat so
-          // OpenClaw publishes live assistant/tool events to our operator socket.
-          channel: "webchat",
-          message: input.message,
-          extraSystemPrompt:
-            "When sharing an existing local document, use its exact absolute path in a Markdown link. Never abbreviate the path with ellipses or invent a file location.\n\n" +
-            input.instructions +
-            (collaboration
-              ? "\n\nLivingBot collaboration tools are connected to this bot's active run. Use the provided message_bot/handoff_to_bot tools for LivingBot teammates; tool results confirm delivery. Your LivingBot sender identity and space permissions are supplied by the host. Never substitute a shell command or a claim in plain text for a collaboration tool call."
-              : ""),
-          idempotencyKey: runId,
-          deliver: false,
-          timeout: Math.ceil(runMs / 1000),
-          ...(input.attachments?.length ? { attachments: input.attachments } : {}),
-        },
-        // Attachment parsing/catalog loading can outlast the socket handshake.
-        { timeoutMs: options.dispatchMs ?? 60_000 },
-      ).catch((error: unknown) => {
-        // Only a definitive pre-execution rejection proves the task did not start.
-        if (error instanceof Error && "gatewayCode" in error && error.gatewayCode === "INVALID_REQUEST") {
-          const message = error.message.includes("active model does not accept image inputs")
-            ? `OpenClaw 拒绝了图片：当前模型未声明支持图片输入，请检查模型配置。详情：${error.message}`
-            : error.message;
-          throw new NativeExecutionError(message, "failed");
-        }
-        if (error instanceof Error && error.message === "gateway request timeout for agent")
-          throw new NativeExecutionError(
-            "OpenClaw 未及时确认是否接收任务，当前执行状态未确认，请先核实，勿重复提交。",
-            "unconfirmed",
-          );
-        throw error;
-      });
+      const accepted = await connection
+        .request<any>(
+          "agent",
+          {
+            agentId: input.agentId,
+            ...modelOverride,
+            ...(input.thinking !== undefined ? { thinking: input.thinking } : {}),
+            sessionKey,
+            // LivingBot owns delivery. Mark its internal engine session as webchat so
+            // OpenClaw publishes live assistant/tool events to our operator socket.
+            channel: "webchat",
+            message: input.message,
+            extraSystemPrompt:
+              "When sharing an existing local document, use its exact absolute path in a Markdown link. Never abbreviate the path with ellipses or invent a file location.\n\n" +
+              input.instructions +
+              (collaboration
+                ? "\n\nLivingBot collaboration tools are connected to this bot's active run. Use the provided message_bot/handoff_to_bot tools for LivingBot teammates; tool results confirm delivery. Your LivingBot sender identity and space permissions are supplied by the host. Never substitute a shell command or a claim in plain text for a collaboration tool call."
+                : ""),
+            idempotencyKey: runId,
+            deliver: false,
+            timeout: Math.ceil(runMs / 1000),
+            ...(input.attachments?.length ? { attachments: input.attachments } : {}),
+          },
+          // Attachment parsing/catalog loading can outlast the socket handshake.
+          { timeoutMs: options.dispatchMs ?? 60_000 },
+        )
+        .catch((error: unknown) => {
+          // Only a definitive pre-execution rejection proves the task did not start.
+          if (
+            error instanceof Error &&
+            "gatewayCode" in error &&
+            error.gatewayCode === "INVALID_REQUEST"
+          ) {
+            const message = error.message.includes("active model does not accept image inputs")
+              ? `OpenClaw 拒绝了图片：当前模型未声明支持图片输入，请检查模型配置。详情：${error.message}`
+              : error.message;
+            throw new NativeExecutionError(message, "failed");
+          }
+          if (error instanceof Error && error.message === "gateway request timeout for agent")
+            throw new NativeExecutionError(
+              "OpenClaw 未及时确认是否接收任务，当前执行状态未确认，请先核实，勿重复提交。",
+              "unconfirmed",
+            );
+          throw error;
+        });
       if (accepted.runId !== runId)
         throw new NativeExecutionError(
           "Native run ID does not match the idempotency key",
@@ -748,15 +902,27 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       try {
         terminal = await connection.request<any>(
           kernel ? "rakazo.run.status" : "agent.wait",
-          kernel ? { runId, sessionKey, startedAt: record.startedAt, engineInstanceId: record.engineInstanceId } : { runId, timeoutMs: Math.min(pollMs, 1000) },
+          kernel
+            ? {
+                runId,
+                sessionKey,
+                startedAt: record.startedAt,
+                engineInstanceId: record.engineInstanceId,
+              }
+            : { runId, timeoutMs: Math.min(pollMs, 1000) },
           { timeoutMs: Math.min(pollMs, 1000) + 5000 },
         );
       } catch (error) {
         // Observation is not execution. A timed-out status request must not
         // discard an already-received lifecycle result or redispatch the task.
-        if (!/request timeout|request timed out|connection|disconnected|socket|not connected/i.test(String(error))) throw error;
+        if (
+          !/request timeout|request timed out|connection|disconnected|socket|not connected/i.test(
+            String(error),
+          )
+        )
+          throw error;
         recovering();
-        if (Date.now() - record.startedAt >= runMs)
+        if (runMs > 0 && Date.now() - record.startedAt >= runMs)
           return await cancel("External task exceeded its execution deadline");
         if (!outcome) await wait(Math.min(pollMs, 1000));
         return "retry";
@@ -769,15 +935,19 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         // unconfirmed, so a transient answer cannot freeze it permanently.
         if (++unconfirmedPolls <= (options.unconfirmedPolls ?? 6)) {
           recovering();
-          if (Date.now() - record.startedAt >= runMs)
+          if (runMs > 0 && Date.now() - record.startedAt >= runMs)
             return await cancel("External task exceeded its execution deadline");
           await wait(Math.min(pollMs, 1000));
           return "retry";
         }
-        throw new NativeExecutionError("后台任务状态尚未确认，请勿重复提交；需恢复连接后核对原任务。", "unconfirmed");
+        throw new NativeExecutionError(
+          "后台任务状态尚未确认，请勿重复提交；需恢复连接后核对原任务。",
+          "unconfirmed",
+        );
       }
       unconfirmedPolls = 0;
-      if (terminal.reason === "engine_restarted") await confirmNativeBackgroundWorkStopped(connection, record);
+      if (terminal.reason === "engine_restarted")
+        await confirmNativeBackgroundWorkStopped(connection, record);
       if (isNativeCancelled(terminal))
         throw new NativeExecutionError("Native task was cancelled", "cancelled");
       if (terminal.status === "error" || terminal.status === "aborted")
@@ -811,7 +981,7 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         throw new NativeExecutionError("Native task was cancelled", "cancelled");
       if (outcome === "done") break;
       if (paused) {
-        if (Date.now() - record.startedAt >= runMs)
+        if (runMs > 0 && Date.now() - record.startedAt >= runMs)
           return await cancel("External task exceeded its execution deadline");
         await wait(Math.min(pollMs, 1000));
         continue;
@@ -821,16 +991,22 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         if (status === "done") break;
         if (status === "retry") continue;
       }
-      if (Date.now() - record.startedAt >= runMs)
+      if (runMs > 0 && Date.now() - record.startedAt >= runMs)
         return await cancel("External task exceeded its execution deadline");
       if (collaboration) {
         let batch: { calls: CollaborationCall[] };
         try {
-          batch = await connection.request<{ calls: CollaborationCall[] }>(
-            "rakazo.tools.poll", { sessionKey, runId },
-          );
+          batch = await connection.request<{ calls: CollaborationCall[] }>("rakazo.tools.poll", {
+            sessionKey,
+            runId,
+          });
         } catch (error) {
-          if (!/request timeout|request timed out|connection|disconnected|socket|not connected/i.test(String(error))) throw error;
+          if (
+            !/request timeout|request timed out|connection|disconnected|socket|not connected/i.test(
+              String(error),
+            )
+          )
+            throw error;
           recovering();
           await wait(Math.min(pollMs, 1000));
           continue;
@@ -896,8 +1072,10 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         const steering = await input.claimSteering(record.steeringIds ?? []);
         for (const item of steering) {
           if (input.signal?.aborted) return await cancel("External task cancelled");
+          // Recorded before delivery so a released instruction is never claimed again here.
+          record.steeringIds = [...(record.steeringIds ?? []), item.id];
           if (outcome) {
-            record.unconfirmedSteeringIds = [...(record.unconfirmedSteeringIds ?? []), item.id];
+            await markSteeringUndelivered(item.id);
             await persist();
             continue;
           }
@@ -935,9 +1113,8 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
           // final response proves the active agent accepted the instruction.
           const delivered =
             receipt?.state === "final" && receipt.text.trim() === "steered current session.";
-          record.steeringIds = [...(record.steeringIds ?? []), item.id];
           if (!delivered) {
-            record.unconfirmedSteeringIds = [...(record.unconfirmedSteeringIds ?? []), item.id];
+            await markSteeringUndelivered(item.id);
             input.onNotice?.({ type: "progress", text: "追加指令尚未确认送达，原任务继续执行。" });
           }
           await persist();
@@ -952,18 +1129,28 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       if (collaboration?.toolMode === "kernel") {
         for (let attempt = 0; attempt < 20; attempt++) {
           const receipt = await connection.request<{ result: NativeRunResult | null }>(
-            "rakazo.run.result", { sessionKey, runId },
+            "rakazo.run.result",
+            { sessionKey, runId },
           );
-          if (receipt.result) { nativeResult = receipt.result; break; }
+          if (receipt.result) {
+            nativeResult = receipt.result;
+            break;
+          }
           await wait(100);
         }
         if (!nativeResult || typeof nativeResult.text !== "string" || !nativeResult.text)
           throw new NativeExecutionError(
-            "Native task ended without its correlated result; inspect before retrying", "unconfirmed",
+            "Native task ended without its correlated result; inspect before retrying",
+            "unconfirmed",
           );
       }
-      const history = nativeResult ? { messages: [] } :
-        await connection.request<any>("chat.history", { sessionKey, limit: 1000, maxChars: 500_000 });
+      const history = nativeResult
+        ? { messages: [] }
+        : await connection.request<any>("chat.history", {
+            sessionKey,
+            limit: 1000,
+            maxChars: 500_000,
+          });
       const commandReplies = new Set(record.steeringReplies ?? []);
       if (record.steeringIds?.length) {
         for (const text of [
@@ -974,12 +1161,14 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         ])
           commandReplies.add(text);
       }
-      const last = nativeResult ?? (history.messages ?? []).findLast(
-        (m: any) =>
-          m.role === "assistant" &&
-          Number(m.timestamp) >= record.startedAt &&
-          !commandReplies.has(textOf(m).trim()),
-      );
+      const last =
+        nativeResult ??
+        (history.messages ?? []).findLast(
+          (m: any) =>
+            m.role === "assistant" &&
+            Number(m.timestamp) >= record.startedAt &&
+            !commandReplies.has(textOf(m).trim()),
+        );
       if (
         input.modelId !== undefined &&
         last?.model !== input.modelId &&
@@ -996,33 +1185,60 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
           "unconfirmed",
         );
       if (nativeResult?.blockedTools?.length)
-        text += "\n\nLivingBot 提示：本轮有工具操作被权限阻止，相关步骤尚未完成。请查看执行记录并处理授权后再继续。";
+        text +=
+          "\n\nLivingBot 提示：本轮有工具操作被权限阻止，相关步骤尚未完成。请查看执行记录并处理授权后再继续。";
       if (record.unconfirmedSteeringIds?.length)
         text += "\n\nLivingBot 提示：有追加指令尚未确认送达，请核实后重新发送。";
       const replace = !text.startsWith(record.text);
       const delta = replace ? text : text.slice(record.text.length);
       record.text = text;
-      const calls = (history.messages ?? []).filter((message: any) =>
-        message.role === "assistant" && Number(message.timestamp) >= record.startedAt &&
-        message.usage && message.provider !== "openclaw");
+      const calls = (history.messages ?? []).filter(
+        (message: any) =>
+          message.role === "assistant" &&
+          Number(message.timestamp) >= record.startedAt &&
+          message.usage &&
+          message.provider !== "openclaw",
+      );
       const aliases: Record<string, string> = {
-        input: "inputTokens", output: "outputTokens", cacheRead: "cacheReadTokens", cacheWrite: "cacheWriteTokens",
+        input: "inputTokens",
+        output: "outputTokens",
+        cacheRead: "cacheReadTokens",
+        cacheWrite: "cacheWriteTokens",
       };
-      const fieldValue = (message: any, field: string) => message.usage[field] ?? message.usage[aliases[field] ?? field];
-      const sum = (field: string) => calls.length && calls.every((message: any) =>
-        typeof fieldValue(message, field) === "number" && Number.isFinite(fieldValue(message, field)))
-        ? calls.reduce((total: number, message: any) => total + fieldValue(message, field), 0) : undefined;
-      record.usage = nativeResult?.usage ? {
-        ...nativeResult.usage, source: "native-run-observed", coverage: "native-attempt",
-      } : calls.length ? {
-        input: sum("input"), output: sum("output"), cacheRead: sum("cacheRead"),
-        cacheWrite: sum("cacheWrite"), totalTokens: sum("totalTokens"),
-        inputTokens: sum("input"), outputTokens: sum("output"),
-        cacheReadTokens: sum("cacheRead"), cacheWriteTokens: sum("cacheWrite"),
-        observedCalls: calls.length, source: "native-transcript-observed",
-        // No claim that a bounded history page contains an unbounded task's full usage.
-        coverage: "observed",
-      } : undefined;
+      const fieldValue = (message: any, field: string) =>
+        message.usage[field] ?? message.usage[aliases[field] ?? field];
+      const sum = (field: string) =>
+        calls.length &&
+        calls.every(
+          (message: any) =>
+            typeof fieldValue(message, field) === "number" &&
+            Number.isFinite(fieldValue(message, field)),
+        )
+          ? calls.reduce((total: number, message: any) => total + fieldValue(message, field), 0)
+          : undefined;
+      record.usage = nativeResult?.usage
+        ? {
+            ...nativeResult.usage,
+            source: "native-run-observed",
+            coverage: "native-attempt",
+          }
+        : calls.length
+          ? {
+              input: sum("input"),
+              output: sum("output"),
+              cacheRead: sum("cacheRead"),
+              cacheWrite: sum("cacheWrite"),
+              totalTokens: sum("totalTokens"),
+              inputTokens: sum("input"),
+              outputTokens: sum("output"),
+              cacheReadTokens: sum("cacheRead"),
+              cacheWriteTokens: sum("cacheWrite"),
+              observedCalls: calls.length,
+              source: "native-transcript-observed",
+              // No claim that a bounded history page contains an unbounded task's full usage.
+              coverage: "observed",
+            }
+          : undefined;
       input.onUsage?.(record.usage);
       if (delta) input.onText?.(delta, replace);
     }
@@ -1034,9 +1250,12 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       await pending;
       return record.text;
     }
-    const state = error instanceof NativeExecutionError
-      ? error.state
-      : dispatchAttempted ? "unconfirmed" : "failed";
+    const state =
+      error instanceof NativeExecutionError
+        ? error.state
+        : dispatchAttempted
+          ? "unconfirmed"
+          : "failed";
     record.status = state;
     record.error = error instanceof Error ? error.message : "External runtime failed";
     await persist();
@@ -1051,9 +1270,13 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     // the next turn, so drop it: one entry per turn would otherwise grow the engine's
     // per-agent session store without bound. Unconfirmed runs keep theirs as evidence.
     if (!paused && record.status === "done")
-      await peer?.request("sessions.delete",
-        { key: sessionKey, deleteTranscript: true, emitLifecycleHooks: false },
-        { timeoutMs: 10_000 }).catch(() => undefined);
+      await peer
+        ?.request(
+          "sessions.delete",
+          { key: sessionKey, deleteTranscript: true, emitLifecycleHooks: false },
+          { timeoutMs: 10_000 },
+        )
+        .catch(() => undefined);
     peer?.stop();
     await pending;
   }

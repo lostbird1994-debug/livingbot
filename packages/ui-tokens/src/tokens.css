@@ -3,6 +3,14 @@
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
+  --file-sheet: #4ade80;
+  --file-document: #60a5fa;
+  --file-pdf: #f87171;
+  --file-slide: #fb923c;
+  --file-code: #a78bfa;
+  --file-image: #2dd4bf;
+  --file-media: #f472b6;
+  --file-archive: #fbbf24;
   --background: #161616;
   --dialog: #1f1f1f;
   --foreground: #f5f5f5;
@@ -52,6 +60,14 @@
 
 [data-theme="light"] {
   color-scheme: light;
+  --file-sheet: #15803d;
+  --file-document: #2563eb;
+  --file-pdf: #dc2626;
+  --file-slide: #ea580c;
+  --file-code: #7c3aed;
+  --file-image: #0d9488;
+  --file-media: #db2777;
+  --file-archive: #d97706;
   --background: #ffffff;
   --dialog: #ffffff;
   --foreground: #1c1c1c;
@@ -101,6 +117,14 @@
 
 [data-theme="porcelain"] {
   color-scheme: light;
+  --file-sheet: #15803d;
+  --file-document: #2563eb;
+  --file-pdf: #dc2626;
+  --file-slide: #ea580c;
+  --file-code: #7c3aed;
+  --file-image: #0d9488;
+  --file-media: #db2777;
+  --file-archive: #d97706;
   --background: #ffffff;
   --dialog: #ffffff;
   --foreground: #1c1c1c;
@@ -154,7 +178,14 @@
 
 [data-theme="indigo"] {
   color-scheme: dark;
-  --chat-routine: #393322;
+  --file-sheet: #4ade80;
+  --file-document: #60a5fa;
+  --file-pdf: #f87171;
+  --file-slide: #fb923c;
+  --file-code: #a78bfa;
+  --file-image: #2dd4bf;
+  --file-media: #f472b6;
+  --file-archive: #fbbf24;
   --background: #0c5670;
   --dialog: #2c6476;
   --foreground: #f2ece6;
@@ -165,13 +196,12 @@
   --glass-fill: #2c6476;
   --glass-stroke: #f2ece616;
   --primary: #edb79c;
-  --primary-hover: #cc9d86;
-  --primary-disabled: #edb79c55;
   --primary-foreground: #05212b;
   --secondary: #f2ece60f;
   --secondary-foreground: #f2ece6;
   --chat-user: #336778;
   --chat-user-foreground: #f2ece6;
+  --chat-routine: #393322;
   --muted: #205f74;
   --muted-foreground: #f2ece6e7;
   --faint-foreground: #f2ece6bb;
@@ -198,12 +228,21 @@
   --overlay: #000000b3;
   --scrollbar: #f2ece63d;
   --scrollbar-hover: #f2ece685;
+  --primary-hover: #cc9d86;
+  --primary-disabled: #edb79c55;
   --radius: 0.75rem;
 }
 
 [data-theme="malachite"] {
   color-scheme: dark;
-  --chat-routine: #393322;
+  --file-sheet: #4ade80;
+  --file-document: #60a5fa;
+  --file-pdf: #f87171;
+  --file-slide: #fb923c;
+  --file-code: #a78bfa;
+  --file-image: #2dd4bf;
+  --file-media: #f472b6;
+  --file-archive: #fbbf24;
   --background: #1b6a67;
   --dialog: #3a7978;
   --foreground: #ffffff;
@@ -214,13 +253,12 @@
   --glass-fill: #3a7978;
   --glass-stroke: #ffffff16;
   --primary: #f9d2e4;
-  --primary-hover: #d6b5c4;
-  --primary-disabled: #f9d2e455;
   --primary-foreground: #0a2827;
   --secondary: #ffffff0f;
   --secondary-foreground: #ffffff;
   --chat-user: #427c7d;
   --chat-user-foreground: #ffffff;
+  --chat-routine: #393322;
   --muted: #2f7372;
   --muted-foreground: #ffffffee;
   --faint-foreground: #ffffffc4;
@@ -247,12 +285,21 @@
   --overlay: #000000b3;
   --scrollbar: #ffffff3d;
   --scrollbar-hover: #ffffff85;
+  --primary-hover: #d6b5c4;
+  --primary-disabled: #f9d2e455;
   --radius: 0.75rem;
 }
 
 [data-theme="dai"] {
   color-scheme: dark;
-  --chat-routine: #393322;
+  --file-sheet: #4ade80;
+  --file-document: #60a5fa;
+  --file-pdf: #f87171;
+  --file-slide: #fb923c;
+  --file-code: #a78bfa;
+  --file-image: #2dd4bf;
+  --file-media: #f472b6;
+  --file-archive: #fbbf24;
   --background: #425066;
   --dialog: #596175;
   --foreground: #f2ece6;
@@ -263,13 +310,12 @@
   --glass-fill: #596175;
   --glass-stroke: #f2ece616;
   --primary: #e4c6d0;
-  --primary-hover: #c4aab3;
-  --primary-disabled: #e4c6d055;
   --primary-foreground: #191e27;
   --secondary: #f2ece60f;
   --secondary-foreground: #f2ece6;
   --chat-user: #5e6579;
   --chat-user-foreground: #f2ece6;
+  --chat-routine: #393322;
   --muted: #515b70;
   --muted-foreground: #f2ece6e6;
   --faint-foreground: #f2ece6b8;
@@ -296,5 +342,7 @@
   --overlay: #000000b3;
   --scrollbar: #f2ece63d;
   --scrollbar-hover: #f2ece685;
+  --primary-hover: #c4aab3;
+  --primary-disabled: #e4c6d055;
   --radius: 0.75rem;
 }
