@@ -278,7 +278,9 @@ export function attachmentFileName(name: string, mimeType: string): string {
   const title = name.trim() || "attachment";
   const base = title.split(/[/\\]/).at(-1) ?? title;
   const dot = base.lastIndexOf(".");
-  if (dot >= 0) {
+  // Dates and parenthesized notes belong to a display title, not a file extension.
+  // Preserve explicit suffixes (including executable ones) rather than disguising them.
+  if (dot >= 0 && /^\.[\p{L}\p{N}_-]*\p{L}[\p{L}\p{N}_-]*$/u.test(base.slice(dot))) {
     const extension = base.slice(dot);
     return title.length <= ARTIFACT_NAME_MAX_LENGTH || extension.length > 16
       ? title.slice(0, ARTIFACT_NAME_MAX_LENGTH)

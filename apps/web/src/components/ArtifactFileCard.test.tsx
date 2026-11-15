@@ -9,7 +9,9 @@ const mocks = vi.hoisted(() => ({
   download: vi.fn(),
   create: vi.fn(),
   revoke: vi.fn(),
+  fileAction: vi.fn(),
 }));
+vi.mock("../lib/rpc", () => ({ rpc: { artifacts: { fileAction: mocks.fileAction } } }));
 vi.mock("../lib/artifact-open", () => ({
   fetchArtifactBytes: mocks.fetch,
   downloadArtifact: mocks.download,
@@ -45,6 +47,7 @@ beforeEach(() => {
   mocks.revoke.mockReset();
   mocks.fetch.mockReset().mockResolvedValue(new Uint8Array([1, 2, 3]));
   mocks.download.mockReset().mockResolvedValue(undefined);
+  mocks.fileAction.mockReset().mockResolvedValue({ ok: true });
   vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
   vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
   container = document.createElement("div");
@@ -56,6 +59,32 @@ afterEach(async () => {
   container.remove();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+});
+it("recognizes a legacy dotted spreadsheet title and opens it with the default application", async () => {
+  const title = "季度报表.1115（修订版）";
+  await act(async () =>
+    root?.render(
+      <ArtifactFileCard
+        compact
+        target={{ botId: "bot-1" }}
+        artifactId="legacy-sheet"
+        name={title}
+        mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        size={4096}
+      />,
+    ),
+  );
+  expect(container.querySelector("svg.text-file-sheet")).not.toBeNull();
+  const button = container.querySelector<HTMLButtonElement>(`button[title="${title}.xlsx"]`);
+  expect(button).not.toBeNull();
+  await act(async () => button?.click());
+  expect(mocks.fileAction).toHaveBeenCalledExactlyOnceWith({
+    artifactId: "legacy-sheet",
+    action: "open",
+  });
+  expect(mocks.fetch).not.toHaveBeenCalled();
+  expect(mocks.download).not.toHaveBeenCalled();
+  expect(container.querySelector('[role="alert"]')).toBeNull();
 });
 it.each([
   ["audio/mpeg", "mp3"],

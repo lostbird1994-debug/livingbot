@@ -39,6 +39,22 @@ async function fixture(
 describe("artifact file actions", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it.each(["季度报表.1115", "季度报表.1115（修订版）"])(
+    "opens a legacy dotted spreadsheet title in the default application: %s",
+    async (title) => {
+      const { deps, open, dir } = await fixture({
+        id: "artifact-1",
+        name: title,
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        storageKey: "key-1",
+      });
+      await openLocalArtifactFile(deps, actor, { artifactId: "artifact-1", action: "open" });
+      const target = join(dir, `${title}.xlsx`);
+      expect(open).toHaveBeenCalledExactlyOnceWith(target, "open");
+      expect(await readFile(target)).toEqual(Buffer.from([1, 2, 3, 4]));
+    },
+  );
+
   it.each(["open"] as const)(
     "%s writes the bytes then opens the copy",
     async (action) => {

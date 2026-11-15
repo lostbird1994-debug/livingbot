@@ -37,6 +37,13 @@ describe("fileTypeIcon", () => {
     expect(fileTypeIcon("upload", "image/png")).toBe(FileImage);
     expect(fileTypeIcon("upload", "audio/mpeg")).toBe(FileMusic);
     expect(fileTypeIcon("upload", "application/pdf")).toBe(BookText);
+    expect(
+      fileTypeIcon(
+        "季度报表.1115（修订版）",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ),
+    ).toBe(Table2);
+    expect(fileTypeIcon("季度报表.1115", "application/vnd.ms-excel")).toBe(Table2);
   });
 
   it("keeps an unknown or dotless name a plain file", () => {

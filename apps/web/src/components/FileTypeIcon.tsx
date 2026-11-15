@@ -114,6 +114,8 @@ const KIND_BY_MIME: Array<[string, FileKind]> = [
   ["application/zip", "archive"],
   ["text/html", "code"],
   ["text/csv", "sheet"],
+  ["application/vnd.ms-excel", "sheet"],
+  ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "sheet"],
   ["text/markdown", "doc"],
   ["text/", "doc"],
 ];

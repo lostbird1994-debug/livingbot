@@ -33,6 +33,16 @@ describe("attachment helpers", () => {
       }),
     ).toMatchObject({ kind: "file", artifactId: "stored-report", name: "报表.xlsx" });
   });
+  it.each(["季度报表.1115", "季度报表.1115（修订版）", "Report.2026 (revised)"])(
+    "restores the spreadsheet extension after a dotted display title: %s",
+    (title) => {
+      const mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      expect(attachmentFileName(title, mimeType)).toBe(`${title}.xlsx`);
+      expect(
+        messageBlockForArtifact({ id: "legacy-sheet", name: title, mimeType, size: 4 }),
+      ).toMatchObject({ artifactId: "legacy-sheet", name: `${title}.xlsx` });
+    },
+  );
   it.each([
     ["xls", "application/vnd.ms-excel"],
     ["xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],

@@ -14,6 +14,7 @@ import { HighlightedText } from "./HighlightedText";
 
 export function DeliveryFileCard({
   name,
+  mimeType,
   nameHighlight,
   wrapName,
   size,
@@ -26,6 +27,7 @@ export function DeliveryFileCard({
   onDownload,
 }: {
   name: string;
+  mimeType?: string;
   nameHighlight?: string;
   wrapName?: boolean;
   size?: number;
@@ -59,7 +61,7 @@ export function DeliveryFileCard({
       data-testid="delivery-file-card"
     >
       <div className="flex min-w-0 items-center gap-3">
-        <FileTypeIcon name={name} className="size-8 shrink-0" />
+        <FileTypeIcon name={name} mimeType={mimeType} className="size-8 shrink-0" />
         <button
           type="button"
           className="min-w-0 flex-1 text-left disabled:opacity-60"

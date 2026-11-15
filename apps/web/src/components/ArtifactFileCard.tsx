@@ -107,6 +107,7 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
       <>
         <DeliveryFileCard
           name={fileName}
+          mimeType={props.mimeType}
           size={props.size}
           nameHighlight={props.nameHighlight}
           wrapName={props.wrapName}

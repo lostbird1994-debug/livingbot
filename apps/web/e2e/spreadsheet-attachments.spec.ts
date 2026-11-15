@@ -1,8 +1,22 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { expect, test } from "@playwright/test";
 import type { Artifact, ArtifactWithContent } from "@livingbot/contracts";
+import { expect, test } from "@playwright/test";
 import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
+
+test("legacy spreadsheet titles show the spreadsheet icon and restored extension", async ({
+  page,
+}, testInfo) => {
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/e2e/fixtures/spreadsheet-delivery.html");
+    const card = page.getByTestId("delivery-file-card");
+    await expect(card.locator('button[title="季度报表.1115（修订版）.xlsx"]')).toBeVisible();
+    await expect(card.locator("svg.text-file-sheet")).toBeVisible();
+    await expect(card.getByRole("alert")).toHaveCount(0);
+    await captureScreenshot(page, testInfo, `legacy-spreadsheet-${width}`);
+  }
+});
 
 test("Excel files can be attached and uploaded without losing their bytes", async ({
   page,
