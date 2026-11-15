@@ -22,6 +22,7 @@ import {
 import { z } from "zod";
 import { allowPrivateHttpSecretOrigins } from "./bot-secrets.js";
 import { BROWSER_ACT_KINDS } from "./browser-tools.js";
+import { inlineVisualToolDefinitions } from "./inline-visual-tools.js";
 import { messageUserMaxLength } from "./user-progress.js";
 import { MAX_WEB_FETCH_OFFSET } from "./web-limits.js";
 
@@ -234,6 +235,7 @@ const fleetGroupTargetProperties = {
 };
 
 export const builtinAgentTools: ConnectorTool[] = [
+  ...inlineVisualToolDefinitions,
   {
     name: "generate_image",
     description:

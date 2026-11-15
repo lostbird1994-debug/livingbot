@@ -15,7 +15,14 @@ import remarkGfm from "remark-gfm";
 import type { HastNode } from "./table-utils";
 import "./markdown.web.css";
 import "./markdown-table.css";
-import { droppedTableHtmlText } from "@livingbot/contracts";
+import {
+  droppedTableHtmlText,
+  INLINE_VISUAL_FENCE,
+  INLINE_WIDGET_FENCES,
+  parseInlineVisual,
+  parseWidgetFence,
+  parseStreamingWidget,
+} from "@livingbot/contracts";
 import { localDocumentPath, localDocumentReferences } from "@livingbot/core";
 import {
   AlertDialog,
@@ -28,6 +35,8 @@ import {
   AlertDialogTitle,
 } from "@livingbot/ui-web";
 import { CheckIcon, CopyIcon, GlobeIcon, ImageIcon } from "./icons";
+import { InlineVisualView } from "./inline-visual.web";
+import { WidgetView } from "./widget.web";
 import type { ChatMarkdownProps } from "./markdown";
 import {
   closeUnterminatedFence,
@@ -212,7 +221,18 @@ function MarkdownPre({
   const diagram = mermaidFenceSource(node);
   // An empty fence has nothing to copy.
   const codeBlock = <CodeBlock {...props} copyable={/\S/.test(codeText(codeElement(node)))} />;
-  if (diagram === undefined) return codeBlock;
+  const code = codeElement(node);
+  const classes = code?.properties?.className;
+  const visual =
+    Array.isArray(classes) &&
+    [INLINE_VISUAL_FENCE, ...INLINE_WIDGET_FENCES].some((fence) =>
+      classes.includes(`language-${fence}`),
+    )
+      ? (parseInlineVisual(codeText(code)) ??
+        parseWidgetFence(codeText(code)) ??
+        (streamingSource !== undefined ? parseStreamingWidget(codeText(code)) : undefined))
+      : undefined;
+  if (diagram === undefined && !visual) return codeBlock;
   // Parser offsets identify the fence inside quotes and lists too. Inspect the original source,
   // since a display-only closing fence must never trigger a diagram render.
   if (streamingSource !== undefined) {
@@ -229,9 +249,13 @@ function MarkdownPre({
       opening[1][0] !== closing[1][0] ||
       closing[1].length < opening[1].length
     ) {
+      if (visual?.kind === "widget") return <WidgetView visual={visual} streaming />;
       return codeBlock;
     }
   }
+  if (visual)
+    return <InlineVisualView key={codeText(code)} visual={visual} source={codeText(code)} />;
+  if (diagram === undefined) return codeBlock;
   return <MermaidDiagram source={diagram} fallback={codeBlock} />;
 }
 
@@ -753,6 +777,7 @@ export const ChatMarkdown = memo(function ChatMarkdown({
 
 export type { ChatMarkdownProps, LinkFavicons } from "./markdown";
 export {
+  InlineVisualReferenceContext,
   LinkFaviconsContext,
   RemoteImagesContext,
   useLinkFavicon,

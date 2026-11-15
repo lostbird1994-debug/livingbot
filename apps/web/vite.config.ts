@@ -7,11 +7,13 @@ import net from "node:net";
 import path from "node:path";
 import tls from "node:tls";
 import { lingui } from "@lingui/vite-plugin";
+import { widgetShellDocument } from "@livingbot/chat-ui/widget";
 import type { DesktopStackProbeResponse } from "@livingbot/contracts";
 import { buildIdAt } from "@livingbot/contracts/client-build";
 import {
   appContentSecurityPolicy,
   CSP_REPORTING_ENDPOINTS,
+  WIDGET_VIEWER_PATH,
   contentSecurityPolicyFor,
   parseContentSecuritySources,
   parseCrispWebsiteId,
@@ -516,6 +518,19 @@ export default defineConfig(({ command, mode }) => {
     },
     define: { "import.meta.env.RAKAZO_BUILD": JSON.stringify(buildId) },
     plugins: [
+      {
+        name: "livingbot-widget-viewer",
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            if (req.url?.split("?", 1)[0] !== WIDGET_VIEWER_PATH) return next();
+            res.setHeader("Content-Type", "text/html; charset=utf-8");
+            res.setHeader("Content-Security-Policy", contentSecurityPolicyFor(WIDGET_VIEWER_PATH)!);
+            res.setHeader("Cache-Control", "no-store");
+            res.end(widgetShellDocument());
+          });
+        },
+        generateBundle() { this.emitFile({ type: "asset", fileName: WIDGET_VIEWER_PATH.slice(1), source: widgetShellDocument() }); },
+      },
       {
         // The API reads this to name the deployed build, and a tab fetches it to confirm the
         // server already serves a newer build before it reloads.

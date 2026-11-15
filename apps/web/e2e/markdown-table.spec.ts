@@ -417,3 +417,22 @@ test.describe("touch table controls", () => {
     }
   });
 });
+
+test("table image export and conversation reference use the current data", async ({ page }) => {
+  await page.goto(fixture);
+  const card = page.getByTestId("table-card");
+  const download = page.waitForEvent("download");
+  await card.getByRole("button", { name: "Download image" }).click();
+  expect((await download).suggestedFilename()).toBe("table.png");
+  await page.evaluate(() =>
+    window.addEventListener("livingbot:visual-reference", (event) => {
+      (window as unknown as { reference: unknown }).reference = (event as CustomEvent).detail;
+    }),
+  );
+  await card.getByRole("button", { name: "Add to conversation" }).click();
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { reference: { text: string } }).reference.text,
+    ),
+  ).toContain("Item\tQty");
+});

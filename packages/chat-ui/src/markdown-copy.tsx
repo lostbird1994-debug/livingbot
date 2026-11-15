@@ -8,6 +8,13 @@ export type MarkdownCopy = {
   copied: string;
   copyCode: string;
   copyDiagramSource: string;
+  expandDiagram: string;
+  downloadSvg: string;
+  downloadFile: string;
+  downloadImage: string;
+  viewSource: string;
+  addToConversation: string;
+  renderError: string;
   /** Scrollable regions and the expanded dialog's title. */
   table: string;
   markdownTable: string;
@@ -35,6 +42,13 @@ export const defaultMarkdownCopy: MarkdownCopy = {
   copied: "Copied",
   copyCode: "Copy code",
   copyDiagramSource: "Copy diagram source",
+  expandDiagram: "Expand diagram",
+  downloadSvg: "Download SVG",
+  downloadFile: "Download",
+  downloadImage: "Download image",
+  viewSource: "View source",
+  addToConversation: "Add to conversation",
+  renderError: "This visual could not render.",
   table: "Table",
   markdownTable: "Markdown table",
   row: "Row",

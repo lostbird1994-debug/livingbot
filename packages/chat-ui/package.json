@@ -4,6 +4,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
+    "./widget": "./src/widget-document.ts",
     "./mermaid": "./src/mermaid.ts",
     "./native": "./src/markdown.native.tsx",
     "./web": "./src/markdown.web.tsx"

@@ -1,5 +1,18 @@
+import {
+  INLINE_VISUAL_FENCE,
+  INLINE_WIDGET_FENCES,
+  parseInlineVisual,
+  parseWidgetFence,
+  parseStreamingWidget,
+} from "@livingbot/contracts";
 import type { ColorTokens, ResolvedAppearance } from "@livingbot/ui-tokens";
-import { darkTokens, fontWeight, MAX_FONT_SCALE, typeScale } from "@livingbot/ui-tokens";
+import {
+  appearanceColorScheme,
+  darkTokens,
+  fontWeight,
+  MAX_FONT_SCALE,
+  typeScale,
+} from "@livingbot/ui-tokens";
 import type {
   ASTNode,
   MarkdownStyleMap,
@@ -34,6 +47,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { InlineVisualNativeView } from "./inline-visual.native";
 import type { ChatMarkdownProps } from "./markdown";
 import {
   inlineMarkdownImageSrc,
@@ -53,13 +67,23 @@ import {
   sanitizeMarkdownUrl,
   useLinkFavicon,
 } from "./markdown";
-
 import {
   useMarkdownLinkAppOrigin,
   useMarkdownLinkCopy,
   useMarkdownLinkTrust,
 } from "./markdown-link-prompt";
 import { isMermaidFence } from "./mermaid";
+
+export type {
+  InlineVisualImageProps,
+  InlineVisualPickerProps,
+  InlineWidgetProps,
+} from "./inline-visual.native";
+export {
+  InlineVisualImageContext,
+  InlineVisualPickerContext,
+  InlineWidgetContext,
+} from "./inline-visual.native";
 
 function keepMarkdownLinkToken(_url: string) {
   return true;
@@ -848,6 +872,29 @@ function MermaidFence({ source, fallback }: { source: string; fallback: ReactNod
   );
 }
 
+function InlineVisualFence({ source, fallback }: { source: string; fallback: ReactNode }) {
+  const { streaming, palette, colorScheme } = useContext(DiagramSurfaceContext);
+  const CopyButton = useContext(CodeCopyButtonContext);
+  const visual =
+    parseInlineVisual(source) ??
+    parseWidgetFence(source) ??
+    (streaming ? parseStreamingWidget(source) : undefined);
+  if (!visual || (streaming && visual.kind !== "widget")) return fallback;
+  return (
+    <View>
+      <InlineVisualNativeView
+        key={visual.kind === "widget" ? visual.title : source}
+        visual={visual}
+        palette={palette}
+        colorScheme={colorScheme}
+        streaming={streaming}
+        fallback={fallback}
+      />
+      {CopyButton ? <CopyButton code={source} /> : null}
+    </View>
+  );
+}
+
 /**
  * The library's fenced code block, drawn here so its lines keep their shape and scroll sideways
  * in the same scroll view as tables.
@@ -1020,6 +1067,8 @@ const renderRules: RenderRules = {
         styleMap={styleMap}
       />
     );
+    if ([INLINE_VISUAL_FENCE, ...INLINE_WIDGET_FENCES].includes(info.trim().split(/\s+/)[0] ?? ""))
+      return <InlineVisualFence key={node.key} source={source} fallback={codeBlock} />;
     if (!isMermaidFence(info)) return codeBlock;
     return <MermaidFence key={node.key} source={source} fallback={codeBlock} />;
   },
@@ -1393,7 +1442,7 @@ export const ChatMarkdown = memo(function ChatMarkdown({
     [streaming, palette, colorScheme],
   );
   const sharedProps = {
-    colorScheme,
+    colorScheme: appearanceColorScheme(colorScheme),
     markdownit: markdownParser,
     style: styles,
     rules: renderRules,
@@ -1510,5 +1559,10 @@ const layout = StyleSheet.create({
 });
 
 export type { ChatMarkdownProps, LinkFavicons } from "./markdown";
-export { LinkFaviconsContext, RemoteImagesContext, withBlockMentions } from "./markdown";
+export {
+  InlineVisualReferenceContext,
+  LinkFaviconsContext,
+  RemoteImagesContext,
+  withBlockMentions,
+} from "./markdown";
 export { MarkdownLinkPromptProvider } from "./markdown-link-prompt";

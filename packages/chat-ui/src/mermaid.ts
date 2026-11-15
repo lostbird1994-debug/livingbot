@@ -1,4 +1,5 @@
 import type { ColorTokens, ResolvedAppearance } from "@livingbot/ui-tokens";
+import { appearanceColorScheme } from "@livingbot/ui-tokens";
 
 /** True for a fence whose info string names Mermaid (```mermaid, ```Mermaid title="x"). */
 export function isMermaidFence(info: string | undefined | null): boolean {
@@ -82,6 +83,7 @@ export function chatMermaidConfig(
   { fontFamily = CHAT_DIAGRAM_FONT, surface = palette.card } = {},
 ): ChatMermaidConfig {
   const line = palette.mutedForeground;
+  const darkMode = appearanceColorScheme(appearance) === "dark";
   return {
     startOnLoad: false,
     securityLevel: "strict",
@@ -101,10 +103,10 @@ export function chatMermaidConfig(
     htmlLabels: false,
     flowchart: { htmlLabels: false },
     theme: "base",
-    darkMode: appearance === "dark",
+    darkMode,
     fontFamily,
     themeVariables: {
-      darkMode: appearance === "dark",
+      darkMode,
       fontFamily,
       fontSize: "14px",
       background: surface,

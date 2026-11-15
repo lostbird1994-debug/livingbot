@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 
+import { InlineVisualSchema, inlineVisualMarkdown } from "@livingbot/contracts";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
+import { InlineVisualImageContext, InlineVisualPickerContext, InlineWidgetContext } from "./inline-visual.native";
 
 const alert = vi.hoisted(() => vi.fn());
 
@@ -1889,4 +1891,90 @@ describe("native markdown diagrams", () => {
     expect(renderWithDiagrams("```ts\nconst a = 1;\n```")).not.toContain("<diagram-probe");
     expect(renderWithDiagrams("```mermaid\n\n```")).not.toContain("<diagram-probe");
   });
+});
+
+describe("native inline explanations", () => {
+  it("renders comparison cards natively without an embedded browser host", () => {
+    const cards = InlineVisualSchema.parse({
+      version: 1,
+      kind: "comparison",
+      title: "Choose a strategy",
+      description: "Two strategies",
+      columns: ["Store a record", "Carry a claim"].map((title) => ({
+        title,
+        tone: "blue",
+        items: [{ label: "State", text: "Keep this explanation readable" }],
+      })),
+    });
+    const html = renderToStaticMarkup(
+      <ChatMarkdown palette={darkTokens} colorScheme="dark">
+        {inlineVisualMarkdown(cards)}
+      </ChatMarkdown>,
+    );
+    expect(html).toContain("Store a record");
+    expect(html).toContain("Carry a claim");
+    expect(html).not.toContain("<visual-probe");
+    expect(html).not.toContain("livingbot-visual");
+  });
+  const canvas = { height: 120, elements: [{ type: "text", x: 24, y: 40, text: "Request" }] };
+  const visual = InlineVisualSchema.parse({
+    version: 1,
+    kind: "steps",
+    title: "Request flow",
+    description: "Two stages",
+    steps: [
+      { title: "Send", text: "Send a question", canvas },
+      { title: "Reply", text: "Read the answer", canvas },
+    ],
+  });
+  const markdown = inlineVisualMarkdown(visual);
+  const render = (streaming = false) =>
+    renderToStaticMarkup(
+      <InlineVisualImageContext.Provider
+        value={({ svg, title }) =>
+          createElement("visual-probe", { "data-svg": svg, "data-title": title })
+        }
+      >
+        <InlineVisualPickerContext.Provider
+          value={({ choices, value }) =>
+            createElement(
+              "picker-probe",
+              { "data-value": value },
+              choices.map((choice) => choice.label).join(","),
+            )
+          }
+        >
+          <ChatMarkdown palette={lightTokens} colorScheme="light" streaming={streaming}>
+            {markdown}
+          </ChatMarkdown>
+        </InlineVisualPickerContext.Provider>
+      </InlineVisualImageContext.Provider>,
+    );
+  it("hands generated SVG and step choices to native hosts", () => {
+    const document = new DOMParser().parseFromString(render(), "text/html");
+    expect(document.querySelector("visual-probe")?.getAttribute("data-title")).toBe(
+      "Request flow: Send",
+    );
+    expect(document.querySelector("visual-probe")?.getAttribute("data-svg")).toContain(
+      `fill="${lightTokens.foreground}"`,
+    );
+    expect(document.querySelector("picker-probe")?.textContent).toBe("1. Send,2. Reply");
+  });
+  it("keeps original content readable while streaming or without a native host", () => {
+    expect(render(true)).not.toContain("<visual-probe");
+    expect(renderToStaticMarkup(<ChatMarkdown>{markdown}</ChatMarkdown>)).not.toContain(
+      "<visual-probe",
+    );
+  });
+});
+
+
+it("routes raw widgets through the native isolated host with a readable fallback", () => {
+  const visual = InlineVisualSchema.parse({ version: 1, kind: "widget", title: "Native demo", description: "Demo", format: "html", code: "<button>Next</button>" });
+  const source = inlineVisualMarkdown(visual);
+  const fallback = renderToStaticMarkup(<ChatMarkdown palette={darkTokens} colorScheme="dark">{source}</ChatMarkdown>);
+  expect(fallback).toContain("Next");
+  const rendered = renderToStaticMarkup(<InlineWidgetContext.Provider value={({ visual: value, streaming }) => <div data-native-widget={value.title} data-streaming={String(streaming)} /> }><ChatMarkdown palette={darkTokens} colorScheme="dark">{source}</ChatMarkdown></InlineWidgetContext.Provider>);
+  expect(rendered).toContain('data-native-widget="Native demo"');
+  expect(rendered).toContain('data-streaming="false"');
 });

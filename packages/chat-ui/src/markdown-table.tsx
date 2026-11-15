@@ -1,3 +1,5 @@
+import { INLINE_VISUAL_REFERENCE_EVENT } from "@livingbot/contracts";
+import { webTokensForAppearance } from "@livingbot/ui-tokens";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@livingbot/ui-web";
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
 import {
@@ -12,7 +14,9 @@ import {
   useState,
 } from "react";
 import { CheckIcon, CopyIcon } from "./icons";
+import { InlineVisualReferenceContext } from "./markdown";
 import { useMarkdownCopy } from "./markdown-copy";
+import { useChatAppearance } from "./mermaid.web";
 import type { ExtractedTable, HastNode, TableAlign, TableSortDirection } from "./table-utils";
 import {
   columnSortLabel,
@@ -72,6 +76,9 @@ export const TableCard = memo(function TableCard({
   const { columns, aligns, rows, schemaKey, dataSignature, numericColumns, minWidths, rowKeys } =
     table;
   const copy = useMarkdownCopy();
+  const reference = useContext(InlineVisualReferenceContext);
+  const palette = webTokensForAppearance(useChatAppearance());
+  const cardRef = useRef<HTMLDivElement>(null);
   const [sort, setSort] = useState<SortState>(null);
   const [page, setPage] = useState(0);
   const [expanded, setExpanded] = useState(false);
@@ -160,6 +167,77 @@ export const TableCard = memo(function TableCard({
     window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
   };
 
+  const addToConversation = () => {
+    const text = tableToTsv(columns, sortedRows);
+    if (reference) reference(text);
+    else window.dispatchEvent(new CustomEvent(INLINE_VISUAL_REFERENCE_EVENT, { detail: { text } }));
+  };
+
+  const downloadImage = () => {
+    const style = cardRef.current ? getComputedStyle(cardRef.current) : null;
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    // Export the visible page, including its current sort order, at readable resolution.
+    const width = Math.max(680, Math.min(1600, columns.length * 240));
+    const columnWidth = width / columns.length;
+    context.font = "14px system-ui";
+    const wrap = (value: string) => {
+      const lines: string[] = [];
+      let line = "";
+      for (const character of value) {
+        if (
+          character === "\n" ||
+          (line && context.measureText(line + character).width > columnWidth - 32)
+        ) {
+          lines.push(line);
+          line = character === "\n" ? "" : character;
+        } else line += character;
+      }
+      lines.push(line);
+      return lines;
+    };
+    const cells = [columns, ...pageRows].map((row) => row.map(wrap));
+    const heights = cells.map((row) => Math.max(1, ...row.map((cell) => cell.length)) * 22 + 24);
+    const height = heights.reduce((sum, value) => sum + value, 0);
+    if (height > 8000) {
+      announce(copy.renderError);
+      return;
+    }
+    canvas.width = width * 2;
+    canvas.height = height * 2;
+    context.scale(2, 2);
+    context.fillStyle =
+      style?.backgroundColor && style.backgroundColor !== "rgba(0, 0, 0, 0)"
+        ? style.backgroundColor
+        : palette.background;
+    context.fillRect(0, 0, width, height);
+    context.fillStyle = style?.color ?? palette.foreground;
+    context.textBaseline = "top";
+    let top = 0;
+    cells.forEach((row, index) => {
+      context.font = `${index === 0 ? "600" : "400"} 14px system-ui`;
+      row.forEach((cell, column) => {
+        cell.forEach((line, lineIndex) => {
+          context.fillText(line, column * columnWidth + 16, top + 12 + lineIndex * 22);
+        });
+      });
+      top += heights[index]!;
+      context.save();
+      context.globalAlpha = 0.2;
+      context.strokeStyle = style?.color ?? palette.foreground;
+      context.beginPath();
+      context.moveTo(0, top - 0.5);
+      context.lineTo(width, top - 0.5);
+      context.stroke();
+      context.restore();
+    });
+    const link = document.createElement("a");
+    link.download = "table.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
+
   const tableView = (mode: "card" | "dialog") => (
     <TableView
       columns={columns}
@@ -235,6 +313,22 @@ export const TableCard = memo(function TableCard({
       >
         <DownloadIcon />
       </button>
+      <button
+        type="button"
+        className="rk-table-tool"
+        onClick={downloadImage}
+        aria-label={copy.downloadImage}
+      >
+        <ImageExportIcon />
+      </button>
+      <button
+        type="button"
+        className="rk-table-tool"
+        onClick={addToConversation}
+        aria-label={copy.addToConversation}
+      >
+        <ReferenceIcon />
+      </button>
       {mode === "card" ? (
         <button
           type="button"
@@ -265,7 +359,7 @@ export const TableCard = memo(function TableCard({
 
   return (
     <Dialog open={expanded} onOpenChange={setExpanded}>
-      <div className="rk-table-card rk-table-box" data-testid="table-card">
+      <div ref={cardRef} className="rk-table-card rk-table-box" data-testid="table-card">
         {/* Keep the live region in the active view — dialog content is outside the card. */}
         {expanded ? null : status}
         {tools("card")}
@@ -596,6 +690,37 @@ function ChevronRightIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+function ImageExportIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <rect x="2" y="2" width="12" height="12" rx="2" />
+      <circle cx="5.5" cy="5.5" r="1" />
+      <path d="m2 12 4-4 3 3 2-2 3 3" />
+    </svg>
+  );
+}
+function ReferenceIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M13 8v4a2 2 0 0 1-2 2H3l-2 1V4a2 2 0 0 1 2-2h5M12 1v6M9 4h6" />
     </svg>
   );
 }

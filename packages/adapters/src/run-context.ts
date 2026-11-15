@@ -105,6 +105,12 @@ export interface ReplyState {
    * sentence boundary, so the step chips never render in the middle of a clause.
    */
   pendingToolNames: string[];
+  /** Native engines stream cumulative previews before delivering verified final text. */
+  widgetPreview?: {
+    text: string;
+    committed: string;
+    anchors: Array<{ at: number; markdown: string }>;
+  };
   pendingProgress: string;
   lastProgressAt: number;
   hasStreamedText: boolean;

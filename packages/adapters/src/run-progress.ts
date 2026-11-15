@@ -13,7 +13,7 @@ import type { ExecutorDeps } from "./executor-deps.js";
 import type { ReplyState, RunContext } from "./run-context.js";
 import { publishMessage } from "./run-messages.js";
 import { runPromotesMidTurnNarration } from "./run-replies.js";
-import { isExactNoResponse } from "./silent-reply.js";
+import { isExactNoResponse, mentionsNoResponse } from "./silent-reply.js";
 import {
   clampUserProgressMessage,
   extractNarrationText,
@@ -80,7 +80,7 @@ export async function createReplyState(
 }
 
 export function recordExplicitNoResponse(reply: ReplyState, text: string) {
-  reply.explicitNoResponse ||= isExactNoResponse(text) || /\bNO_RESPONSE\b/.test(text);
+  reply.explicitNoResponse ||= isExactNoResponse(text) || mentionsNoResponse(text);
 }
 
 /** Durable interim messages only on genuinely long turns, capped per run. */
@@ -122,6 +122,31 @@ export function tryFlushPendingTools(reply: ReplyState) {
     flushPendingTools(reply);
 }
 
+/** Insert a tool's validated visual into the same reply; no model echo or separate chat message. */
+export async function appendInlineVisual(ctx: RunContext, markdown: string) {
+  const { reply } = ctx.state;
+  flushPendingTools(reply);
+  const preview = reply.widgetPreview;
+  // Commit the native engine's prose before its visual. Its final cumulative text
+  // will skip this prefix, so the same prose cannot be duplicated after the visual.
+  const prefix = preview?.text.startsWith(preview.committed)
+    ? preview.text.slice(preview.committed.length)
+    : "";
+  if (preview) {
+    preview.anchors.push({ at: preview.text.length, markdown });
+    if (prefix) preview.committed = preview.text;
+  }
+  const text = `${prefix}\n\n${markdown}\n\n`;
+  reply.assembled += text;
+  reply.currentTextSegment += text;
+  reply.textSinceLastStep += text;
+  reply.assistantTurnText += text;
+  reply.assistantTurnBreakPending = false;
+  reply.narrationStatusShowing = false;
+  reply.pendingProgress += reply.redactor.push(text);
+  await flushProgress(ctx);
+}
+
 export async function flushProgress(ctx: RunContext) {
   const { deps, run, runId, bot, thread } = ctx;
   const { reply } = ctx.state;
@@ -157,6 +182,8 @@ export async function flushProgress(ctx: RunContext) {
  * the caller can show it as the working line.
  */
 export async function publishMidTurnNarration(ctx: RunContext, beforeConnectCard = false) {
+  // A generated visual is reply content, not a status note to shorten or discard.
+  if (ctx.state.reply.assembled.includes("```livingbot-visual")) return;
   const { deps, run } = ctx;
   const { reply } = ctx.state;
   const extracted = extractNarrationText(reply.messageSegments, reply.currentTextSegment);

@@ -14,6 +14,50 @@ export type ResolvedAppearance = "light" | "dark" | "porcelain" | "indigo" | "ma
 
 export const UI_APPEARANCE_STORAGE_KEY = "rakazo.uiAppearance";
 
+/** Explanatory content has its own palette; application chrome keeps its semantic colors. */
+export const visualColorTokens = {
+  light: {
+    blueFill: "#E8F2FF",
+    blueStroke: "#3978C6",
+    blueText: "#123F70",
+    tealFill: "#E4F5EF",
+    tealStroke: "#34876C",
+    tealText: "#12523F",
+    purpleFill: "#F0ECFC",
+    purpleStroke: "#8061B3",
+    purpleText: "#493071",
+    coralFill: "#FCEDE6",
+    coralStroke: "#BB7351",
+    coralText: "#743C24",
+    amberFill: "#FFF3DB",
+    amberStroke: "#AB7B2D",
+    amberText: "#6F4A10",
+    roseFill: "#FBEAF0",
+    roseStroke: "#B65D7E",
+    roseText: "#742E4A",
+  },
+  dark: {
+    blueFill: "#182E49",
+    blueStroke: "#85B7ED",
+    blueText: "#D5E8FF",
+    tealFill: "#18382E",
+    tealStroke: "#77C9AA",
+    tealText: "#D0F3E6",
+    purpleFill: "#322442",
+    purpleStroke: "#B69AD9",
+    purpleText: "#E9DDFB",
+    coralFill: "#432A20",
+    coralStroke: "#DEA486",
+    coralText: "#FFE1D1",
+    amberFill: "#3D3019",
+    amberStroke: "#D7B773",
+    amberText: "#FFE9BA",
+    roseFill: "#402330",
+    roseStroke: "#DB97B2",
+    roseText: "#FBDCE8",
+  },
+} as const;
+
 /**
  * Semantic palette shared by web, Electron, and Expo. Names follow the shadcn
  * convention so the same slot means the same thing on every surface: a `border`

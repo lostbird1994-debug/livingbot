@@ -14,6 +14,8 @@ export type ChatMarkdownProps = {
   renderLocalFile?: (path: string, label?: string) => ReactNode;
 };
 
+export const InlineVisualReferenceContext = createContext<((text: string) => void) | null>(null);
+
 const MENTION_URL_PREFIX = "rakazo-mention:";
 
 /** The id of a mention link, if this href is one. */

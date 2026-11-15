@@ -14,6 +14,10 @@ import { USER_COMPUTER_SCREEN_TOOLS } from "./run-tools-user-computer.js";
 import { filterBuiltinToolsForRun, filterBuiltinToolsForThread } from "./schedule-tools.js";
 
 export const READ_ONLY_AGENT_TOOLS = new Set([
+  "widget_guidelines",
+  "show_widget",
+  "visual_guidelines",
+  "show_visual",
   "computer_observe",
   "list_files",
   "list_fleet",
@@ -88,6 +92,7 @@ export function selectBuiltinToolsForRun(options: {
   userComputerScreen?: boolean;
 }) {
   const disabled = disabledBuiltinToolSet(options.disabledBuiltinTools);
+  const fullWidgets = !disabled.has("widget_guidelines") && !disabled.has("show_widget");
   const ownerStartedRun = isOwnerStartedRun(options.trigger, Boolean(options.followUpFromUser));
   return selectCloudAgentTools(
     selectMemoryTools(
@@ -108,6 +113,7 @@ export function selectBuiltinToolsForRun(options: {
   ).filter(
     (tool) =>
       !disabled.has(tool.name) &&
+      (!fullWidgets || !["show_visual", "visual_guidelines"].includes(tool.name)) &&
       (!options.memoryMaintenance || MEMORY_MAINTENANCE_TOOL_NAMES.has(tool.name)) &&
       (options.memoryMaintenance ||
         !["propose_memory_consolidation", "organize_memory"].includes(tool.name)) &&
@@ -118,6 +124,10 @@ export function selectBuiltinToolsForRun(options: {
       (options.paymentWalletEnabled || !PURCHASE_TOOL_NAMES.has(tool.name)) &&
       (options.mediaImagesEnabled || tool.name !== "generate_image") &&
       (options.mediaVideoEnabled || tool.name !== "generate_video") &&
+      (!(options.messagingChannelRun || options.voiceCall) ||
+        !["show_visual", "visual_guidelines", "show_widget", "widget_guidelines"].includes(
+          tool.name,
+        )) &&
       (options.ticketBoardEnabled ||
         (tool.name !== "board_tickets" && !tool.name.startsWith("ticket_"))) &&
       (!isBackgroundRunTrigger(options.trigger) ||

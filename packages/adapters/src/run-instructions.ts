@@ -1,5 +1,10 @@
 import { botRoleCard, FLEET_WRITE_TOOL_NAMES } from "@livingbot/contracts";
 import { runReadsThreadHistory, toolRequiresExplicitApproval } from "@livingbot/core";
+import {
+  MESSAGING_PRESENTATION_INSTRUCTION,
+  RESPONSE_PRESENTATION_INSTRUCTION,
+  WIDGET_PRESENTATION_INSTRUCTION,
+} from "./inline-visual-tools.js";
 import { MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import { replyGuidanceForOfferedTools } from "./run-replies.js";
 import type { UserComputerState } from "./run-tools-user-computer.js";
@@ -327,6 +332,14 @@ export function userTurnInstructions(parts: {
 }): (string | undefined)[] {
   return [
     parts.botInstructions,
+    parts.messagingContext
+      ? MESSAGING_PRESENTATION_INSTRUCTION
+      : builtinOffered(parts.disabledBuiltinTools, "widget_guidelines") && builtinOffered(parts.disabledBuiltinTools, "show_widget")
+        ? WIDGET_PRESENTATION_INSTRUCTION
+      : builtinOffered(parts.disabledBuiltinTools, "visual_guidelines") &&
+          builtinOffered(parts.disabledBuiltinTools, "show_visual")
+        ? RESPONSE_PRESENTATION_INSTRUCTION
+        : "Choose compact Markdown tables for comparisons and Mermaid diagrams for relationships or processes when they help. Use prose for simple answers or when the user requests it. Never invent facts to complete a visual.",
     parts.historyRetrievalEnabled &&
     builtinOffered(parts.disabledBuiltinTools, "search_history") &&
     builtinOffered(parts.disabledBuiltinTools, "read_history")
@@ -447,9 +460,7 @@ export function runIdentityInstruction(
   const role = [
     card.identity.trim() ? `Bot identity:\n${card.identity}` : "",
     card.personality.trim() ? `Personality:\n${card.personality}` : "",
-    card.userIdentity.trim()
-      ? `User identity for this bot:\n${card.userIdentity}`
-      : "",
+    card.userIdentity.trim() ? `User identity for this bot:\n${card.userIdentity}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");

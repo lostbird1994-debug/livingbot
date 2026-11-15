@@ -1,5 +1,5 @@
 import type { ResolvedAppearance } from "@livingbot/ui-tokens";
-import { webTokensForAppearance } from "@livingbot/ui-tokens";
+import { isAppearancePreference, webTokensForAppearance } from "@livingbot/ui-tokens";
 import type mermaid from "mermaid";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { chatMermaidConfig } from "./mermaid";
@@ -110,7 +110,8 @@ export function renderMermaidSvg(
 }
 
 function readAppearance(): ResolvedAppearance {
-  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+  const theme = document.documentElement.dataset.theme;
+  return isAppearancePreference(theme) && theme !== "system" ? theme : "dark";
 }
 
 function subscribeAppearance(onChange: () => void) {
@@ -119,16 +120,16 @@ function subscribeAppearance(onChange: () => void) {
   return () => observer.disconnect();
 }
 
+export function useChatAppearance(): ResolvedAppearance {
+  return useSyncExternalStore(subscribeAppearance, readAppearance, () => "dark");
+}
+
 /**
  * The SVG for a diagram in the page's current theme. Undefined while it renders and null when it
  * cannot be drawn; the caller shows the code block in both cases, so the source is never lost.
  */
 export function useMermaidSvg(source: string): string | null | undefined {
-  const appearance = useSyncExternalStore<ResolvedAppearance>(
-    subscribeAppearance,
-    readAppearance,
-    () => "dark",
-  );
+  const appearance = useChatAppearance();
   const key = renderKey(source, appearance);
   const [result, setResult] = useState<{ key: string; svg: string | null }>();
   useEffect(() => {
