@@ -20,7 +20,6 @@ import {
   BACKGROUND_RUN_TRIGGERS,
   callIdFromClientNonce,
   isConversationalRun,
-  isOnDemandSkillMd,
   messageBypassesTakeoverWait,
   messageReaction,
   projectMessages,
@@ -170,8 +169,8 @@ async function resolveConnectorScope(
     select: { id: true },
   });
   const found = new Set(rows.map((row) => row.id));
-  // An opt-in skill shares the same scope: picking it in the composer is what
-  // lets this message name it. Only skills that opted in may be named here.
+  // Older clients may still send skill selections alongside connector ids.
+  // Keep accepting available skills while all skills are discovered automatically.
   const rest = ids.filter((id) => !found.has(id));
   if (rest.length > 0) {
     const skills = await tx.agentSkill.findMany({
@@ -179,14 +178,26 @@ async function resolveConnectorScope(
         id: { in: rest },
         ...availableInSpace({ spaceId: actor.spaceId, userId: actor.userId }),
       },
-      select: { id: true, content: true },
+      select: { id: true },
     });
     for (const skill of skills) {
-      if (isOnDemandSkillMd(skill.content)) found.add(skill.id);
+      found.add(skill.id);
     }
   }
   if (found.size !== ids.length) throw new IsolationError();
   return ids;
+}
+
+async function extendAnsweredRunConnectorScope(
+  tx: Prisma.TransactionClient,
+  runs: Array<{ id: string; connectorScope: string[] }>,
+  selected: string[],
+) {
+  if (!selected.length) return;
+  for (const run of runs) {
+    const connectorScope = [...new Set([...(run.connectorScope ?? []), ...selected])];
+    await tx.run.update({ where: { id: run.id }, data: { connectorScope } });
+  }
 }
 
 function sendRunClientNonce(
@@ -457,6 +468,7 @@ export async function threadSnapshot(
               select: { seq: true },
             }),
             tx.run.findMany({
+              include: { routine: { select: { name: true } } },
               where: {
                 botId: target.botId,
                 threadId: target.threadId,
@@ -469,6 +481,7 @@ export async function threadSnapshot(
               orderBy: [{ createdAt: "desc" }, { id: "desc" }],
             }),
             tx.run.findFirst({
+              include: { routine: { select: { name: true } } },
               where: {
                 botId: target.botId,
                 threadId: target.threadId,
@@ -549,6 +562,7 @@ export async function threadSnapshot(
           select: { seq: true },
         }),
         tx.run.findMany({
+          include: { routine: { select: { name: true } } },
           where: {
             threadId: target.threadId,
             status: { in: [...ACTIVE_RUN_STATUSES] },
@@ -564,6 +578,7 @@ export async function threadSnapshot(
         // Recently updated terminals (completion bumps updatedAt). pickLatestTerminalRun then
         // ranks by completedAt ?? createdAt so null timestamps cannot revive a stale failure.
         tx.run.findMany({
+          include: { routine: { select: { name: true } } },
           where: {
             threadId: target.threadId,
             trigger: { notIn: ["bot_message", ...BACKGROUND_RUN_TRIGGERS] },
@@ -687,6 +702,7 @@ function mapRun(run: {
   status: string;
   trigger: string;
   routineId: string | null;
+  routine?: { name: string } | null;
   modelProvider: string | null;
   modelId: string | null;
   error: string | null;
@@ -703,6 +719,7 @@ function mapRun(run: {
     status: run.status as never,
     trigger: run.trigger as never,
     routineId: run.routineId ?? null,
+    ...(run.routine?.name ? { routineName: run.routine.name } : {}),
     modelProvider: run.modelProvider,
     modelId: run.modelId,
     // Same display clamp as live run.failed events so a huge stored error cannot bypass it.
@@ -908,6 +925,7 @@ export async function sendThreadMessage(
             modelId: true,
             modelPinned: true,
             thinkingLevel: true,
+            connectorScope: true,
           },
         });
         if (input.imageHandling === "confirm") {
@@ -956,6 +974,7 @@ export async function sendThreadMessage(
             });
         }
         if (answered.length) {
+          await extendAnsweredRunConnectorScope(tx, answered, connectorScope);
           const primary = answered[0];
           if (!primary) throw new IsolationError();
           await tx.message.update({ where: { id: message.id }, data: { runId: primary.id } });
@@ -968,6 +987,7 @@ export async function sendThreadMessage(
                 messageId: message.id,
                 botId: target.botId,
                 userId: actor.userId,
+                ...(connectorScope.length ? { connectorScope } : {}),
                 runId: run.id,
               },
             });
@@ -1004,6 +1024,7 @@ export async function sendThreadMessage(
               messageId: message.id,
               botId: target.botId,
               userId: actor.userId,
+              ...(connectorScope.length ? { connectorScope } : {}),
               runId: steersUserMessage(active) ? active.id : null,
             },
           });
@@ -1118,6 +1139,7 @@ export async function sendThreadMessage(
           modelId: true,
           modelPinned: true,
           thinkingLevel: true,
+          connectorScope: true,
         },
       });
       if (input.imageHandling === "confirm") {
@@ -1182,12 +1204,19 @@ export async function sendThreadMessage(
       for (const botId of targetBotIds) {
         const answered = answeredByBotId.get(botId);
         if (answered) {
+          await extendAnsweredRunConnectorScope(tx, answered, connectorScope);
           const steered = answered.filter((run) =>
             answerSteersRun(run, attachmentBlocks, input.imageHandling),
           );
           for (const run of steered) {
             await tx.steeringMessage.create({
-              data: { messageId: message.id, botId, userId: actor.userId, runId: run.id },
+              data: {
+                messageId: message.id,
+                botId,
+                userId: actor.userId,
+                ...(connectorScope.length ? { connectorScope } : {}),
+                runId: run.id,
+              },
             });
           }
           runs.push(...answered);
@@ -1200,6 +1229,7 @@ export async function sendThreadMessage(
               messageId: message.id,
               botId,
               userId: actor.userId,
+              ...(connectorScope.length ? { connectorScope } : {}),
               runId: steersUserMessage(active) ? active.id : null,
             },
           });

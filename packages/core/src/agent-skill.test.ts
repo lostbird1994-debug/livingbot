@@ -5,6 +5,7 @@ import {
   extractForcedSkillName,
   extractRoutineSkillMentions,
   findSkillByName,
+  formatSelectedSkillsInstruction,
   formatSkillsCatalogInstruction,
   mergeBuiltinSkills,
   parseSkillMd,
@@ -415,6 +416,18 @@ describe("skill prompt helpers", () => {
     expect(line).toContain("- Daily standup: Prepare standup notes");
     expect(line).toContain("skill_read");
     expect(line).toContain("Prefer matching skills");
+  });
+
+  it("identifies only the skills selected by id without injecting their full bodies", () => {
+    const skills = [
+      { id: "selected", name: "Files CLI" },
+      { id: "other", name: "Other CLI" },
+    ];
+    expect(formatSelectedSkillsInstruction(skills, ["selected", "selected", "api-1"])).toContain(
+      '["Files CLI"]',
+    );
+    expect(formatSelectedSkillsInstruction(skills, ["api-1"])).toBeUndefined();
+    expect(formatSelectedSkillsInstruction(skills, [])).toBeUndefined();
   });
 });
 

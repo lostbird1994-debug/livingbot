@@ -994,7 +994,9 @@ describe("threadSnapshot", () => {
       threadId: "thread-1",
       taskId: "task-1",
       status: "failed",
-      trigger: "user",
+      trigger: "routine",
+      routineId: "inventory-check",
+      routine: { name: "Scheduled inventory check" },
       modelProvider: "openrouter",
       modelId: "openrouter/unknown",
       error: "member exploded",
@@ -1030,7 +1032,7 @@ describe("threadSnapshot", () => {
       }),
     );
     expect(snapshot.run).toEqual(
-      expect.objectContaining({ id: "run-failed", status: "failed", error: "member exploded" }),
+      expect.objectContaining({ id: "run-failed", status: "failed", error: "member exploded", routineName: "Scheduled inventory check" }),
     );
     expect(snapshot.activeRuns).toEqual([]);
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
@@ -2137,6 +2139,7 @@ describe("sendThreadMessage", () => {
 
   it("steers a waiting-takeover run instead of refusing the message", async () => {
     const tx = {
+      capabilityInstall: { findMany: vi.fn().mockResolvedValue([{ id: "api-selected" }]) },
       $queryRaw: vi.fn().mockResolvedValue([]),
       thread: {
         update: vi
@@ -2196,6 +2199,7 @@ describe("sendThreadMessage", () => {
         {
           text: "skip that",
           clientNonce: "nonce-takeover",
+          connectorScope: ["api-selected"],
         },
       ),
     ).resolves.toMatchObject({
@@ -2210,6 +2214,7 @@ describe("sendThreadMessage", () => {
         botId: "bot-1",
         userId: "user-1",
         runId: "run-waiting",
+        connectorScope: ["api-selected"],
       },
     });
     expect(tx.task.create).not.toHaveBeenCalled();

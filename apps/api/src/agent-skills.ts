@@ -5,7 +5,6 @@ import type { SkillSource } from "@livingbot/core";
 import {
   buildSkillMd,
   findSkillByName,
-  isOnDemandSkillMd,
   isSkillReadOnly,
   mergeBuiltinSkills,
   parseSkillMd,
@@ -46,7 +45,7 @@ export function mapAgentSkill(row: AgentSkillRow): AgentSkill {
     content: row.content,
     source,
     readOnly: isSkillReadOnly(source as SkillSource),
-    onDemand: isOnDemandSkillMd(row.content),
+    onDemand: false,
     availability: spaceAvailability(row),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),

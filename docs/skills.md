@@ -8,6 +8,12 @@ or how to publish a blog post.
 Bots pick up the right skill on their own when a task matches it. To use one explicitly, type **/**
 at the start of a message and choose it.
 
+Every skill available in a space is automatically discoverable by that space's bots, including
+imported skills with a legacy `on_demand: true` field. Bots receive names and descriptions first
+and read the full instructions when needed. Skills and configured external tool sources do not
+need to be enabled in the composer. Tool sources retain their account and space access controls;
+MCP servers also retain their bot assignments.
+
 ## Your skills library
 
 Open the account menu (your avatar at the bottom of the sidebar) and choose **Skills**.

@@ -673,11 +673,7 @@ export const AgentSkillSchema = z.object({
   content: z.string(),
   source: AgentSkillSourceSchema,
   readOnly: z.boolean(),
-  /**
-   * Opt-in skill: its catalog line reaches a run only when the message's connector
-   * scope names it. Lets a skill describe a tool the model should not know about
-   * until the user reaches for it in the composer.
-   */
+  /** Legacy client compatibility; all skills now use automatic discovery. */
   onDemand: z.boolean().default(false),
   /** Absent for built-in skills, which every space has. */
   availability: SpaceAvailabilitySchema.optional(),
@@ -1298,6 +1294,7 @@ export const RunSchema = z.object({
   status: RunStatus,
   trigger: RunTriggerSchema,
   routineId: Id.nullable(),
+  routineName: z.string().optional(),
   modelProvider: z.string().nullable(),
   modelId: z.string().nullable(),
   error: z.string().nullable(),

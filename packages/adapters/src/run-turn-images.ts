@@ -1,7 +1,8 @@
 import type { AgentRunRequest, AgentSteeringMessage } from "@livingbot/adapter-kit";
 import type { MessageBlock } from "@livingbot/contracts";
 import { ATTACHMENT_MAX_BYTES, isAttachmentImageMimeType } from "@livingbot/contracts";
-import { blocksToAgentHistoryText } from "@livingbot/core";
+import { blocksToAgentHistoryText, formatSelectedSkillsInstruction } from "@livingbot/core";
+import { availableInSpace } from "@livingbot/db";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { loadReplyContext } from "./reply-context.js";
 import { currentTurnFilesInstruction, listCurrentTurnFiles } from "./thread-artifacts.js";
@@ -369,11 +370,23 @@ export async function claimRunSteering(
   deps: ExecutorDeps,
   lease: { threadId: string; botId: string; runId: string; leaseOwner: string; leaseFence: number },
   seenIds: string[],
-  context: Parameters<typeof loadCurrentTurnImages>[2],
+  context: Parameters<typeof loadCurrentTurnImages>[2] & { connectorScope?: string[] },
   pendingTurnFiles: MessageBlock[][],
   currentTurn: { messageId?: string; hasImages: boolean },
 ): Promise<AgentSteeringMessage[]> {
   const steering = await deps.events.claimSteering({ ...lease, seenIds });
+  const addedScope = steering.flatMap((item) =>
+    item.origin === "user" ? (item.connectorScope ?? []) : [],
+  );
+  if (addedScope.length) {
+    context.connectorScope = [...new Set([...(context.connectorScope ?? []), ...addedScope])];
+  }
+  const selectedSkills = addedScope.length
+    ? await deps.prisma.agentSkill.findMany({
+        where: { ...availableInSpace(context), id: { in: [...new Set(addedScope)] } },
+        select: { id: true, name: true },
+      })
+    : [];
   return Promise.all(
     steering.map(async (item) => {
       const { images, files, unavailableInstruction } = await settleSteeringAttachmentLoads(
@@ -392,6 +405,13 @@ export async function claimRunSteering(
         text: [
           await loadReplyContext(deps.prisma, lease.threadId, item.messageId),
           item.text,
+          item.origin === "user"
+            ? formatSelectedSkillsInstruction(selectedSkills, item.connectorScope ?? [])
+            : undefined,
+          item.origin === "user" &&
+          item.connectorScope?.some((id) => !selectedSkills.some((skill) => skill.id === id))
+            ? "This message enabled additional capabilities for this run. Use installed_search_tools to discover the currently selected connector tools, then installed_load_tool and installed_execute_tool to use them."
+            : undefined,
           filesInstruction,
           unavailableInstruction,
         ]

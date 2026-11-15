@@ -123,6 +123,24 @@ describe("built-in skill precedence in the API", () => {
 });
 
 describe("imported skill content in the API", () => {
+  it("automatically discovers legacy on-demand skills without rewriting their content", async () => {
+    const row = savedSkill("Files CLI");
+    row.content = buildSkillMd({
+      name: row.name,
+      description: row.description,
+      body: "Read the command guide",
+      frontmatter: { on_demand: true },
+    });
+    const { service } = setup([row]);
+    const catalog = await service.list(actor);
+    expect(catalog.find((skill) => skill.id === row.id)).toMatchObject({ onDemand: false });
+    expect(catalog.find((skill) => skill.id === row.id)).not.toHaveProperty("content");
+    await expect(service.get(actor, { skillId: row.id })).resolves.toMatchObject({
+      onDemand: false,
+      content: row.content,
+    });
+  });
+
   it("keeps multiline keep-chomp metadata editable after normalization", async () => {
     const imported = resolveSkillContent({
       content: `---

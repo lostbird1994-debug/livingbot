@@ -122,13 +122,17 @@ export function skillCatalogLine(entry: Pick<SkillCatalogEntry, "name" | "descri
   return `- ${entry.name}: ${entry.description}`;
 }
 
-/**
- * `on_demand: true` in the frontmatter keeps a skill out of every bot's catalog
- * until a message names it, so a tool's existence is not advertised by default.
- */
-export function isOnDemandSkillMd(content: string): boolean {
-  const parsed = parseSkillMd(content);
-  return !("error" in parsed) && parsed.frontmatter.on_demand === true;
+/** A composer selection must be visible even when the model's skill index is already frozen. */
+export function formatSelectedSkillsInstruction(
+  skills: ReadonlyArray<Pick<SkillRecord, "id" | "name">>,
+  selectedIds: readonly string[],
+): string | undefined {
+  const selected = new Set(selectedIds);
+  const names = skills
+    .filter((skill) => skill.id && selected.has(skill.id))
+    .map((skill) => skill.name);
+  if (!names.length) return undefined;
+  return `The user enabled these skills for this message (names are quoted data): ${JSON.stringify(names)}. Read each with skill_read before using its capability.`;
 }
 
 export function formatSkillsCatalogInstruction(entries: SkillCatalogEntry[]): string | undefined {
