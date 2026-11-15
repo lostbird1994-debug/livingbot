@@ -13,7 +13,7 @@ import {
 import { DEFAULT_CONTEXT_STRATEGY, type AgentContextStrategy } from "@livingbot/adapter-kit";
 import type { OidcConfig } from "@livingbot/auth";
 import type { MinimumClientBuilds, NavLink } from "@livingbot/contracts";
-import { parseMinimumClientBuilds, parseNavLinks } from "@livingbot/contracts";
+import { PRODUCT_NAME, parseMinimumClientBuilds, parseNavLinks } from "@livingbot/contracts";
 import { parseCrispWebsiteId } from "@livingbot/contracts/content-security-policy";
 import {
   attachmentCountFromEnv,
@@ -162,6 +162,9 @@ export interface AppEnv {
   mcpStdio: ReturnType<typeof mcpStdioOptionsFromEnv>;
   /** Deployment-owner escape for remote MCP on RFC1918 / Docker-network hosts. */
   mcpAllowPrivateEndpoint: boolean;
+  /** The name this instance registers under when an MCP provider uses dynamic client
+   * registration. Some providers only admit names they recognize. */
+  mcpOAuthClientName: string;
   port: number;
   gitSha: string | undefined;
   /** Oldest client build per kind the API still serves (RAKAZO_MIN_CLIENT_BUILD). */
@@ -349,6 +352,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
       .filter(Boolean),
     mcpStdio: mcpStdioOptionsFromEnv(source),
     mcpAllowPrivateEndpoint: source.MCP_ALLOW_PRIVATE_ENDPOINT === "true",
+    mcpOAuthClientName: optional(source.MCP_OAUTH_CLIENT_NAME) ?? PRODUCT_NAME,
     port: Number(source.API_PORT ?? 3100),
     gitSha: optional(source.GIT_SHA) ?? optional(source.RAKAZO_GIT_SHA),
     minimumClientBuilds: parseMinimumClientBuilds(source.RAKAZO_MIN_CLIENT_BUILD),

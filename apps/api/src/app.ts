@@ -409,6 +409,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     secrets,
     remoteConnectors,
     env.mcpAllowPrivateEndpoint,
+    env.mcpOAuthClientName,
   );
   const memoryProviders = new SpaceMemoryProviderResolver(prisma, secrets);
   const oauthLogins = new PiOAuthLogins(undefined, { prisma, secrets });

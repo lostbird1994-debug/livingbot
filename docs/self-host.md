@@ -140,3 +140,9 @@ From a checkout, use `-f infra/compose/docker-compose.yml` (or the production fi
 report lists the revision, which features are on, migration status, each bot's MCP servers with
 their health, and the latest runs. It prints no secrets, settings values, names, addresses,
 paths or message content; servers, bots and runs appear only as short hashes.
+
+Public plugin marketplace browsing and GitHub plugin previews/imports honor standard
+`HTTPS_PROXY`, `HTTP_PROXY` and `NO_PROXY` settings (including their lowercase forms).
+Set these in the API service environment; a desktop system proxy is not automatically
+inherited by a background service. Proxy transport is restricted to the public GitHub
+API and raw file hosts. Other user-supplied endpoints keep their existing network checks.
