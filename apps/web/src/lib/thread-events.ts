@@ -8,7 +8,7 @@ import type {
   ThreadMessagePage,
   ThreadSnapshot,
 } from "@livingbot/contracts";
-import { TaskResultSchema, RUN_TRIGGERS } from "@livingbot/contracts";
+import { RUN_TRIGGERS, TaskResultSchema } from "@livingbot/contracts";
 import {
   isActive,
   isBackgroundRunTrigger,
@@ -47,6 +47,11 @@ function runFromStartedEvent(event: ProductEvent, previous: Run | undefined): Ru
       typeof event.payload.routineId === "string"
         ? event.payload.routineId
         : (previous?.routineId ?? null),
+    ...(typeof event.payload.routineName === "string"
+      ? { routineName: event.payload.routineName }
+      : previous?.routineName
+        ? { routineName: previous.routineName }
+        : {}),
     modelProvider: previous?.modelProvider ?? null,
     modelId: previous?.modelId ?? null,
     error: null,

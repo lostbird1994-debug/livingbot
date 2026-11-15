@@ -1,7 +1,9 @@
 import { join } from "node:path";
+import { runContinueJob } from "@livingbot/adapter-kit";
 import { runAsTenant } from "@livingbot/db";
 import { getLogger } from "@livingbot/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { parseLocalAgentSelection } from "./local-agent-model.js";
 import { connectLocalAgentBridge } from "./local-agent-runtime.js";
 import type { NativeRunResult } from "./native-collaboration-broker.js";
 import { verifyNativeDeliveryText } from "./native-delivery-files.js";
@@ -196,6 +198,8 @@ export function createOpenClawReconciler(
         spaceId: true,
         status: true,
         error: true,
+        leaseFence: true,
+        updatedAt: true,
         modelId: true,
         taskSlotHeld: true,
         resourceWaitReason: true,
@@ -206,10 +210,10 @@ export function createOpenClawReconciler(
     const scanDeadline = Date.now() + 25_000;
     for (const run of runs) {
       if (deps.shutdownSignal?.aborted || Date.now() >= scanDeadline) break;
-      const local = !deps.nativeExecution && run.modelId?.startsWith("native/");
+      const local = Boolean(run.modelId && parseLocalAgentSelection(run.modelId));
       const store =
         dependencies.store ??
-        deps.nativeExecution?.store ??
+        (!local ? deps.nativeExecution?.store : undefined) ??
         new NativeRunJournal(
           join(
             process.env.DATA_DIR ?? "./data",
@@ -249,6 +253,33 @@ export function createOpenClawReconciler(
           continue;
         }
         if (["done", "failed", "cancelled"].includes(record.status)) {
+          if (run.status === "waiting_input") {
+            // The engine has already ended this wait. Let the normal executor consume its
+            // terminal receipt and finalize history, attempts and task state. The native driver
+            // returns a saved result/error before dispatch, so this cannot replay business work.
+            const released = await runAsTenant(run, () =>
+              deps.prisma.run.updateMany({
+                where: {
+                  id: run.id,
+                  spaceId: run.spaceId,
+                  userId: run.userId,
+                  status: "waiting_input",
+                  leaseFence: run.leaseFence,
+                  updatedAt: run.updatedAt,
+                },
+                data: {
+                  status: "queued",
+                  error: null,
+                  resourceWaitReason: null,
+                  leaseOwner: null,
+                  leaseExpiresAt: null,
+                  wakeAt: null,
+                },
+              }),
+            );
+            if (released.count === 1) await deps.jobs.enqueue(runContinueJob(run.id));
+            continue;
+          }
           // Admission-time recovery may already have settled the journal. Reflect
           // that evidence in the original failed run instead of leaving a stale
           // "unconfirmed" error forever, without marking business work successful.
@@ -278,7 +309,7 @@ export function createOpenClawReconciler(
             record.approval!.expiresAtMs <= Date.now());
         if (run.status === "waiting_input" && record.status !== "unconfirmed" && !expired) continue;
         await runAsTenant(run, async () => {
-          if (deps.nativeExecution) {
+          if (deps.nativeExecution && !local) {
             const peer = await deps.nativeExecution.connect(run);
             let status: NativeRecord["status"];
             try {
@@ -362,6 +393,7 @@ export function createOpenClawReconciler(
               error: run.error,
             },
             data: {
+              resourceWaitReason: status === "unconfirmed" ? "unconfirmed" : null,
               error:
                 status === "unconfirmed"
                   ? "底层任务状态未确认，请先核实，勿重复提交。"

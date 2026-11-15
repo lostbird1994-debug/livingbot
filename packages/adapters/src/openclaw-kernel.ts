@@ -7,6 +7,7 @@ import type {
 } from "@livingbot/adapter-kit";
 import { DEFAULT_CONTEXT_STRATEGY } from "@livingbot/adapter-kit";
 import { ContextBudgetError, selectContext } from "./context-selection.js";
+import { isLocalAgentModel, runLocalAgent } from "./local-agent-runtime.js";
 import { nativeCollaboration } from "./native-collaboration.js";
 import { verifyNativeDeliveryText } from "./native-delivery-files.js";
 import { connectOpenClawKernelSdk } from "./openclaw-gateway.js";
@@ -191,6 +192,12 @@ export class OpenClawAgentRuntime implements AgentRuntime {
         signal.throwIfAborted();
         if (!context.spaceId || !context.userId)
           throw new Error("Native agent requires tenant context");
+        // Desktop agents expose lifecycle RPCs, not model completions. Keep their
+        // dispatch inside this run's cancellation boundary, before provisioning a model.
+        if (isLocalAgentModel(request.model)) {
+          for await (const event of runLocalAgent(request, { ...context, signal })) emit(event);
+          return;
+        }
         const agent = await this.options.resolveAgent(request, context);
         signal.throwIfAborted();
         const key = JSON.stringify([request.runId, 0]);
@@ -222,7 +229,7 @@ export class OpenClawAgentRuntime implements AgentRuntime {
         let lastPreviewAt = 0;
         const publishPreview = (force = false) => {
           if (preview === publishedPreview || (!force && Date.now() - lastPreviewAt < 250)) return;
-          emit({ type: "progress", text: preview });
+          emit({ type: "progress", text: preview, replyPreview: true });
           publishedPreview = preview;
           lastPreviewAt = Date.now();
         };
@@ -290,6 +297,7 @@ export class OpenClawAgentRuntime implements AgentRuntime {
             onSteeringUndelivered: request.onSteeringUndelivered,
             onText(delta, replace) {
               preview = replace ? delta : preview + delta;
+              request.onReplyPreview?.(preview);
               publishPreview(replace);
             },
             onThinking: (active) => emit({ type: "thinking", active }),

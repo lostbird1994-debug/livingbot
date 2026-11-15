@@ -3,6 +3,7 @@ import {
   DEFAULT_CONTEXT_STRATEGY,
   isModelCredentialRejected,
   runContinueJob,
+  RunInterruptedError,
   SandboxUnavailableError,
   SandboxUnresponsiveError,
 } from "@livingbot/adapter-kit";
@@ -13,12 +14,12 @@ import {
   assertTransition,
   botMessageAllowsSilence,
   expandSkillReferencesInPrompt,
+  formatSelectedSkillsInstruction,
   formatSkillRunPrompt,
   formatSkillsCatalogInstruction,
   isBackgroundRunTrigger,
   isCallClientNonce,
   isMessagingChannelRun,
-  isOnDemandSkillMd,
   isOwnerStartedRun,
   isTerminal,
   MISSING_MODEL_RUN_ERROR,
@@ -153,7 +154,7 @@ import {
   RUN_SETUP_FAILURE_LIMIT,
   renewRunLease,
   requeueComputerRun,
-  requeueRunAfterShutdown,
+  requeueRunAfterInterruption,
   setupFailureStreak,
   startNextWaitingRun,
   writeComputerRunRequeue,
@@ -302,6 +303,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           thread: { select: { taskBotId: true } },
           routine: {
             select: {
+              name: true,
               memoryMaintenance: true,
               requireOutput: true,
               spaceId: true,
@@ -523,17 +525,28 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           renewRunLease(deps, runId, workerId, fence),
           renewComputerExecutionLease(deps.prisma, computerLease),
         ])
-          .then(([runRenewed, computerRenewed]) => {
+          .then(async ([runRenewed, computerRenewed]) => {
             if (lease.completed) return;
             if (!runRenewed || !computerRenewed) {
+              // Cancellation still stops the native task. An expired lease only detaches
+              // this producer, so another worker can recover the existing invocation.
+              const current = await deps.prisma.run.findUnique({
+                where: { id: runId },
+                select: { status: true },
+              });
+              if (lease.completed) return;
               lease.valid = false;
-              runAbortController?.abort();
+              runAbortController?.abort(
+                !current || current.status === "cancelled"
+                  ? undefined
+                  : new RunInterruptedError("lease_lost"),
+              );
             }
           })
           .catch(() => {
             if (lease.completed) return;
             lease.valid = false;
-            runAbortController?.abort();
+            runAbortController?.abort(new RunInterruptedError("lease_lost"));
           });
       }, 60_000);
       heartbeat.unref?.();
@@ -655,9 +668,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               )
             : null;
         runAbortController = new AbortController();
-        if (!lease.valid) runAbortController.abort();
-        if (deps.shutdownSignal?.aborted) runAbortController.abort(deps.shutdownSignal.reason);
-        const onShutdown = () => runAbortController?.abort(deps.shutdownSignal?.reason);
+        if (!lease.valid) runAbortController.abort(new RunInterruptedError("lease_lost"));
+        const onShutdown = () => runAbortController?.abort(new RunInterruptedError("shutdown"));
+        if (deps.shutdownSignal?.aborted) onShutdown();
         deps.shutdownSignal?.addEventListener("abort", onShutdown);
         detachShutdown = () => deps.shutdownSignal?.removeEventListener("abort", onShutdown);
         const composioRows = storedConnections.filter(
@@ -752,7 +765,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           botId: bot.id,
           type: "run.started",
           runId,
-          payload: { trigger: run.trigger, routineId: run.routineId },
+          payload: { trigger: run.trigger, routineId: run.routineId,
+            ...(run.routine?.name ? { routineName: run.routine.name } : {}) },
         });
 
         const discoveredPromise =
@@ -1521,19 +1535,20 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   "\n",
                 )}\nWhen the user asks to run a taught skill by name, follow that skill's playbook exactly. The full playbook is included in the user task when they invoke it.`
             : undefined;
-        // A skill marked on_demand reaches this run only when the composer picked it,
-        // so the model never learns the tool exists until the user reaches for it.
-        const pickedIds = new Set(run.connectorScope ?? []);
-        const visibleAgentSkills = agentSkills.filter(
-          (skill) => !isOnDemandSkillMd(skill.content) || pickedIds.has(skill.id),
-        );
-        const agentSkillsLine = formatSkillsCatalogInstruction(visibleAgentSkills);
+        const agentSkillsLine = formatSkillsCatalogInstruction(agentSkills);
         const missingImagesInstruction = missingTurnImagesInstruction(
           turnBlocks,
           currentTurnImages,
         );
         const taskPrompt = expandSkillReferencesInPrompt(
-          [task.prompt, attachedFilesPrompt, missingImagesInstruction].filter(Boolean).join("\n\n"),
+          [
+            task.prompt,
+            formatSelectedSkillsInstruction(agentSkills, run.connectorScope ?? []),
+            attachedFilesPrompt,
+            missingImagesInstruction,
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
           agentSkills,
         );
         const invokedSkill = savedSkills.find((skill) =>
@@ -1930,6 +1945,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               allowSilentEmpty: allowSilentEmptyRun,
               requireFinalResponse: requireRoutineOutput,
               emptyResponseText,
+              onReplyPreview: (text) => {
+                const preview = ctx.state.reply.widgetPreview;
+                if (preview) preview.text = text;
+                else ctx.state.reply.widgetPreview = { text, committed: "", anchors: [] };
+              },
               executeTool: scripted
                 ? undefined
                 : (name, args, executionId, route, observer) =>
@@ -1994,6 +2014,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           await completeRun(ctx);
         } catch (caughtError) {
           if (await interruptedByShutdown()) return;
+          if (!lease.valid) return;
           await failRun(ctx, caughtError, {
             ownCredential: resolved.ownCredential,
             active: activeModel,
@@ -2098,17 +2119,19 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           }
           await releaseComputerExecutionLease(deps.prisma, computerLease).catch(() => undefined);
           // A stopping process requeues this run instead, which must keep its turn.
-          if (!deps.shutdownSignal?.aborted) {
+          if (!deps.shutdownSignal?.aborted &&
+              !(runAbortController?.signal.reason instanceof RunInterruptedError)) {
             await startNextWaitingRun(deps, run.botId, runId).catch((error) =>
               getLogger().error("start next waiting run", error),
             );
           }
         }
-        if (deps.shutdownSignal?.aborted) {
+        if (deps.shutdownSignal?.aborted ||
+            runAbortController?.signal.reason instanceof RunInterruptedError) {
           // A renewal still in flight must not treat this release as a lost lease.
           lease.completed = true;
-          await requeueRunAfterShutdown(deps, runId, workerId, fence).catch((error) =>
-            getLogger().error("shutdown run requeue", error),
+          await requeueRunAfterInterruption(deps, runId, workerId, fence).catch((error) =>
+            getLogger().error("interrupted run requeue", error),
           );
         }
         await deps.prisma.attempt

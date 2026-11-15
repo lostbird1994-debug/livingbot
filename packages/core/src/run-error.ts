@@ -250,6 +250,9 @@ export function normalizeRunError(
   }
   if (
     trimmed === "External task exceeded its execution deadline" ||
+    trimmed === "External task cancelled" ||
+    trimmed === "External task cancelled before dispatch" ||
+    trimmed === "Native task was cancelled" ||
     trimmed === "底层任务已结束；请查看原生会话结果。" ||
     trimmed === "底层任务已结束；取消前的操作可能已经执行。"
   ) {

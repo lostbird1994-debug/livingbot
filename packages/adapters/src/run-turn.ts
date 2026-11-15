@@ -6,6 +6,7 @@ import {
   ModelAccountError,
   ModelOutputError,
   runContinueJob,
+  RunInterruptedError,
   SandboxAllowanceUsedError,
   SandboxRateLimitError,
   TransientModelError,
@@ -221,13 +222,16 @@ async function runLeaseLost(ctx: RunContext) {
     still.leaseFence !== fence
   ) {
     lease.valid = false;
+    ctx.abortController.abort(
+      !still || still.status === "cancelled" ? undefined : new RunInterruptedError("lease_lost"),
+    );
     return true;
   }
   const releasedHold = takeoverCheckpointOf(still.checkpoint);
   if (ctx.computer.heldForTakeover && releasedHold) {
     await requeueComputerRun(deps, runId, workerId, fence, releasedHold, false);
     lease.valid = false;
-    ctx.abortController.abort();
+    ctx.abortController.abort(new RunInterruptedError("lease_lost"));
     return true;
   }
   return false;
@@ -235,6 +239,11 @@ async function runLeaseLost(ctx: RunContext) {
 
 async function streamText(ctx: RunContext, event: RuntimeEvent<"text">) {
   const { reply } = ctx.state;
+  const preview = reply.widgetPreview;
+  if (preview?.committed && event.text.startsWith(preview.committed)) {
+    event = { ...event, text: event.text.slice(preview.committed.length) };
+    preview.committed = "";
+  }
   reply.assistantTurnText += event.text;
   if (event.text) reply.narrationStatusShowing = false;
   reply.textSinceLastStep += event.text;
@@ -286,7 +295,12 @@ async function streamProgress(ctx: RunContext, event: RuntimeEvent<"progress">) 
     type: "thread.progress",
     runId,
     payload: {
-      text: redactSecrets(event.text, ctx.secrets),
+      text: redactSecrets(
+        event.replyPreview && reply.widgetPreview?.anchors.length
+          ? previewWithWidgets(event.text, reply.widgetPreview.anchors)
+          : event.text,
+        ctx.secrets,
+      ),
       ...(event.activity ? { activity: true } : {}),
     },
   });
@@ -729,13 +743,14 @@ export async function completeRun(ctx: RunContext) {
   // A routine's silence token is control data, never its required result.
   // Required-output routines must fail the empty-result check below rather
   // than publishing that token as if it were a useful answer.
-  const silentReply = ctx.allowSilentEmptyRun || run.trigger === "routine"
-    ? stripNoResponseReply(reply.assembled, reply.messageSegments)
-    : (ctx.source.peerMessage?.intent === "request" ||
-          ctx.source.peerMessage?.intent === "question") &&
-        !reply.publishedMidTurnUserMessage
-      ? peerReplyWithoutSentinel(reply.assembled, reply.messageSegments)
-      : stripStrayNoResponse(reply.assembled, reply.messageSegments);
+  const silentReply =
+    ctx.allowSilentEmptyRun || run.trigger === "routine"
+      ? stripNoResponseReply(reply.assembled, reply.messageSegments)
+      : (ctx.source.peerMessage?.intent === "request" ||
+            ctx.source.peerMessage?.intent === "question") &&
+          !reply.publishedMidTurnUserMessage
+        ? peerReplyWithoutSentinel(reply.assembled, reply.messageSegments)
+        : stripStrayNoResponse(reply.assembled, reply.messageSegments);
   // A required-output routine must answer, but "nothing to report" is an answer:
   // it posts one honest line instead of failing the scheduled run.
   const routineNeedsBody = run.trigger === "routine" && ctx.routineRequiresOutput;
@@ -900,11 +915,22 @@ export async function failRun(
 ) {
   const { deps, run, runId, bot, thread } = ctx;
   const { reply } = ctx.state;
-  if (thread.taskBotId && caughtError instanceof NativeExecutionError && caughtError.state === "unconfirmed") {
+  if (
+    thread.taskBotId &&
+    caughtError instanceof NativeExecutionError &&
+    caughtError.state === "unconfirmed"
+  ) {
     ctx.state.lease.retainComputer = true;
-    await deps.prisma.run.updateMany({ where: { id: runId, status: "running", leaseOwner: ctx.workerId, leaseFence: ctx.fence },
-      data: { status: "queued", resourceWaitReason: "unconfirmed", leaseOwner: null, leaseExpiresAt: null,
-        wakeAt: new Date(Date.now() + 5000) } });
+    await deps.prisma.run.updateMany({
+      where: { id: runId, status: "running", leaseOwner: ctx.workerId, leaseFence: ctx.fence },
+      data: {
+        status: "queued",
+        resourceWaitReason: "unconfirmed",
+        leaseOwner: null,
+        leaseExpiresAt: null,
+        wakeAt: new Date(Date.now() + 5000),
+      },
+    });
     await deps.jobs.enqueue({ ...runContinueJob(runId), availableAt: new Date(Date.now() + 5000) });
     return;
   }
@@ -1014,4 +1040,19 @@ export async function failRun(
       threadId: thread.id,
     });
   }
+}
+
+/** Position anchors refer to native assistant text, never to injected widget source. */
+export function previewWithWidgets(
+  text: string,
+  anchors: Array<{ at: number; markdown: string }>,
+): string {
+  let result = "";
+  let position = 0;
+  for (const anchor of anchors) {
+    const at = Math.max(position, Math.min(text.length, anchor.at));
+    result += `${text.slice(position, at)}\n\n${anchor.markdown}\n\n`;
+    position = at;
+  }
+  return result + text.slice(position);
 }

@@ -3,12 +3,19 @@ import { BUILTIN_TOOL_NAMES } from "@livingbot/contracts";
 
 // The catalog is deliberately restricted. Execution still goes through the run's gate.
 export const NATIVE_COLLABORATION_TOOLS = [
+  "widget_guidelines",
+  "show_widget",
+  "visual_guidelines",
+  "show_visual",
   "message_bot",
   "handoff_to_bot",
   "list_fleet",
   "connect_agent",
   "respond_agent_connection",
   "message_agent",
+  "task_catalog",
+  "skill_read",
+  "rakazo_connected_tool",
 ] as const;
 const ENGINE_TOOL_NAMES = new Set([
   "shell", "list_files", "read_file", "write_file", "web_search", "web_fetch", "search_memory",

@@ -1,3 +1,4 @@
+import { RunInterruptedError } from "@livingbot/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import { approvalPausedToolResult } from "./approval-effect.js";
 import { NativeCollaborationBroker } from "./native-collaboration-broker.js";
@@ -91,6 +92,108 @@ function fixture(overrides: Partial<NativeInput> = {}) {
 }
 
 describe("native external Agent lifecycle", () => {
+  it.each([
+    ["lease_lost", undefined],
+    ["shutdown", undefined],
+    ["lease_lost", "kernel"],
+    ["shutdown", "kernel"],
+  ] as const)(
+    "recovers the same native invocation after %s (%s) without cancelling or replaying it",
+    async (reason, toolMode) => {
+      const controller = new AbortController();
+      const interrupted = new RunInterruptedError(reason);
+      const f = fixture({
+        signal: controller.signal,
+        collaboration: {
+          toolMode,
+          tools: [],
+          execute: async () => ({ ok: true }),
+          completed: undefined,
+          onPaused() {},
+        },
+      });
+      f.setHandler(async (method, params) => {
+        if (method === "rakazo.tools.register") return {};
+        if (method === "agent") {
+          controller.abort(interrupted);
+          return { runId: params.idempotencyKey };
+        }
+        throw new Error(`Unexpected RPC during interruption: ${method}`);
+      });
+      await expect(runNativeAgent(f.input, f.options)).rejects.toBe(interrupted);
+      expect(f.store.records.get(f.input.key)).toMatchObject({ status: "running" });
+      expect(f.store.records.get(f.input.key)?.error).toBeUndefined();
+      expect(
+        f.calls.some((call) =>
+          ["chat.abort", "rakazo.tools.close", "rakazo.process.control"].includes(call.method),
+        ),
+      ).toBe(false);
+      expect(f.stopped()).toBe(1);
+
+      f.setHandler(async (method) => {
+        if (
+          method === "rakazo.tools.register" ||
+          method === "rakazo.tools.close" ||
+          method === "sessions.delete"
+        )
+          return {};
+        if (method === "rakazo.tools.poll") return { calls: [] };
+        if (method === "agent.wait") return { status: "ok" };
+        if (method === "rakazo.run.result") return { result: { text: "Recovered result" } };
+        if (method === "chat.history")
+          return {
+            messages: [
+              {
+                role: "assistant",
+                timestamp: Date.now(),
+                content: [{ type: "text", text: "Recovered result" }],
+              },
+            ],
+          };
+        throw new Error(`Unexpected RPC during recovery: ${method}`);
+      });
+      await expect(
+        runNativeAgent({ ...f.input, signal: new AbortController().signal }, f.options),
+      ).resolves.toBe("Recovered result");
+      expect(f.calls.filter((call) => call.method === "agent")).toHaveLength(1);
+      expect(f.store.records.get(f.input.key)?.status).toBe("done");
+    },
+  );
+
+  it("leaves no cancellation receipt when ownership is lost before dispatch", async () => {
+    const controller = new AbortController();
+    const reason = new RunInterruptedError("lease_lost");
+    controller.abort(reason);
+    const f = fixture({ signal: controller.signal });
+    await expect(runNativeAgent(f.input, f.options)).rejects.toBe(reason);
+    expect(f.calls).toEqual([]);
+    expect(f.store.records.size).toBe(0);
+    await expect(
+      runNativeAgent({ ...f.input, signal: new AbortController().signal }, f.options),
+    ).resolves.toBe("Answer");
+  });
+
+  it("never replays an invocation the user explicitly cancelled", async () => {
+    const controller = new AbortController();
+    const f = fixture({ signal: controller.signal });
+    let nativeId = "";
+    f.setHandler(async (method, params) => {
+      if (method === "agent") {
+        nativeId = params.idempotencyKey;
+        controller.abort();
+        return { runId: nativeId };
+      }
+      if (method === "chat.abort") return { aborted: true, runIds: [nativeId] };
+      throw new Error(method);
+    });
+    await expect(runNativeAgent(f.input, f.options)).rejects.toMatchObject({ state: "cancelled" });
+    await expect(
+      runNativeAgent({ ...f.input, signal: new AbortController().signal }, f.options),
+    ).rejects.toMatchObject({ state: "cancelled" });
+    expect(f.calls.filter((call) => call.method === "agent")).toHaveLength(1);
+    expect(f.calls.filter((call) => call.method === "chat.abort")).toHaveLength(1);
+  });
+
   it.each(["rejected", "timeout"] as const)(
     "releases a new session after a %s handshake so the next routine can run",
     async (failure) => {

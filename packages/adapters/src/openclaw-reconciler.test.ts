@@ -160,10 +160,16 @@ describe("durable native cancellation reconciliation", () => {
       status,
       error: null,
       modelId: "openclaw/default",
+      leaseFence: 2,
+      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
     };
     const update = vi.fn().mockResolvedValue({ count: 1 });
     const findMany = vi.fn().mockResolvedValue([run]);
-    const deps = { prisma: { run: { findMany, updateMany: update } } } as unknown as ExecutorDeps;
+    const enqueue = vi.fn(async () => undefined);
+    const deps = {
+      prisma: { run: { findMany, updateMany: update } },
+      jobs: { enqueue },
+    } as unknown as ExecutorDeps;
     const connect = vi.fn().mockResolvedValue(f.peer);
     const resolveModel = vi.fn().mockResolvedValue({
       provider: "openai-compatible",
@@ -172,8 +178,54 @@ describe("durable native cancellation reconciliation", () => {
       apiKey: "test-secret",
       allowPrivateEndpoint: true,
     });
-    return { ...f, deps, connect, resolveModel, update, findMany };
+    return { ...f, deps, connect, resolveModel, update, findMany, enqueue };
   }
+  it.each(["done", "failed", "cancelled"] as const)(
+    "finalizes a waiting run through its existing %s receipt instead of keeping it live",
+    async (status) => {
+      const f = scheduled("waiting_input");
+      f.store.rows.set(JSON.stringify(["rakazo-run", 0]), { ...f.record, status });
+      await createOpenClawReconciler(f.deps, {
+        store: f.store,
+        connect: f.connect,
+        resolveModel: f.resolveModel,
+      })();
+      expect(f.update).toHaveBeenCalledExactlyOnceWith({
+        where: {
+          id: "rakazo-run",
+          spaceId: "space",
+          userId: "owner",
+          status: "waiting_input",
+          leaseFence: 2,
+          updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+        data: {
+          status: "queued",
+          error: null,
+          resourceWaitReason: null,
+          leaseOwner: null,
+          leaseExpiresAt: null,
+          wakeAt: null,
+        },
+      });
+      expect(f.enqueue).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "run.continue", payload: { runId: "rakazo-run" } }),
+      );
+      expect(f.connect).not.toHaveBeenCalled();
+      expect(f.resolveModel).not.toHaveBeenCalled();
+    },
+  );
+  it("leaves a concurrently resumed wait alone", async () => {
+    const f = scheduled("waiting_input");
+    f.store.rows.set(JSON.stringify(["rakazo-run", 0]), { ...f.record, status: "failed" });
+    f.update.mockResolvedValue({ count: 0 });
+    await createOpenClawReconciler(f.deps, {
+      store: f.store,
+      connect: f.connect,
+      resolveModel: f.resolveModel,
+    })();
+    expect(f.enqueue).not.toHaveBeenCalled();
+  });
   it("finds cancelled approval work after restart and confirms it through the native peer", async () => {
     const f = scheduled("cancelled");
     await createOpenClawReconciler(f.deps, {

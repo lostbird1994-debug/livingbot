@@ -13,6 +13,7 @@ export function ComposerError({
   onSendAsFile,
   runError,
   runErrorId,
+  runErrorTaskName,
   onRunErrorPresented,
   onOpenModels,
   onOpenConnections,
@@ -26,6 +27,7 @@ export function ComposerError({
   onSendAsFile?: () => void;
   runError: string | null;
   runErrorId: string | null;
+  runErrorTaskName?: string;
   onRunErrorPresented: (runId: string) => void;
   onOpenModels: () => void;
   onOpenConnections: () => void;
@@ -143,6 +145,9 @@ export function ComposerError({
       className={`mb-3 flex items-center gap-2 rounded-[14px] border px-4 py-2 text-[13px] animate-in fade-in-0 slide-in-from-bottom-1 duration-150 motion-reduce:animate-none ${warning ? "border-warning/40 bg-warning/10 text-warning" : "border-destructive/40 bg-destructive/10 text-destructive"}`}
     >
       <div className="min-w-0 flex-1">
+        {!sendError && runErrorTaskName ? (
+          <div className="mb-1 break-words font-medium">{runErrorTaskName}</div>
+        ) : null}
         {isModelRequiredSendError(sendError) ? (
           <button
             type="button"
@@ -189,12 +194,19 @@ export function ComposerError({
           </>
         ) : null}
         {nativeUnresolved && onStopUnresolved ? (
-          <Button type="button" variant="outline" size="sm" className="ml-2"
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="ml-2"
             disabled={stopping}
             onClick={() => {
               setStopping(true);
-              void onStopUnresolved().catch(() => undefined).finally(() => setStopping(false));
-            }}>
+              void onStopUnresolved()
+                .catch(() => undefined)
+                .finally(() => setStopping(false));
+            }}
+          >
             {stopping ? "正在核实停止…" : "停止旧任务"}
           </Button>
         ) : null}

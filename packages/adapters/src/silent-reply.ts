@@ -3,6 +3,29 @@ import type { MessageBlock } from "@livingbot/contracts";
 /** Exact token a silent run must emit as its entire final assistant reply. */
 export const NO_RESPONSE = "NO_RESPONSE";
 
+/**
+ * Workspaces imported from OpenClaw and routine prompts written against it say
+ * `NO_REPLY` for the same choice. Instructions only ever teach `NO_RESPONSE`,
+ * but a run that answers with the older token is staying silent too, so it is
+ * swallowed rather than posted as chat text.
+ */
+export const LEGACY_NO_RESPONSE = "NO_REPLY";
+
+/** Every token that means "nothing to report". */
+const SILENT_SENTINELS = [NO_RESPONSE, LEGACY_NO_RESPONSE] as const;
+
+const SHORTEST_SENTINEL = Math.min(...SILENT_SENTINELS.map((token) => token.length));
+
+/** The sentinel starting at `index`, if any. */
+function sentinelAt(text: string, index: number): string | undefined {
+  return SILENT_SENTINELS.find((token) => text.startsWith(token, index));
+}
+
+/** The sentinel ending at `index`, if any. */
+function sentinelEndingAt(text: string, index: number): string | undefined {
+  return SILENT_SENTINELS.find((token) => text.endsWith(token, index));
+}
+
 function textBlocksOf(
   blocks: readonly MessageBlock[],
 ): Array<Extract<MessageBlock, { kind: "text" }>> {
@@ -22,11 +45,19 @@ function joinedText(blocks: readonly MessageBlock[]): string {
  * with no separator, so a model that re-emits the sentinel after each tool
  * batch yields `NO_RESPONSENO_RESPONSE`; that is still a silent reply, not prose.
  */
-const SENTINEL_ONLY = /^(?:NO_RESPONSE\s*)+$/;
+const SENTINEL_ONLY = new RegExp(`^(?:${SILENT_SENTINELS.join("|")}\\s*)+$`);
 
 /** True when trimmed text is only the silent-reply sentinel, once or repeated. Extra prose does not match. */
 export function isExactNoResponse(text: string): boolean {
   return SENTINEL_ONLY.test(text.trim());
+}
+
+/** True when a whole sentinel word appears anywhere in the text. */
+const MENTIONS_SENTINEL = new RegExp(`\\b(?:${SILENT_SENTINELS.join("|")})\\b`);
+
+/** Whether the text mentions a sentinel at all, as when prose pairs it with a report. */
+export function mentionsNoResponse(text: string): boolean {
+  return MENTIONS_SENTINEL.test(text);
 }
 
 const IDENTIFIER_CHAR = /[A-Za-z0-9_]/;
@@ -41,32 +72,41 @@ const WHITESPACE = /\s/;
 function proseRange(text: string): { start: number; end: number } {
   let cursor = text.length - text.trimStart().length;
   let start = 0;
-  while (text.startsWith(NO_RESPONSE, cursor)) {
-    cursor += NO_RESPONSE.length;
+  let token = sentinelAt(text, cursor);
+  while (token) {
+    cursor += token.length;
     if (!IDENTIFIER_CHAR.test(text[cursor] ?? "")) {
       while (cursor < text.length && WHITESPACE.test(text[cursor]!)) cursor++;
       start = cursor;
-    } else if (!text.startsWith(NO_RESPONSE, cursor)) {
-      break;
+      token = sentinelAt(text, cursor);
+    } else {
+      const glued = sentinelAt(text, cursor);
+      if (!glued) break;
+      token = glued;
     }
   }
   // Scan backwards from the end so long whitespace cannot cause suffix backtracking.
   cursor = text.trimEnd().length;
   let end = text.length;
-  while (cursor - NO_RESPONSE.length >= start && text.endsWith(NO_RESPONSE, cursor)) {
-    cursor -= NO_RESPONSE.length;
+  token = sentinelEndingAt(text, cursor);
+  while (token && cursor - token.length >= start) {
+    cursor -= token.length;
     if (cursor <= start || !IDENTIFIER_CHAR.test(text[cursor - 1] ?? "")) {
       while (cursor > start && WHITESPACE.test(text[cursor - 1]!)) cursor--;
       end = cursor;
-    } else if (!(cursor - NO_RESPONSE.length >= start && text.endsWith(NO_RESPONSE, cursor))) {
-      break;
+      token = sentinelEndingAt(text, cursor);
+    } else {
+      const glued =
+        cursor - SHORTEST_SENTINEL >= start ? sentinelEndingAt(text, cursor) : undefined;
+      if (!glued) break;
+      token = glued;
     }
   }
   return { start, end };
 }
 
 /**
- * Silent-reply stripper. If the trimmed final text is exactly `NO_RESPONSE`,
+ * Silent-reply stripper. If the trimmed final text is exactly a silence token,
  * drop that text so the run can finish with no chat bubble. Sibling tool/step
  * blocks do not count as extra prose. Surrounding words keep the reply; only a
  * stray sentinel at the start or end of that prose is removed from it.

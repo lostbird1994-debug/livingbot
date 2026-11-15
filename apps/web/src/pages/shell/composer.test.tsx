@@ -1206,6 +1206,20 @@ it("shows file confirmation only for a recognized server response", () => {
   ).toBe(true);
 });
 
+it("identifies the failed task and does not attribute a send error to it", () => {
+  renderComposer(async () => false, {
+    runError: "External task cancelled",
+    runErrorId: "inspection-run",
+    runErrorTaskName: "Scheduled inventory check",
+  });
+  const error = () => container!.querySelector('[data-testid="composer-error"]')!;
+  expect(error().textContent).toContain("Scheduled inventory check");
+  expect(error().textContent).toContain("The task stopped. Check its results before retrying.");
+  expect(error().textContent).not.toContain("The model provider returned an error.");
+  rerenderComposer({ sendError: "Message could not be sent" });
+  expect(error().textContent).not.toContain("Scheduled inventory check");
+});
+
 it("never carries file confirmation into a later run error after send error dismissal", () => {
   renderComposer(async () => false, {
     sendError: "Image input is not configured for this model.",

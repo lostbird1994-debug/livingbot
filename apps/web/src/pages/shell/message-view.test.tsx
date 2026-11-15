@@ -288,7 +288,7 @@ it("opens one counted peer line without an inline reply toggle", () => {
   expect(open).toHaveBeenCalledWith({ peerBotId: "peer", peerBotName: "Researcher" });
 });
 
-it("uses the routine bubble surface only for routine replies", () => {
+it("keeps the routine label while rendering the reply as a full-width document", () => {
   const message: ThreadMessage = {
     id: "routine",
     threadId: "thread",
@@ -296,14 +296,18 @@ it("uses the routine bubble surface only for routine replies", () => {
     role: "bot",
     createdAt: new Date().toISOString(),
     routine: true,
+    routineName: "Daily report",
     blocks: [{ kind: "text", text: "Daily report" }],
   };
   renderView("bot", message.blocks, { message });
+  expect(container.querySelector('[data-testid="message-bot-heading"]')).not.toBeNull();
+  expect(container.querySelector('[data-testid="message-routine-label"]')?.textContent).toContain(
+    "Daily report",
+  );
   expect(
-    container
-      .querySelector('[data-testid="message-bot-bubble"]')
-      ?.classList.contains("rk-bubble-routine"),
+    container.querySelector('[data-testid="message-bot-bubble"]')?.classList.contains("w-full"),
   ).toBe(true);
+  expect(container.querySelector(".rk-bubble-bot")).toBeNull();
   renderView("bot", message.blocks);
   expect(container.querySelector(".rk-bubble-routine")).toBeNull();
 });

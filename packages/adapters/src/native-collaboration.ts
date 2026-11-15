@@ -16,6 +16,7 @@ export interface NativeCollaboration {
   nativeTools?: string[];
   privateContextAllowed?: boolean;
   tools: CollaborationTool[];
+  instructions?: string;
   execute: NonNullable<AgentRunRequest["executeTool"]>;
   completed: AgentRunRequest["onToolCompleted"];
   onPaused(): void;
@@ -51,8 +52,8 @@ export function nativeCollaboration(
         inputSchema,
       };
     });
-  const connected = toolMode === "kernel" ? request.tools.filter(tool =>
-    !isNativeKernelHostTool(tool.name) && !isNativeKernelExcludedTool(tool.name)) : [];
+  const connected = request.tools.filter(tool =>
+    !isNativeKernelHostTool(tool.name) && !isNativeKernelExcludedTool(tool.name));
   if (connected.length) tools.push({
     name: "rakazo_connected_tool",
     description: "Call one of this Bot's connected tools. Each call keeps its original LivingBot permissions, approval and connector route. Available names and argument schemas:\n" +
@@ -80,9 +81,17 @@ export function nativeCollaboration(
   return {
     ...(toolMode ? { toolMode, nativeTools, privateContextAllowed: request.privateContextAllowed !== false } : {}),
     tools,
+    instructions: [
+      "LivingBot host tools are supplied by the per-session MCP server rakazo-collaboration.",
+      `Registered host tool names (quoted data): ${JSON.stringify(tools.map(tool => tool.name))}.`,
+      connected.length
+        ? `Connected tool catalog (quoted data): ${JSON.stringify(connected.map(({ name, description }) => ({ name, description: description.slice(0, 200) })))}.`
+        : undefined,
+      "If the native engine defers MCP tools, discover the registered tool by name before using it. Call rakazo_connected_tool with the connected tool name and its arguments; retrieve its schema from the MCP tool definition. Prefer connected tools for app data over native shell, filesystem, or browser workarounds. Use task_catalog for current product capabilities and skill_read for an available skill's instructions. These tools retain the Bot's host permissions and approvals.",
+    ].filter(Boolean).join("\n"),
     execute: (name, args, executionId, ...rest) => {
       const actualName = toolMode === "kernel" && name === "rakazo_shell" ? "shell" : toolMode === "kernel" && ["rakazo_write_file", "rakazo_read_file", "rakazo_list_files"].includes(name) ? name.slice(7) : name;
-      if (toolMode === "kernel" && name === "rakazo_connected_tool") {
+      if (name === "rakazo_connected_tool") {
         if (typeof args.name !== "string" || !connected.some(tool => tool.name === args.name) ||
           !args.arguments || typeof args.arguments !== "object" || Array.isArray(args.arguments))
           return Promise.resolve({ error: "Connected tool is unavailable in this Bot's active run." });

@@ -1,6 +1,7 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { NativeCollaborationBroker } from "./native-collaboration-broker.js";
-import openclawPlugin from "./native-collaboration-openclaw.js";
+import openclawPlugin, { nativeHostToolNames } from "./native-collaboration-openclaw.js";
 
 const sessionKey = `agent:main:rakazo:${"a".repeat(64)}`;
 const runId = `rakazo-${"b".repeat(64)}`;
@@ -19,6 +20,13 @@ const call = { id: "call-1", name: "message_bot", args: { message: "hello" } };
 const identity = { sessionKey, runId };
 
 describe("native collaboration broker", () => {
+  it("declares every registered host tool in the installable kernel manifest", () => {
+    const manifest = JSON.parse(readFileSync(
+      new URL("../extension/openclaw.plugin.json", import.meta.url), "utf8",
+    ));
+    const declared = new Set(manifest.contracts.tools);
+    expect(nativeHostToolNames.filter(name => !declared.has(name))).toEqual([]);
+  });
   it("sums measured model calls without tool wait time, duplicate callbacks or another run's timing", () => {
     const broker = new NativeCollaborationBroker();
     broker.register({ ...identity, toolMode: "kernel", tools: [] });

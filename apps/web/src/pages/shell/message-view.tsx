@@ -168,25 +168,22 @@ export const MessageView = memo(function MessageView({
   );
   const replyBotId = message.replyPreview?.botId ?? replyParent?.botId;
   const speakerBot = message.botId ? peerBot?.(message.botId) : undefined;
-  const speakerColorDef = useMemo(
-    () => resolvePersonaColorDef(message.botId ?? "bot", speakerBot?.color),
-    [message.botId, speakerBot?.color],
-  );
+  const peerReceipt = isPeerReceiptBlocks(message.blocks);
   const messageContext = (
     <>
-      {speakerName ? (
+      {message.role === "bot" && !peerReceipt ? (
         <div
-          className="mb-1.5 flex items-center gap-2 text-[13px] font-semibold tracking-tight"
+          data-testid="message-bot-heading"
+          className="mb-3 mt-4 flex items-center gap-2.5 text-sm font-medium text-foreground"
           dir="auto"
-          style={{ color: speakerColorDef.light }}
         >
           <BotAvatar
             color={speakerBot?.color ?? FALLBACK_BOT_COLOR}
             avatarSet={speakerBot?.avatarSet}
             identity={message.botId}
-            size={22}
+            size={28}
           />
-          {speakerName}
+          {speakerName ?? speakerBot?.name ?? memberName?.(message.botId) ?? t`Bot`}
         </div>
       ) : null}
       <ReplyLine
@@ -211,7 +208,6 @@ export const MessageView = memo(function MessageView({
     textAnchorIndex === -1
       ? message.blocks.findIndex((block) => block.kind === "ask")
       : textAnchorIndex;
-  const peerReceipt = isPeerReceiptBlocks(message.blocks);
   const hoverActions = peerReceipt ? null : (
     <MessageHoverActions
       message={message}
@@ -225,22 +221,37 @@ export const MessageView = memo(function MessageView({
   if (message.taskResult && message.botId) {
     const result = message.taskResult;
     const summary = message.blocks[1];
-    const fileCount = message.blocks.filter(block => block.kind === "file" || block.kind === "image").length;
+    const fileCount = message.blocks.filter(
+      (block) => block.kind === "file" || block.kind === "image",
+    ).length;
     // Same geometry as a normal reply bubble — only the tint marks it as its own session.
-    return <div
-      data-testid="message-task-bubble"
-      className="w-full max-w-full space-y-2.5 rounded-[20px] rk-bubble-bot rk-bubble-task px-[18px] py-3 text-body1 text-foreground"
-      dir="auto"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <span className="min-w-0">{result.title}</span>
-        <span className="shrink-0 text-[13px] text-muted-foreground">{result.status === "completed" ? "已完成" : result.status === "failed" ? "失败" : "已停止"}</span>
+    return (
+      <div
+        data-testid="message-task-bubble"
+        className="w-full max-w-full space-y-2.5 rounded-[20px] rk-bubble-bot rk-bubble-task px-[18px] py-3 text-body1 text-foreground"
+        dir="auto"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <span className="min-w-0">{result.title}</span>
+          <span className="shrink-0 text-[13px] text-muted-foreground">
+            {result.status === "completed"
+              ? "已完成"
+              : result.status === "failed"
+                ? "失败"
+                : "已停止"}
+          </span>
+        </div>
+        {summary?.kind === "text" ? (
+          <p className="whitespace-pre-wrap text-muted-foreground">{summary.text}</p>
+        ) : null}
+        <Link
+          className="inline-block font-medium underline-offset-4 hover:underline"
+          to={`/app/${message.botId}?task=${result.taskSessionId}`}
+        >
+          查看结果{fileCount ? ` · ${fileCount} 个文件` : ""} →
+        </Link>
       </div>
-      {summary?.kind === "text" ? <p className="whitespace-pre-wrap text-muted-foreground">{summary.text}</p> : null}
-      <Link className="inline-block font-medium underline-offset-4 hover:underline" to={`/app/${message.botId}?task=${result.taskSessionId}`}>
-        查看结果{fileCount ? ` · ${fileCount} 个文件` : ""} →
-      </Link>
-    </div>;
+    );
   }
   if (isNarration) {
     if (visibleNarrationBlocks.length === 0) return null;
@@ -258,14 +269,11 @@ export const MessageView = memo(function MessageView({
     return (
       <>
         {messageContext}
-        <div className="relative w-fit max-w-full [@media(hover:none)]:w-full">
-          <div className="flex w-fit max-w-full justify-start [@media(hover:none)]:w-full">
+        <div className="relative w-full min-w-0">
+          <div className="flex w-full min-w-0 justify-start">
             <div
               data-testid="message-bot-bubble"
-              className={cn(
-                "max-w-full space-y-2.5 rounded-[20px] rk-bubble-bot px-[18px] py-3 text-body1 text-foreground",
-                message.routine && "rk-bubble-routine",
-              )}
+              className={cn("w-full min-w-0 space-y-2.5 text-body1 text-foreground")}
               dir="auto"
             >
               {message.routineName && (
@@ -418,16 +426,10 @@ export const MessageView = memo(function MessageView({
           }
           if (block.kind === "progress") {
             return (
-              <div
-                key={i}
-                className="flex w-fit max-w-full justify-start [@media(hover:none)]:w-full"
-              >
+              <div key={i} className="flex w-full min-w-0 justify-start">
                 <div
                   data-testid="message-bot-bubble"
-                  className={cn(
-                    "max-w-full rounded-[20px] rk-bubble-bot px-[18px] py-3 text-body1 text-foreground",
-                    message.routine && "rk-bubble-routine",
-                  )}
+                  className={cn("w-full min-w-0 text-body1 text-foreground")}
                   dir="auto"
                 >
                   <ChatMarkdown
@@ -563,16 +565,10 @@ export const MessageView = memo(function MessageView({
           }
           if (block.kind === "text") {
             return (
-              <div
-                key={i}
-                className="relative flex w-fit max-w-full justify-start [@media(hover:none)]:w-full [@media(hover:none)]:flex-wrap"
-              >
+              <div key={i} className="relative flex w-full min-w-0 flex-wrap justify-start">
                 <div
                   data-testid="message-bot-bubble"
-                  className={cn(
-                    "max-w-full rounded-[20px] rk-bubble-bot px-[18px] py-3 text-body1 text-foreground",
-                    message.routine && "rk-bubble-routine",
-                  )}
+                  className={cn("w-full min-w-0 text-body1 text-foreground")}
                   dir="auto"
                 >
                   <div data-quote-message-id={quoteMessageId}>
@@ -650,7 +646,9 @@ export const MessageView = memo(function MessageView({
                         ? "rounded-full bg-warning/15 px-[11px] py-1 text-[13px] text-warning"
                         : block.state === "Skipped"
                           ? "rounded-full bg-foreground/10 px-[11px] py-1 text-[13px] text-muted-foreground"
-                          : "rounded-full bg-success/15 px-[11px] py-1 text-[13px] text-success"
+                          : block.state === "Done"
+                            ? "rounded-full bg-success/15 px-[11px] py-1 text-[13px] text-success"
+                            : "rounded-full bg-status-working/15 px-[11px] py-1 text-[13px] text-status-working"
                     }
                   >
                     {block.state === "Needs you"

@@ -23,6 +23,8 @@ import {
 } from "./run-replies.js";
 import {
   isExactNoResponse,
+  LEGACY_NO_RESPONSE,
+  mentionsNoResponse,
   NO_RESPONSE,
   stripNoResponseReply,
   stripStrayNoResponse,
@@ -308,6 +310,51 @@ describe("stripNoResponseReply", () => {
     const padded = `  ${NO_RESPONSE}  `;
     const stripped = stripNoResponseReply(padded, [{ kind: "text", text: padded }]);
     expect(stripped).toEqual({ assembled: "", blocks: [] });
+  });
+
+  it("treats the older NO_REPLY token a workspace still teaches as empty", () => {
+    // Imported OpenClaw workspaces and the routine prompts written against them say
+    // NO_REPLY. A run that answers with it is staying silent, not reporting it.
+    expect(isExactNoResponse(LEGACY_NO_RESPONSE)).toBe(true);
+    const stripped = stripNoResponseReply(LEGACY_NO_RESPONSE, [
+      { kind: "text", text: LEGACY_NO_RESPONSE },
+    ]);
+    expect(stripped).toEqual({ assembled: "", blocks: [] });
+    expect(completionMarksUnread("routine", completionNotificationBody("", stripped.blocks))).toBe(
+      false,
+    );
+  });
+
+  it("treats the two tokens repeated and joined together as empty", () => {
+    const text = `${LEGACY_NO_RESPONSE}${NO_RESPONSE}${LEGACY_NO_RESPONSE}`;
+    expect(stripNoResponseReply(text, [{ kind: "text", text }])).toEqual({
+      assembled: "",
+      blocks: [],
+    });
+    expect(stripNoResponseReply(`${NO_RESPONSE} ${LEGACY_NO_RESPONSE}`, [])).toEqual({
+      assembled: "",
+      blocks: [],
+    });
+  });
+
+  it("drops a legacy token glued to the end of a report, keeping the report", () => {
+    const report = "本周三条线索已跟进，无异常。";
+    const text = `${report}${LEGACY_NO_RESPONSE}`;
+    const stripped = stripNoResponseReply(text, [
+      { kind: "text", text: report },
+      { kind: "text", text: LEGACY_NO_RESPONSE },
+    ]);
+    expect(stripped).toEqual({ assembled: report, blocks: [{ kind: "text", text: report }] });
+  });
+
+  it("keeps prose that names a token, and ignores identifiers containing one", () => {
+    const text = "本轮没有新消息，所以我回了 NO_REPLY 结束。";
+    const blocks = [{ kind: "text" as const, text }];
+    expect(stripNoResponseReply(text, blocks)).toEqual({ assembled: text, blocks });
+    expect(mentionsNoResponse(text)).toBe(true);
+    expect(mentionsNoResponse("NO_REPLY_POLICY")).toBe(false);
+    expect(mentionsNoResponse("reportNO_REPLYNO_RESPONSE")).toBe(false);
+    expect(mentionsNoResponse(`first ${LEGACY_NO_RESPONSE} last`)).toBe(true);
   });
 
   it("treats the sentinel repeated across joined text segments as empty", () => {

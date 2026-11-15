@@ -1,5 +1,13 @@
 import type { AdapterContext } from "./types.js";
 
+/** Stop this producer while leaving durable external work available for the next owner. */
+export class RunInterruptedError extends Error {
+  constructor(readonly reason: "lease_lost" | "shutdown") {
+    super(`Run execution interrupted: ${reason}`);
+    this.name = "RunInterruptedError";
+  }
+}
+
 export function createAdapterContext(
   actor: Pick<AdapterContext, "spaceId" | "userId">,
   botId: string,

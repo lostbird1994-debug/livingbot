@@ -1,5 +1,5 @@
 import type { AgentRunRequest, ComputerRef } from "@livingbot/adapter-kit";
-import { SandboxRateLimitError, SandboxUnresponsiveError } from "@livingbot/adapter-kit";
+import { RunInterruptedError, SandboxRateLimitError, SandboxUnresponsiveError } from "@livingbot/adapter-kit";
 import type { MessageBlock } from "@livingbot/contracts";
 import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -82,7 +82,7 @@ async function runRoutine(
   // A test-owned signal cannot be aborted mid-run, so the runtime fake trips this
   // relay; the executor still sees the option's signal through AbortSignal.any.
   const shutdownRelay = new AbortController();
-  const runtimeRun = vi.fn(async function* (request: AgentRunRequest) {
+  const runtimeRun = vi.fn(async function* (request: AgentRunRequest, _context?: { signal: AbortSignal }) {
     if (options.cancelRun) run.status = "cancelled";
     if (options.steering && !options.steeringAfterFirst) {
       steeringInputs.push(...((await request.claimSteering?.([])) ?? []));
@@ -635,8 +635,9 @@ describe("run computer provisioning", () => {
     expect(sink.events.filter((event) => event.level === "error")).toEqual([]);
   });
 
-  it("does not report setup that a lost run lease aborted", async () => {
+  it("requeues a lost lease without treating it as cancellation or failure", async () => {
     vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    let interruption: unknown;
     try {
       provisionComputer.mockImplementation(
         async (
@@ -647,18 +648,23 @@ describe("run computer provisioning", () => {
           deps.prisma.run.updateMany.mockResolvedValueOnce({ count: 0 });
           vi.advanceTimersByTime(60_000);
           await new Promise((resolve) => context.signal.addEventListener("abort", resolve));
+          interruption = context.signal.reason;
           throw context.signal.reason;
         },
       );
 
-      await runRoutine([{ name: "list_files", args: { path: "" } }]).catch(() => undefined);
+      const result = await runRoutine([{ name: "list_files", args: { path: "" } }]);
+      expect(result.finalizeRun).not.toHaveBeenCalled();
+      expect(result.run.status).toBe("queued");
+      expect(result.enqueue).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "run.continue", payload: { runId: "run-1" } }),
+      );
     } finally {
       vi.useRealTimers();
     }
     expect(provisionComputer).toHaveBeenCalledOnce();
-    expect(sink.events).toContainEqual(
-      expect.objectContaining({ level: "warn", message: "run setup failed" }),
-    );
+    expect(interruption).toBeInstanceOf(RunInterruptedError);
+    expect(interruption).toMatchObject({ reason: "lease_lost" });
     expect(sink.events.filter((event) => event.level === "error")).toEqual([]);
   });
 
@@ -702,7 +708,7 @@ describe("run computer provisioning", () => {
   );
 
   it("requeues a run aborted by shutdown so the next worker resumes it", async () => {
-    const { finalizeRun, prisma, run, enqueue, resumeOnNextWorker } = await runRoutine(
+    const { finalizeRun, prisma, run, enqueue, resumeOnNextWorker, runtimeRun } = await runRoutine(
       [{ name: "list_files", args: { path: "" } }],
       {
         toolFailure: "abort",
@@ -711,6 +717,7 @@ describe("run computer provisioning", () => {
     );
 
     expect(finalizeRun).not.toHaveBeenCalled();
+    expect(runtimeRun.mock.calls[0]?.[1]?.signal.reason).toMatchObject({ reason: "shutdown" });
     expect(run).toMatchObject({
       status: "queued",
       leaseOwner: null,

@@ -8,10 +8,7 @@ import {
 } from "./openai-compatible-url.js";
 import { NativeRunJournal } from "./openclaw-gateway.js";
 import type { NativeFrame, NativePeer, NativeStore } from "./openclaw-native-driver.js";
-import {
-  NativeExecutionError,
-  runNativeAgent,
-} from "./openclaw-native-driver.js";
+import { NativeExecutionError, runNativeAgent } from "./openclaw-native-driver.js";
 
 export const isLocalAgentModel = (model: AgentRunRequest["model"]) =>
   model.provider === "openai-compatible" && Boolean(parseLocalAgentSelection(model.id));
@@ -207,6 +204,7 @@ export async function* runLocalAgent(
       let preview = "";
       let lastPreviewAt = 0;
       let lastActivityAt = 0;
+      const collaboration = nativeCollaboration(request, emit);
       const result = await runNativeAgent(
         {
           key,
@@ -216,8 +214,8 @@ export async function* runLocalAgent(
           gatewayOrigin: url.origin,
           connectionId: request.model.connectionId,
           message,
-          instructions: request.instructions,
-          collaboration: nativeCollaboration(request, emit),
+          instructions: [request.instructions, collaboration?.instructions].filter(Boolean).join("\n\n"),
+          collaboration,
           signal,
           answeredApproval: request.answeredApproval,
           attachments: request.currentTurnImages?.map((image) => ({
@@ -302,7 +300,11 @@ export async function* runLocalAgent(
     } catch (error) {
       if (error instanceof NativeExecutionError && error.state === "unconfirmed")
         await request.onExecutionState?.({ status: "unconfirmed" }).catch(() => undefined);
-      if (!signal.aborted) failure = error;
+      if (
+        !signal.aborted ||
+        (error instanceof NativeExecutionError && error.state === "unconfirmed")
+      )
+        failure = error;
     } finally {
       preparedPeer?.stop();
       if (reservation && request.model.callObserver)

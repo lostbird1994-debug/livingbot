@@ -3,7 +3,6 @@ import { answerableAskMessageIds, chatUserBubbleColors, dismissableAskMessageIds
 import { toast, Button, Dialog, DialogContent, DialogHeader, DialogTitle } from "@livingbot/ui-web";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ArtifactTarget } from "../../lib/artifact-open";
-import { clearConnectorScope, readConnectorScope, scopeKeyForTarget } from "../../lib/connector-scope";
 import { writeComposerDraft } from "../../lib/composer-draft";
 import { readFileAsBase64 } from "../../lib/pending-attachments";
 import type { RpcClient } from "../../lib/rpc";
@@ -121,7 +120,7 @@ export function TaskConversation({ bot, tabKey, session, rpc, scope, userId, ent
         artifactIds.push(id);
       }
       const input = { botId: bot.id, text, artifactIds, clientNonce,
-        connectorScope: readConnectorScope(scopeKeyForTarget(artifactTarget)), imageHandling,
+        imageHandling,
         ...(selection ? { modelProvider: selection.provider, modelId: selection.modelId, thinkingLevel: selection.thinkingLevel } : {}) };
       if (isDraft) {
         const accepted = await rpc.taskSessions.start({ ...input, clientNonce: tabKey });
@@ -139,7 +138,6 @@ export function TaskConversation({ bot, tabKey, session, rpc, scope, userId, ent
         await refresh();
       }
       if (mounted.current) setSent(value => value + 1);
-      clearConnectorScope(scopeKeyForTarget(artifactTarget));
       void onChanged();
       return true;
     } catch (caught) { if (mounted.current) setError(errorText(caught)); return false; }
@@ -192,12 +190,13 @@ export function TaskConversation({ bot, tabKey, session, rpc, scope, userId, ent
       <Composer draftKey={draftKey} artifactTarget={artifactTarget} activeName={title} targetLabel={`给「${title}」补充要求`} enterToSend={enterToSend}
         running={running} disabled={!filesReady || !canContinue || sending} pendingAttachments={pending} attachmentNotice={null}
         sendError={error} runError={session?.status === "failed" ? snapshot?.run?.error ?? null : null} runErrorId={snapshot?.run?.id ?? null}
+        runErrorTaskName={session?.title}
         onRunErrorPresented={() => {}} onDismissError={() => setError(null)} sending={sending} fileInputRef={fileInput}
         onAttachmentPick={picked => { if (!picked || !filesReady) return false;
           void saveFiles([...filesRef.current, ...Array.from(picked).map(file => ({ id: crypto.randomUUID(), name: file.name, type: file.type, size: file.size, file }))]); return true; }}
         onRemoveAttachment={entry => { void saveFiles(filesRef.current.filter(row => row.id !== entry.id)); }} onSend={send} onStop={stop}
         onOpenModels={() => { setModelOpen(true); void rpc.models.list().then(setModels).catch(caught => setError(errorText(caught))); }}
-        onOpenConnections={() => setError("在连接器按钮中选择此任务可以使用的连接器")}
+        onOpenConnections={() => setError("请在连接应用中检查授权")}
         replyTarget={reply?.message} replyQuote={reply?.quote} replyTargetName={bot.name} onClearReply={() => setReply(null)}
       />
       <ComposerUsage usage={usage} />

@@ -43,6 +43,14 @@ describe("task catalog", () => {
             content: "steps",
             source: "user",
           },
+          {
+            id: "cli-1",
+            name: "Files CLI",
+            description: "Files commands",
+            source: "user",
+            content:
+              "---\nname: Files CLI\ndescription: Files commands\non_demand: true\n---\nRead the guide.",
+          },
         ]),
       },
     };
@@ -53,6 +61,7 @@ describe("task catalog", () => {
         spaceId: "space-1",
         botId: "bot-1",
         userId: "user-1",
+        connectorScope: ["cli-1"],
         tools: [
           { name: "task_catalog", description: "Catalog", readOnly: true },
           { name: "task_catalog", description: "Duplicate", readOnly: true },
@@ -99,6 +108,17 @@ describe("task catalog", () => {
       { name: "task_catalog", description: "Catalog", readOnly: true },
       { name: "GITHUB_LIST_RELEASES", description: "List releases", readOnly: true },
     ]);
+    expect(result.skills.some((skill) => skill.name === "Files CLI")).toBe(true);
+    const withoutScope = await taskCatalogFromTool(
+      { prisma: prisma as never },
+      {
+        spaceId: "space-1",
+        botId: "bot-1",
+        userId: "user-1",
+        tools: [],
+      },
+    );
+    expect(withoutScope.skills.some((skill) => skill.name === "Files CLI")).toBe(true);
     expect(result.guidance).toBe(TASK_CATALOG_GUIDANCE);
   });
 });

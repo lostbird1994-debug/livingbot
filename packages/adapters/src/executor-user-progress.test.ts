@@ -19,6 +19,7 @@ import { MID_TURN_PROGRESS_MIN_TURN_AGE_MS, userProgressClientNonce } from "./us
 vi.mock("./computer-lifecycle.js", async (importOriginal) => ({
   ...(await importOriginal<typeof ComputerLifecycleModule>()),
   acquireComputerExecutionLease: async () => null,
+  acquireDedicatedScreenLeaseFence: async () => null,
   provisionComputer: async () => ({ id: "computer-1", kind: "desktop" }),
 }));
 
@@ -84,9 +85,16 @@ async function runTurn(
     trigger: options.trigger ?? (silent ? "bot_message" : "user"),
     sourceMessageId: "source-1",
     leaseFence: 0,
-    ...(options.requireRoutineOutput === undefined ? {} : { routine: {
-      requireOutput: options.requireRoutineOutput, spaceId: "space-1", userId: "user-1", botId: "bot-1",
-    } }),
+    ...(options.requireRoutineOutput === undefined
+      ? {}
+      : {
+          routine: {
+            requireOutput: options.requireRoutineOutput,
+            spaceId: "space-1",
+            userId: "user-1",
+            botId: "bot-1",
+          },
+        }),
     ...(options.startedAt ? { startedAt: options.startedAt } : {}),
   };
   const runtimeRun = vi.fn(async function* (request: AgentRunRequest) {
@@ -1420,7 +1428,8 @@ it("terminal cancellation wins over a runtime's open thinking marker", async () 
 describe("routine silence versus required output", () => {
   it("finishes an unchanged monitor without a text bubble or silence token", async () => {
     const { finalizeRun } = await runTurn("", true, undefined, [], "fyi", {
-      trigger: "routine", requireRoutineOutput: false,
+      trigger: "routine",
+      requireRoutineOutput: false,
       runtimeEvents: [
         { type: "tool", name: "read_file", args: {}, executionId: "scan" },
         { type: "text", text: "NO_RESPONSE" },
@@ -1428,15 +1437,92 @@ describe("routine silence versus required output", () => {
       ],
     });
     expect(finalizeRun).toHaveBeenCalledWith(expect.objectContaining({ outcome: "completed" }));
-    expect(finalizeRun.mock.calls[0]![0].blocks.filter(b => b.kind === "text")).toEqual([]);
+    expect(finalizeRun.mock.calls[0]![0].blocks.filter((b) => b.kind === "text")).toEqual([]);
   });
   it("does not accept a silence token as the result of a required-output routine", async () => {
     const { finalizeRun } = await runTurn("", true, undefined, [], "fyi", {
-      trigger: "routine", requireRoutineOutput: true, expectOutputFailure: true,
-      runtimeEvents: [{ type: "text", text: "NO_RESPONSE" }, { type: "done", text: "NO_RESPONSE" }],
+      trigger: "routine",
+      requireRoutineOutput: true,
+      expectOutputFailure: true,
+      runtimeEvents: [
+        { type: "text", text: "NO_RESPONSE" },
+        { type: "done", text: "NO_RESPONSE" },
+      ],
     });
     expect(finalizeRun).not.toHaveBeenCalledWith(expect.objectContaining({ outcome: "completed" }));
     expect(finalizeRun).toHaveBeenCalledWith(expect.objectContaining({ outcome: "failed" }));
     expect(JSON.stringify(finalizeRun.mock.calls)).not.toContain('"text":"NO_RESPONSE"');
+  });
+});
+
+describe("inline widget delivery", () => {
+  it("keeps tool-published widgets between narration and final prose without echoing source to the model", async () => {
+    const results: unknown[] = [];
+    const { finalizeRun, append } = await runTurn("", false, "", [], "fyi", {
+      runtime: async function* (request) {
+        yield { type: "text", text: "Before the example.\n" };
+        const args = {
+          title: "Local counter",
+          widget_code: '<button onclick="this.textContent=2">1</button>',
+        };
+        yield { type: "tool", name: "show_widget", args, executionId: "widget-1" };
+        results.push(await request.executeTool!("show_widget", args, "widget-1"));
+        yield { type: "turn" };
+        yield { type: "text", text: "After the example." };
+        yield { type: "done" };
+      },
+    });
+    expect(JSON.stringify(results)).toContain('"shown":true');
+    expect(JSON.stringify(results)).not.toContain("onclick");
+    const final = JSON.stringify(finalizeRun.mock.calls[0]![0].blocks);
+    expect(final).toContain("Before the example.");
+    expect(final).toContain("livingbot-visual");
+    expect(final).toContain("After the example.");
+    expect(final.indexOf("Before the example.")).toBeLessThan(final.indexOf("livingbot-visual"));
+    expect(final.indexOf("livingbot-visual")).toBeLessThan(final.indexOf("After the example."));
+    expect(
+      append.mock.calls.some(
+        ([event]) =>
+          event.type === "thread.progress" &&
+          JSON.stringify(event.payload).includes("livingbot-visual"),
+      ),
+    ).toBe(true);
+  });
+  it("retains native cumulative previews and multiple visual insertion points", async () => {
+    const { finalizeRun, append } = await runTurn("", false, "", [], "fyi", {
+      runtime: async function* (request) {
+        const before = "Opening explanation.\n";
+        const middle = "\nHere is the second idea.\n";
+        request.onReplyPreview?.(before);
+        yield { type: "progress", text: before, replyPreview: true };
+        await request.executeTool!(
+          "show_widget",
+          { title: "First", widget_code: "<div>First</div>" },
+          "w1",
+        );
+        request.onReplyPreview?.(before + middle);
+        yield { type: "progress", text: before + middle, replyPreview: true };
+        await request.executeTool!(
+          "show_widget",
+          { title: "Second", widget_code: "<div>Second</div>" },
+          "w2",
+        );
+        yield { type: "text", text: before + middle + "Closing recommendation." };
+        yield { type: "done", text: before + middle + "Closing recommendation." };
+      },
+    });
+    const final = JSON.stringify(finalizeRun.mock.calls[0]![0].blocks);
+    expect(final.match(/Opening explanation/g)).toHaveLength(1);
+    expect(final.match(/Here is the second idea/g)).toHaveLength(1);
+    expect(final.indexOf("Opening explanation")).toBeLessThan(final.indexOf("<div>First"));
+    expect(final.indexOf("<div>First")).toBeLessThan(final.indexOf("Here is the second idea"));
+    expect(final.indexOf("Here is the second idea")).toBeLessThan(final.indexOf("<div>Second"));
+    expect(final.indexOf("<div>Second")).toBeLessThan(final.indexOf("Closing recommendation"));
+    const previews = append.mock.calls.flatMap(([event]) =>
+      event.type === "thread.progress" ? [JSON.stringify(event.payload)] : [],
+    );
+    expect(
+      previews.some((text) => text.includes("second idea") && text.includes("livingbot-visual")),
+    ).toBe(true);
   });
 });

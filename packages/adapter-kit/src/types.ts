@@ -19,6 +19,7 @@ export interface AdapterContext {
   keepScreenWarm?: boolean;
   /** When releasing a screen after cancel, also stop orphaned browser work on that screen. */
   cancelRunWork?: boolean;
+  /** RunInterruptedError as the reason detaches durable work for recovery; other aborts cancel. */
   signal: AbortSignal;
   /**
    * Installed connectors this run may use, chosen per message. Absent or empty
@@ -592,6 +593,8 @@ export interface AgentRunRequest {
   requireFinalResponse?: boolean;
   /** Contextual fallback when a non-silent run produces no written response. */
   emptyResponseText?: string;
+  /** Synchronous snapshot of cumulative reply previews from runtimes that verify final text later. */
+  onReplyPreview?: (text: string) => void;
   executeTool?: (
     name: string,
     args: Record<string, unknown>,
@@ -682,6 +685,8 @@ export type AgentRuntimeEvent =
   | {
       type: "progress";
       text: string;
+      /** Cumulative assistant preview; visual insertions must survive subsequent replacements. */
+      replyPreview?: true;
       /** Provider-generated tool status rather than assistant-authored narration. */
       activity?: true;
     }

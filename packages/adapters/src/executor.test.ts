@@ -11,6 +11,7 @@ import type { PrismaClient } from "@livingbot/db";
 import { prioritizeConversation, RunHistoryWriteError } from "@livingbot/db";
 import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
 import { describe, expect, it, vi } from "vitest";
+import { MESSAGING_PRESENTATION_INSTRUCTION, RESPONSE_PRESENTATION_INSTRUCTION } from "./inline-visual-tools.js";
 import { builtinAgentTools } from "./builtin-tools.js";
 import { createRunExecutor as createExecutor } from "./executor.js";
 import { UnavailableModelForAuthError, validateConnectedModelChoice } from "./model-selection.js";
@@ -1416,6 +1417,7 @@ describe("userTurnInstructions", () => {
 
     expect(instructions).toEqual([
       "Bot instructions",
+      MESSAGING_PRESENTATION_INSTRUCTION,
       computerLine,
       "This entire computer workspace is your private home.",
       "Agent environment",
@@ -1452,6 +1454,7 @@ describe("userTurnInstructions", () => {
 
     expect(instructions).toEqual([
       "Bot instructions",
+      RESPONSE_PRESENTATION_INSTRUCTION,
       computerLine,
       "This entire computer workspace is your private home.",
       ...stableMiddle,
@@ -1480,6 +1483,7 @@ describe("userTurnInstructions", () => {
 
     expect(instructions).toEqual([
       "Bot instructions",
+      RESPONSE_PRESENTATION_INSTRUCTION,
       computerLine,
       "Catalog guidance",
       "This entire computer workspace is your private home.",

@@ -2,6 +2,18 @@ import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, openNewSpace, signup } from "./helpers";
 
+test("a scheduled task failure names its task separately from a completed report", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/e2e/fixtures/task-failure.html");
+  const error = page.getByTestId("composer-error");
+  await expect(error).toContainText("Scheduled inventory check");
+  await expect(error).toContainText("The task stopped. Check its results before retrying.");
+  await expect(error).not.toContainText("Daily report");
+  await expect(error).not.toContainText("The model provider returned an error.");
+  await captureScreenshot(page, testInfo, "scheduled-task-failure-name");
+});
+
 function isPresented(error: Locator) {
   return error.evaluate((element) => {
     const rect = element.getBoundingClientRect();
@@ -70,7 +82,12 @@ test("a failed run is visible once without returning after reload", async ({ pag
 
 test("a covered run error is not remembered until it is presented", async ({ page }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `covered-run-failure-${stamp}@livingbot.test`, "password12", "Covered Failure");
+  await signup(
+    page,
+    `covered-run-failure-${stamp}@livingbot.test`,
+    "password12",
+    "Covered Failure",
+  );
   await completeOnboarding(page);
   await page.setViewportSize({ width: 390, height: 844 });
 

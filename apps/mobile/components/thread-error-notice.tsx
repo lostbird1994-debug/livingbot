@@ -8,12 +8,14 @@ import { RunErrorAction } from "./run-error-actions";
 export function ThreadErrorNotice({
   error,
   summary,
+  taskName,
   resetAt,
   onDetails,
   action,
 }: {
   error: string | null;
   summary: string | null;
+  taskName?: string;
   resetAt?: number;
   onDetails?: () => void;
   /** The one action that fixes the failure. */
@@ -54,7 +56,10 @@ export function ThreadErrorNotice({
             color={tokens.warning}
           />
         </View>
-        <Text style={[styles.headline, { color: tokens.foreground }]}>{summary ?? error}</Text>
+        <Text style={[styles.headline, { color: tokens.foreground }]}>
+          {taskName ? `${taskName}\n` : ""}
+          {summary ?? error}
+        </Text>
       </View>
       {hasBody ? (
         <View style={[styles.body, { marginLeft: 18 * fontScale + 8 }]}>

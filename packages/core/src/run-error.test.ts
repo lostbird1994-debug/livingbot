@@ -880,6 +880,9 @@ describe("local execution failures", () => {
   });
   it.each([
     "External task exceeded its execution deadline",
+    "External task cancelled",
+    "External task cancelled before dispatch",
+    "Native task was cancelled",
     "底层任务已结束；请查看原生会话结果。",
     "底层任务已结束；取消前的操作可能已经执行。",
   ])("preserves a stopped task diagnostic: %s", (details) => {

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { RunInterruptedError } from "@livingbot/adapter-kit";
 import { isToolPauseResult } from "./approval-effect.js";
 import type { NativeCollaboration } from "./native-collaboration.js";
 import type { CollaborationCall, NativeRunResult } from "./native-collaboration-broker.js";
@@ -247,6 +248,8 @@ export async function confirmNativeBackgroundWorkStopped(peer: NativePeer, recor
 
 /** One durable native invocation, never an automatically retried model request. */
 export async function runNativeAgent(input: NativeInput, options: NativeOptions): Promise<string> {
+  if (input.signal?.aborted && input.signal.reason instanceof RunInterruptedError)
+    throw input.signal.reason;
   // Zero is the engine's no-timeout protocol value. Long tasks stay cancellable
   // without imposing a wall-clock deadline on otherwise healthy execution.
   const runMs = options.runMs ?? 0;
@@ -649,6 +652,8 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       wake = finish;
     });
   const cancel = async (reason: string) => {
+    if (input.signal?.aborted && input.signal.reason instanceof RunInterruptedError)
+      throw input.signal.reason;
     if (!peer) throw new NativeExecutionError("Cancellation could not be confirmed", "unconfirmed");
     const result = await bounded(
       peer.request<any>("chat.abort", { sessionKey, runId }, { timeoutMs: cancelMs }),
@@ -1246,6 +1251,10 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     await persist();
     return record.text;
   } catch (error) {
+    // Lost ownership and worker shutdown detach the observer; they are not user stops.
+    // Keep the last dispatch receipt so recovery observes the same invocation, never replays it.
+    if (input.signal?.aborted && input.signal.reason instanceof RunInterruptedError)
+      throw input.signal.reason;
     if (paused && input.signal?.aborted) {
       await pending;
       return record.text;
@@ -1264,7 +1273,12 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
     closing = true;
     input.signal?.removeEventListener("abort", onAbort);
     wake?.();
-    if (input.collaboration && !paused && record.status !== "unconfirmed")
+    if (
+      input.collaboration &&
+      !paused &&
+      record.status !== "unconfirmed" &&
+      !(input.signal?.reason instanceof RunInterruptedError)
+    )
       await peer?.request("rakazo.tools.close", { sessionKey, runId }).catch(() => undefined);
     // The session belonged to this run only, and its conversation is already quoted into
     // the next turn, so drop it: one entry per turn would otherwise grow the engine's

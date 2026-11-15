@@ -29,14 +29,14 @@ it("does not grant filesystem, process or cross-agent tools absent from the Bot'
     .toEqual(["memory_search", "memory_get"]);
 });
 
-it("routes dynamic MCP and installed tools through a declared tool while preserving host authorization", async () => {
+it.each([undefined, "kernel"] as const)("routes dynamic MCP and installed tools through the host gate in %s mode", async (mode) => {
   const executeTool = vi.fn(async () => ({ synthetic: true }));
   const onToolCompleted = vi.fn();
   const request = { tools: [
     { name: "mcp__example__read", description: "Read one synthetic record", inputSchema: { type: "object" } },
     { name: "installed__example__lookup", description: "Lookup", inputSchema: { type: "object" } },
   ], executeTool, onToolCompleted } as unknown as AgentRunRequest;
-  const grant = nativeCollaboration(request, () => {}, "kernel")!;
+  const grant = nativeCollaboration(request, () => {}, mode)!;
   expect(grant.tools.map(tool => tool.name)).toEqual(["rakazo_connected_tool"]);
   await grant.execute("rakazo_connected_tool", { name: "mcp__example__read", arguments: { id: "one" } }, "call");
   expect(executeTool).toHaveBeenCalledWith("mcp__example__read", { id: "one" }, "call");

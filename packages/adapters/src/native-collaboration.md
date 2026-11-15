@@ -32,3 +32,9 @@ Tests cover broker isolation, result return, retries, revoke, cancellation, the
 stdio MCP wire protocol, plugin registry reuse and native approval continuation.
 Native host smoke tests must use a stub executor so no real teammate receives
 test messages.
+
+Local Codex and ACP agents receive the current Bot's connected tools through
+`rakazo_connected_tool`, using the same host executor, authorization and approvals
+as other runtimes. `task_catalog` and `skill_read` expose discovery and skill
+instructions without granting native filesystem or shell actions through the bridge.
+The installed bridge broker must accept the same tool grant as the application.

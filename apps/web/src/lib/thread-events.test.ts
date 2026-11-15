@@ -524,6 +524,35 @@ describe("thread event reduction", () => {
     expect(progressed?.cursor).toBe(4);
   });
 
+  it("retains the scheduled task name when its run fails", () => {
+    const started = reduceThreadSnapshot(
+      snapshot([]),
+      event({
+        type: "run.started",
+        runId: "inspection-run",
+        payload: {
+          trigger: "routine",
+          routineId: "inspection",
+          routineName: "Scheduled inventory check",
+        },
+      }),
+    );
+    const failed = reduceThreadSnapshot(
+      started,
+      event({
+        type: "run.failed",
+        runId: "inspection-run",
+        seq: 10,
+        payload: { error: "External task cancelled" },
+      }),
+    );
+    expect(failed?.run).toMatchObject({
+      id: "inspection-run",
+      status: "failed",
+      routineName: "Scheduled inventory check",
+    });
+  });
+
   it.each([undefined, "group-1"])(
     "preserves and hydrates the owner for waiting secret requests in %s",
     (groupId) => {

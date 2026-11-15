@@ -7,6 +7,7 @@ import {
 } from "./local-agent-runtime.js";
 import { NativeCollaborationBroker } from "./native-collaboration-broker.js";
 import type { NativeFrame, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
+import { NativeExecutionError } from "./openclaw-native-driver.js";
 
 class Store implements NativeStore {
   rows = new Map<string, NativeRecord>();
@@ -146,6 +147,74 @@ describe("local native Agent boundary", () => {
       expect(events.at(-1)?.type).toBe("done");
     },
   );
+  it.each(["codex", "workbuddy"])(
+    "returns %s connected tool results through the host executor",
+    async (engine) => {
+      const f = fixture();
+      const broker = new NativeCollaborationBroker();
+      const baseConnect = f.connect;
+      let pending: Promise<unknown> | undefined;
+      f.connect = async (url, key, event) => {
+        const peer = await baseConnect(url, key, event);
+        const original = peer.request;
+        peer.request = async <T>(method: string, params: any): Promise<T> => {
+          if (method.startsWith("rakazo.tools.")) {
+            const action = method.slice("rakazo.tools.".length) as
+              | "register"
+              | "poll"
+              | "resolve"
+              | "close";
+            if (action === "register") {
+              expect(params.tools).toContainEqual(
+                expect.objectContaining({ name: "rakazo_connected_tool" }),
+              );
+              expect(JSON.stringify(params.tools)).toContain("installed_search_tools");
+            }
+            return broker[action](params) as T;
+          }
+          if (method === "agent")
+            pending = broker.call(params.sessionKey, params.idempotencyKey, {
+              id: "native-search",
+              name: "rakazo_connected_tool",
+              args: { name: "installed_search_tools", arguments: { query: "notes" } },
+            });
+          return original(method, params);
+        };
+        return peer;
+      };
+      const executeTool = vi.fn().mockResolvedValue({ tools: [{ id: "notes:read" }] });
+      const onToolCompleted = vi.fn();
+      const events = await collect(
+        {
+          ...request,
+          model: { ...request.model, id: `native/${engine}` },
+          tools: [
+            {
+              name: "installed_search_tools",
+              description: "Search available sources",
+              inputSchema: { type: "object" },
+            },
+          ],
+          executeTool,
+          onToolCompleted,
+        },
+        f,
+      );
+      await expect(pending).resolves.toEqual({ tools: [{ id: "notes:read" }] });
+      expect(executeTool).toHaveBeenCalledWith(
+        "installed_search_tools",
+        { query: "notes" },
+        expect.stringMatching(/^native-tool:/),
+      );
+      expect(onToolCompleted).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "installed_search_tools" }),
+      );
+      expect(f.calls.find(call => call.method === "agent")?.params.extraSystemPrompt).toContain("installed_search_tools");
+    expect(events).toContainEqual({ type: "text", text: "Native result" });
+      expect(events.at(-1)?.type).toBe("done");
+    },
+  );
+
   it("recognizes explicitly configured native models only", () => {
     expect(isLocalAgentModel(request.model)).toBe(true);
     expect(isLocalAgentModel({ ...request.model, id: "native/workbuddy" })).toBe(true);
@@ -243,6 +312,27 @@ describe("local native Agent boundary", () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+  it("surfaces unconfirmed termination even when the caller has already stopped", async () => {
+    const f = fixture();
+    const controller = new AbortController();
+    const onExecutionState = vi.fn().mockResolvedValue(undefined);
+    const connect = async () => {
+      controller.abort();
+      throw new NativeExecutionError("Native stop unconfirmed", "unconfirmed");
+    };
+    const collectStopped = async () => {
+      for await (const _event of runLocalAgent(
+        { ...request, onExecutionState },
+        { spaceId: "space", userId: "user", signal: controller.signal },
+        { ...f, connect },
+      )) {
+        /* Drain the run, as the executor does. */
+      }
+    };
+    await expect(collectStopped()).rejects.toThrow("Native stop unconfirmed");
+    expect(onExecutionState).toHaveBeenCalledWith({ status: "unconfirmed" });
+    expect(f.calls.some((call) => call.method === "agent")).toBe(false);
   });
 });
 

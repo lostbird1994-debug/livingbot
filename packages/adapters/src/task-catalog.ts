@@ -13,6 +13,7 @@ type TaskCatalogInput = {
   botId: string;
   userId: string;
   threadId?: string;
+  connectorScope?: string[];
   tools: readonly Pick<ConnectorTool, "name" | "description" | "readOnly">[];
 };
 

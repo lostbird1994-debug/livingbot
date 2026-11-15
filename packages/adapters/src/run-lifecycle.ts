@@ -265,11 +265,11 @@ export async function writeComputerRunRequeue(
 }
 
 /**
- * This worker is stopping and still owns the run. Queue it for another worker.
+ * A worker is stopping or lost its resource lease. Requeue only if it still owns the run.
  * The row stays recoverable: no failure is recorded, and the lease does not keep
  * the next worker from claiming it.
  */
-export async function requeueRunAfterShutdown(
+export async function requeueRunAfterInterruption(
   deps: ExecutorDeps,
   runId: string,
   workerId: string,
@@ -293,7 +293,7 @@ export async function requeueRunAfterShutdown(
   if (released.count !== 1) return false;
   await deps.jobs
     .enqueue(runContinueJob(runId))
-    .catch((error) => getLogger().error("shutdown run requeue", error));
+    .catch((error) => getLogger().error("interrupted run requeue", error));
   return true;
 }
 
