@@ -1,4 +1,5 @@
 import type { AgentSkillCatalogEntry } from "@livingbot/contracts";
+import { InlineVisualReferenceContext } from "@livingbot/chat-ui/native";
 import {
   buildComposerMentionOptions,
   channelMessageSender,
@@ -528,6 +529,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     <ThreadErrorNotice
       error={null}
       summary={visibleRunError?.summary ?? null}
+      taskName={visibleRunError ? snap?.run?.routineName : undefined}
       resetAt={visibleRunError?.resetAt}
       onDetails={() => setDetailsOpen(true)}
       action={visibleRunError ? runErrorAction : null}
@@ -535,6 +537,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   );
 
   return (
+    <InlineVisualReferenceContext.Provider value={focused && !readOnly ? text => composer.composerRef.current?.insert(text) : null}>
     <View style={{ flex: 1 }}>
       <KeyboardAvoidingView
         // Padding always settles to zero. "height" stays shrunk when the keyboard hides without
@@ -649,5 +652,6 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
         ) : null}
       </KeyboardAvoidingView>
     </View>
+    </InlineVisualReferenceContext.Provider>
   );
 }

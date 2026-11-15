@@ -9,29 +9,34 @@ export function messageRowLayout(
     activityBotId,
     inGroup,
     columnWidth,
+    role,
   }: {
     activityBotId?: string;
     inGroup: boolean;
     columnWidth: number;
+    role?: MobileMessage["role"];
   },
 ) {
   const wideAsk = blocks.some(isSecretAskBlock);
-  const full = wideAsk || isCenteredAgentEvent(blocks);
+  const response = role === "bot";
+  const full = response || wideAsk || isCenteredAgentEvent(blocks);
   // Connect cards fill the bubble width instead of shrinking to their button.
   const appConnect = blocks.some(
     (block) => block.kind === "app_connect" || block.kind === "mcp_approval",
   );
-  const gutter = activityBotId ? (inGroup ? 28 : 36) : 0;
+  const gutter = activityBotId && !response ? (inGroup ? 28 : 36) : 0;
   return {
     width: full ? "100%" : appConnect && !activityBotId ? "90%" : undefined,
     maxWidth: full ? "100%" : activityBotId ? undefined : "90%",
-    menuFullWidth: wideAsk || appConnect,
-    menuMaxWidth: wideAsk
-      ? columnWidth - 40 - gutter
-      : isCenteredAgentEvent(blocks)
-        ? columnWidth - 40
-        : activityBotId
-          ? columnWidth - 40 - gutter
-          : (columnWidth - 40) * 0.9,
+    menuFullWidth: response || wideAsk || appConnect,
+    menuMaxWidth: response
+      ? columnWidth - 40
+      : wideAsk
+        ? columnWidth - 40 - gutter
+        : isCenteredAgentEvent(blocks)
+          ? columnWidth - 40
+          : activityBotId
+            ? columnWidth - 40 - gutter
+            : (columnWidth - 40) * 0.9,
   } as const;
 }

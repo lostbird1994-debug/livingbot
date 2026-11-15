@@ -534,12 +534,14 @@ export function RoutineEditor({
           <Trans>Active</Trans>
         </label>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" disabled={saving || running} onClick={onDelete}>
-            <Trans>Delete</Trans>
-          </Button>
-          <Button variant="secondary" disabled={!canTest} onClick={onTestRun}>
-            {running ? t`Running…` : t`Test run`}
-          </Button>
+          <span
+            className="block"
+            title={editing ? undefined : t`Save this routine before a test run`}
+          >
+            <Button variant="secondary" disabled={!canTest} onClick={onTestRun}>
+              {running ? t`Running…` : t`Test run`}
+            </Button>
+          </span>
         </div>
       </div>
 
@@ -826,7 +828,15 @@ export function RoutineEditor({
         ) : null}
       </div>
 
-      <div className="mt-5">
+      <div className="mt-5 flex items-center justify-between gap-2">
+        <Button
+          variant="text"
+          disabled={saving || running}
+          onClick={onDelete}
+          className="text-destructive/80 hover:text-destructive"
+        >
+          <Trans>Delete</Trans>
+        </Button>
         <Button disabled={saving || running || !hasTriggers} onClick={onSave}>
           {saving ? t`Saving…` : t`Save`}
         </Button>

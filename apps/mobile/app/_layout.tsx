@@ -1,6 +1,9 @@
 import type { LinkFavicons } from "@livingbot/chat-ui/native";
 import {
   CodeCopyButtonContext,
+  InlineVisualImageContext,
+  InlineVisualPickerContext,
+  InlineWidgetContext,
   LinkFaviconsContext,
   MarkdownLinkPromptProvider,
   MermaidDiagramContext,
@@ -30,6 +33,9 @@ import { chatRouteHeader } from "../components/chat-route-header";
 import { CodeCopyButton } from "../components/code-copy-button";
 import { ComputerUpdateProgress } from "../components/computer-update-progress";
 import { floatingHeaderOptions, glassHeaderOptions } from "../components/glass-title";
+import { InlineVisualImage } from "../components/inline-visual-image";
+import { InlineWidget } from "../components/inline-widget";
+import { MenuPicker } from "../components/menu-picker";
 import { MermaidDiagram } from "../components/mermaid-diagram";
 import { MessageMenuHost } from "../components/message-action-menu";
 import { MessageActionSheetHost } from "../components/message-action-sheet-host";
@@ -244,9 +250,15 @@ function ChatContentProviders({
       <RemoteImagesContext.Provider value={loadRemoteImages}>
         <LinkFaviconsContext.Provider value={linkFavicons}>
           <MermaidDiagramContext.Provider value={MermaidDiagram}>
-            <CodeCopyButtonContext.Provider value={CodeCopyButton}>
-              {children}
-            </CodeCopyButtonContext.Provider>
+            <InlineWidgetContext.Provider value={InlineWidget}>
+            <InlineVisualImageContext.Provider value={InlineVisualImage}>
+              <InlineVisualPickerContext.Provider value={MenuPicker}>
+                <CodeCopyButtonContext.Provider value={CodeCopyButton}>
+                  {children}
+                </CodeCopyButtonContext.Provider>
+              </InlineVisualPickerContext.Provider>
+            </InlineVisualImageContext.Provider>
+            </InlineWidgetContext.Provider>
           </MermaidDiagramContext.Provider>
         </LinkFaviconsContext.Provider>
       </RemoteImagesContext.Provider>

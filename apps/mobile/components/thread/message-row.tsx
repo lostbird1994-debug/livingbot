@@ -3,10 +3,11 @@ import type { BotAvatarSet, LoginFieldInput, MessageReaction } from "@livingbot/
 import { canReactToThreadMessage, MESSAGE_REACTIONS } from "@livingbot/contracts";
 import type { ChildBotBlock, PeerExchange } from "@livingbot/core";
 import { canMarkMessageUnread, isPeerReceiptBlocks, liveMessageComposing } from "@livingbot/core";
+import { appearanceColorScheme } from "@livingbot/ui-tokens";
 import * as Clipboard from "expo-clipboard";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GestureResponderEvent, LayoutChangeEvent } from "react-native";
-import { Platform, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import Animated, { useReducedMotion, ZoomIn } from "react-native-reanimated";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "../../lib/api";
 import { blockText, copyableMobileMessageText, selectableMobileMessageText } from "../../lib/api";
@@ -134,7 +135,7 @@ export const MessageRow = memo(function MessageRow({
   index,
 }: MessageRowProps) {
   const tokens = useMobileTokens();
-  const colorScheme = useResolvedAppearance();
+  const colorScheme = appearanceColorScheme(useResolvedAppearance());
   const { t, locale } = useI18n();
   const artifactTarget = useMemo<MobileArtifactTarget | undefined>(
     () => (groupId ? { groupId } : botId ? { botId } : undefined),
@@ -364,7 +365,16 @@ export const MessageRow = memo(function MessageRow({
     hasLike,
     optimisticLike,
   ]);
-  const layout = messageRowLayout(message.blocks, { activityBotId, inGroup, columnWidth });
+  const botResponse = message.role === "bot" && !isPeerReceiptBlocks(message.blocks);
+  const senderId = message.botId ?? bubbleBotId;
+  const sender =
+    bots.find((bot) => bot.id === senderId) ?? members?.find((member) => member.botId === senderId);
+  const layout = messageRowLayout(message.blocks, {
+    activityBotId,
+    inGroup,
+    columnWidth,
+    role: message.role,
+  });
   return (
     <View
       key={message.id}
@@ -386,7 +396,7 @@ export const MessageRow = memo(function MessageRow({
           justifyContent: message.role === "user" ? "flex-end" : "flex-start",
         }}
       >
-        {activityBotId ? (
+        {activityBotId && !botResponse ? (
           <View style={{ paddingTop: 22 }}>
             <BotAvatar
               color={activityColor ?? tokens.mutedForeground}
@@ -404,10 +414,34 @@ export const MessageRow = memo(function MessageRow({
           style={{
             width: layout.width,
             maxWidth: layout.maxWidth,
-            flex: activityBotId ? 1 : undefined,
+            flex: activityBotId && !botResponse ? 1 : undefined,
             flexShrink: 1,
           }}
         >
+          {botResponse ? (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                marginTop: 8,
+                marginBottom: 12,
+              }}
+            >
+              <BotAvatar
+                color={sender?.color ?? activityColor ?? tokens.mutedForeground}
+                avatarSet={sender?.avatarSet ?? activityAvatarSet}
+                identity={senderId}
+                size={28}
+                composing={liveMessageComposing(message.blocks)}
+              />
+              <Text
+                style={{ color: tokens.foreground, fontSize: 15, fontWeight: "500", flexShrink: 1 }}
+              >
+                {sender?.name ?? botName ?? t("Bot")}
+              </Text>
+            </View>
+          ) : null}
           {isPeerReceiptBlocks(message.blocks) ? null : (
             <ReplyLine
               threadTarget={artifactTarget}
@@ -435,7 +469,7 @@ export const MessageRow = memo(function MessageRow({
                 groupId={groupId}
                 message={message}
                 botName={botName}
-                showBotSenderName={showBotSenderName}
+                showBotSenderName={botResponse ? false : showBotSenderName}
                 bots={bots}
                 members={members}
                 canAnswer={canAnswer}

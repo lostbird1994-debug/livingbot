@@ -85,16 +85,15 @@ export function ComputerModePicker({
   onChange: (value: ComputerMode) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
       {BOT_COMPUTER_MODES.map((mode) => (
         <Toggle
           key={mode}
-          variant="outline"
           pressed={value === mode}
           onPressedChange={(pressed) => {
             if (pressed) onChange(mode);
           }}
-          className="capitalize aria-pressed:border-foreground/40 aria-pressed:text-foreground"
+          className="capitalize text-muted-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm"
         >
           {mode === "team" ? <Trans>Team</Trans> : <Trans>Private</Trans>}
         </Toggle>

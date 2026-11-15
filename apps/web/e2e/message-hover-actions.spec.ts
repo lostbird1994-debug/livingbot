@@ -131,7 +131,7 @@ async function expectHeaderAboveHoveredRow(page: Page, testInfo: TestInfo, row: 
   }
 }
 
-test("message hover shows beside-bubble actions; reply links to parent", async ({
+test("Bot actions sit below the document, user actions stay beside the bubble, and replies link to parents", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();
@@ -167,16 +167,13 @@ test("message hover shows beside-bubble actions; reply links to parent", async (
       const railBox = await botRail.boundingBox();
       const bubbleBox = await botBubble.boundingBox();
       if (!railBox || !bubbleBox) return null;
-      const railMid = railBox.y + railBox.height / 2;
-      const bubbleMid = bubbleBox.y + bubbleBox.height / 2;
       return {
-        beside: railBox.x >= bubbleBox.x + bubbleBox.width - 2,
-        flush: railBox.x - (bubbleBox.x + bubbleBox.width) < 8,
-        centered: Math.abs(railMid - bubbleMid) <= 12,
-        notBelow: railBox.y + railBox.height <= bubbleBox.y + bubbleBox.height + 12,
+        below: railBox.y >= bubbleBox.y + bubbleBox.height,
+        aligned: Math.abs(railBox.x - bubbleBox.x) <= 2,
+        contained: railBox.x + railBox.width <= bubbleBox.x + bubbleBox.width + 2,
       };
     })
-    .toEqual({ beside: true, flush: true, centered: true, notBelow: true });
+    .toEqual({ below: true, aligned: true, contained: true });
   await captureScreenshot(page, testInfo, "message-bot-actions-desktop");
   await expectRailAtRest(page, botRow);
 

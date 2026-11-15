@@ -7701,3 +7701,12 @@ msgstr "The previous task is unresolved. Check its status before continuing."
 
 msgid "Workspace files"
 msgstr "Workspace files"
+
+msgid "Download image"
+msgstr "Download image"
+
+msgid "Add to conversation"
+msgstr "Add to conversation"
+
+msgid "This visual could not render."
+msgstr "This visual could not render."

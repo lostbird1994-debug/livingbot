@@ -48,7 +48,11 @@ export function MessageHoverActions({
     "grid h-11 w-11 place-items-center text-muted-foreground transition-colors hover:text-foreground [@media(hover:hover)_and_(pointer:fine)]:h-7 [@media(hover:hover)_and_(pointer:fine)]:w-7";
 
   return (
-    <MessageHoverMetadata pinned={moreOpen || reactionsOpen} side={side}>
+    <MessageHoverMetadata
+      pinned={moreOpen || reactionsOpen}
+      side={side}
+      inline={message.role === "bot"}
+    >
       <div data-testid="message-hover-actions" className="flex items-center gap-0.5">
         {canReactToThreadMessage(message) ? (
           <Popover open={reactionsOpen} onOpenChange={setReactionsOpen}>

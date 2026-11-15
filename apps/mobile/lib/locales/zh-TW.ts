@@ -1,4 +1,7 @@
 export const ZH_TW_MESSAGES: Record<string, string> = {
+  "This visual could not render.": "此图示暂时无法显示。",
+  "Add to conversation": "添加到对话",
+  "Download image": "下载图片",
   "The task stopped. Check its results before retrying.":
     "任務已停止。請先核實已有結果，再決定是否重試。",
   "The previous task is unresolved. Check its status before continuing.":

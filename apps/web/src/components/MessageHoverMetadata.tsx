@@ -3,10 +3,12 @@ import type { ReactNode } from "react";
 export function MessageHoverMetadata({
   side,
   pinned = false,
+  inline = false,
   children,
 }: {
   side: "start" | "end";
   pinned?: boolean;
+  inline?: boolean;
   children: ReactNode;
 }) {
   // Touch shows the rail in-flow below the bubble; hover-capable pointers reveal it beside the bubble on demand.
@@ -17,13 +19,17 @@ export function MessageHoverMetadata({
   return (
     <div
       data-testid="message-hover-rail"
-      className={`absolute top-1/2 z-10 flex -translate-y-1/2 items-center transition-opacity ${reveal} ${
-        side === "end" ? "start-full ms-1" : "end-full me-1"
-      } [@media(hover:none)]:static [@media(hover:none)]:mt-1 [@media(hover:none)]:w-full [@media(hover:none)]:translate-y-0 ${
-        side === "end"
-          ? "[@media(hover:none)]:ms-0 [@media(hover:none)]:justify-start"
-          : "[@media(hover:none)]:me-0 [@media(hover:none)]:justify-end"
-      }`}
+      className={
+        inline
+          ? `relative mt-2 flex w-full items-center transition-opacity ${reveal}`
+          : `absolute top-1/2 z-10 flex -translate-y-1/2 items-center transition-opacity ${reveal} ${
+              side === "end" ? "start-full ms-1" : "end-full me-1"
+            } [@media(hover:none)]:static [@media(hover:none)]:mt-1 [@media(hover:none)]:w-full [@media(hover:none)]:translate-y-0 ${
+              side === "end"
+                ? "[@media(hover:none)]:ms-0 [@media(hover:none)]:justify-start"
+                : "[@media(hover:none)]:me-0 [@media(hover:none)]:justify-end"
+            }`
+      }
     >
       {children}
     </div>

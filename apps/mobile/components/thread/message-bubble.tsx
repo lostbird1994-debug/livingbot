@@ -497,10 +497,10 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
     const hasInlineImages = attachments.some(isInlineImageBlock);
     const bubbleStyle = {
       maxWidth: "100%",
-      borderRadius: 20,
-      backgroundColor: message.role === "user" ? tokens.chatUser : message.routine ? tokens.chatRoutine : tokens.muted,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
+      borderRadius: message.role === "user" ? 20 : 0,
+      backgroundColor: message.role === "user" ? tokens.chatUser : undefined,
+      paddingHorizontal: message.role === "user" ? 14 : 0,
+      paddingVertical: message.role === "user" ? 12 : 0,
       gap: 8,
     } as const;
     return (
@@ -748,10 +748,10 @@ function MessageTextCard({
         flexShrink: 1,
         minWidth: 0,
         maxWidth: "100%",
-        backgroundColor: message.role === "user" ? tokens.chatUser : message.routine ? tokens.chatRoutine : tokens.muted,
-        paddingHorizontal: 14,
-        paddingVertical: 9,
-        borderRadius: 20,
+        backgroundColor: message.role === "user" ? tokens.chatUser : undefined,
+        paddingHorizontal: message.role === "user" ? 14 : 0,
+        paddingVertical: message.role === "user" ? 9 : 0,
+        borderRadius: message.role === "user" ? 20 : 0,
       }}
     >
       {speaker ? (

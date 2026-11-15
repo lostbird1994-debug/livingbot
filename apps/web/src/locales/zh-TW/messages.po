@@ -7624,3 +7624,12 @@ msgstr "任務已停止。請先核實已有結果，再決定是否重試。"
 
 msgid "The previous task is unresolved. Check its status before continuing."
 msgstr "上一項任務的狀態尚未確認，請先核實後再繼續。"
+
+msgid "Download image"
+msgstr "下载图片"
+
+msgid "Add to conversation"
+msgstr "添加到对话"
+
+msgid "This visual could not render."
+msgstr "此图示暂时无法显示。"

@@ -1,6 +1,10 @@
 import type { ActionApprovalRule as StoredActionApprovalRule } from "@livingbot/contracts";
 
 const APPROVAL_EXEMPT_TOOLS = new Set([
+  "widget_guidelines",
+  "show_widget",
+  "visual_guidelines",
+  "show_visual",
   "computer_observe",
   "computer_act",
   "browser_navigate",
@@ -61,6 +65,10 @@ const EXPLICIT_APPROVAL_BUILTIN_TOOLS = new Set([
 ]);
 
 const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
+  "widget_guidelines",
+  "show_widget",
+  "visual_guidelines",
+  "show_visual",
   "propose_memory_consolidation",
   "organize_memory",
   "read_memory",
@@ -217,6 +225,10 @@ export function unattendedTriggerToolRequiresApproval(
  * and taints the run. New tools taint by default.
  */
 const OWN_STATE_RESULT_TOOLS = new Set([
+  "widget_guidelines",
+  "show_widget",
+  "visual_guidelines",
+  "show_visual",
   "propose_memory_consolidation",
   "organize_memory",
   "read_memory",
