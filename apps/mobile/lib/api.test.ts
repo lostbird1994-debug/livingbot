@@ -3519,6 +3519,17 @@ describe("mobile thread event reduction", () => {
     expect(applyMobileThreadEvent(initial, { type: "run.started" })).toBe(initial);
   });
 
+  it("retains the scheduled task name when its run fails", () => {
+    const started = applyMobileThreadEvent({ ...snapshot(), run: null, activeRuns: [] }, {
+      type: "run.started", runId: "inspection-run",
+      payload: { trigger: "routine", routineName: "Scheduled inventory check" },
+    });
+    const failed = applyMobileThreadEvent(started, {
+      type: "run.failed", runId: "inspection-run", payload: { error: "External task cancelled" },
+    });
+    expect(failed?.run).toMatchObject({ id: "inspection-run", status: "failed", routineName: "Scheduled inventory check" });
+  });
+
   it("does not infer a started run's bot from the snapshot", () => {
     const initial: MobileSnapshot = {
       ...snapshot(),

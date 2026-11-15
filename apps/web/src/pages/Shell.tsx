@@ -1213,6 +1213,7 @@ function SpaceShell() {
               onOpenConnections={() => openSettings("models")}
               runError={composer.displayedRunError}
               runErrorId={composer.displayedRunErrorId}
+              runErrorTaskName={activeSnapshot?.run?.routineName}
               onRunErrorPresented={composer.handleRunErrorPresented}
               onDismissError={composer.dismissComposerError}
               sending={sending}
