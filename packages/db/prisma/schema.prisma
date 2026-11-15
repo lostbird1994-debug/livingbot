@@ -964,8 +964,8 @@ model Run {
   clientNonce          String?
   sourceMessageId      String?
   sourceMessage        Message?          @relation("RunSourceMessage", fields: [sourceMessageId], references: [id], onDelete: SetNull)
-  // Connectors this run may reach, chosen in the composer. Empty means none: an
-  // installed connector stays in the registry without entering any model's context.
+  // Legacy client selections retained for in-flight messages and skill hints.
+  // Tool sources are discovered through current account and space availability.
   connectorScope       String[]          @default([])
   routineId            String?
   routine              Routine?          @relation(fields: [routineId], references: [id], onDelete: SetNull)
@@ -1012,6 +1012,8 @@ model SteeringMessage {
   botId     String
   bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
   userId    String
+  /// Explicit capabilities selected on this message, including when it steers an active run.
+  connectorScope String[] @default([])
   runId     String?
   run       Run?     @relation(fields: [runId], references: [id], onDelete: SetNull)
   /// Set when a pending row must resume as this trigger so its reply can be delivered.

@@ -163,6 +163,7 @@ export interface ClaimedSteeringMessage {
   messageId: string;
   text: string;
   blocks: MessageBlock[];
+  connectorScope?: string[];
   /**
    * Who sent it: the run's own person (in the app or a connected chat), another member of the
    * chat, someone else in a connected chat, or a webhook.
@@ -677,6 +678,7 @@ async function claimSteeringOnce(
         spaceId: true,
         userId: true,
         trigger: true,
+        connectorScope: true,
         sourceMessage: { select: { blocks: true } },
       },
     });
@@ -715,6 +717,21 @@ async function claimSteeringOnce(
       orderBy: [{ message: { seq: "asc" } }, { id: "asc" }],
     });
     if (steering.length === 0) return [];
+    // Only the run's person can expand its capabilities. Incoming deliveries and
+    // other members' messages must never lend the run their connector access.
+    const connectorScope = [
+      ...new Set([
+        ...(run.connectorScope ?? []),
+        ...steering.flatMap((item) =>
+          item.userId === run.userId && item.originTrigger === null
+            ? (item.connectorScope ?? [])
+            : [],
+        ),
+      ]),
+    ];
+    if (connectorScope.length !== (run.connectorScope ?? []).length) {
+      await tx.run.update({ where: { id: run.id }, data: { connectorScope } });
+    }
     await tx.steeringMessage.updateMany({
       where: { id: { in: steering.map((item) => item.id) }, claimedAt: null },
       data: { runId: input.runId, claimedAt: new Date() },
@@ -767,6 +784,9 @@ async function claimSteeringOnce(
       messageId: item.messageId,
       text: blocksToAgentHistoryText(item.message.blocks as MessageBlock[]),
       blocks: item.message.blocks as MessageBlock[],
+      ...(item.userId === run.userId && item.originTrigger === null && item.connectorScope?.length
+        ? { connectorScope: item.connectorScope }
+        : {}),
       origin:
         item.originTrigger === "webhook"
           ? ("webhook" as const)
@@ -2087,6 +2107,15 @@ export async function createPendingSteeringRun(
             ? "follow_up"
             : "messaging",
       sourceMessageId: source.message.id,
+      connectorScope: [
+        ...new Set(
+          batch.flatMap((item) =>
+            item.userId === batch[0]!.userId && item.originTrigger === null
+              ? (item.connectorScope ?? [])
+              : [],
+          ),
+        ),
+      ],
       ...(modelPin ?? {}),
     },
   });

@@ -3,7 +3,7 @@ import { comparePlugins, matchesPluginQuery, pluginCategory } from "@livingbot/c
 import { z } from "zod";
 import type { PluginCompleteness, PluginTextReader } from "./plugin-connectors.js";
 import { classifyPluginFiles, parsePluginSource } from "./plugin-connectors.js";
-import { fetchSafeWebText } from "./web-ssrf.js";
+import { readPublicGithubText } from "./github-public-text.js";
 
 const REGISTRIES = [
   {
@@ -175,7 +175,7 @@ function displayName(name: string): string {
 }
 
 const publicRead: PluginTextReader = async (url, maxBytes, signal) =>
-  (await fetchSafeWebText(url, { maxBytes, signal })).body;
+  readPublicGithubText(url, maxBytes, signal);
 
 /** Cache is per API router instance; failures are never cached. Concurrent
  * requests share one bounded fetch, without sharing an actor's abort signal. */

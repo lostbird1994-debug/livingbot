@@ -131,8 +131,10 @@ export class InstalledConnectorProvider implements ConnectorProvider {
 
   async discoverTools(context: AdapterContext): Promise<ConnectorTool[]> {
     const tools = await this.authorizedTools(context);
-    if (tools.length <= DIRECT_TOOL_LIMIT) return tools;
-    return lazyCatalogTools("installed", "installed", "API", catalogEntries(tools));
+    // Discover the account's sources available in this space on every catalog call,
+    // including sources added after the run's initial tool roster was built.
+    const catalog = lazyCatalogTools("installed", "installed", "API", catalogEntries(tools));
+    return tools.length <= DIRECT_TOOL_LIMIT ? [...tools, ...catalog] : catalog;
   }
 
   async resolveCall(
@@ -145,15 +147,9 @@ export class InstalledConnectorProvider implements ConnectorProvider {
   }
 
   private async authorizedTools(context: AdapterContext): Promise<ConnectorTool[]> {
-    // Installed is not the same as in context: only the connectors this run asked
-    // for are discovered. No scope means none, so a new install reaches no bot
-    // until someone turns it on for a message.
-    const scope = context.connectorScope ?? [];
-    if (scope.length === 0) return [];
     const installs = await this.prisma.capabilityInstall.findMany({
       where: {
         ...availableInSpace(context),
-        id: { in: scope },
         kind: { in: ["mcp", "api", "graphql"] },
       },
       orderBy: { createdAt: "asc" },

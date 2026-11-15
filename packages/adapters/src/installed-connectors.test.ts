@@ -17,6 +17,97 @@ import { parseConnectorToolArgs, SELECTED_SCHEMA_MAX_BYTES } from "./lazy-tool-c
 import { parametersFor } from "./pi-runtime-tool-parameters.js";
 
 describe("OpenAPI connector import", () => {
+  it.each([undefined, [], ["unrelated-source"]])(
+    "discovers available sources automatically with legacy scope %j",
+    async (connectorScope) => {
+      const install = {
+        id: "api-auto",
+        name: "Notes API",
+        kind: "api",
+        source: "https://notes.example.test",
+        secretId: null,
+        config: {
+          auth: { type: "none" },
+          operations: [{ id: "list_notes", method: "GET", path: "/notes", readOnly: true }],
+        },
+      };
+      const findMany = vi.fn().mockResolvedValue([install]);
+      const provider = new InstalledConnectorProvider(
+        { capabilityInstall: { findMany } } as never,
+        {} as never,
+      );
+      const tools = await provider.discoverTools({
+        spaceId: "space-1",
+        userId: "user-1",
+        signal: new AbortController().signal,
+        connectorScope,
+      } as never);
+      expect(tools).toContainEqual(
+        expect.objectContaining({
+          name: "list_notes",
+          route: expect.objectContaining({ resourceId: install.id }),
+        }),
+      );
+      expect(findMany).toHaveBeenCalledWith({
+        where: {
+          userId: "user-1",
+          OR: [
+            { spaceId: "space-1" },
+            { allSpaces: true },
+            { availableIn: { some: { spaceId: "space-1" } } },
+          ],
+          kind: { in: ["mcp", "api", "graphql"] },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+    },
+  );
+
+  it("discovers a remote MCP source without a composer selection", async () => {
+    const install = {
+      id: "mcp-auto",
+      name: "Notes MCP",
+      kind: "mcp",
+      source: "https://notes.example.test/mcp",
+      secretId: null,
+      config: { auth: { type: "none" } },
+    };
+    const fetch = vi.fn(async (_input: unknown, init?: RequestInit) => {
+      if (init?.method !== "POST") return new Response(null, { status: 200 });
+      const request = JSON.parse(String(init.body));
+      if (request.id === undefined) return new Response(null, { status: 202 });
+      const result =
+        request.method === "initialize"
+          ? {
+              protocolVersion: request.params.protocolVersion,
+              capabilities: { tools: {} },
+              serverInfo: { name: "notes", version: "1" },
+            }
+          : { tools: [{ name: "list_notes", inputSchema: { type: "object" } }] };
+      return Response.json({ jsonrpc: "2.0", id: request.id, result });
+    });
+    const provider = new InstalledConnectorProvider(
+      { capabilityInstall: { findMany: vi.fn().mockResolvedValue([install]) } } as never,
+      {} as never,
+      {
+        fetch: fetch as typeof globalThis.fetch,
+        resolveHostname: async () => [{ address: "203.0.113.10", family: 4 }],
+      },
+    );
+    const tools = await provider.discoverTools({
+      spaceId: "space-1",
+      userId: "user-1",
+      signal: new AbortController().signal,
+    } as never);
+    expect(tools).toContainEqual(
+      expect.objectContaining({
+        name: "list_notes",
+        route: expect.objectContaining({ resourceId: "mcp-auto" }),
+      }),
+    );
+    expect(fetch).toHaveBeenCalled();
+  });
+
   it("uses the bounded catalog for a real large installed OpenAPI source", async () => {
     const install = {
       id: "api-1",
@@ -48,6 +139,7 @@ describe("OpenAPI connector import", () => {
       workspaceId: "workspace-1",
       userId: "user-1",
       signal: new AbortController().signal,
+      connectorScope: [install.id],
     } as never;
 
     const [search, load, execute] = await provider.discoverTools(context);
@@ -179,6 +271,7 @@ describe("OpenAPI connector import", () => {
       workspaceId: "workspace-1",
       userId: "user-1",
       signal: new AbortController().signal,
+      connectorScope: [install.id],
     } as never;
     const execute = (await provider.discoverTools(context))[2]!;
     const marker = "__rakazoCatalogTool";
@@ -250,6 +343,7 @@ describe("OpenAPI connector import", () => {
       spaceId: "space-1",
       userId: "user-1",
       signal: new AbortController().signal,
+      connectorScope: [install.id],
     } as never;
     const [tool] = await provider.discoverTools(context);
     const events = [];
@@ -307,6 +401,7 @@ describe("OpenAPI connector import", () => {
       workspaceId: "workspace-1",
       userId: "user-1",
       signal: new AbortController().signal,
+      connectorScope: installs.map((install) => install.id),
     } as never;
 
     const discovered = await provider.discoverTools(context);
@@ -376,6 +471,7 @@ describe("OpenAPI connector import", () => {
       workspaceId: "workspace-1",
       userId: "user-1",
       signal: new AbortController().signal,
+      connectorScope: ["api-threshold"],
     } as never;
 
     const directPrisma = {
@@ -387,7 +483,7 @@ describe("OpenAPI connector import", () => {
       directPrisma as never,
       {} as never,
     ).discoverTools(context);
-    expect(direct).toHaveLength(20);
+    expect(direct).toHaveLength(23);
     expect(direct[0]?.name).toBe("operation_0");
     expect(direct.every((tool) => !tool.name.startsWith("installed__"))).toBe(true);
 
@@ -462,9 +558,12 @@ describe("OpenAPI connector import", () => {
       spaceId: "space-1",
       userId: "user-1",
       signal: new AbortController().signal,
+      connectorScope: installs.map((install) => install.id),
     } as never);
 
-    expect(tools.map((tool) => [tool.name, tool.readOnly])).toEqual([
+    expect(
+      tools.filter((tool) => tool.route?.resourceId).map((tool) => [tool.name, tool.readOnly]),
+    ).toEqual([
       ["read_profile_card", false],
       ["find_validator_record", false],
       ["get_status", false],
@@ -481,7 +580,7 @@ describe("OpenAPI connector import", () => {
     expect(note!.description).toBe("mutation readNote");
   });
 
-  it("returns no tools for an empty installed catalog", async () => {
+  it("keeps the catalog available when no sources are installed", async () => {
     const provider = new InstalledConnectorProvider(
       { capabilityInstall: { findMany: vi.fn().mockResolvedValue([]) } } as never,
       {} as never,
@@ -492,7 +591,11 @@ describe("OpenAPI connector import", () => {
         userId: "user-1",
         signal: new AbortController().signal,
       } as never),
-    ).resolves.toEqual([]);
+    ).resolves.toMatchObject([
+      { name: "installed_search_tools" },
+      { name: "installed_load_tool" },
+      { name: "installed_execute_tool" },
+    ]);
   });
 
   it("executes an installed API operation whose id matches a catalog control", async () => {
@@ -526,6 +629,7 @@ describe("OpenAPI connector import", () => {
       workspaceId: "workspace-1",
       userId: "user-1",
       signal: new AbortController().signal,
+      connectorScope: [install.id],
     } as never;
     const [tool] = await provider.discoverTools(context);
     const call = { tool: tool!.name, args: {}, executionId: "reserved", route: tool!.route };

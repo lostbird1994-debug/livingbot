@@ -2983,3 +2983,22 @@ describe("MCP setup with an existing access token", () => {
     },
   );
 });
+
+describe("MCP OAuth client name", () => {
+  const redirectUri = "http://127.0.0.1:5173/mcp/oauth/callback";
+
+  function provider(clientName?: string) {
+    return new StoredMcpOAuthProvider("server-1", {}, async () => undefined, {
+      redirectUri,
+      ...(clientName ? { clientName } : {}),
+    });
+  }
+
+  it("registers under the product name by default", () => {
+    expect(provider().clientMetadata.client_name).toBe("LivingBot");
+  });
+
+  it("registers under the name the instance configured", () => {
+    expect(provider("LivingBot (Example)").clientMetadata.client_name).toBe("LivingBot (Example)");
+  });
+});

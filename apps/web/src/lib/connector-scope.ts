@@ -4,8 +4,9 @@ import { useSyncExternalStore } from "react";
  * Connectors a message can reach, chosen in the composer.
  *
  * Installed connectors no longer reach every bot: a run only discovers the ones
- * named here. The choice belongs to one message, so the composer clears it once
- * the send is accepted — the next message starts with nothing attached.
+ * named here. The choice sticks to the session it was made in, and a session
+ * without a choice of its own opens with whatever the last one left behind, so
+ * a connector switched on stays on until it is switched off again.
  *
  * State lives in a module map rather than React context because the send path
  * (use-composer-actions) and the picker (composer) sit in different trees.
@@ -13,37 +14,59 @@ import { useSyncExternalStore } from "react";
 const scopes = new Map<string, string[]>();
 const listeners = new Set<() => void>();
 const EMPTY: string[] = [];
+const PREFIX = "rakazo.connectorScope.";
+/** Selections saved before the choice outlived a send. */
+const LEGACY_PREFIX = "rakazo.taskConnectorScope.";
+const LAST = "rakazo.connectorScopeLast";
 
 function emit() {
   for (const listener of listeners) listener();
 }
 
-export function scopeKeyForTarget(target: { botId?: string; groupId?: string; taskSessionId?: string; draftScope?: string }): string {
-  if (target.taskSessionId || target.draftScope) return `task:${target.botId}:${target.taskSessionId ?? target.draftScope}`;
+function readIds(key: string): string[] | null {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(key) ?? "null");
+    if (Array.isArray(saved) && saved.every((id) => typeof id === "string"))
+      return saved as string[];
+  } catch {
+    /* Unreadable storage leaves the session on the last choice. */
+  }
+  return null;
+}
+
+function writeIds(key: string, ids: string[]) {
+  try {
+    localStorage.setItem(key, JSON.stringify(ids));
+  } catch {
+    /* The choice still applies to this run when storage is unavailable. */
+  }
+}
+
+export function scopeKeyForTarget(target: {
+  botId?: string;
+  groupId?: string;
+  taskSessionId?: string;
+  draftScope?: string;
+}): string {
+  if (target.taskSessionId || target.draftScope)
+    return `task:${target.botId}:${target.taskSessionId ?? target.draftScope}`;
   if (target.groupId) return `group:${target.groupId}`;
   return `bot:${target.botId ?? ""}`;
 }
 
 export function readConnectorScope(key: string): string[] {
-  if (!scopes.has(key) && key.startsWith("task:")) {
-    try { const saved = JSON.parse(localStorage.getItem(`rakazo.taskConnectorScope.${key}`) ?? "[]");
-      if (Array.isArray(saved) && saved.every(id => typeof id === "string")) scopes.set(key, saved);
-    } catch { /* Selection remains empty when storage is unavailable. */ }
-  }
-  return scopes.get(key) ?? EMPTY;
+  const cached = scopes.get(key);
+  if (cached) return cached;
+  const saved = readIds(PREFIX + key) ?? readIds(LEGACY_PREFIX + key) ?? readIds(LAST) ?? EMPTY;
+  scopes.set(key, saved);
+  return saved;
 }
 
 export function writeConnectorScope(key: string, ids: string[]) {
-  if (ids.length === 0) scopes.delete(key);
-  else scopes.set(key, [...ids]);
-  if (key.startsWith("task:")) try { localStorage.setItem(`rakazo.taskConnectorScope.${key}`, JSON.stringify(ids)); } catch {}
-  emit();
-}
-
-export function clearConnectorScope(key: string) {
-  if (!scopes.has(key)) return;
-  scopes.delete(key);
-  if (key.startsWith("task:")) try { localStorage.setItem(`rakazo.taskConnectorScope.${key}`, "[]"); } catch {}
+  const next = [...ids];
+  scopes.set(key, next);
+  writeIds(PREFIX + key, next);
+  writeIds(LAST, next);
   emit();
 }
 

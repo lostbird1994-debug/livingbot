@@ -515,6 +515,7 @@ describe("GraphQL execution failures", () => {
     const context = {
       spaceId: "space-1",
       userId: "user-1",
+      connectorScope: [install.id],
       signal: new AbortController().signal,
     } as never;
     const tools = await provider.discoverTools(context);
@@ -749,7 +750,7 @@ describe("GraphQL execution failures", () => {
 });
 
 describe("GraphQL optional-off", () => {
-  it("keeps core discovery empty when no GraphQL source is installed", async () => {
+  it("offers only catalog controls when no sources are installed", async () => {
     const prisma = {
       capabilityInstall: {
         findMany: vi.fn().mockResolvedValue([]),
@@ -762,13 +763,22 @@ describe("GraphQL optional-off", () => {
       userId: "user-1",
       signal: new AbortController().signal,
     } as never);
-    expect(tools).toEqual([]);
-    expect(prisma.capabilityInstall.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          kind: { in: ["mcp", "api", "graphql"] },
-        }),
-      }),
-    );
+    expect(tools.map((tool) => tool.name)).toEqual([
+      "installed_search_tools",
+      "installed_load_tool",
+      "installed_execute_tool",
+    ]);
+    expect(prisma.capabilityInstall.findMany).toHaveBeenCalledWith({
+      where: {
+        userId: "user-1",
+        OR: [
+          { spaceId: "space-1" },
+          { allSpaces: true },
+          { availableIn: { some: { spaceId: "space-1" } } },
+        ],
+        kind: { in: ["mcp", "api", "graphql"] },
+      },
+      orderBy: { createdAt: "asc" },
+    });
   });
 });

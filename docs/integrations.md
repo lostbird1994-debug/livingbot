@@ -36,6 +36,11 @@ Choose an authentication method (**No auth**, **Bearer token** or **API key head
 **Manage MCP servers** lists every server you've added, with **Test connection**, OAuth sign-in, and
 which bots can use each one.
 
+Configured MCP, OpenAPI and GraphQL tool sources are discovered automatically in the spaces where
+they are available. No composer switch is required. MCP servers managed separately still require
+an enabled server and access for the bot (an individual assignment or all-bot access). Large tool
+catalogs expose search and parameter loading instead of sending every tool schema to the model.
+
 ## Choose which bots use what
 
 Bots pick the apps they need. To add an MCP server to the bot you're chatting with, open it in

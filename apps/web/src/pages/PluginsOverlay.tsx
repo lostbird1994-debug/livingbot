@@ -1677,13 +1677,7 @@ export function PluginsOverlay({
             <>
               {catalogLoaded && showFeatured && !category ? (
                 <div className="mb-6" data-testid="featured-connectors">
-                  {catalog.length === 0 ? (
-                    plugins.length ? null : (
-                      <p className="text-[13.5px] leading-6 text-muted-foreground/80">
-                        <Trans>Configure a plugin catalog on the server to connect apps.</Trans>
-                      </p>
-                    )
-                  ) : (
+                  {catalog.length === 0 ? null : (
                     <div className="grid grid-cols-2 gap-2">
                       {featuredTiles.map((tile) => {
                         const item = tile.item;

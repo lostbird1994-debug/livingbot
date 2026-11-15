@@ -25,6 +25,7 @@ import {
   MCP_OAUTH_CLIENT_REQUIRED,
   mcpOAuthEnvReferences,
   parseMcpOAuthAuthorizationParams,
+  PRODUCT_NAME,
 } from "@livingbot/contracts";
 import { readBoundedResponseBytes } from "@livingbot/core";
 import type { Prisma, PrismaClient } from "@livingbot/db";
@@ -441,6 +442,9 @@ type ProviderOptions = {
   refresh?: (heldRefreshToken: string) => Promise<TokenGrant>;
   /** The instance opt-in that lets OAuth URLs use plain HTTP on a private network. */
   allowPrivateEndpoint?: boolean;
+  /** The name this client registers under. Some authorization servers only admit
+   * clients whose name they recognize, so an operator can set it for the instance. */
+  clientName?: string;
 };
 
 /** Refresh before expiry to cover clock skew and request time. */
@@ -546,7 +550,7 @@ export class StoredMcpOAuthProvider implements OAuthClientProvider {
     const applicationType = hostname === "localhost" || hostname === "127.0.0.1" ? "native" : "web";
     return {
       redirect_uris: [redirectUri],
-      client_name: "LivingBot",
+      client_name: this.options.clientName ?? PRODUCT_NAME,
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],
       token_endpoint_auth_method: "none",
@@ -1090,6 +1094,7 @@ export class McpOAuthBroker {
     private readonly secrets: SecretStore,
     private readonly network: RemoteTransportDependencies = {},
     private readonly allowPrivateEndpoint = false,
+    private readonly oauthClientName: string = PRODUCT_NAME,
   ) {}
 
   async statusFor(server: ServerRef, context: ActorRef): Promise<McpOAuthSummary["status"]> {
@@ -1442,6 +1447,7 @@ export class McpOAuthBroker {
             }
           : {}),
         allowPrivateEndpoint: this.allowPrivateEndpoint,
+        clientName: this.oauthClientName,
         ...options,
       },
     );

@@ -3635,6 +3635,7 @@ describe("queue admission beside pending cards", () => {
             id: "steering-1",
             userId: "user-1",
             originTrigger: null,
+            connectorScope: ["api-selected"],
             message: { id: "new-message", blocks: [{ kind: "text", text: "Continue" }], seq: 3 },
           },
         ]),
@@ -3649,6 +3650,11 @@ describe("queue admission beside pending cards", () => {
         botId: "bot-1",
       }),
     ).resolves.toBe("continuation");
+    expect(tx.run.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ connectorScope: ["api-selected"] }),
+      }),
+    );
     expect(tx.steeringMessage.updateMany).toHaveBeenCalledWith({
       where: { id: { in: ["steering-1"] }, runId: null },
       data: { runId: "continuation", claimedAt: null },
@@ -4327,7 +4333,13 @@ describe("claimSteering", () => {
     const tx = {
       $queryRaw: vi.fn(),
       run: {
-        findFirst: vi.fn().mockResolvedValue({ id: "run-1", spaceId: "space-1", userId: "user-1" }),
+        update: vi.fn(),
+        findFirst: vi.fn().mockResolvedValue({
+          id: "run-1",
+          spaceId: "space-1",
+          userId: "user-1",
+          connectorScope: ["api-existing"],
+        }),
         findUnique: vi.fn().mockResolvedValue({ status: "running", startedAt: null }),
       },
       thread: {
@@ -4342,6 +4354,7 @@ describe("claimSteering", () => {
             messageId: "message-1",
             userId: "user-1",
             originTrigger: null,
+            connectorScope: ["api-selected", "api-existing"],
             message: {
               seq: 5,
               blocks: [
@@ -4360,6 +4373,7 @@ describe("claimSteering", () => {
             messageId: "message-2",
             userId: "user-2",
             originTrigger: null,
+            connectorScope: ["api-someone-else"],
             message: { seq: 6, blocks: [{ kind: "text", text: "Second" }] },
           },
         ]),
@@ -4394,6 +4408,7 @@ describe("claimSteering", () => {
           },
         ],
         origin: "user",
+        connectorScope: ["api-selected", "api-existing"],
       },
       {
         id: "steer-2",
@@ -4403,6 +4418,10 @@ describe("claimSteering", () => {
         origin: "member",
       },
     ]);
+    expect(tx.run.update).toHaveBeenCalledWith({
+      where: { id: "run-1" },
+      data: { connectorScope: ["api-existing", "api-selected"] },
+    });
     expect(tx.run.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ leaseOwner: "worker-1", leaseFence: 2 }),

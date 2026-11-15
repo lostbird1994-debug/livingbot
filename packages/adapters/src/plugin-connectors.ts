@@ -7,7 +7,7 @@ import { buildSkillMd, findSkillByName, parseSkillMd } from "@livingbot/core";
 import { z } from "zod";
 import { BUILTIN_AGENT_SKILLS } from "./builtin-skills.js";
 import { assertNoSensitiveQuery } from "./connector-http.js";
-import { fetchSafeWebText } from "./web-ssrf.js";
+import { readPublicGithubText } from "./github-public-text.js";
 
 export type PluginSourceRef = { gitUrl: string; ref?: string; subdir?: string };
 export type PluginRepoFile = { path: string; content: string };
@@ -181,15 +181,15 @@ export function parsePluginSource(source: string): PluginSourceRef {
   return { gitUrl: url.toString().replace(/\/$/, ""), ref, subdir };
 }
 
-/** Provider seam for deterministic tests. The default always uses the DNS-pinned,
- * redirect-checked web fetch with per-response byte limits. */
+/** Provider seam for deterministic tests. Public GitHub reads keep URL/DNS,
+ * redirect and response-size checks, with optional trusted proxy transport. */
 export type PluginTextReader = (
   url: string,
   maxBytes: number,
   signal?: AbortSignal,
 ) => Promise<string>;
 const readPublicText: PluginTextReader = async (url, maxBytes, signal) =>
-  (await fetchSafeWebText(url, { maxBytes, signal })).body;
+  readPublicGithubText(url, maxBytes, signal);
 
 export async function fetchGitHubRepo(
   ref: PluginSourceRef,

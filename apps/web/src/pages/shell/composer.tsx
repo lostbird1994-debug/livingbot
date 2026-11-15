@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import type { AgentSkillCatalogEntry, ThreadMessage } from "@livingbot/contracts";
+import { INLINE_VISUAL_REFERENCE_EVENT } from "@livingbot/contracts";
 import type { ComposerMention, ComposerMentionRange, SlashActionId } from "@livingbot/core";
 import {
   bindComposerMention,
@@ -17,9 +18,8 @@ import {
   truncateSlashDescription,
   updateComposerMentionBindings,
 } from "@livingbot/core";
-import { Button, Switch } from "@livingbot/ui-web";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowUp, Box, Link, Paperclip, Plus, Settings, Square, X } from "lucide-react";
+import { Button } from "@livingbot/ui-web";
+import { ArrowUp, Box, Paperclip, Plus, Settings, Square, X } from "lucide-react";
 import type { ClipboardEvent, DragEvent, RefObject } from "react";
 import { memo, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
@@ -29,8 +29,6 @@ import {
 } from "../../components/composer/DictationInput";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { attachmentPickerAccept } from "../../lib/attachment-picker-accept";
-import { scopeKeyForTarget, useConnectorScope } from "../../lib/connector-scope";
-import { useSpaceQueries } from "../../lib/query";
 import { useCallSession } from "../../lib/call-session";
 import {
   beginComposerDraftSubmission,
@@ -70,6 +68,7 @@ export const Composer = memo(function Composer({
   onOpenConnections,
   runError,
   runErrorId,
+  runErrorTaskName,
   onRunErrorPresented,
   onDismissError,
   sending,
@@ -103,6 +102,7 @@ export const Composer = memo(function Composer({
   onOpenConnections: () => void;
   runError: string | null;
   runErrorId: string | null;
+  runErrorTaskName?: string;
   onRunErrorPresented: (runId: string) => void;
   onDismissError: () => void;
   sending: boolean;
@@ -140,6 +140,17 @@ export const Composer = memo(function Composer({
   const mentionBindings = composition.bindings;
   const compositionRef = useRef(composition);
   compositionRef.current = composition;
+  useEffect(() => {
+    const reference = (event: Event) => {
+      const text = (event as CustomEvent<{ text?: unknown }>).detail?.text;
+      if (disabled || typeof text !== "string" || !text.trim() || text.length > 96_000) return;
+      const current = compositionRef.current.text;
+      commitComposition({ text: current ? `${current}\n\n${text}` : text, bindings: compositionRef.current.bindings });
+      onDraftEdited?.();
+    };
+    window.addEventListener(INLINE_VISUAL_REFERENCE_EVENT, reference);
+    return () => window.removeEventListener(INLINE_VISUAL_REFERENCE_EVENT, reference);
+  }, [draftKey, disabled, onDraftEdited]);
   const selectedMentions = useMemo(
     () => composerSelectedMentions(mentionBindings),
     [mentionBindings],
@@ -196,66 +207,6 @@ export const Composer = memo(function Composer({
     onText: insertDictation,
   });
   const [selectedSkill, setSelectedSkill] = useState<AgentSkillCatalogEntry | null>(null);
-  // Connectors are opt-in per message: nothing is attached until picked here.
-  const scopeKey = scopeKeyForTarget(artifactTarget);
-  const [connectorScope, setConnectorScope] = useConnectorScope(scopeKey);
-  const [connectorPickerOpen, setConnectorPickerOpen] = useState(false);
-  const connectorPickerRef = useRef<HTMLDivElement>(null);
-  const spaceQueries = useSpaceQueries();
-  const installsQuery = useQuery(spaceQueries.capabilities.list.queryOptions());
-  const connectorOptions = useMemo(
-    () =>
-      (installsQuery.data ?? []).filter(
-        (install) =>
-          install.kind === "api" || install.kind === "mcp" || install.kind === "graphql",
-      ),
-    [installsQuery.data],
-  );
-  // Skills flagged on_demand stay unknown to every bot until they are picked here.
-  const onDemandSkillsQuery = useQuery(spaceQueries.agentSkills.list.queryOptions());
-  const onDemandSkills = useMemo(
-    () => (onDemandSkillsQuery.data ?? []).filter((skill) => skill.onDemand),
-    [onDemandSkillsQuery.data],
-  );
-  const scopeOptions = useMemo(
-    () => [
-      ...connectorOptions.map((install) => ({
-        id: install.id,
-        name: install.name,
-        kind: install.kind.toUpperCase(),
-      })),
-      ...onDemandSkills.map((skill) => ({ id: skill.id, name: skill.name, kind: "SKILL" })),
-    ],
-    [connectorOptions, onDemandSkills],
-  );
-  const toggleConnector = (id: string) =>
-    setConnectorScope(
-      connectorScope.includes(id)
-        ? connectorScope.filter((current) => current !== id)
-        : [...connectorScope, id],
-    );
-  // The list floats over the transcript now, so it must get out of the way on its own.
-  useEffect(() => {
-    if (!connectorPickerOpen) return;
-    const closeOnOutside = (event: PointerEvent) => {
-      const target = event.target as Element | null;
-      if (!target) return;
-      // The trigger toggles on its own click; closing here first would make it reopen.
-      if (target.closest('[data-testid="connector-button"]')) return;
-      if (connectorPickerRef.current?.contains(target)) return;
-      setConnectorPickerOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setConnectorPickerOpen(false);
-    };
-    document.addEventListener("pointerdown", closeOnOutside, true);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutside, true);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [connectorPickerOpen]);
   const editRevision = useRef(0);
   useEffect(
     () =>
@@ -666,6 +617,7 @@ export const Composer = memo(function Composer({
         onSendAsFile={imageConfirmation && !sending ? () => void send("file") : undefined}
         runError={runError}
         runErrorId={runErrorId}
+        runErrorTaskName={runErrorTaskName}
         onRunErrorPresented={onRunErrorPresented}
         onOpenModels={onOpenModels}
         onOpenConnections={onOpenConnections}
@@ -859,21 +811,6 @@ export const Composer = memo(function Composer({
               onRemove={removeSkill}
             />
           ) : null}
-          {connectorScope.map((id) => {
-            const option = scopeOptions.find((current) => current.id === id);
-            return (
-              <ComposerChip
-                key={id}
-                data-testid="connector-chip"
-                icon={
-                  <Link size={13} strokeWidth={1.7} className="shrink-0 text-muted-foreground/70" />
-                }
-                label={option?.name ?? id}
-                removeLabel={t`Remove connector ${option?.name ?? id}`}
-                onRemove={() => toggleConnector(id)}
-              />
-            );
-          })}
           <DictationStrip talk={talk} />
           <div className="relative min-w-[8rem] flex-1" hidden={talk.recording !== null}>
             <textarea
@@ -1003,68 +940,12 @@ export const Composer = memo(function Composer({
             />
           </div>
         </div>
-        {/* Floating over the transcript: opening this list must not resize the chat above it. */}
-        {connectorPickerOpen ? (
-          <div
-            ref={connectorPickerRef}
-            data-testid="connector-picker"
-            className="absolute bottom-full end-2 z-50 mb-2 w-[288px] max-w-[calc(100vw_-_2rem)] overflow-hidden rounded-[14px] border border-border bg-popover shadow-[0_10px_30px_-16px_rgba(0,0,0,0.35)] animate-in fade-in-0 slide-in-from-bottom-1 duration-150 motion-reduce:animate-none"
-          >
-            <div className="px-3.5 pb-1 pt-2.5 text-[11.5px] leading-snug text-muted-foreground">
-              只对这条消息生效
-            </div>
-            {scopeOptions.length === 0 ? (
-              <div className="px-3.5 pb-2.5 text-[12.5px] text-muted-foreground">还没有安装连接器</div>
-            ) : (
-              <div className="max-h-[248px] overflow-y-auto pb-1">
-                {scopeOptions.map((option) => {
-                  const on = connectorScope.includes(option.id);
-                  return (
-                    <label
-                      key={option.id}
-                      htmlFor={`connector-toggle-${option.id}`}
-                      title={option.kind}
-                      className="flex cursor-pointer items-center gap-2 px-3.5 py-[5px] hover:bg-accent"
-                    >
-                      <span dir="auto" className="min-w-0 flex-1 truncate text-[13px] text-foreground">
-                        {option.name}
-                      </span>
-                      <Switch
-                        id={`connector-toggle-${option.id}`}
-                        size="sm"
-                        checked={on}
-                        onCheckedChange={() => toggleConnector(option.id)}
-                      />
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ) : null}
         <div
           ref={composerActionsRef}
           className={`col-start-3 flex shrink-0 items-center gap-2 justify-self-end ${
             expanded ? "row-start-2" : ""
           }`}
         >
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={t`Connectors`}
-            aria-pressed={connectorPickerOpen}
-            data-testid="connector-button"
-            disabled={disabled}
-            onClick={() => setConnectorPickerOpen((open) => !open)}
-            className={`size-8 shrink-0 rounded-full transition-colors ${
-              connectorPickerOpen
-                ? "bg-accent text-foreground"
-                : "bg-muted text-foreground/80 hover:bg-accent"
-            }`}
-          >
-            <Link size={15} strokeWidth={1.8} />
-          </Button>
           {talk.recording?.locked ? (
             <DictationControls talk={talk} />
           ) : running ? (
