@@ -36,27 +36,27 @@ function tagNames(tree: HastNode): (string | undefined)[] {
 describe("rehypeReportShape", () => {
   it("marks the opening paragraph as the lead only for a multi-block reply", () => {
     const tree = run(root([p("改好了，三个文件都已生效。"), p("第二段"), p("第三段")]));
-    expect(tree.children?.[0].properties?.className).toEqual(["rk-lead"]);
+    expect(tree.children?.[0]?.properties?.className).toEqual(["rk-lead"]);
   });
 
   it("leaves a short reply alone", () => {
     const tree = run(root([p("好的，改完了。")]));
-    expect(tree.children?.[0].properties?.className).toBeUndefined();
-    expect(tree.children?.[0].tagName).toBe("p");
+    expect(tree.children?.[0]?.properties?.className).toBeUndefined();
+    expect(tree.children?.[0]?.tagName).toBe("p");
   });
 
   it("does not box a long opening paragraph", () => {
     const long = "这是一段很长的正文".repeat(30);
     const tree = run(root([p(long), p("第二段"), p("第三段")]));
-    expect(tree.children?.[0].properties?.className).toBeUndefined();
+    expect(tree.children?.[0]?.properties?.className).toBeUndefined();
   });
 
   it("folds an evidence section into a closed details", () => {
     const tree = run(root([p("结论"), p("过程"), h(2, "依据"), p("日志片段"), p("文件路径")]));
     const folded = tree.children?.[2];
     expect(folded?.tagName).toBe("details");
-    expect(folded?.children?.[0].tagName).toBe("summary");
-    expect(folded?.children?.[0].children?.[0].value).toBe("依据");
+    expect(folded?.children?.[0]?.tagName).toBe("summary");
+    expect(folded?.children?.[0]?.children?.[0]?.value).toBe("依据");
     expect(folded?.children?.slice(1).map((child) => child.tagName)).toEqual(["p", "p"]);
   });
 
@@ -68,7 +68,7 @@ describe("rehypeReportShape", () => {
   it("keeps a nested heading inside the folded section", () => {
     const tree = run(root([h(2, "证据"), p("日志"), h(3, "子项"), p("细节")]));
     expect(tagNames(tree)).toEqual(["details"]);
-    expect(tree.children?.[0].children?.slice(1).map((child) => child.tagName)).toEqual([
+    expect(tree.children?.[0]?.children?.slice(1).map((child) => child.tagName)).toEqual([
       "p",
       "h3",
       "p",
@@ -105,7 +105,7 @@ describe("rehypeReportShape", () => {
     const tree = run(
       root([p("Done."), p("Changed two files."), h(3, "Verification"), p("exit 0")]),
     );
-    expect(tree.children?.[2].tagName).toBe("details");
+    expect(tree.children?.[2]?.tagName).toBe("details");
   });
 
   it("ignores a heading that merely mentions a keyword in a longer phrase", () => {
@@ -118,6 +118,6 @@ describe("rehypeReportShape", () => {
     const tree = run(
       root([p("结论"), p("过程"), h(2, "验证：三个文件都已重新构建并通过检查"), p("exit 0")]),
     );
-    expect(tree.children?.[2].tagName).toBe("details");
+    expect(tree.children?.[2]?.tagName).toBe("details");
   });
 });

@@ -3,6 +3,7 @@ import { routineJobKey, routineWakeupJob } from "@livingbot/adapter-kit";
 import type { RoutineWatch } from "@livingbot/contracts";
 import { RoutineWatchSchema, TimeZoneSchema } from "@livingbot/contracts";
 import {
+  builtinRoutineKind,
   cronFromPreset,
   formatCron,
   isOneShotRoutineCron,
@@ -479,6 +480,8 @@ export async function listSchedulesFromTool(
   return {
     routines: rows.map((row) => ({
       routineId: row.id,
+      builtinKind: builtinRoutineKind(row),
+      usageTrigger: row.usageTrigger,
       name: row.name,
       prompt: row.prompt,
       crons: row.crons,
@@ -542,6 +545,14 @@ export async function updateScheduleFromTool(
     timezone = parsed.data;
   }
   const hasTiming = TIMING_FIELDS.some((field) => isScheduleValueProvided(input.schedule[field]));
+  if (
+    builtinRoutineKind(existing) &&
+    (name !== undefined ||
+      prompt !== undefined ||
+      input.timezone !== undefined ||
+      Object.values(input.schedule).some(isScheduleValueProvided))
+  )
+    return { error: "Built-in routines can only be enabled or disabled." };
   const retime =
     hasTiming || isScheduleValueProvided(input.schedule.startAt) || timezone !== existing.timezone;
   if (!retime && name === undefined && prompt === undefined && input.active === undefined) {
@@ -613,7 +624,17 @@ export async function updateScheduleFromTool(
     data: {
       ...(name === undefined ? {} : { name }),
       ...(prompt === undefined ? {} : { prompt }),
-      ...(timingChanged ? { crons, timezone, active, nextRunAt } : {}),
+      ...(timingChanged
+        ? {
+            crons,
+            timezone,
+            active,
+            nextRunAt,
+            ...(existing.usageTrigger && active && !existing.active
+              ? { usageSince: new Date() }
+              : {}),
+          }
+        : {}),
     },
   });
   if (count === 0) {
@@ -683,8 +704,13 @@ export async function cancelScheduleFromTool(
   });
   if (!existing) return { error: "Schedule not found." };
 
+  if (builtinRoutineKind(existing))
+    return { error: "Built-in routines cannot be deleted. Use schedule_update with active=false." };
+
   // The scope is part of the delete, so the routine cannot change hands between the read and it.
-  const { count } = await deps.prisma.routine.deleteMany({ where: { ...scope, id: existing.id } });
+  const { count } = await deps.prisma.routine.deleteMany({
+    where: { ...scope, id: existing.id, builtinKind: null, memoryMaintenance: false },
+  });
   if (count === 0) return { error: "Schedule not found." };
   await deps.jobs.cancel(routineJobKey(existing.id));
   return { ok: true as const, routineId: existing.id, name: existing.name };

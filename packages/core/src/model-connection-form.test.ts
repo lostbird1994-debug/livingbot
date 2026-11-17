@@ -1,4 +1,5 @@
 import type { ModelCredential } from "@livingbot/contracts";
+import { DEFAULT_MODEL_MAX_TOKENS } from "@livingbot/contracts";
 import { describe, expect, it } from "vitest";
 import type { ConnectionFormDraft } from "./model-connection-form.js";
 import {
@@ -113,7 +114,7 @@ describe("connectionFormFields", () => {
       apiProtocol: "chat-completions",
       reasoning: false,
       thinkingLevel: null,
-      maxTokens: "4096",
+      maxTokens: String(DEFAULT_MODEL_MAX_TOKENS),
       contextWindow: "262144",
       supportsImages: false,
       maxImagesPerPrompt: "",

@@ -63,8 +63,9 @@ export function MemoryOrganizationSettings() {
       await rpc.routines.update({
         routineId: routine.id,
         active,
-        modelProvider: model?.provider ?? null,
-        modelId: model?.modelId ?? null,
+        ...(!routine.builtinKind
+          ? { modelProvider: model?.provider ?? null, modelId: model?.modelId ?? null }
+          : {}),
       });
     },
     onSuccess: refresh,
@@ -146,35 +147,37 @@ export function MemoryOrganizationSettings() {
                   ))}
                 </NativeSelect>
               </label>
-              <label htmlFor={`${id}-model`} className="block text-muted-foreground">
-                <Trans>Execution model</Trans>
-                <NativeSelect
-                  id={`${id}-model`}
-                  className="mt-2 w-full"
-                  value={modelKey}
-                  disabled={busy || credentials.isPending || catalog.isPending}
-                  onChange={(event) => {
-                    setError(null);
-                    setModelKey(event.target.value);
-                  }}
-                >
-                  <NativeSelectOption value="">
-                    {t`Bot's model`}
-                    {row?.botModelId ? ` · ${row.botModelId}` : ""}
-                  </NativeSelectOption>
-                  {modelKey && !options.some((option) => option.key === modelKey) ? (
-                    <NativeSelectOption value={modelKey}>
-                      {parseModelOptionKey(modelKey)?.modelId ?? modelKey}
+              {!routine?.builtinKind ? (
+                <label htmlFor={`${id}-model`} className="block text-muted-foreground">
+                  <Trans>Execution model</Trans>
+                  <NativeSelect
+                    id={`${id}-model`}
+                    className="mt-2 w-full"
+                    value={modelKey}
+                    disabled={busy || credentials.isPending || catalog.isPending}
+                    onChange={(event) => {
+                      setError(null);
+                      setModelKey(event.target.value);
+                    }}
+                  >
+                    <NativeSelectOption value="">
+                      {t`Bot's model`}
+                      {row?.botModelId ? ` · ${row.botModelId}` : ""}
                     </NativeSelectOption>
-                  ) : null}
-                  {options.map((option) => (
-                    <NativeSelectOption key={option.key} value={option.key}>
-                      {option.label}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              </label>
-              {credentials.isError || catalog.isError ? (
+                    {modelKey && !options.some((option) => option.key === modelKey) ? (
+                      <NativeSelectOption value={modelKey}>
+                        {parseModelOptionKey(modelKey)?.modelId ?? modelKey}
+                      </NativeSelectOption>
+                    ) : null}
+                    {options.map((option) => (
+                      <NativeSelectOption key={option.key} value={option.key}>
+                        {option.label}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                </label>
+              ) : null}
+              {!routine?.builtinKind && (credentials.isError || catalog.isError) ? (
                 <p role="alert" className="text-destructive">
                   <Trans>Could not load available models</Trans>
                 </p>
@@ -191,10 +194,12 @@ export function MemoryOrganizationSettings() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                <Trans>
-                  Daily check, or earlier after 30 messages or a large summary. At least 6 hours
-                  between checks.
-                </Trans>
+                {!routine?.builtinKind && (
+                  <Trans>
+                    Daily check, or earlier after 30 messages or a large summary. At least 6 hours
+                    between checks.
+                  </Trans>
+                )}
                 {routine
                   ? ` ${routine.crons
                       .map((cron) => formatCron(cron, cronLabels(i18n.locale)))
@@ -202,7 +207,10 @@ export function MemoryOrganizationSettings() {
                   : ""}
               </p>
               <Button
-                disabled={busy || (modelKey === savedModel && active === routine?.active)}
+                disabled={
+                  busy ||
+                  ((routine?.builtinKind || modelKey === savedModel) && active === routine?.active)
+                }
                 onClick={() => {
                   setError(null);
                   save.mutate();

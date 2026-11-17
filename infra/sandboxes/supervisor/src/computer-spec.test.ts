@@ -2143,7 +2143,7 @@ describe("computer home storage", () => {
       "utf8",
     );
     expect(start).toMatch(
-      /while true; do\s+\/usr\/local\/bin\/rakazo-computer-control\s+sleep 1\s+done >\/tmp\/rakazo\/control\.log 2>&1 &/,
+      /while true; do\s+\/usr\/local\/bin\/rakazo-computer-control\s+sleep 1\s+done >\/tmp\/livingbot\/control\.log 2>&1 &/,
     );
     // PID 1 terminates both the background loop and its current child on stop.
     expect(start).toContain("kill -TERM -- -1");
@@ -2157,7 +2157,7 @@ describe("computer home storage", () => {
         "utf8",
       );
       const loop = start.match(
-        /while true; do[\s\S]*?done >\/tmp\/rakazo\/control\.log 2>&1 &/,
+        /while true; do[\s\S]*?done >\/tmp\/livingbot\/control\.log 2>&1 &/,
       )?.[0];
       expect(loop).toBeDefined();
       const result = spawnSync(

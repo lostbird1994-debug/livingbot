@@ -1,9 +1,12 @@
 import {
+  CONTEXT_AUDIT_TOOL_NAMES,
+  DAILY_REVIEW_TOOL_NAMES,
   disabledBuiltinToolSet,
   FLEET_TOOL_NAMES,
   FLEET_WRITE_TOOL_NAMES,
   MEMORY_MAINTENANCE_TOOL_NAMES,
   PRIVATE_MEMORY_TOOL_NAMES,
+  WORKSPACE_ORGANIZATION_TOOL_NAMES,
 } from "@livingbot/contracts";
 import { isBackgroundRunTrigger, isOwnerStartedRun } from "@livingbot/core";
 import { builtinAgentTools } from "./builtin-tools.js";
@@ -14,6 +17,7 @@ import { USER_COMPUTER_SCREEN_TOOLS } from "./run-tools-user-computer.js";
 import { filterBuiltinToolsForRun, filterBuiltinToolsForThread } from "./schedule-tools.js";
 
 export const READ_ONLY_AGENT_TOOLS = new Set([
+  "job_status",
   "widget_guidelines",
   "show_widget",
   "visual_guidelines",
@@ -22,6 +26,8 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "list_files",
   "list_fleet",
   "read_file",
+  "read_loaded_context",
+  "read_review_work",
   "read_history",
   "read_memory",
   "search_memory",
@@ -79,6 +85,9 @@ export function selectBuiltinToolsForRun(options: {
   mediaVideoEnabled?: boolean;
   messagingChannelRun: boolean;
   memoryMaintenance?: boolean;
+  dailyReview?: boolean;
+  contextAudit?: boolean;
+  workspaceOrganization?: boolean;
   /** Hanging up is only offered to a turn the caller spoke on a live call. */
   voiceCall?: boolean;
   /** Built-in names this bot turned off. Unknown names are ignored. */
@@ -113,6 +122,12 @@ export function selectBuiltinToolsForRun(options: {
   ).filter(
     (tool) =>
       !disabled.has(tool.name) &&
+      (!disabled.has("shell") || !["start_job", "stop_job"].includes(tool.name)) &&
+      (!options.workspaceOrganization || WORKSPACE_ORGANIZATION_TOOL_NAMES.has(tool.name)) &&
+      (!options.contextAudit || CONTEXT_AUDIT_TOOL_NAMES.has(tool.name)) &&
+      (options.contextAudit || tool.name !== "read_loaded_context") &&
+      (!options.dailyReview || DAILY_REVIEW_TOOL_NAMES.has(tool.name)) &&
+      (options.dailyReview || !["read_review_work", "complete_daily_review"].includes(tool.name)) &&
       (!fullWidgets || !["show_visual", "visual_guidelines"].includes(tool.name)) &&
       (!options.memoryMaintenance || MEMORY_MAINTENANCE_TOOL_NAMES.has(tool.name)) &&
       (options.memoryMaintenance ||

@@ -1538,7 +1538,7 @@ describe("BoatSandboxProvider", () => {
     expect(artifactRaw).not.toHaveBeenCalled();
     expect(createDownloadUrl).toHaveBeenCalledOnce();
     expect(createDownloadUrl.mock.calls[0]?.[0].fileUrlRequest.path).toMatch(
-      /^\/tmp\/rakazo-workspace-archive-[0-9a-f-]+\.tar\.gz$/,
+      /^\/tmp\/livingbot-workspace-archive-[0-9a-f-]+\.tar\.gz$/,
     );
     expect(fetchMock).toHaveBeenCalledOnce();
     const [, init] = fetchMock.mock.calls[0]!;
@@ -1547,7 +1547,7 @@ describe("BoatSandboxProvider", () => {
     // Stopping the browsers, archiving, and removing the archive.
     expect(command).toHaveBeenCalledTimes(3);
     expect(command.mock.calls.at(-1)?.[0].commandRequest.command).toMatch(
-      /^rm -f -- '\/tmp\/rakazo-workspace-archive-/,
+      /^rm -f -- '\/tmp\/livingbot-workspace-archive-/,
     );
     expect(archivesLeft(api, computer)).toEqual([]);
   });

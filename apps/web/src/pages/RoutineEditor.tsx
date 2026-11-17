@@ -19,6 +19,7 @@ import {
   presetFromCron,
 } from "@livingbot/core";
 import {
+  Badge,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -48,7 +49,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { cronLabels } from "../lib/cron";
 import {
   connectedModelOptions,
@@ -59,6 +60,7 @@ import {
 import type { RoutineScheduleGroup } from "../lib/routine-schedule";
 import { groupRoutinesBySchedule } from "../lib/routine-schedule";
 import { rpc } from "../lib/rpc";
+import { errorText } from "../lib/user-error";
 import { RoutineRunHistory } from "./RoutineRunHistory";
 import { RoutineSchedule } from "./RoutineSchedule";
 
@@ -232,7 +234,6 @@ export function routineTriggerSummary(
   routine: Routine,
   labels: CronLabels = ENGLISH_CRON_LABELS,
 ): string {
-  if (!routine.active) return t`Paused`;
   const parts: string[] = [];
   if (routine.webhookEnabled) parts.push(t`When a webhook fires`);
   if (routine.githubEnabled) parts.push(t`Git event`);
@@ -241,6 +242,7 @@ export function routineTriggerSummary(
   else if (routine.messageProvider) parts.push(t`Message event`);
   for (const cron of routine.crons) parts.push(formatCron(cron, labels));
   if (routine.watch) parts.push(t`When something changes`);
+  if (routine.usageTrigger) parts.push(t`Every ${routine.usageTrigger.count} human messages`);
   return parts.length > 0 ? parts.join(", ") : t`No trigger`;
 }
 
@@ -252,6 +254,8 @@ function routineGroupLabel(group: RoutineScheduleGroup) {
       return <Trans>Every week</Trans>;
     case "monthly":
       return <Trans>Monthly</Trans>;
+    case "usage":
+      return <Trans>Non-time conditions</Trans>;
     case "other":
       return <Trans>Other</Trans>;
   }
@@ -262,13 +266,13 @@ export function RoutineList({
   runningRoutineId,
   onCreate,
   onEdit,
-  onStop,
+  onToggle,
 }: {
   routines: Routine[];
   runningRoutineId?: string;
   onCreate: () => void;
   onEdit: (routine: Routine) => void;
-  onStop: () => void;
+  onToggle: (routine: Routine, active: boolean) => Promise<Routine>;
 }) {
   const { t, i18n } = useLingui();
   const sections = groupRoutinesBySchedule(routines, cronLabels(i18n.locale), i18n.locale);
@@ -315,7 +319,7 @@ export function RoutineList({
                     detail={row.detail}
                     running={runningRoutineId === row.routine.id}
                     onOpen={() => onEdit(row.routine)}
-                    onStop={onStop}
+                    onToggle={onToggle}
                   />
                 </li>
               ))}
@@ -332,62 +336,77 @@ function RoutineListRow({
   detail,
   running,
   onOpen,
-  onStop,
+  onToggle,
 }: {
   routine: Routine;
   detail: string;
   running: boolean;
   onOpen: () => void;
-  onStop: () => void;
+  onToggle: (routine: Routine, active: boolean) => Promise<Routine>;
 }) {
   const { t, i18n } = useLingui();
+  const [active, setActive] = useState(routine.active);
+  useEffect(() => setActive(routine.active), [routine.active]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const pending = useRef(false);
   const schedule = detail || routineTriggerSummary(routine, cronLabels(i18n.locale));
   return (
-    // The hover surface bleeds past the text so a row reads as one target without a card.
-    <div className="-mx-2 flex items-center gap-1 rounded-lg px-2 transition-colors hover:bg-muted/60 motion-reduce:transition-none">
-      <button
-        type="button"
-        onClick={onOpen}
-        className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 text-start focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
-      >
-        <span
-          dir="auto"
-          title={routine.name}
-          className={`min-w-0 flex-1 truncate text-body2 ${
-            routine.active ? "text-foreground" : "text-muted-foreground"
-          }`}
+    <div>
+      <div className="-mx-2 flex items-center gap-3 rounded-lg px-2 transition-colors hover:bg-muted/60 motion-reduce:transition-none">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-2 text-start focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
         >
-          {routine.name}
-        </span>
-        {routine.active ? null : (
-          <span className="me-1 shrink-0 text-caption text-muted-foreground/60">
-            <Trans>Paused</Trans>
-          </span>
-        )}
-        {running ? (
-          <span className="sr-only">
-            <Trans>Running</Trans>
-          </span>
-        ) : (
           <span
             dir="auto"
-            className="max-w-[44%] shrink-0 truncate tabular-nums text-label text-muted-foreground"
+            className={`min-w-0 flex-1 break-words text-body2 ${active ? "text-foreground" : "text-muted-foreground"}`}
+          >
+            {routine.name}
+          </span>
+          {routine.builtinKind ? (
+            <Badge variant="secondary" className="shrink-0">
+              <Trans>System</Trans>
+            </Badge>
+          ) : null}
+          <span
+            dir="auto"
+            className={`max-w-[44%] shrink-0 tabular-nums text-label ${active ? "text-muted-foreground" : "text-muted-foreground/70"}`}
           >
             {schedule}
           </span>
-        )}
-      </button>
-      {running ? (
-        <Button
-          variant="ghost"
-          size="xs"
-          aria-label={t`Stop`}
-          title={t`Stop`}
-          onClick={onStop}
-          className="h-[18px] shrink-0 rounded-md bg-warning/12 px-1.5 text-caption text-warning hover:bg-warning/25 hover:text-warning"
-        >
-          <Trans>Stop</Trans>
-        </Button>
+          {running ? (
+            <span className="sr-only">
+              <Trans>Running</Trans>
+            </span>
+          ) : null}
+        </button>
+        <Switch
+          aria-label={`${t`Active`}: ${routine.name}`}
+          checked={active}
+          disabled={saving || routine.editable === false}
+          onCheckedChange={async (active) => {
+            if (pending.current) return;
+            pending.current = true;
+            setSaving(true);
+            setError(null);
+            try {
+              const saved = await onToggle(routine, active);
+              setActive(saved.active);
+            } catch (error) {
+              setError(errorText(error, t`Could not save routine`));
+            } finally {
+              pending.current = false;
+              setSaving(false);
+            }
+          }}
+        />
+      </div>
+      {error ? (
+        <p role="alert" className="pb-2 text-caption text-destructive">
+          {error}
+        </p>
       ) : null}
     </div>
   );
@@ -466,7 +485,7 @@ export function RoutineEditor({
     draft.githubEnabled ||
     Boolean(draft.messageProvider) ||
     Boolean(draft.watch);
-  const canTest = Boolean(editing) && !saving && !running;
+  const canTest = Boolean(editing) && editing?.editable !== false && !saving && !running;
   const needsOneShotArm =
     editing != null && routineNeedsOneShotArm(editing, draft.schedules.map(cronFromPreset));
 
@@ -494,6 +513,57 @@ export function RoutineEditor({
   function addMessageProvider(provider: string) {
     onChange({ ...draft, messageProvider: provider });
   }
+
+  if (editing?.builtinKind)
+    return (
+      <div className="space-y-5">
+        <Button variant="ghost" onClick={onBack}>
+          <ChevronLeft />
+          <Trans>Back</Trans>
+        </Button>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="font-medium">{editing.name}</span>
+            <Badge variant="secondary">
+              <Trans>System</Trans>
+            </Badge>
+          </div>
+          <Switch
+            aria-label={t`Active`}
+            checked={draft.active}
+            onCheckedChange={(active) => onChange({ ...draft, active })}
+          />
+        </div>
+        {editing.usageTrigger ? (
+          <p className="text-sm text-muted-foreground">{t`Every ${editing.usageTrigger.count} human messages`}</p>
+        ) : null}
+        <details>
+          <summary className="cursor-pointer text-sm text-muted-foreground">
+            <Trans>Instruction</Trans>
+          </summary>
+          <pre className="mt-3 whitespace-pre-wrap text-sm text-muted-foreground">
+            {editing.prompt}
+          </pre>
+        </details>
+        <div className="flex items-center gap-2">
+          <Button
+            disabled={saving || editing.editable === false || draft.active === editing.active}
+            onClick={onSave}
+          >
+            {saving ? t`Saving…` : t`Save`}
+          </Button>
+          <Button variant="secondary" disabled={!canTest} onClick={onTestRun}>
+            {running ? t`Running…` : t`Test run`}
+          </Button>
+        </div>
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
+        <RoutineRunHistory key={editing.id} routineId={editing.id} />
+      </div>
+    );
 
   return (
     <div>

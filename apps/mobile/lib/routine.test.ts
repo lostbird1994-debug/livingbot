@@ -12,6 +12,7 @@ function routine(partial: Partial<Routine>): Routine {
     timezone: "UTC",
     active: true,
     notify: true,
+    requireOutput: false,
     webhookEnabled: false,
     githubEnabled: false,
     messageProvider: null,

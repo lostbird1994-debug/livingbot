@@ -72,7 +72,7 @@ function appearanceSnapshot(): string {
   return `${getCachedAppearancePreference()}:${resolveMobileAppearance()}`;
 }
 
-export function useResolvedAppearance(): ResolvedAppearance {
+export function useResolvedAppearance(): ReturnType<typeof resolveMobileAppearance> {
   // Include the preference: System -> Light must replace iOS PlatformColor
   // objects even when both currently resolve to light.
   useSyncExternalStore(subscribeAppearance, appearanceSnapshot, () => "system:dark");

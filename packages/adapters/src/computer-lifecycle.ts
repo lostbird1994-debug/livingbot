@@ -882,7 +882,20 @@ export async function acquireComputerExecutionLease(
 
 /** Independent tasks share host resources with existing conversations and routines.
  * An expired timer alone is never evidence that native work has stopped. */
-async function assertTaskResourceAvailable(tx: Prisma.TransactionClient, input: { computerId: string; runId: string; botId: string }) {
+async function assertTaskResourceAvailable(
+  tx: Prisma.TransactionClient,
+  input: { computerId: string; runId: string; botId: string },
+) {
+  const background = await tx.$queryRaw<Array<{ id: string }>>`
+    SELECT e.id FROM external_effects e
+    JOIN runs owner_run ON owner_run.id = e."runId"
+    JOIN runs current_run ON current_run.id = ${input.runId}
+    WHERE e.kind = 'task_work_v1'
+      AND e.status IN ('work_starting', 'work_running', 'work_polling', 'work_stopping', 'work_unconfirmed')
+      AND e.request->>'computerId' = ${input.computerId}
+      AND owner_run."threadId" <> current_run."threadId"
+    LIMIT 1`;
+  if (background.length) throw new ComputerBusyError();
   const conflicts = await tx.$queryRaw<Array<{ id: string }>>`
     SELECT l.id FROM computer_execution_leases l
     JOIN runs r ON r.id = l."runId"

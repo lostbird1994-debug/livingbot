@@ -1,11 +1,11 @@
-import { onError } from "@orpc/server";
-import { RPCHandler } from "@orpc/server/fetch";
 import { SandboxDamagedError } from "@livingbot/adapter-kit";
 import type * as Adapters from "@livingbot/adapters";
 import { ComputerBusyError } from "@livingbot/adapters";
 import type { Actor } from "@livingbot/contracts";
 import type { PrismaClient } from "@livingbot/db";
 import { Prisma } from "@livingbot/db";
+import { onError } from "@orpc/server";
+import { RPCHandler } from "@orpc/server/fetch";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handleRpcError } from "./app.js";
 import type { RouterDeps } from "./router.js";
@@ -83,6 +83,7 @@ describe("computer boot", () => {
     lifecycle.acquireComputerExecutionLease.mockImplementation(lifecycle.realAcquire!);
     lifecycle.provisionComputer.mockRejectedValue(new Error("stop after the lease"));
     const tx = {
+      $queryRaw: vi.fn(async () => []),
       computer: { findUniqueOrThrow: vi.fn().mockResolvedValue(stoppedBot.computer) },
       computerExecutionLease: {
         updateManyAndReturn: vi.fn().mockResolvedValue([]),

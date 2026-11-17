@@ -25,6 +25,7 @@ import {
   userVisibleMessages,
 } from "@livingbot/core";
 import { chooseBotAvatar } from "./bot-avatar-choice.js";
+import { ensureBuiltinRoutines } from "./builtin-routines.js";
 import type { Prisma, PrismaClient } from "./client.js";
 import type { ComputerMode } from "./computers.js";
 import { ensureComputerRecord, parseComputerMode } from "./computers.js";
@@ -371,7 +372,10 @@ export function createRepos(
       });
     },
 
-    async listBots(actor: Actor, options: { archived?: boolean; botId?: string } = {}): Promise<Bot[]> {
+    async listBots(
+      actor: Actor,
+      options: { archived?: boolean; botId?: string } = {},
+    ): Promise<Bot[]> {
       const bots = await withNewestThreadMessages(
         prisma,
         await withLatestBotRuns(
@@ -671,6 +675,7 @@ export function createRepos(
               content: initialBotMemory(input.name),
             },
           });
+          await ensureBuiltinRoutines(tx, actor, created.id);
           await input.seed?.(tx, created.id);
           return tx.bot.findFirstOrThrow({
             where: { id: created.id },

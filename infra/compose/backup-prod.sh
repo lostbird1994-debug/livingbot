@@ -26,8 +26,10 @@ done
 # Encrypt every artifact to public age recipients. The private key never lives on this host,
 # and plaintext is streamed straight into age, so it never touches disk.
 age_args=()
-read -r -a recipients <<<"${RAKAZO_BACKUP_AGE_RECIPIENTS:-}"
-for recipient in "${recipients[@]}"; do age_args+=(-r "${recipient}"); done
+if [[ -n "${RAKAZO_BACKUP_AGE_RECIPIENTS:-}" ]]; then
+  read -r -a recipients <<<"${RAKAZO_BACKUP_AGE_RECIPIENTS}"
+  for recipient in "${recipients[@]}"; do age_args+=(-r "${recipient}"); done
+fi
 RECIPIENTS_FILE="${RAKAZO_BACKUP_AGE_RECIPIENTS_FILE:-}"
 if [[ -n "${RECIPIENTS_FILE}" ]]; then
   [[ -r "${RECIPIENTS_FILE}" && -s "${RECIPIENTS_FILE}" ]] || {
@@ -81,8 +83,9 @@ exec 8>"${BACKUP_ROOT}/.lock"
 flock -n 8 || { echo "Another LivingBot backup is running" >&2; exit 1; }
 # Newest first; stamps sort by time. Only stamp-named directories are ever listed or removed.
 snapshots() {
-  find "${BACKUP_ROOT}" -mindepth 1 -maxdepth 1 -type d -regextype posix-extended \
-    -regex '.*/[0-9]{8}T[0-9]{6}Z' -print | sort -r
+  for dir in "${BACKUP_ROOT}"/*; do
+    [[ -d "${dir}" && "${dir##*/}" =~ ^[0-9]{8}T[0-9]{6}Z$ ]] && printf '%s\n' "${dir}"
+  done | sort -r
 }
 
 # Remove abandoned partial snapshots and excess history BEFORE checking free space.
@@ -258,8 +261,11 @@ echo "Copied to ${remote}${STAMP}"
 ((OFFSITE_KEEP > 0)) || exit 0
 listing="$(rclone lsf -R --max-depth 2 -- "${remote}")" || offsite_failed "listing for retention"
 stamp='^[0-9]{8}T[0-9]{6}Z/'
-mapfile -t kept_remote < <(grep -E "${stamp}SHA256SUMS\$" <<<"${listing}" | cut -d/ -f1 | sort -r | head -n "${OFFSITE_KEEP}")
+kept_remote=()
+while read -r kept; do
+  [[ -n "${kept}" ]] && kept_remote+=("${kept}")
+done < <(grep -E "${stamp}SHA256SUMS\$" <<<"${listing}" | cut -d/ -f1 | sort -r | head -n "${OFFSITE_KEEP}")
 while read -r old; do
-  [[ -n "${old}" && "${old}" != "${STAMP}" && " ${kept_remote[*]} " != *" ${old} "* ]] || continue
+  [[ -n "${old}" && "${old}" != "${STAMP}" && " ${kept_remote[*]-} " != *" ${old} "* ]] || continue
   rclone purge -- "${remote}${old}" || offsite_failed "pruning ${old}"
 done < <(grep -oE "${stamp}" <<<"${listing}" | tr -d / | sort -u)

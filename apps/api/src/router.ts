@@ -10,9 +10,8 @@ import type {
   TransactionalEmailProvider,
 } from "@livingbot/adapter-kit";
 import type {
-  CloudAgentConnection,
   BotWorkspaceProfiles,
-  NativeBootstrapPreview,
+  CloudAgentConnection,
   CodexLiveCatalog,
   ComposioProvider,
   ConnectorRegistry,
@@ -22,6 +21,7 @@ import type {
   McpOAuthBroker,
   MemoryProviderResolver,
   MessagingInstallations,
+  NativeBootstrapPreview,
   PiOAuthLogins,
   PluginRepoFetcher,
   PluginTextReader,
@@ -76,7 +76,8 @@ export interface RouterDeps {
   memory: MemoryStore;
   botWorkspace?: BotWorkspaceProfiles;
   nativeContextPreview?: (
-    actor: { spaceId: string; userId: string }, botId: string,
+    actor: { spaceId: string; userId: string },
+    botId: string,
   ) => Promise<NativeBootstrapPreview>;
   memoryProviders: MemoryProviderResolver;
   home: AgentHomeStore;
@@ -123,6 +124,10 @@ export interface RouterDeps {
   notificationSummary?: VoiceDeps["notificationSummary"];
   independentTasksAvailable?: () => Promise<boolean>;
   cancelNativeRuns?: (runIds: string[]) => Promise<void>;
+  stopTaskWork?: (
+    scope: { spaceId: string; userId: string; botId: string; threadId: string },
+    runIds?: string[],
+  ) => Promise<boolean>;
   env: {
     ticketBoardEnabled?: boolean;
     navLinks?: NavLink[];

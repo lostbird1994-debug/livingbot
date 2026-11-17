@@ -1,9 +1,6 @@
 import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { InferRouterInitialContext } from "@orpc/server";
-import { createRouterClient } from "@orpc/server";
-import { RPCHandler } from "@orpc/server/fetch";
 import type { ManagedConnectorProvider } from "@livingbot/adapter-kit";
 import { ConnectorAuthUnavailableError, SecretStoreUnavailableError } from "@livingbot/adapter-kit";
 import type { McpOAuthSummary } from "@livingbot/adapters";
@@ -40,6 +37,9 @@ import {
   runProviderTransaction,
 } from "@livingbot/db";
 import { createLogger, createTestSink, installLogger } from "@livingbot/logging";
+import type { InferRouterInitialContext } from "@orpc/server";
+import { createRouterClient } from "@orpc/server";
+import { RPCHandler } from "@orpc/server/fetch";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mainRole, withModelRoles } from "../../../packages/adapters/src/testing/model-roles.js";
 import type { RouterDeps } from "./router.js";
@@ -7072,6 +7072,7 @@ describe("routine live Codex model validation", () => {
         timezone: "UTC",
         active: false,
         notify: false,
+        requireOutput: false,
         webhookEnabled: false,
         githubEnabled: false,
         messageProvider: null,
@@ -7182,6 +7183,7 @@ describe("routines.list", () => {
       timezone: "UTC",
       active: true,
       notify: false,
+      requireOutput: false,
       webhookEnabled: false,
       githubEnabled: false,
       messageProvider: null,
@@ -7197,8 +7199,11 @@ describe("routines.list", () => {
     const client = createRouterClient(
       createRouter({
         prisma: {
+          user: { findUnique: vi.fn(async () => ({ timezone: "UTC" })) },
           bot: { findFirst: vi.fn(async () => ({ id: "bot-1", thread: null, computer: null })) },
           routine: {
+            findFirst: vi.fn(async () => null),
+            upsert: vi.fn(async () => undefined),
             findMany: vi.fn(async () => [row("mine", "user-1"), row("theirs", "user-2")]),
           },
         },
@@ -7234,6 +7239,7 @@ describe("routines.update", () => {
     timezone: "UTC",
     active: false,
     notify: false,
+    requireOutput: false,
     webhookEnabled: false,
     githubEnabled: false,
     messageProvider: null,
@@ -7566,7 +7572,9 @@ describe("routines.remove", () => {
     await expect(as("user-a").routines.remove({ routineId: "routine-1" })).resolves.toEqual({
       ok: true,
     });
-    expect(remove).toHaveBeenCalledWith({ where: { id: "routine-1" } });
+    expect(remove).toHaveBeenCalledWith({
+      where: { id: "routine-1", builtinKind: null, memoryMaintenance: false },
+    });
     expect(cancel).toHaveBeenCalledOnce();
   });
 });

@@ -100,10 +100,14 @@ async function runAfterFill(
     run: {
       findUnique: vi.fn(async () => run),
       findUniqueOrThrow: vi.fn(async () => run),
-      findFirst: vi.fn(async () => ({
-        bot: { notifyOnFinish: false },
-        thread: { groupId: null },
-      })),
+      findFirst: vi.fn(async (args?: { where?: { trigger?: { notIn?: string[] } } }) =>
+        args?.where?.trigger?.notIn
+          ? null
+          : {
+              bot: { notifyOnFinish: false },
+              thread: { groupId: null },
+            },
+      ),
       updateMany: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
         Object.assign(run, data);
         return { count: 1 };
@@ -143,6 +147,7 @@ async function runAfterFill(
     },
     message: {
       findMany: vi.fn(async () => []),
+      findFirst: vi.fn(async () => null),
       findUnique: vi.fn(async () => null),
       count: vi.fn(async () => 0),
     },
@@ -167,6 +172,7 @@ async function runAfterFill(
       findMany: vi.fn(async () => []),
       findFirst: vi.fn(async () => null),
       findUnique: vi.fn(async () => null),
+      count: vi.fn(async () => 0),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
         id: `effect-${data.idempotencyKey}`,
         ...data,

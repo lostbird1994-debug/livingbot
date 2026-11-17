@@ -355,9 +355,12 @@ describe("MCP connector managed stdio launch", () => {
 
     it("is not retried on every turn, but is again after the backoff or once it works", async () => {
       await publishPackage(root);
-      env = { SILENT: "1" };
-      const launches = vi.spyOn(McpSession.prototype, "connectStdio");
-      const connector = connectorFor({ startupTimeoutMs: 300, discoveryTimeoutMs: 5_000 });
+      // Exercise backoff independently of process scheduling; the deadline test above
+      // covers a real hung server, and the retry below still starts the real server.
+      const launches = vi
+        .spyOn(McpSession.prototype, "connectStdio")
+        .mockRejectedValueOnce(new Error("stdio startup timed out"));
+      const connector = connectorFor();
       try {
         expect(await connector.discoverTools(contextFor())).toMatchObject([
           { name: "mcp__mail__unavailable" },
@@ -385,12 +388,13 @@ describe("MCP connector managed stdio launch", () => {
 
     it("ends the backoff once another process records a successful check", async () => {
       await publishPackage(root);
-      env = { SILENT: "1" };
       const server: typeof SERVER & { healthStatus?: string; healthCheckedAt?: Date } = {
         ...SERVER,
       };
-      const launches = vi.spyOn(McpSession.prototype, "connectStdio");
-      const connector = connectorFor({ server, startupTimeoutMs: 300, discoveryTimeoutMs: 5_000 });
+      const launches = vi
+        .spyOn(McpSession.prototype, "connectStdio")
+        .mockRejectedValueOnce(new Error("stdio startup timed out"));
+      const connector = connectorFor({ server });
       try {
         expect(await connector.discoverTools(contextFor())).toMatchObject([
           { name: "mcp__mail__unavailable" },

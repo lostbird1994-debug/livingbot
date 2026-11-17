@@ -16,6 +16,7 @@ vi.mock("react-native", () => ({
   Alert: { alert: vi.fn() },
   Platform: { OS: "ios", select: (options: { ios?: unknown }) => options.ios },
   View: "div",
+  Text: "span",
 }));
 vi.mock("react-native-reanimated", () => ({
   default: { Text: "span" },

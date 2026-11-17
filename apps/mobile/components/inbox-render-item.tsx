@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { Platform, Pressable, Text, View } from "react-native";
 import type { MobileBot, MobileBotSection, MobileGroup } from "../lib/api";
-import type { ResolvedAppearance } from "../lib/appearance";
 import { AvatarRow } from "../lib/avatar-life";
 import { useI18n } from "../lib/i18n";
 import type { InboxItem, InboxSpace } from "../lib/inbox-spaces";
@@ -65,7 +64,7 @@ export function useInboxRenderItem({
   ChatActions,
   "botAction" | "groupAction" | "organizeFromMenu" | "editSectionFromMenu" | "deleteSection"
 > & {
-  appearance: ResolvedAppearance;
+  appearance: "light" | "dark";
   botSections: MobileBotSection[];
   chooseInboxSpace: (spaceId: string) => void;
   confirmDeleteSpace: (space: InboxSpace) => void;

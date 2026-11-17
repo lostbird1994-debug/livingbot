@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AUTOMATIC_MEMORY_PROMPT,
   enableAutomaticMemoryOrganization,
+  memoryOrganizationPlan,
   memoryOrganizationStatus,
   nudgeMemoryOrganization,
   organizeMemoryDocument,
@@ -158,6 +159,7 @@ function policyFixture() {
   };
   const document = {
     path: "MEMORY.md",
+    scope: "bot",
     content: "current",
     updatedAt: new Date("2026-11-08T02:00:00Z"),
     revisions: [{ sourceRunId: "user-run" }],
@@ -340,16 +342,21 @@ describe("memory organization scheduling", () => {
     expect(update).toHaveBeenNthCalledWith(1, {
       where: { id: "paused" },
       data: {
+        builtinKind: "memory-organization",
         name: "Automatic memory organization",
         prompt: AUTOMATIC_MEMORY_PROMPT,
+        crons: ["10 18 * * *"],
+        nextRunAt: null,
       },
     });
     expect(update).toHaveBeenNthCalledWith(2, {
       where: { id: "active" },
       data: {
+        builtinKind: "memory-organization",
         name: "Automatic memory organization",
         prompt: AUTOMATIC_MEMORY_PROMPT,
-        nextRunAt: now,
+        crons: ["10 18 * * *"],
+        nextRunAt: new Date("2026-11-08T18:10:00Z"),
       },
     });
     expect(update).toHaveBeenNthCalledWith(3, {
@@ -357,4 +364,60 @@ describe("memory organization scheduling", () => {
       data: { sharedMemoryOrganizer: true },
     });
   });
+});
+
+it("uses changed paths for daily checks and live paths for a weekly full check", async () => {
+  const f = policyFixture();
+  const original = f.prisma.routine.findFirst.getMockImplementation()!;
+  const lastFull = new Date("2026-11-08T01:00:00Z");
+  f.prisma.routine.findFirst.mockImplementation(async (args) =>
+    args.select.organizationFullCheckedAt
+      ? ({ organizationFullCheckedAt: lastFull } as never)
+      : original(args),
+  );
+  let result = await memoryOrganizationPlan(f.prisma as never, scope, "current", now);
+  expect(result.full).toBe(false);
+  expect(result.paths).toEqual(["bot:MEMORY.md"]);
+  result = await memoryOrganizationPlan(
+    f.prisma as never,
+    scope,
+    "current",
+    new Date("2026-11-16T10:00:00Z"),
+  );
+  expect(result.full).toBe(true);
+  expect(result.paths).toEqual(["bot:MEMORY.md"]);
+  f.prisma.memoryDocument.findMany.mockResolvedValue([
+    { ...f.document, updatedAt: new Date("2026-11-07T00:00:00Z") },
+  ]);
+  result = await memoryOrganizationPlan(
+    f.prisma as never,
+    scope,
+    "current",
+    new Date("2026-11-16T10:00:00Z"),
+  );
+  expect(result.full).toBe(false);
+  expect(result.changed).toBe(false);
+});
+
+it("never advances the built-in fixed memory schedule after messages or daily review", async () => {
+  const updateMany = vi.fn();
+  const prisma = {
+    routine: {
+      findFirst: vi.fn().mockResolvedValue({
+        id: "memory",
+        builtinKind: "memory-organization",
+        prompt: AUTOMATIC_MEMORY_PROMPT,
+      }),
+      updateMany,
+    },
+  };
+  expect(
+    await nudgeMemoryOrganization(
+      prisma as never,
+      { spaceId: "space", userId: "user", botId: "bot" },
+      new Date(),
+      true,
+    ),
+  ).toBe(false);
+  expect(updateMany).not.toHaveBeenCalled();
 });

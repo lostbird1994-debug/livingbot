@@ -1,0 +1,26 @@
+#!/bin/bash
+set -eu
+
+force=0
+recursive=0
+while (($#)); do
+  case "$1" in
+    -f|--force) force=1; shift ;;
+    -r|-R|-d|--recursive) recursive=1; shift ;;
+    -rf|-fr|-Rf|-fR) force=1; recursive=1; shift ;;
+    --) shift; break ;;
+    -*) shift ;;
+    *) break ;;
+  esac
+done
+
+for target in "$@"; do
+  if [[ ! -e "$target" && ! -L "$target" ]]; then
+    ((force)) && continue
+    exit 1
+  fi
+  if [[ -d "$target" && ! -L "$target" ]] && (( ! recursive )); then
+    exit 1
+  fi
+  /usr/bin/trash "$target"
+done

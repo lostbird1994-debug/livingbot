@@ -148,7 +148,14 @@ echo "/dev/fake 104857600 0 \${FREE_KB:-52428800} 0% /"
   );
   write(path.join(bin, "flock"), `#!/bin/bash\n[[ -z "\${LOCK_HELD:-}" ]]\n`, 0o755);
   const env = {
-    PATH: [bin, "/usr/bin", "/bin"].join(path.delimiter),
+    PATH: [
+      bin,
+      ...(process.platform === "darwin"
+        ? [path.join(repoRoot, "packages/testkit/src/test-trash-bin")]
+        : []),
+      "/usr/bin",
+      "/bin",
+    ].join(path.delimiter),
     HOME: root,
     COMMAND_LOG: log,
     RAKAZO_DEPLOY_DIR: checkout,
@@ -361,7 +368,7 @@ describe("production deploy script", () => {
       );
       expect(deploy.run().status).toBe(0);
       expect(commandsOf(deploy)).toContain(
-        `docker pull --quiet ghcr.io/example/rakazo/app:sha-${next}`,
+        `docker pull --quiet ghcr.io/example/livingbot/app:sha-${next}`,
       );
     });
 

@@ -17,12 +17,16 @@ function routineTriggers(routine: Routine): string {
           ? [t("Message event")]
           : []),
     ...(routine.watch ? [t("When something changes")] : []),
+    ...(routine.usageTrigger
+      ? [t("Every {count} human messages", { count: routine.usageTrigger.count })]
+      : []),
   ].join(", ");
 }
 
 /** Triggers with their zone in parentheses, or whichever of the two exists. */
 function routineSchedule(routine: Routine, zone: string | undefined): string {
   const triggers = routineTriggers(routine);
+  if (routine.usageTrigger && !routine.crons.length) return triggers;
   return triggers && zone ? `${triggers} (${zone})` : triggers || zone || "";
 }
 
@@ -44,9 +48,8 @@ export function routineRowDetail(routine: Routine, deviceTimeZone: string | unde
 
 /** A list row's name for screen readers, with whether its switch is on. */
 export function routineRowLabel(routine: Routine): string {
-  return routine.active
-    ? t("{name}, On", { name: routine.name })
-    : t("{name}, Off", { name: routine.name });
+  const name = routine.builtinKind ? `${routine.name}, ${t("System task")}` : routine.name;
+  return routine.active ? t("{name}, On", { name }) : t("{name}, Off", { name });
 }
 
 /** The device's IANA time zone, or undefined when the runtime can't tell. */

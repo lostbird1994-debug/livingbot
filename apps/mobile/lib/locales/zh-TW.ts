@@ -1,4 +1,13 @@
 export const ZH_TW_MESSAGES: Record<string, string> = {
+  Download: "下載",
+  Enabled: "已啟用",
+  Expand: "展開",
+  "Finished, no update": "已完成，無新訊息",
+  "System task": "系統",
+  "Test run": "測試執行",
+  "Running…": "執行中…",
+  "Could not run routine": "無法執行例行任務",
+  "Every {count} human messages": "每累計 {count} 則人類訊息",
   "This visual could not render.": "此图示暂时无法显示。",
   "Add to conversation": "添加到对话",
   "Download image": "下载图片",

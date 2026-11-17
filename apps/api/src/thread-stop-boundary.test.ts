@@ -5,14 +5,23 @@ import { describe, expect, it, vi } from "vitest";
 import type { ThreadTarget } from "./thread-target.js";
 import { stopThreadRuns } from "./thread-target.js";
 
-function fixture(pendingOnly = false, group = false) {
+function fixture(pendingOnly = false, group = false, deleting = false) {
   let seq = 10;
   const writes: string[] = [];
   const tx = {
     $queryRaw: vi.fn(async () => {
       writes.push("lock");
     }),
+    botTaskSession: {
+      update: vi.fn(async () => {
+        writes.push("archive");
+      }),
+    },
     run: {
+      updateMany: vi.fn(async () => {
+        writes.push("stopping");
+        return { count: 1 };
+      }),
       updateManyAndReturn: vi.fn(async () => {
         writes.push("cancel");
         return pendingOnly
@@ -82,6 +91,8 @@ function fixture(pendingOnly = false, group = false) {
     },
   };
   const prisma = {
+    run: { findMany: vi.fn(async () => []), updateMany: vi.fn(async () => ({ count: 0 })) },
+    botTaskSession: { update: vi.fn(async () => undefined) },
     $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     computer: { updateMany: vi.fn(async () => ({ count: 0 })) },
     computerExecutionLease: { updateMany: vi.fn(async () => ({ count: 0 })) },
@@ -95,7 +106,13 @@ function fixture(pendingOnly = false, group = false) {
           members: [],
           memberBotIds: ["bot-a", "bot-b"],
         }
-      : { kind: "bot", botId: "bot-a", threadId: "thread", bot: { computer: null } }
+      : {
+          kind: "bot",
+          botId: "bot-a",
+          threadId: "thread",
+          bot: { computer: null },
+          ...(deleting ? { taskSessionId: "session" } : {}),
+        }
   ) as ThreadTarget;
   const notify = vi.fn(async () => {});
   return {
@@ -103,9 +120,15 @@ function fixture(pendingOnly = false, group = false) {
     writes,
     stop: () =>
       stopThreadRuns(
-        { prisma, sandbox: {} as never, events: { notify } as never },
+        {
+          prisma,
+          sandbox: {} as never,
+          events: { notify } as never,
+          ...(deleting ? { cancelNativeRuns: vi.fn(async () => {}) } : {}),
+        },
         { spaceId: "space", userId: "user" } as Actor,
         target,
+        deleting ? { archiveTaskSession: true } : {},
       ),
   };
 }
@@ -162,4 +185,41 @@ describe("durable thread stop boundaries", () => {
       pendingMessageIds: ["group-original"],
     });
   });
+});
+
+it("soft-deletes under the same thread lock as cancellation, preserving the conversation", async () => {
+  const { tx, writes, stop } = fixture(false, false, true);
+  // No previously cancelled runs need a retry in this fixture.
+  tx.run.updateManyAndReturn
+    .mockResolvedValueOnce([
+      {
+        id: "run-a",
+        botId: "bot-a",
+        sourceMessageId: "original",
+        userId: "user",
+        spaceId: "space",
+      },
+    ])
+    .mockResolvedValueOnce([]);
+  await stop();
+  expect(writes[0]).toBe("lock");
+  expect(writes[1]).toBe("archive");
+  expect(tx.run.updateMany).toHaveBeenCalledWith({
+    where: { id: { in: ["run-a"] }, taskSlotHeld: true },
+    data: { resourceWaitReason: "stopping" },
+  });
+  expect(tx.botTaskSession.update).toHaveBeenCalledWith({
+    where: { id: "session" },
+    data: { archivedAt: expect.any(Date) },
+  });
+  expect(tx.run.updateManyAndReturn).toHaveBeenNthCalledWith(
+    2,
+    expect.objectContaining({
+      where: {
+        threadId: "thread",
+        status: { in: ["cancelled", "failed"] },
+        resourceWaitReason: { in: ["stopping", "unconfirmed"] },
+      },
+    }),
+  );
 });

@@ -1,4 +1,6 @@
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
+import { lstatSync, statSync } from "node:fs";
+import path from "node:path";
 import { promisify } from "node:util";
 
 const run = promisify(execFile);
@@ -56,13 +58,47 @@ export async function removeOwnedWorkspaceChildren(
 }
 
 export async function moveNativePathToTrash(file: string) {
-  const { lstat } = await import("node:fs/promises");
+  const { lstat, stat } = await import("node:fs/promises");
   const path = await import("node:path");
-  try { await lstat(file); } catch (error) {
+  try {
+    await lstat(file);
+  } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
     throw error;
   }
   const parent = path.dirname(file);
-  const identity = await lstat(parent, { bigint: true });
-  await removeOwnedWorkspaceChildren(parent, [path.basename(file)], identity, new AbortController().signal);
+  const identity = await stat(parent, { bigint: true });
+  await removeOwnedWorkspaceChildren(
+    parent,
+    [path.basename(file)],
+    identity,
+    new AbortController().signal,
+  );
+}
+
+export function moveNativePathToTrashSync(file: string) {
+  try {
+    lstatSync(file);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+    throw error;
+  }
+  const parent = path.dirname(file);
+  const identity = statSync(parent, { bigint: true });
+  execFileSync(
+    process.execPath,
+    [
+      "-e",
+      REMOVE_CHILDREN,
+      JSON.stringify({ dev: String(identity.dev), ino: String(identity.ino) }),
+      JSON.stringify([path.basename(file)]),
+    ],
+    {
+      cwd: parent,
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+      timeout: 20_000,
+      maxBuffer: 64 * 1024,
+      windowsHide: true,
+    },
+  );
 }

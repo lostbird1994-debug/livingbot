@@ -2268,7 +2268,11 @@ describe("computer execution leases", () => {
       return { count: 1 };
     });
     const client = {
-      $queryRaw: vi.fn().mockResolvedValue([{ id: "run-1" }]),
+      $queryRaw: vi.fn(async (sql: TemplateStringsArray) =>
+        /FROM external_effects|FROM computer_execution_leases/.test(sql.join(""))
+          ? []
+          : [{ id: "run-1" }],
+      ),
       computer: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({ scope: "team", state: "running" }),
       },
@@ -2387,7 +2391,11 @@ describe("computer execution leases", () => {
     };
     const create = vi.fn().mockRejectedValue(Object.assign(new Error("unique"), { code: "P2002" }));
     const client = {
-      $queryRaw: vi.fn().mockResolvedValue([{ id: "run-2" }]),
+      $queryRaw: vi.fn(async (sql: TemplateStringsArray) =>
+        /FROM external_effects|FROM computer_execution_leases/.test(sql.join(""))
+          ? []
+          : [{ id: "run-2" }],
+      ),
       externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       thread: {
         update: vi
@@ -2509,7 +2517,11 @@ describe("computer execution leases", () => {
 
   it("does not reclaim a same-run lease without the current worker claim", async () => {
     const prisma = leasePrisma({ scope: "team", reclaim: true });
-    prisma.queryRaw.mockResolvedValueOnce([]);
+    prisma.queryRaw
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
 
     await expect(
       acquireComputerExecutionLease(prisma.client, {
@@ -2556,9 +2568,13 @@ describe("computer execution leases", () => {
       .mockResolvedValueOnce([{ id: "bot-1" }])
       .mockResolvedValueOnce([{ id: "computer-1", scope: "dedicated" }])
       .mockResolvedValueOnce([{ id: "run-1" }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ id: "bot-1" }])
       .mockResolvedValueOnce([{ id: "computer-1", scope: "dedicated" }])
       .mockResolvedValueOnce([{ id: "run-2" }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ id: "bot-1" }])
       .mockResolvedValueOnce([{ id: "computer-1", scope: "dedicated" }])
       .mockResolvedValueOnce([]);
@@ -2607,7 +2623,9 @@ describe("computer execution leases", () => {
           .fn()
           .mockResolvedValueOnce([{ id: "bot-1" }])
           .mockResolvedValueOnce([{ id: "computer-1", scope: "dedicated" }])
-          .mockResolvedValueOnce([{ id: "run-resumed-card" }]),
+          .mockResolvedValueOnce([{ id: "run-resumed-card" }])
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([]),
         computerExecutionLease: {
           updateManyAndReturn: vi.fn().mockResolvedValue(live ? [] : [{ fence: 8 }]),
           create: vi
@@ -2727,7 +2745,11 @@ function leasePrisma(options: {
     scope: options.scope,
     state: "running",
   });
-  const queryRaw = vi.fn().mockResolvedValue([{ id: "run-1" }]);
+  const queryRaw = vi.fn(async (sql: TemplateStringsArray) =>
+    /FROM external_effects|FROM computer_execution_leases/.test(sql.join(""))
+      ? []
+      : [{ id: "run-1" }],
+  );
   const client = {
     $queryRaw: queryRaw,
     computer: { findUniqueOrThrow },

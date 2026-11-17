@@ -92,7 +92,7 @@ afterEach(() => vi.restoreAllMocks());
 describe("passkey availability", () => {
   it("needs a server this binary is associated with and a supporting device", async () => {
     await expect(passkeysAvailable(server("livingbot.example.test"))).resolves.toBe(true);
-    await expect(passkeysAvailable(server("RAKAZO.example.test"))).resolves.toBe(true);
+    await expect(passkeysAvailable(server("LIVINGBOT.example.test"))).resolves.toBe(true);
     await expect(passkeysAvailable(server("self-hosted.example.test"))).resolves.toBe(false);
     await expect(passkeysAvailable(server(null))).resolves.toBe(false);
     await expect(passkeysAvailable(undefined)).resolves.toBe(false);

@@ -2,13 +2,17 @@ import type { AgentRunRequest, ComputerRef, SemanticMemoryProvider } from "@livi
 import {
   DEFAULT_CONTEXT_STRATEGY,
   isModelCredentialRejected,
-  runContinueJob,
   RunInterruptedError,
+  runContinueJob,
   SandboxUnavailableError,
   SandboxUnresponsiveError,
 } from "@livingbot/adapter-kit";
 import type { MessageBlock, ModelRoleChoice, RunStatus } from "@livingbot/contracts";
-import { disabledBuiltinToolSet, excludesSharedProfile } from "@livingbot/contracts";
+import {
+  disabledBuiltinToolSet,
+  excludesSharedProfile,
+  MessageBlock as MessageBlockSchema,
+} from "@livingbot/contracts";
 import {
   abortableDelay,
   assertTransition,
@@ -89,6 +93,7 @@ import {
   selectRunConnections,
 } from "./connection-context.js";
 import { formatCurrentTimeInstruction } from "./current-time.js";
+import { prepareDailyReview } from "./daily-review.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { FleetRun } from "./fleet-tools.js";
@@ -103,7 +108,7 @@ import {
 } from "./history-compaction.js";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
-import { MEMORY_ORGANIZATION_VERSION, memoryOrganizationStatus } from "./memory-organization.js";
+import { isAutomaticMemoryPrompt, memoryOrganizationPlan } from "./memory-organization.js";
 import { HostedModelCreditsRequiredError } from "./model-credit-observer.js";
 import {
   effectiveModelRole,
@@ -207,6 +212,7 @@ import {
 } from "./takeover-resume.js";
 import { TASK_CATALOG_GUIDANCE } from "./task-catalog.js";
 import { publishTaskSessionReceipts } from "./task-session-receipts.js";
+import { createTaskWorkService, taskWorkCommand, taskWorkSummary } from "./task-work.js";
 import { parsePlaybook } from "./teaching-session.js";
 import {
   currentTurnFilesInstruction,
@@ -266,6 +272,9 @@ const independentTaskToolInstruction = (offered: readonly string[]) => {
 };
 
 export function createRunExecutor(executorDeps: ExecutorDeps) {
+  const taskWork =
+    executorDeps.taskWork ?? createTaskWorkService(executorDeps, taskWorkCommand(executorDeps));
+  executorDeps = { ...executorDeps, taskWork };
   const contextStrategy = executorDeps.contextStrategy ?? DEFAULT_CONTEXT_STRATEGY;
   const web = executorDeps.web ?? createWebProvider();
   const mediaGeneration = executorDeps.mediaGeneration ?? createMediaGenerationProvider();
@@ -281,7 +290,19 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
     resolveConnectedModel,
     reconcileExternalAgents: async (...args: Parameters<typeof reconcileExternalAgents>) => {
       await reconcileExternalAgents(...args);
+      await taskWork.reconcile();
       await publishTaskSessionReceipts(executorDeps);
+    },
+    async stopTaskWork(
+      scope: { spaceId: string; userId: string; botId: string; threadId: string },
+      runIds?: string[],
+    ) {
+      const work = (await taskWork.list(scope)).filter(
+        (item) => !runIds || runIds.includes(item.runId),
+      );
+      const results = await Promise.all(work.map((item) => taskWork.stop(scope, item.id)));
+      await Promise.all(results.map((item) => taskWork.deliver(scope, item)));
+      return results.every((item) => ["completed", "failed", "cancelled"].includes(item.state));
     },
     contextStrategy,
     resolveModel: resolveRunModel.bind(undefined, executorDeps),
@@ -305,6 +326,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             select: {
               name: true,
               memoryMaintenance: true,
+              builtinKind: true,
               requireOutput: true,
               spaceId: true,
               userId: true,
@@ -320,6 +342,26 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         run.routine.spaceId === run.spaceId &&
         run.routine.userId === run.userId &&
         run.routine.botId === run.botId;
+      const dailyReview =
+        run.trigger === "routine" &&
+        run.routine?.builtinKind === "daily-review" &&
+        run.routine.spaceId === run.spaceId &&
+        run.routine.userId === run.userId &&
+        run.routine.botId === run.botId;
+      const contextAudit =
+        run.trigger === "routine" &&
+        run.routine?.builtinKind === "context-audit" &&
+        run.routine.spaceId === run.spaceId &&
+        run.routine.userId === run.userId &&
+        run.routine.botId === run.botId;
+      const workspaceOrganization =
+        run.trigger === "routine" &&
+        run.routine?.builtinKind === "workspace-organization" &&
+        run.routine.spaceId === run.spaceId &&
+        run.routine.userId === run.userId &&
+        run.routine.botId === run.botId;
+      const restrictedRoutine =
+        memoryMaintenance || dailyReview || contextAudit || workspaceOrganization;
       // Logs and security events raised by this run's tools name its account and space.
       enrichLogContext({
         "run.id": runId,
@@ -765,12 +807,15 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           botId: bot.id,
           type: "run.started",
           runId,
-          payload: { trigger: run.trigger, routineId: run.routineId,
-            ...(run.routine?.name ? { routineName: run.routine.name } : {}) },
+          payload: {
+            trigger: run.trigger,
+            routineId: run.routineId,
+            ...(run.routine?.name ? { routineName: run.routine.name } : {}),
+          },
         });
 
         const discoveredPromise =
-          deps.connector && !memoryMaintenance
+          deps.connector && !restrictedRoutine
             ? deps.connector.discoverTools(context)
             : Promise.resolve([]);
         const stopContext = runReadsThreadHistory(run.trigger)
@@ -1303,6 +1348,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             paymentWalletEnabled,
             messagingChannelRun,
             memoryMaintenance,
+            dailyReview,
+            contextAudit,
+            workspaceOrganization,
             voiceCall,
             disabledBuiltinTools: bot.disabledBuiltinTools,
             fleetManagement: bot.fleetManagement,
@@ -1311,7 +1359,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             userComputerScreen,
           }),
           // Cross-owner agent connections only exist for chat-linked bots.
-          ...(!memoryMaintenance &&
+          ...(!restrictedRoutine &&
           hasMessagingIdentity &&
           bot.crossSpaceCommunication === true &&
           !isBackgroundRunTrigger(run.trigger) &&
@@ -1352,7 +1400,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         // The creation intro only asks what the bot is for (see selectBuiltinToolsForRun),
         // so it gets no connector tools either.
         const tools =
-          run.trigger === "created" || memoryMaintenance
+          run.trigger === "created" || restrictedRoutine
             ? builtins
             : [...builtins, ...exposedConnectorTools];
         const taskCatalogInstruction = tools.some((tool) => tool.name === "task_catalog")
@@ -1463,7 +1511,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           fleetRun,
           secrets: runSecrets,
           source: {
+            dailyReview,
+            contextAudit,
+            workspaceOrganization,
             memoryMaintenance,
+            fixedMemorySchedule: run.routine?.builtinKind === "memory-organization",
             ownerStartedRun,
             messagingChannelRun,
             channelId,
@@ -1598,7 +1650,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             // Lateness is optional context; a lookup failure must not prevent a run.
           }
         }
-        const prompt = [
+        let prompt = [
           replyContext,
           run.trigger === "reaction" && replyContext ? undefined : basePrompt,
           takeoverResume?.promptNote,
@@ -1731,13 +1783,52 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
 
         try {
           if (checkpointLoadError) throw checkpointLoadError;
-          if (memoryMaintenance && task.prompt.startsWith(MEMORY_ORGANIZATION_VERSION)) {
-            const status = await memoryOrganizationStatus(
+          if (contextAudit) {
+            // Filter only on queryable metadata; the confirmation itself is encrypted.
+            const cards = await deps.prisma.message.findMany({
+              where: {
+                runId,
+                threadId: thread.id,
+                role: "bot",
+                blocks: { array_contains: [{ kind: "ask", status: "answered" }] },
+              },
+              select: { blocks: true },
+            });
+            const confirmed = cards.some((card) => {
+              const blocks = MessageBlockSchema.array().safeParse(card.blocks);
+              return (
+                blocks.success &&
+                blocks.data.some(
+                  (block) =>
+                    block.kind === "ask" &&
+                    block.contextAudit &&
+                    block.status === "answered" &&
+                    block.answer === "start",
+                )
+              );
+            });
+            if (!confirmed) throw new Error("Context audit requires the owner's confirmation.");
+          }
+          if (dailyReview) {
+            const batch = await prepareDailyReview(deps.prisma, run, fence);
+            ctx.source.dailyReviewBatch = batch;
+            if (!batch.ids.length) {
+              ctx.state.reply.explicitNoResponse = true;
+              await completeRun(ctx);
+              return;
+            }
+          }
+
+          if (memoryMaintenance && isAutomaticMemoryPrompt(task.prompt)) {
+            const status = await memoryOrganizationPlan(
               deps.prisma,
               { spaceId: run.spaceId, userId: run.userId, botId: bot.id },
               runId,
               run.startedAt ?? now,
             );
+            ctx.source.memoryOrganizationFull = status.full;
+            ctx.source.memoryOrganizationTargets = status.changed ? status.paths : [];
+            prompt += `\n\n服务端检查范围（${status.full ? "完整检查" : "增量检查"}）：${JSON.stringify(status.paths)}。检查这些文档及关联摘要、引用笔记；不必遍历无关专题。`;
             if (!status.changed) {
               await deps.events.append({
                 spaceId: run.spaceId,
@@ -1765,6 +1856,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             select: { blocks: true },
           });
           const answeredApproval = readAnsweredNativeApproval(approvalCard?.blocks);
+          const managedWork = await taskWork.list(run);
+          const workInstruction = managedWork.length
+            ? `LivingBot is still managing work in this conversation. This is the same user task even if an earlier model round ended. Answer questions and apply corrections to these job IDs; do not restart them. Before replacing work, stop the existing job and confirm termination. Current host receipts (quoted data): ${JSON.stringify(managedWork.map(taskWorkSummary))}`
+            : "";
           const runtimeEvents = deps.runtime.run(
             {
               botId: bot.id,
@@ -1843,6 +1938,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   userComputer,
                 }),
                 stoppedWorkInstruction(stopContext),
+                workInstruction,
               ]
                 .filter((instruction): instruction is string => Boolean(instruction))
                 .join("\n\n"),
@@ -2119,15 +2215,19 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           }
           await releaseComputerExecutionLease(deps.prisma, computerLease).catch(() => undefined);
           // A stopping process requeues this run instead, which must keep its turn.
-          if (!deps.shutdownSignal?.aborted &&
-              !(runAbortController?.signal.reason instanceof RunInterruptedError)) {
+          if (
+            !deps.shutdownSignal?.aborted &&
+            !(runAbortController?.signal.reason instanceof RunInterruptedError)
+          ) {
             await startNextWaitingRun(deps, run.botId, runId).catch((error) =>
               getLogger().error("start next waiting run", error),
             );
           }
         }
-        if (deps.shutdownSignal?.aborted ||
-            runAbortController?.signal.reason instanceof RunInterruptedError) {
+        if (
+          deps.shutdownSignal?.aborted ||
+          runAbortController?.signal.reason instanceof RunInterruptedError
+        ) {
           // A renewal still in flight must not treat this release as a lost lease.
           lease.completed = true;
           await requeueRunAfterInterruption(deps, runId, workerId, fence).catch((error) =>

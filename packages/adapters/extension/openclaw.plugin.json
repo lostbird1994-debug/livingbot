@@ -52,6 +52,9 @@
       "remember",
       "read_memory",
       "write_memory",
+      "read_loaded_context",
+      "read_review_work",
+      "complete_daily_review",
       "propose_memory_consolidation",
       "organize_memory",
       "save_shared_memory",
@@ -107,7 +110,10 @@
       "rakazo_connected_tool",
       "list_tools",
       "get_tool",
-      "use_tool"
+      "use_tool",
+      "start_job",
+      "job_status",
+      "stop_job"
     ]
   }
 }

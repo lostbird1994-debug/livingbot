@@ -201,6 +201,7 @@ const skill = {
   description: "Write",
   source: "user",
   readOnly: false,
+  onDemand: false,
 } as const;
 const bot = { kind: "bot", id: "bot-2", name: "Helper" } as const;
 const props: Omit<ComponentProps<typeof ThreadComposer>, "ref"> = {

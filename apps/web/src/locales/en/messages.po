@@ -453,10 +453,6 @@ msgstr "1 space"
 msgid "A bit of everything"
 msgstr "A bit of everything"
 
-#: src/pages/VoiceSettingsOverlay.tsx
-#~ msgid "A bot you switched \"notify when finished\" on says one short line when its work is done or it needs you. Never during a call."
-#~ msgstr "A bot you switched \"notify when finished\" on says one short line when its work is done or it needs you. Never during a call."
-
 #: src/pages/RoutineEditor.tsx
 msgid "A command's output"
 msgstr "A command's output"
@@ -522,14 +518,6 @@ msgstr "Actions for space"
 #: src/pages/RoutineEditor.tsx
 msgid "Active"
 msgstr "Active"
-
-#: src/pages/RoutineEditor.tsx
-msgid "Require a reply"
-msgstr "Require a reply"
-
-#: src/pages/RoutineEditor.tsx
-msgid "Even a run with nothing to report posts a short reply."
-msgstr "Even a run with nothing to report posts a short reply."
 
 #: src/pages/shell/sidebar-header.tsx
 msgid "Activity"
@@ -625,10 +613,6 @@ msgstr "Add item"
 msgid "Add MCP server"
 msgstr "Add MCP server"
 
-#: src/pages/ScratchpadSection.tsx
-#~ msgid "Add open work"
-#~ msgstr "Add open work"
-
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
 msgid "Add passkey"
@@ -649,6 +633,10 @@ msgstr "Add server URL"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Add skills"
 msgstr "Add skills"
+
+#: src/components/markdown-copy.tsx
+msgid "Add to conversation"
+msgstr "Add to conversation"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Add to routine"
@@ -699,14 +687,6 @@ msgstr "Advanced..."
 msgid "After"
 msgstr "After"
 
-#: src/pages/BotRoleCardEditor.tsx
-#~ msgid "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
-#~ msgstr "After saving, shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
-
-#: src/pages/BotRoleCardEditor.tsx
-msgid "After saving, workspace-shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
-msgstr "After saving, workspace-shared USER.md, MEMORY.md and profile.md will not load automatically. This bot's own memory stays available."
-
 #: src/components/AccountDataSettings.tsx
 msgid "Agent from another app"
 msgstr "Agent from another app"
@@ -749,13 +729,13 @@ msgstr "Allow cross-space bot communication"
 msgid "Allow in this space"
 msgstr "Allow in this space"
 
-#: src/components/AskCard.tsx
-msgid "Allow once"
-msgstr "Allow once"
-
 #: src/lib/dictation.ts
 msgid "Allow LivingBot to use Speech Recognition and the microphone in System Settings."
 msgstr "Allow LivingBot to use Speech Recognition and the microphone in System Settings."
+
+#: src/components/AskCard.tsx
+msgid "Allow once"
+msgstr "Allow once"
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
@@ -889,10 +869,6 @@ msgstr "Appearance · this device"
 msgid "Appearance: {0}"
 msgstr "Appearance: {0}"
 
-#: src/pages/Shell.tsx
-#~ msgid "Appearance: {label}"
-#~ msgstr "Appearance: {label}"
-
 #: src/pages/SettingsOverlay.tsx
 msgid "Applies to every workspace"
 msgstr "Applies to every workspace"
@@ -979,6 +955,12 @@ msgstr "at {0}"
 #: src/pages/RoutineSchedule.tsx
 msgid "at {timeSelect}"
 msgstr "at {timeSelect}"
+
+#. placeholder {0}: compactTokens(latest.knownTokens)
+#. placeholder {0}: compactTokens(usage.total.knownTokens)
+#: src/pages/shell/composer-usage.tsx
+msgid "At least {0} tok"
+msgstr "At least {0} tok"
 
 #: src/pages/shell/composer.tsx
 msgid "Attach file"
@@ -1092,10 +1074,6 @@ msgstr "Back to sign in"
 msgid "Background preview for {botName}"
 msgstr "Background preview for {botName}"
 
-#: src/pages/BotRoleCardEditor.tsx
-msgid "Backstory"
-msgstr "Backstory"
-
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "Base URL"
@@ -1168,10 +1146,6 @@ msgstr "Bot"
 msgid "Bot folder"
 msgstr "Bot folder"
 
-#: src/pages/LoadedContextPanel.tsx
-#~ msgid "Bot identity and instructions"
-#~ msgstr "Bot identity and instructions"
-
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
 msgstr "Bot is watching, not acting"
@@ -1241,6 +1215,10 @@ msgstr "Bubbles"
 #: src/pages/shell/agent-import.tsx
 msgid "Built-in"
 msgstr "Built-in"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Cache hit"
+msgstr "Cache hit"
 
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
@@ -1559,6 +1537,7 @@ msgid "Close panel"
 msgstr "Close panel"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/shell/task-tabs.tsx
 msgid "Close preview"
 msgstr "Close preview"
 
@@ -1573,10 +1552,6 @@ msgstr "Close skills"
 #: src/components/markdown-copy.tsx
 msgid "Close table"
 msgstr "Close table"
-
-#: src/pages/SettingsOverlay.tsx
-#~ msgid "Close user settings"
-#~ msgstr "Close user settings"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Close voice settings"
@@ -1699,10 +1674,6 @@ msgstr "Computers are available. Reload or open a bot to continue."
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, novita, daytona, or boat with its API key. Recreate the stack after changing .env."
 msgstr "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, novita, daytona, or boat with its API key. Recreate the stack after changing .env."
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Configure a plugin catalog on the server to connect apps."
-msgstr "Configure a plugin catalog on the server to connect apps."
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -1841,6 +1812,10 @@ msgstr "Contains code to run"
 msgid "Context"
 msgstr "Context"
 
+#: src/pages/shell/composer-usage.tsx
+msgid "Context ≈"
+msgstr "Context ≈"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Context limit"
@@ -1870,9 +1845,21 @@ msgstr "Continue to checkout"
 msgid "Continue with {0}"
 msgstr "Continue with {0}"
 
+#: src/pages/shell/composer-usage.tsx
+msgid "Conversation"
+msgstr "Conversation"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Conversation data"
 msgstr "Conversation data"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Conversation usage"
+msgstr "Conversation usage"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Conversation usage details"
+msgstr "Conversation usage details"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Conversations"
@@ -2202,6 +2189,7 @@ msgid "Could not load this chat."
 msgstr "Could not load this chat."
 
 #: src/components/ArtifactFileCard.tsx
+#: src/components/MarkdownDocumentView.tsx
 msgid "Could not load this file."
 msgstr "Could not load this file."
 
@@ -2343,6 +2331,7 @@ msgstr "Could not save memory organization settings"
 msgid "Could not save model"
 msgstr "Could not save model"
 
+#: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not save routine"
 msgstr "Could not save routine"
@@ -2610,10 +2599,6 @@ msgstr "Customer support"
 msgid "Customize"
 msgstr "Customize"
 
-#: src/pages/SpaceSettingOverrides.tsx
-#~ msgid "Customize {label}"
-#~ msgstr "Customize {label}"
-
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "Customize bot avatar"
@@ -2645,10 +2630,6 @@ msgstr "Dark"
 #: src/pages/PluginsOverlay.tsx
 msgid "Data"
 msgstr "Data"
-
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "Data and open work"
-#~ msgstr "Data and open work"
 
 #: src/lib/billing.ts
 #: src/lib/cron.ts
@@ -2749,10 +2730,6 @@ msgstr "Delete section"
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Delete space"
 msgstr "Delete space"
-
-#: src/pages/SpaceSettingOverrides.tsx
-#~ msgid "Delete this Space's credentials?"
-#~ msgstr "Delete this Space's credentials?"
 
 #: src/pages/SpaceSettingSection.tsx
 msgid "Delete this workspace's credentials?"
@@ -2928,6 +2905,7 @@ msgstr "Done"
 msgid "Downgrade at renewal"
 msgstr "Downgrade at renewal"
 
+#: src/components/markdown-copy.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Download"
@@ -2945,6 +2923,10 @@ msgstr "Download {name}"
 #: src/components/markdown-copy.tsx
 msgid "Download CSV"
 msgstr "Download CSV"
+
+#: src/components/markdown-copy.tsx
+msgid "Download image"
+msgstr "Download image"
 
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
@@ -3022,14 +3004,6 @@ msgstr "Enable {0}"
 msgid "Enable automatic organization"
 msgstr "Enable automatic organization"
 
-#: src/pages/BotRoleCardEditor.tsx
-msgid "Enable backstory"
-msgstr "Enable backstory"
-
-#: src/pages/BotRoleCardEditor.tsx
-msgid "Enable user identity"
-msgstr "Enable user identity"
-
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Ends {day}"
 msgstr "Ends {day}"
@@ -3078,6 +3052,14 @@ msgstr "Environment variables: {names}"
 msgid "Error"
 msgstr "Error"
 
+#: src/pages/shell/composer-usage.tsx
+msgid "Estimated context / window"
+msgstr "Estimated context / window"
+
+#: src/pages/RoutineEditor.tsx
+msgid "Even a run with nothing to report posts a short reply."
+msgstr "Even a run with nothing to report posts a short reply."
+
 #: src/lib/cron.ts
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Every"
@@ -3093,6 +3075,13 @@ msgstr "Every {0}"
 #: src/lib/cron.ts
 msgid "Every {0} and {1}"
 msgstr "Every {0} and {1}"
+
+#. placeholder {0}: editing.usageTrigger.count
+#. placeholder {0}: routine.usageTrigger.count
+#: src/lib/routine-schedule.ts
+#: src/pages/RoutineEditor.tsx
+msgid "Every {0} human messages"
+msgstr "Every {0} human messages"
 
 #: src/pages/RoutineSchedule.tsx
 msgid "every {intervalAmountSelect} {intervalUnitSelect}"
@@ -3145,6 +3134,7 @@ msgstr "Execution model"
 msgid "Executor token"
 msgstr "Executor token"
 
+#: src/components/markdown-copy.tsx
 #: src/pages/shell/message-cards.tsx
 msgid "Expand"
 msgstr "Expand"
@@ -3230,10 +3220,6 @@ msgstr "Fields to compare, e.g. id, modifiedTime (optional)"
 msgid "File"
 msgstr "File"
 
-#: src/pages/shell/bot-panel.tsx
-msgid "Files"
-msgstr "Files"
-
 #: src/pages/RoutineEditor.tsx
 msgid "Files or folders on the computer"
 msgstr "Files or folders on the computer"
@@ -3284,6 +3270,10 @@ msgstr "Finish subscription sign-in, then test again."
 #: src/components/CloudAgentCard.tsx
 msgid "finished"
 msgstr "finished"
+
+#: src/pages/RoutineRunHistory.tsx
+msgid "Finished, no update"
+msgstr "Finished, no update"
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
@@ -3355,18 +3345,9 @@ msgstr "Fullscreen"
 msgid "Gateway ID"
 msgstr "Gateway ID"
 
-#: src/pages/settings-nav.ts
-#: src/pages/SettingsOverlay.tsx
-#~ msgid "General"
-#~ msgstr "General"
-
 #: src/components/InviteDialog.tsx
 msgid "Get a free month for each friend who starts a trial."
 msgstr "Get a free month for each friend who starts a trial."
-
-#: src/components/SidebarFooter.tsx
-msgid "Get the mobile app"
-msgstr "Get the mobile app"
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Getting ready"
@@ -3602,6 +3583,10 @@ msgstr "Inbox & email"
 msgid "Include API keys"
 msgstr "Include API keys"
 
+#: src/pages/shell/composer-usage.tsx
+msgid "Includes model calls during tool use and subagents. Speed excludes tool and approval waits. Missing provider data stays unknown. Context is the last prepared input estimate."
+msgstr "Includes model calls during tool use and subagents. Speed excludes tool and approval waits. Missing provider data stays unknown. Context is the last prepared input estimate."
+
 #: src/pages/LoadedContextPanel.tsx
 msgid "Includes source headings and truncation notices. Directory entries have a separate budget."
 msgstr "Includes source headings and truncation notices. Directory entries have a separate budget."
@@ -3781,6 +3766,30 @@ msgstr "Last check {0}: no changes"
 msgid "Later"
 msgstr "Later"
 
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest"
+msgstr "Latest"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest cache read"
+msgstr "Latest cache read"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest input (including cache)"
+msgstr "Latest input (including cache)"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest model calls"
+msgstr "Latest model calls"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest model time"
+msgstr "Latest model time"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Latest output (including reasoning)"
+msgstr "Latest output (including reasoning)"
+
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Leave"
 msgstr "Leave"
@@ -3822,22 +3831,10 @@ msgstr "List view"
 msgid "Listen"
 msgstr "Listen"
 
-#: src/pages/VoiceSettingsOverlay.tsx
-#~ msgid "Listen for a bot's name"
-#~ msgstr "Listen for a bot's name"
-
 #: src/components/call/CallCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Listening"
 msgstr "Listening"
-
-#: src/components/voice/VoiceAssistant.tsx
-#~ msgid "Listening for a name"
-#~ msgstr "Listening for a name"
-
-#: src/components/voice/VoiceAssistant.tsx
-#~ msgid "Listening stopped: {trouble}"
-#~ msgstr "Listening stopped: {trouble}"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Listening…"
@@ -3846,6 +3843,19 @@ msgstr "Listening…"
 #: src/components/composer/DictationInput.tsx
 msgid "Listening… Click the microphone to finish."
 msgstr "Listening… Click the microphone to finish."
+
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "LivingBot"
+msgstr "LivingBot"
+
+#: src/pages/LoadedContextPanel.tsx
+msgid "LivingBot also adds built-in behavior and safety rules, available tools, skills and environment information. Recent messages, attachments, group context and retrieved content depend on the task and model window. Working files such as README.md and TOOLS.md are not automatically included just because they exist. External messaging channels use different loading rules."
+msgstr "LivingBot also adds built-in behavior and safety rules, available tools, skills and environment information. Recent messages, attachments, group context and retrieved content depend on the task and model window. Working files such as README.md and TOOLS.md are not automatically included just because they exist. External messaging channels use different loading rules."
+
+#: src/components/ModelCredits.tsx
+#: src/pages/Onboarding.tsx
+msgid "LivingBot credits"
+msgstr "LivingBot credits"
 
 #: src/pages/shell/transcript.tsx
 msgid "Load earlier messages"
@@ -3863,10 +3873,6 @@ msgstr "Load older runs"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Load web images automatically"
 msgstr "Load web images automatically"
-
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "Loaded context"
-#~ msgstr "Loaded context"
 
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
@@ -3898,12 +3904,17 @@ msgid "Loading plugins…"
 msgstr "Loading plugins…"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/components/MarkdownDocumentView.tsx
 msgid "Loading preview…"
 msgstr "Loading preview…"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Loading tasks…"
 msgstr "Loading tasks…"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Loading usage…"
+msgstr "Loading usage…"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
@@ -4083,12 +4094,6 @@ msgstr "Memory"
 #: src/pages/shell/agent-import.tsx
 msgid "Memory {position}"
 msgstr "Memory {position}"
-
-#. placeholder {0}: characters(data.memory.body)
-#. placeholder {1}: data.budgets.body
-#: src/pages/LoadedContextPanel.tsx
-#~ msgid "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
-#~ msgstr "Memory block: {0} / {1} characters. Shared source text: {shared} characters."
 
 #. placeholder {0}: characters(data.memory.body)
 #. placeholder {1}: data.budgets.body
@@ -4282,6 +4287,7 @@ msgid "month"
 msgstr "month"
 
 #: src/lib/cron.ts
+#: src/pages/RoutineEditor.tsx
 msgid "Monthly"
 msgstr "Monthly"
 
@@ -4416,10 +4422,6 @@ msgstr "New group chat"
 #: src/pages/shell/chat-context.tsx
 msgid "New messages"
 msgstr "New messages"
-
-#: src/pages/ScratchpadSection.tsx
-#~ msgid "New open-work item"
-#~ msgstr "New open-work item"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -4564,10 +4566,6 @@ msgstr "No organization runs yet"
 msgid "No remote MCP servers found"
 msgstr "No remote MCP servers found"
 
-#: src/pages/RoutineRunHistory.tsx
-msgid "No reply"
-msgstr "No reply"
-
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/command-palette.tsx
@@ -4615,6 +4613,10 @@ msgstr "No trigger"
 msgid "No workspaces yet"
 msgstr "No workspaces yet"
 
+#: src/pages/RoutineEditor.tsx
+msgid "Non-time conditions"
+msgstr "Non-time conditions"
+
 #: src/pages/LoadedContextPanel.tsx
 msgid "None"
 msgstr "None"
@@ -4652,17 +4654,13 @@ msgstr "Not in LivingBot's catalog"
 msgid "Not in the plugin catalog"
 msgstr "Not in the plugin catalog"
 
-#: src/pages/BotRoleCardEditor.tsx
-msgid "Not loaded · disabled"
-msgstr "Not loaded · disabled"
-
-#: src/pages/LoadedContextPanel.tsx
-msgid "Not loaded: workspace-shared USER.md, MEMORY.md and profile.md. This bot has its own user identity or backstory enabled."
-msgstr "Not loaded: workspace-shared USER.md, MEMORY.md and profile.md. This bot has its own user identity or backstory enabled."
-
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "Not now"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "Not reported"
+msgstr "Not reported"
 
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/import-status.ts
@@ -4680,10 +4678,6 @@ msgstr "Not working"
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "Nothing remembered yet"
-
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "Notifications"
-#~ msgstr "Notifications"
 
 #: src/pages/ActivityList.tsx
 msgid "Now"
@@ -4739,10 +4733,6 @@ msgstr "on day {day} at {time}"
 #: src/lib/cron.ts
 msgid "on the 1st at {0}"
 msgstr "on the 1st at {0}"
-
-#: src/pages/LoadedContextPanel.tsx
-#~ msgid "On-demand memory directory"
-#~ msgstr "On-demand memory directory"
 
 #: src/lib/cron.ts
 msgid "One-time"
@@ -4875,6 +4865,10 @@ msgstr "Original"
 msgid "Original message unavailable"
 msgstr "Original message unavailable"
 
+#: src/pages/RoutineEditor.tsx
+msgid "Other"
+msgstr "Other"
+
 #: src/pages/LoadedContextPanel.tsx
 msgid "Other inputs depend on the conversation"
 msgstr "Other inputs depend on the conversation"
@@ -4980,7 +4974,6 @@ msgstr "Paste your API key"
 msgid "Paste your API key, then test again."
 msgstr "Paste your API key, then test again."
 
-#: src/pages/RoutineEditor.tsx
 #: src/pages/shell/import-status.ts
 msgid "Paused"
 msgstr "Paused"
@@ -5094,10 +5087,6 @@ msgstr "POST to"
 msgid "Preferences"
 msgstr "Preferences"
 
-#: src/pages/VoiceSettingsOverlay.tsx
-#~ msgid "Press ⌥ Space anywhere in the app to open the microphone for one try: say a bot's name and it calls you back. No microphone stays on in between."
-#~ msgstr "Press ⌥ Space anywhere in the app to open the microphone for one try: say a bot's name and it calls you back. No microphone stays on in between."
-
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -5175,19 +5164,6 @@ msgstr "Pull request"
 msgid "Queued"
 msgstr "Queued"
 
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "LivingBot"
-msgstr "LivingBot"
-
-#: src/pages/LoadedContextPanel.tsx
-msgid "LivingBot also adds built-in behavior and safety rules, available tools, skills and environment information. Recent messages, attachments, group context and retrieved content depend on the task and model window. Working files such as README.md and TOOLS.md are not automatically included just because they exist. External messaging channels use different loading rules."
-msgstr "LivingBot also adds built-in behavior and safety rules, available tools, skills and environment information. Recent messages, attachments, group context and retrieved content depend on the task and model window. Working files such as README.md and TOOLS.md are not automatically included just because they exist. External messaging channels use different loading rules."
-
-#: src/components/ModelCredits.tsx
-#: src/pages/Onboarding.tsx
-msgid "LivingBot credits"
-msgstr "LivingBot credits"
-
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for LivingBot."
 msgstr "rakazo-shared and IDs starting with bot- are reserved for LivingBot."
@@ -5199,10 +5175,6 @@ msgstr "React"
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Reactions"
 msgstr "Reactions"
-
-#: src/pages/VoiceSettingsOverlay.tsx
-#~ msgid "Read new messages aloud"
-#~ msgstr "Read new messages aloud"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
@@ -5507,6 +5479,10 @@ msgstr "Reply cancelled"
 msgid "Replying to {0}"
 msgstr "Replying to {0}"
 
+#: src/pages/shell/composer-usage.tsx
+msgid "Reported calls / all calls"
+msgstr "Reported calls / all calls"
+
 #: src/lib/user-error.ts
 msgid "Request a new code"
 msgstr "Request a new code"
@@ -5514,6 +5490,10 @@ msgstr "Request a new code"
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Requests"
 msgstr "Requests"
+
+#: src/pages/RoutineEditor.tsx
+msgid "Require a reply"
+msgstr "Require a reply"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Research & writing"
@@ -5590,6 +5570,7 @@ msgstr "Restoring your workspace"
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
+#: src/components/MarkdownDocumentView.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
@@ -5757,6 +5738,10 @@ msgstr "Save role settings"
 msgid "Save the workspace and install current software."
 msgstr "Save the workspace and install current software."
 
+#: src/pages/RoutineEditor.tsx
+msgid "Save this routine before a test run"
+msgstr "Save this routine before a test run"
+
 #: src/components/AskCard.tsx
 msgid "Save to Vault"
 msgstr "Save to Vault"
@@ -5805,14 +5790,6 @@ msgstr "Saving..."
 #: src/pages/shell/dialogs.tsx
 msgid "Saving…"
 msgstr "Saving…"
-
-#: src/components/voice/VoiceAssistant.tsx
-#~ msgid "Say a bot's name to call it"
-#~ msgstr "Say a bot's name to call it"
-
-#: src/pages/VoiceSettingsOverlay.tsx
-#~ msgid "Say a name to start the call. This browser keeps the microphone open, but only sends audio once someone speaks, and only to recognise the name."
-#~ msgstr "Say a name to start the call. This browser keeps the microphone open, but only sends audio once someone speaks, and only to recognise the name."
 
 #: src/lib/call-session.ts
 msgid "Say yes or no, or answer in a sentence."
@@ -5977,10 +5954,6 @@ msgstr "Server name"
 msgid "Server URL"
 msgstr "Server URL"
 
-#: src/pages/shell/bili-whale-panel.tsx
-#~ msgid "SESSDATA 不能为空"
-#~ msgstr "SESSDATA cannot be empty"
-
 #: src/components/InheritanceBadge.tsx
 msgid "Set here"
 msgstr "Set here"
@@ -6034,25 +6007,9 @@ msgstr "Shared"
 msgid "Shared by your bots in this workspace. Summaries load automatically; other notes are read on demand."
 msgstr "Shared by your bots in this workspace. Summaries load automatically; other notes are read on demand."
 
-#: src/pages/KnowledgeSection.tsx
-#~ msgid "Shared memory"
-#~ msgstr "Shared memory"
-
 #: src/pages/MemoryOrganizationSettings.tsx
 msgid "Shared memory organizer"
 msgstr "Shared memory organizer"
-
-#: src/pages/BotRoleCardEditor.tsx
-msgid "Shared profile loading rules"
-msgstr "Shared profile loading rules"
-
-#: src/pages/KnowledgeSection.tsx
-#~ msgid "Shared summaries load automatically. Other shared notes are read on demand."
-#~ msgstr "Shared summaries load automatically. Other shared notes are read on demand."
-
-#: src/pages/LoadedContextPanel.tsx
-#~ msgid "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
-#~ msgstr "Shared USER.md, MEMORY.md and profile.md are excluded from this bot's automatic inputs."
 
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -6259,18 +6216,6 @@ msgstr "Space"
 msgid "Space default"
 msgstr "Space default"
 
-#: src/pages/SettingsOverlay.tsx
-#~ msgid "Spaces"
-#~ msgstr "Spaces"
-
-#: src/pages/shell/message-view.tsx
-msgid "Speak"
-msgstr "Speak"
-
-#: src/pages/shell/message-view.tsx
-msgid "Speak this reply"
-msgstr "Speak this reply"
-
 #: src/components/call/CallCard.tsx
 msgid "Speaking"
 msgstr "Speaking"
@@ -6320,10 +6265,8 @@ msgstr "Status"
 msgid "Steps"
 msgstr "Steps"
 
-#: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
 #: src/pages/shell/computer-overlay.tsx
-#: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "Stop"
 
@@ -6331,13 +6274,13 @@ msgstr "Stop"
 msgid "Stop computer"
 msgstr "Stop computer"
 
-#: src/pages/shell/message-view.tsx
-msgid "Stop speaking"
-msgstr "Stop speaking"
-
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Stop teaching"
 msgstr "Stop teaching"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Stopped this conversation and cancelled {count} pending messages."
+msgstr "Stopped this conversation and cancelled {count} pending messages."
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
@@ -6413,6 +6356,7 @@ msgid "Switching…"
 msgstr "Switching…"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/RoutineEditor.tsx
 #: src/pages/Shell.tsx
 msgid "System"
 msgstr "System"
@@ -6494,6 +6438,11 @@ msgstr "The browser keeps dropping the microphone. Start dictation again to retr
 msgid "The connection timed out."
 msgstr "The connection timed out."
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "The local engine connection lacks required permissions."
+msgstr "The local engine connection lacks required permissions."
+
 #: src/lib/wake-listener.ts
 msgid "The microphone was disconnected."
 msgstr "The microphone was disconnected."
@@ -6512,6 +6461,11 @@ msgstr "The model provider returned an error."
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "The model returned an unusable response. Try again."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "The previous task is unresolved. Check its status before continuing."
+msgstr "The previous task is unresolved. Check its status before continuing."
 
 #: src/lib/model-connection-preflight.ts
 msgid "The provider is rate-limiting requests."
@@ -6532,6 +6486,11 @@ msgstr "The screen link expired."
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "The selected memory provider is not available in this build."
 msgstr "The selected memory provider is not available in this build."
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "The task stopped. Check its results before retrying."
+msgstr "The task stopped. Check its results before retrying."
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Their own model is cleared. You can pick one again in each bot."
@@ -6635,6 +6594,7 @@ msgid "This directory is loaded automatically; the listed documents are not load
 msgstr "This directory is loaded automatically; the listed documents are not loaded in full."
 
 #: src/components/ArtifactFileCard.tsx
+#: src/components/MarkdownDocumentView.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "This file is not valid UTF-8 text."
 
@@ -6708,6 +6668,10 @@ msgstr "This server's tool result does not fit the model. Turn off Keep tool res
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in LivingBot yet. Use a deployment credential or choose another provider."
 msgstr "This subscription sign-in is not available in LivingBot yet. Use a deployment credential or choose another provider."
+
+#: src/components/markdown-copy.tsx
+msgid "This visual could not render."
+msgstr "This visual could not render."
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
@@ -6974,6 +6938,10 @@ msgstr "Urgent"
 msgid "Usage"
 msgstr "Usage"
 
+#: src/pages/shell/composer-usage.tsx
+msgid "Usage unavailable"
+msgstr "Usage unavailable"
+
 #. Switches the saved timezone to this device's, e.g. 'Use Pacific/Auckland'
 #. placeholder {0}: deviceTimezone.replaceAll("_", " ")
 #: src/pages/AccountSettingsOverlay.tsx
@@ -7009,13 +6977,13 @@ msgstr "Use default guidance"
 msgid "Use defaults"
 msgstr "Use defaults"
 
-#: src/pages/SpaceSettingOverrides.tsx
-#~ msgid "Use defaults for {label}"
-#~ msgstr "Use defaults for {label}"
-
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Use in this bot"
 msgstr "Use in this bot"
+
+#: src/components/ModelCredits.tsx
+msgid "Use LivingBot credits"
+msgstr "Use LivingBot credits"
 
 #: src/components/ModelCredits.tsx
 msgid "Use my subscription or API key"
@@ -7024,10 +6992,6 @@ msgstr "Use my subscription or API key"
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
 msgstr "Use Protected input for passwords."
-
-#: src/components/ModelCredits.tsx
-msgid "Use LivingBot credits"
-msgstr "Use LivingBot credits"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"
@@ -7040,14 +7004,6 @@ msgstr "Use up to 512 letters, digits, _ or -."
 #: src/pages/BotRoleCardEditor.tsx
 msgid "User identity"
 msgstr "User identity"
-
-#: src/pages/BotRoleCardEditor.tsx
-msgid "User identity and backstory load only when their switches are on. Both off: workspace-shared profiles load as usual."
-msgstr "User identity and backstory load only when their switches are on. Both off: workspace-shared profiles load as usual."
-
-#: src/pages/BotRoleCardEditor.tsx
-#~ msgid "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
-#~ msgstr "User identity and backstory load only when their switches are on. Shared memory follows the usual loading rules."
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
@@ -7123,6 +7079,7 @@ msgid "View organizer"
 msgstr "View organizer"
 
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/components/markdown-copy.tsx
 msgid "View source"
 msgstr "View source"
 
@@ -7297,6 +7254,10 @@ msgstr "Workspace"
 msgid "Workspace “{spaceName}” · shared by your bots"
 msgstr "Workspace “{spaceName}” · shared by your bots"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Workspace files"
+msgstr "Workspace files"
+
 #: src/pages/settings-nav.ts
 msgid "Workspace settings"
 msgstr "Workspace settings"
@@ -7347,10 +7308,6 @@ msgstr "Your Anthropic"
 #: src/components/AccountDataSettings.tsx
 msgid "Your data"
 msgstr "Your data"
-
-#: src/pages/SpaceSettingOverrides.tsx
-#~ msgid "Your defaults"
-#~ msgstr "Your defaults"
 
 #: src/pages/Auth.tsx
 msgid "Your email address"
@@ -7483,10 +7440,6 @@ msgstr "Off: @-mentions you in the comments. On: direct message (needs two mutua
 #: src/pages/shell/bot-panel.tsx
 msgid "养鱼"
 msgstr "Fish"
-
-#: src/pages/shell/bili-whale-panel.tsx
-#~ msgid "凭据只写不读，保存后不再显示"
-#~ msgstr "Credentials are write-only; they are never shown again"
 
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "凭据只写不读，留空保留原值"
@@ -7631,82 +7584,3 @@ msgstr "Retry"
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "首次配置请同时填写 SESSDATA 和 bili_jct"
 msgstr "Enter both SESSDATA and bili_jct for first-time setup"
-
-msgid "Not reported"
-msgstr "Not reported"
-
-msgid "Conversation usage details"
-msgstr "Conversation usage details"
-
-msgid "Usage unavailable"
-msgstr "Usage unavailable"
-
-msgid "Loading usage…"
-msgstr "Loading usage…"
-
-msgid "Latest"
-msgstr "Latest"
-
-msgid "Cache hit"
-msgstr "Cache hit"
-
-msgid "Conversation"
-msgstr "Conversation"
-
-msgid "At least {0} tok"
-msgstr "At least {0} tok"
-
-msgid "Context ≈"
-msgstr "Context ≈"
-
-msgid "Conversation usage"
-msgstr "Conversation usage"
-
-#: src/pages/shell/use-composer-actions.ts
-msgid "Stopped this conversation and cancelled {count} pending messages."
-msgstr "Stopped this conversation and cancelled {count} pending messages."
-
-msgid "Latest model calls"
-msgstr "Latest model calls"
-
-msgid "Latest input (including cache)"
-msgstr "Latest input (including cache)"
-
-msgid "Latest output (including reasoning)"
-msgstr "Latest output (including reasoning)"
-
-msgid "Latest cache read"
-msgstr "Latest cache read"
-
-msgid "Latest model time"
-msgstr "Latest model time"
-
-msgid "Reported calls / all calls"
-msgstr "Reported calls / all calls"
-
-msgid "Estimated context / window"
-msgstr "Estimated context / window"
-
-msgid "Includes model calls during tool use and subagents. Speed excludes tool and approval waits. Missing provider data stays unknown. Context is the last prepared input estimate."
-msgstr "Includes model calls during tool use and subagents. Speed excludes tool and approval waits. Missing provider data stays unknown. Context is the last prepared input estimate."
-
-msgid "The local engine connection lacks required permissions."
-msgstr "The local engine connection lacks required permissions."
-
-msgid "The task stopped. Check its results before retrying."
-msgstr "The task stopped. Check its results before retrying."
-
-msgid "The previous task is unresolved. Check its status before continuing."
-msgstr "The previous task is unresolved. Check its status before continuing."
-
-msgid "Workspace files"
-msgstr "Workspace files"
-
-msgid "Download image"
-msgstr "Download image"
-
-msgid "Add to conversation"
-msgstr "Add to conversation"
-
-msgid "This visual could not render."
-msgstr "This visual could not render."

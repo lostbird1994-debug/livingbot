@@ -1,14 +1,16 @@
-import { ORPCError } from "@orpc/server";
 import { routineJobKey, routineWakeupJob, runContinueJob } from "@livingbot/adapter-kit";
 import { parseRoutineWatch, stableStringify, validateRoutineWatch } from "@livingbot/adapters";
 import { canonicalPiProviderId } from "@livingbot/contracts";
 import {
+  builtinRoutineKind,
+  builtinRoutineToggleOnly,
   expandSkillReferencesInPrompt,
   hasMixedOneShotSchedule,
   isOneShotRoutineCrons,
 } from "@livingbot/core";
 import { IsolationError, Prisma } from "@livingbot/db";
 import { getLogger } from "@livingbot/logging";
+import { ORPCError } from "@orpc/server";
 import { assertRoutineModel } from "../model-pins.js";
 import { listRoutineRuns } from "../routine-runs.js";
 import {
@@ -48,7 +50,9 @@ export function routinesRoutes(ctx: RouterContext) {
         });
         return bots.map((bot) => ({
           botId: bot.id,
-          routines: rows.filter((row) => row.botId === bot.id).map((row) => routineDto(row, actor)),
+          routines: rows
+            .filter((row) => row.botId === bot.id && !builtinRoutineKind(row))
+            .map((row) => routineDto(row, actor)),
         }));
       }),
       history: authed.routines.history.handler(async ({ context, input }) =>
@@ -93,6 +97,10 @@ export function routinesRoutes(ctx: RouterContext) {
           },
         });
         if (!existing) throw new ORPCError("NOT_FOUND");
+        if (builtinRoutineKind(existing) && !builtinRoutineToggleOnly(input))
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Built-in routines can only be enabled or disabled.",
+          });
         const bot = await repos.getBot(context.actor, existing.botId);
         const active = input.active ?? existing.active;
         const crons = input.crons ?? existing.crons;
@@ -149,7 +157,14 @@ export function routinesRoutes(ctx: RouterContext) {
         const watchChanged =
           input.watch !== undefined &&
           stableStringify(input.watch) !== stableStringify(parseRoutineWatch(existing.watch));
-        if (crons.length === 0 && !webhookEnabled && !githubEnabled && !messageProvider && !watch) {
+        if (
+          crons.length === 0 &&
+          !webhookEnabled &&
+          !githubEnabled &&
+          !messageProvider &&
+          !watch &&
+          !existing.usageTrigger
+        ) {
           throw new ORPCError("BAD_REQUEST", {
             message: "Add a schedule, webhook, GitHub, message, or change trigger",
           });
@@ -246,6 +261,9 @@ export function routinesRoutes(ctx: RouterContext) {
               crons: input.crons,
               timezone: input.timezone,
               active: input.active,
+              ...(existing.usageTrigger && !existing.active && input.active
+                ? { usageSince: new Date() }
+                : {}),
               notify: input.notify,
               requireOutput: input.requireOutput,
               webhookEnabled: input.webhookEnabled,
@@ -315,7 +333,13 @@ export function routinesRoutes(ctx: RouterContext) {
           },
         });
         if (!existing) throw new IsolationError();
-        await deps.prisma.routine.delete({ where: { id: existing.id } });
+        if (builtinRoutineKind(existing))
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Built-in routines cannot be deleted. Disable this routine instead.",
+          });
+        await deps.prisma.routine.delete({
+          where: { id: existing.id, builtinKind: null, memoryMaintenance: false },
+        });
         await deps.jobs.cancel(routineJobKey(existing.id));
         return { ok: true as const };
       }),

@@ -1,7 +1,22 @@
 import { useLingui } from "@lingui/react/macro";
 import type { Bot, TaskSession } from "@livingbot/contracts";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input } from "@livingbot/ui-web";
-import { History, Plus, X } from "lucide-react";
+import {
+  Button,
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Input,
+} from "@livingbot/ui-web";
+import { History, MoreHorizontal, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { composerDraftBindingsKey, composerDraftStorageKey } from "../../lib/composer-draft";
@@ -34,6 +49,7 @@ interface Layout {
   opened: string[];
   selected: string | null;
   drafts: string[];
+  titles?: Record<string, string>;
 }
 function readLayout(botId: string, scope: string): Layout {
   try {
@@ -82,6 +98,9 @@ export function useBotTaskTabs(
   });
   const [enabled, setEnabled] = useState(false);
   const [history, setHistory] = useState(false);
+  const [editing, setEditing] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [findRequest, setFindRequest] = useState(0);
   const [stopList, setStopList] = useState<Awaited<
     ReturnType<RpcClient["taskSessions"]["activeRuns"]>
@@ -173,30 +192,51 @@ export function useBotTaskTabs(
   const discard = useCallback(
     (key: string) => {
       const latest = readLayout(botId, scope);
-      if (latest.selected === key) navigateTask(null);
+      const opened = latest.opened.filter((id) => id !== key);
+      const selected =
+        latest.selected === key
+          ? (opened[Math.max(0, latest.opened.indexOf(key) - 1)] ?? null)
+          : latest.selected;
+      if (latest.selected === key) navigateTask(selected);
+      const titles = { ...latest.titles };
+      delete titles[key];
       change({
         ...latest,
+        titles,
         drafts: latest.drafts.filter((id) => id !== key),
-        opened: latest.opened.filter((id) => id !== key),
-        selected: latest.selected === key ? null : latest.selected,
+        opened,
+        selected,
       });
+      const draftKey = `task:${scope}:${botId}:${key}`;
       try {
-        localStorage.removeItem(composerDraftStorageKey(key));
-        localStorage.removeItem(composerDraftBindingsKey(key));
+        localStorage.removeItem(composerDraftStorageKey(draftKey));
+        localStorage.removeItem(composerDraftBindingsKey(draftKey));
+        localStorage.removeItem(`${draftKey}:model`);
       } catch {
         /* The entry is gone from the list even if storage refuses. */
       }
-      void clearTaskDraftFiles(key).catch(() => undefined);
+      void clearTaskDraftFiles(draftKey).catch(() => undefined);
     },
     [botId, scope, change, navigateTask],
   );
   const tasks = rows.botId === botId ? rows.tasks : [];
+  useEffect(() => {
+    if (rows.botId !== botId) return;
+    const deleted = new Set(rows.tasks.filter((task) => task.archivedAt).map((task) => task.id));
+    if (!current.opened.some((id) => deleted.has(id)) && !deleted.has(current.selected ?? ""))
+      return;
+    const opened = current.opened.filter((id) => !deleted.has(id));
+    const selected = deleted.has(current.selected ?? "") ? (opened[0] ?? null) : current.selected;
+    change({ ...current, opened, selected });
+    navigateTask(selected);
+  }, [rows, botId, current, change, navigateTask]);
   const adopt = (draftId: string, session: TaskSession) => {
     // A late server acceptance updates this draft's layout only; it cannot redirect a different tab.
     const latest = readLayout(botId, scope);
     const wasOpen = latest.opened.includes(draftId);
     if (latest.selected === draftId) navigateTask(session.id);
     change({
+      ...latest,
       botId,
       drafts: latest.drafts.filter((id) => id !== draftId),
       opened: latest.opened.map((id) => (id === draftId ? session.id : id)),
@@ -212,11 +252,70 @@ export function useBotTaskTabs(
       }));
     void refresh();
   };
+  const forget = (id: string) => {
+    const latest = readLayout(botId, scope);
+    const index = latest.opened.indexOf(id);
+    const opened = latest.opened.filter((key) => key !== id);
+    const selected =
+      latest.selected === id ? (opened[Math.max(0, index - 1)] ?? null) : latest.selected;
+    if (latest.selected === id) navigateTask(selected);
+    change({ ...latest, opened, selected });
+  };
+  const mutate = async (operation: () => Promise<void>) => {
+    if (saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await operation();
+    } catch {
+      setError("操作未完成，请重试");
+    } finally {
+      setSaving(false);
+    }
+  };
   return {
     enabled: enabled && Boolean(bot),
     selected: current.selected,
     opened: current.opened,
     drafts: current.drafts,
+    draftTitle: (id: string) => current.titles?.[id],
+    editing,
+    setEditing,
+    deleting,
+    setDeleting,
+    saving,
+    rename: () =>
+      mutate(async () => {
+        if (!editing?.title.trim()) return;
+        if (editing.id.startsWith("draft:")) {
+          const latest = readLayout(botId, scope);
+          change({ ...latest, titles: { ...latest.titles, [editing.id]: editing.title.trim() } });
+        } else {
+          await rpc.taskSessions.rename({
+            botId,
+            taskSessionId: editing.id,
+            title: editing.title.trim(),
+          });
+          await refresh();
+        }
+        setEditing(null);
+      }),
+    remove: () =>
+      mutate(async () => {
+        if (!deleting) return;
+        if (deleting.startsWith("draft:")) discard(deleting);
+        else {
+          await rpc.taskSessions.delete({ botId, taskSessionId: deleting });
+          forget(deleting);
+          await refresh();
+        }
+        setDeleting(null);
+      }),
+    restore: (id: string) =>
+      mutate(async () => {
+        await rpc.taskSessions.archive({ botId, taskSessionId: id, archived: false });
+        await refresh();
+      }),
     tasks,
     select,
     close,
@@ -281,8 +380,10 @@ export function TaskTabs({
     !["completed", "failed", "cancelled"].includes(task.status) || Boolean(task.resourceWaitReason);
   const filtered = state.tasks.filter(
     (task) =>
+      (filter === "deleted" ? Boolean(task.archivedAt) : !task.archivedAt) &&
       task.title.toLowerCase().includes(query.toLowerCase()) &&
       (filter === "all" ||
+        filter === "deleted" ||
         (filter === "active" && active(task)) ||
         (filter === "attention" && ["waiting_input", "waiting_takeover"].includes(task.status)) ||
         (filter === "ended" && !active(task))),
@@ -311,39 +412,65 @@ export function TaskTabs({
               主会话
             </Button>
             {opened.map(({ id, task }) => (
-              <div key={id} className="flex shrink-0 items-center rounded-lg bg-transparent">
-                <Button
-                  size="sm"
-                  variant={!selectedDocument && state.selected === id ? "secondary" : "ghost"}
-                  role="tab"
-                  aria-selected={!selectedDocument && state.selected === id}
-                  title={task?.title}
-                  onClick={() => state.select(id)}
+              <ContextMenu key={id}>
+                <ContextMenuTrigger
+                  render={<div />}
+                  className="flex shrink-0 items-center rounded-lg bg-transparent"
                 >
-                  <span className="max-w-36 truncate">
-                    {task?.title ?? (id.startsWith("draft:") ? "新会话" : "读取会话…")}
-                  </span>
-                  {task ? (
-                    <span
-                      className={
-                        task.status === "waiting_input" ? "text-warning" : "text-muted-foreground"
-                      }
-                    >
-                      {taskStatus(task)}
-                      {task.unread ? " ·" : ""}
+                  <Button
+                    size="sm"
+                    variant={!selectedDocument && state.selected === id ? "secondary" : "ghost"}
+                    role="tab"
+                    aria-selected={!selectedDocument && state.selected === id}
+                    title={task?.title}
+                    onClick={() => state.select(id)}
+                  >
+                    <span className="max-w-36 truncate">
+                      {task?.title ??
+                        (id.startsWith("draft:")
+                          ? (state.draftTitle?.(id) ?? "新会话")
+                          : "读取会话…")}
                     </span>
-                  ) : null}
-                </Button>
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  aria-label={`收起会话 ${task?.title ?? "新会话"}`}
-                  title="收起会话"
-                  onClick={() => state.close(id)}
-                >
-                  <X size={13} />
-                </Button>
-              </div>
+                    {task ? (
+                      <span
+                        className={
+                          task.status === "waiting_input" ? "text-warning" : "text-muted-foreground"
+                        }
+                      >
+                        {taskStatus(task)}
+                        {task.unread ? " ·" : ""}
+                      </span>
+                    ) : null}
+                  </Button>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label={`收起会话 ${task?.title ?? "新会话"}`}
+                    title="收起会话"
+                    onClick={() => state.close(id)}
+                  >
+                    <X size={13} />
+                  </Button>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem
+                    onClick={() =>
+                      state.setEditing({
+                        id,
+                        title: task?.title ?? state.draftTitle?.(id) ?? "新会话",
+                      })
+                    }
+                  >
+                    重命名
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    className="text-destructive"
+                    onClick={() => state.setDeleting(id)}
+                  >
+                    删除
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             ))}
             {documents.map((document) => (
               <div key={document.id} className="flex shrink-0 items-center">
@@ -381,7 +508,9 @@ export function TaskTabs({
             <option value="main">主会话</option>
             {opened.map(({ id, task }) => (
               <option key={id} value={id}>
-                {task ? `${task.title} · ${taskStatus(task)}` : "新会话"}
+                {task
+                  ? `${task.title} · ${taskStatus(task)}`
+                  : (state.draftTitle?.(id) ?? "新会话")}
               </option>
             ))}
             {documents.map((document) => (
@@ -453,7 +582,7 @@ export function SessionActions({
       >
         <History size={14} />
         <span className="hidden sm:inline">全部会话</span>
-        {state.tasks.length + state.drafts.length || ""}
+        {state.tasks.filter((task) => !task.archivedAt).length + state.drafts.length || ""}
       </Button>
     </div>
   );
@@ -478,6 +607,69 @@ function TaskHistoryDialogs({
 }) {
   return (
     <>
+      <Dialog
+        open={Boolean(state.editing)}
+        onOpenChange={(open) => {
+          if (!open && !state.saving) state.setEditing(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>重命名</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void state.rename();
+            }}
+            className="grid gap-3"
+          >
+            <Input
+              autoFocus
+              aria-label="会话名称"
+              maxLength={100}
+              value={state.editing?.title ?? ""}
+              onChange={(event) => {
+                if (state.editing)
+                  state.setEditing({ ...state.editing, title: event.target.value });
+              }}
+            />
+            {state.error ? (
+              <p role="alert" className="text-sm text-destructive">
+                {state.error}
+              </p>
+            ) : null}
+            <Button type="submit" disabled={state.saving || !state.editing?.title.trim()}>
+              保存
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={Boolean(state.deleting)}
+        onOpenChange={(open) => {
+          if (!open && !state.saving) state.setDeleting(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>删除会话？</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {state.deleting?.startsWith("draft:") ? "草稿及其内容将被移除。" : "可从“已删除”恢复。"}
+          </p>
+          {state.error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {state.error}
+            </p>
+          ) : null}
+          <Button variant="destructive" disabled={state.saving} onClick={() => void state.remove()}>
+            {state.tasks.some((task) => task.id === state.deleting && active(task))
+              ? "停止并删除"
+              : "删除"}
+          </Button>
+        </DialogContent>
+      </Dialog>
       <Dialog open={state.history} onOpenChange={state.setHistory}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
@@ -504,6 +696,7 @@ function TaskHistoryDialogs({
                 ["active", "进行中"],
                 ["attention", "待处理"],
                 ["ended", "已结束"],
+                ["deleted", "已删除"],
               ] as const
             ).map(([key, title]) => (
               <Button
@@ -534,18 +727,14 @@ function TaskHistoryDialogs({
                       state.setHistory(false);
                     }}
                   >
-                    <span>新会话 {index + 1}</span>
+                    <span>{state.draftTitle?.(id) ?? `新会话 ${index + 1}`}</span>
                     <span className="text-muted-foreground">未发送</span>
                   </button>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label={`删除草稿 新会话 ${index + 1}`}
-                    title="删除草稿"
-                    onClick={() => state.discard(id)}
-                  >
-                    <X size={13} />
-                  </Button>
+                  <TaskMenu
+                    state={state}
+                    id={id}
+                    title={state.draftTitle?.(id) ?? `新会话 ${index + 1}`}
+                  />
                 </div>
               ))}
             </div>
@@ -555,25 +744,34 @@ function TaskHistoryDialogs({
               filtered
                 .sort((a, b) => Number(active(b)) - Number(active(a)))
                 .map((task) => (
-                  <button
-                    type="button"
-                    key={task.id}
-                    className="flex w-full items-center justify-between gap-4 rounded-lg px-3 py-3 text-left hover:bg-muted focus-visible:outline-ring"
-                    onClick={() => {
-                      state.select(task.id);
-                      state.setHistory(false);
-                    }}
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">{task.title}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(task.updatedAt).toLocaleString()}
+                  <div key={task.id} className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={Boolean(task.archivedAt)}
+                      className="flex min-w-0 flex-1 items-center justify-between gap-4 rounded-lg px-3 py-3 text-left hover:bg-muted focus-visible:outline-ring"
+                      onClick={() => {
+                        if (task.archivedAt) return;
+                        state.select(task.id);
+                        state.setHistory(false);
+                      }}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">{task.title}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(task.updatedAt).toLocaleString()}
+                        </span>
                       </span>
-                    </span>
-                    <span className="shrink-0 text-sm text-muted-foreground">
-                      {taskStatus(task)}
-                    </span>
-                  </button>
+                      <span className="shrink-0 text-sm text-muted-foreground">
+                        {taskStatus(task)}
+                      </span>
+                    </button>
+                    <TaskMenu
+                      state={state}
+                      id={task.id}
+                      title={task.title}
+                      deleted={Boolean(task.archivedAt)}
+                    />
+                  </div>
                 ))
             ) : (
               <p className="py-8 text-center text-sm text-muted-foreground">没有符合条件的会话</p>
@@ -620,5 +818,44 @@ function TaskHistoryDialogs({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function TaskMenu({
+  state,
+  id,
+  title,
+  deleted = false,
+}: {
+  state: BotTaskTabs;
+  id: string;
+  title: string;
+  deleted?: boolean;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={`会话操作 ${title}`}
+        className="shrink-0 rounded-md p-2 hover:bg-muted"
+      >
+        <MoreHorizontal size={14} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {deleted ? (
+          <DropdownMenuItem disabled={state.saving} onClick={() => void state.restore(id)}>
+            恢复
+          </DropdownMenuItem>
+        ) : (
+          <>
+            <DropdownMenuItem onClick={() => state.setEditing({ id, title })}>
+              重命名
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={() => state.setDeleting(id)}>
+              删除
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

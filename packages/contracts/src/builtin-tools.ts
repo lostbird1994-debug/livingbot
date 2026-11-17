@@ -1,7 +1,29 @@
+export const WORKSPACE_ORGANIZATION_TOOL_NAMES: ReadonlySet<string> = new Set([
+  "read_file",
+  "list_files",
+  "write_file",
+  "shell",
+  "read_memory",
+  "search_memory",
+  "skill_read",
+]);
+
+export const CONTEXT_AUDIT_TOOL_NAMES: ReadonlySet<string> = new Set([
+  "read_loaded_context",
+  "read_memory",
+  "search_memory",
+  "skill_read",
+  "read_file",
+  "list_files",
+]);
+
 import * as z from "zod";
 
 /** Private state is unavailable to messaging-channel runs, including deferred calls. */
 export const PRIVATE_MEMORY_TOOL_NAMES: ReadonlySet<string> = new Set([
+  "read_loaded_context",
+  "read_review_work",
+  "complete_daily_review",
   "remember",
   "read_memory",
   "search_memory",
@@ -12,6 +34,16 @@ export const PRIVATE_MEMORY_TOOL_NAMES: ReadonlySet<string> = new Set([
   "forget_memory",
   "propose_memory_consolidation",
   "organize_memory",
+]);
+
+export const DAILY_REVIEW_TOOL_NAMES: ReadonlySet<string> = new Set([
+  "read_review_work",
+  "complete_daily_review",
+  "read_memory",
+  "search_memory",
+  "remember",
+  "write_memory",
+  "save_shared_memory",
 ]);
 
 export const MEMORY_MAINTENANCE_TOOL_NAMES: ReadonlySet<string> = new Set([
@@ -53,6 +85,9 @@ export const BUILTIN_TOOL_NAMES = [
   "attach_file",
   "shell",
   "user_computer_shell",
+  "start_job",
+  "job_status",
+  "stop_job",
   "user_computer_observe",
   "user_computer_act",
   "open_path",
@@ -70,6 +105,9 @@ export const BUILTIN_TOOL_NAMES = [
   "generate_image",
   "generate_video",
   "add_mcp_server",
+  "read_loaded_context",
+  "read_review_work",
+  "complete_daily_review",
   "remember",
   "read_memory",
   "search_memory",

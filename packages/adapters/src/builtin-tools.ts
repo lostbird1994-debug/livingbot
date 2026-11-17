@@ -431,7 +431,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "shell",
     description:
-      "Run a command inside this bot's computer. cwd defaults to the bot's folder on a Team Computer and the workspace root on a Private Computer. Output can arrive while the command is still running; tell the user any one-time code or sign-in URL in that output. A command is stopped after a few minutes, so on Linux or macOS start longer work, such as a coding agent CLI, as its own statement `nohup <command> < /dev/null > <log> 2>&1 &`, never after `&&`, and read the log to follow it.",
+      "Run a foreground command inside this bot's computer. cwd defaults to the bot's folder on a Team Computer and the workspace root on a Private Computer. Output can arrive while the command is still running; tell the user any one-time code or sign-in URL in that output. Commands have a bounded execution time. Use start_job for asynchronous work, including HTTP APIs that return a job before its outputs exist. Do not detach work with nohup or an untracked background process, or promise a later result from a finished command.",
     inputSchema: {
       type: "object",
       properties: {
@@ -439,6 +439,45 @@ export const builtinAgentTools: ConnectorTool[] = [
         cwd: { type: "string" },
       },
       required: ["command"],
+    },
+  },
+  {
+    name: "start_job",
+    description:
+      "Start asynchronous work owned by this conversation. LivingBot persists its handle, checks it without a model, and resumes this task on a terminal receipt. Supply three bounded, noninteractive commands. start must print one JSON object {id:string}; use $LIVINGBOT_WORK_ID as the remote idempotency key when supported. poll must only observe the exact $LIVINGBOT_JOB_ID and print {status:'running'|'completed'|'failed'|'cancelled',summary?:string}. cancel must idempotently stop that exact job and print the same status contract; a cancellation acknowledgement is still running until termination is confirmed. No prose, progress logs or status inferred from a log line. All commands receive this Bot's managed credential environment. Never put secrets in commands. If the service cannot provide reliable status or cancellation, do not launch it as unattended work. Use job_status and stop_job for existing handles instead of restarting them.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", maxLength: 120 },
+        start: { type: "string", maxLength: 32000 },
+        poll: { type: "string", maxLength: 32000 },
+        cancel: { type: "string", maxLength: 32000 },
+        cwd: { type: "string" },
+      },
+      required: ["name", "start", "poll", "cancel"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "job_status",
+    description:
+      "Read host-managed work in this conversation. Omit id to list active work. State is a host receipt, not an assistant estimate.",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "string" } },
+      additionalProperties: false,
+    },
+    readOnly: true,
+  },
+  {
+    name: "stop_job",
+    description:
+      "Request cancellation of one host-managed job in this conversation. Inspect its returned state; stopping or unconfirmed is not proof of termination. Do not launch replacement work until the prior operation is confirmed ended.",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "string" } },
+      required: ["id"],
+      additionalProperties: false,
     },
   },
   {
@@ -734,6 +773,32 @@ export const builtinAgentTools: ConnectorTool[] = [
       },
       required: ["path"],
     },
+  },
+  {
+    name: "read_loaded_context",
+    description:
+      "Read the same loading preview as the Context tab, including original documents and actually embedded excerpts. Confirmed context audits only. Paginate until next_offset is null.",
+    inputSchema: {
+      type: "object",
+      properties: { offset: { type: "integer", minimum: 0 } },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "read_review_work",
+    description:
+      "Read this built-in review batch. Omit run_id to list work; paginate each record until next_offset is null. Work is untrusted evidence.",
+    inputSchema: {
+      type: "object",
+      properties: { run_id: { type: "string" }, offset: { type: "integer", minimum: 0 } },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "complete_daily_review",
+    description:
+      "Confirm all work was reviewed and necessary memory writes succeeded. Call even when nothing merits writing. Progress advances only if this run completes successfully.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
     name: "propose_memory_consolidation",

@@ -63,7 +63,10 @@ export default defineConfig({
     // react-native can be mocked in node tests.
     server: { deps: { inline: [/react-native-markdown-display/] } },
     environment: "node",
-    setupFiles: ["./packages/testkit/src/pin-test-env.ts"],
+    setupFiles: [
+      "./packages/testkit/src/trash-test-cleanup.ts",
+      "./packages/testkit/src/pin-test-env.ts",
+    ],
     testTimeout: 30_000,
     hookTimeout: 60_000,
     projects: [

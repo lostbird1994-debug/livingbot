@@ -127,9 +127,21 @@ export function RoutineList({
                             contentShape(shapes.rectangle()),
                           ]}
                         >
-                          <Text modifiers={[lineLimit(1), foregroundStyle(tokens.foreground)]}>
-                            {routine.name}
-                          </Text>
+                          <HStack spacing={6}>
+                            <Text modifiers={[lineLimit(1), foregroundStyle(tokens.foreground)]}>
+                              {routine.name}
+                            </Text>
+                            {routine.builtinKind ? (
+                              <Text
+                                modifiers={[
+                                  font({ textStyle: "caption2" }),
+                                  foregroundStyle({ type: "hierarchical", style: "secondary" }),
+                                ]}
+                              >
+                                {t("System task")}
+                              </Text>
+                            ) : null}
+                          </HStack>
                           {detail ? (
                             <Text
                               modifiers={[
@@ -158,7 +170,7 @@ export function RoutineList({
                     </HStack>
                   </VStack>
                   {/* While a delete is in flight, and for routines only their creator can change, no row offers it. */}
-                  {canDelete && routine.editable !== false ? (
+                  {canDelete && !routine.builtinKind && routine.editable !== false ? (
                     <SwipeActions.Actions allowsFullSwipe={false}>
                       <Button
                         label={t("Delete")}

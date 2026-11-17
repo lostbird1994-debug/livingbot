@@ -1,5 +1,6 @@
 import { once } from "node:events";
 import { createServer } from "node:http";
+import { DEFAULT_MODEL_MAX_TOKENS } from "@livingbot/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 type WireRequest = {
@@ -113,6 +114,6 @@ describe("local model output limit on the wire", () => {
       {},
       "openai-compatible",
     );
-    expect(outputLimit(request)).toBe(4096);
+    expect(outputLimit(request)).toBe(DEFAULT_MODEL_MAX_TOKENS);
   });
 });

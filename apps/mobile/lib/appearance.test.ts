@@ -69,6 +69,31 @@ describe("mobile appearance", () => {
     expect(colorSchemeOverride).toBe("light");
   });
 
+  it.each([
+    ["porcelain", "light"],
+    ["indigo", "dark"],
+    ["malachite", "dark"],
+    ["dai", "dark"],
+  ] as const)("maps the saved %s theme to native %s controls", async (preference, scheme) => {
+    const { UI_APPEARANCE_STORAGE_KEY, lightTokens, darkTokens } = await import(
+      "@livingbot/ui-tokens"
+    );
+    const {
+      loadAppearancePreference,
+      getCachedAppearancePreference,
+      mobileTokens,
+      resolveMobileAppearance,
+    } = await import("./appearance");
+    store.set(UI_APPEARANCE_STORAGE_KEY, preference);
+
+    await loadAppearancePreference();
+
+    expect(getCachedAppearancePreference()).toBe(preference);
+    expect(colorSchemeOverride).toBe(scheme);
+    expect(resolveMobileAppearance()).toBe(scheme);
+    expect(mobileTokens()).toEqual(scheme === "dark" ? darkTokens : lightTokens);
+  });
+
   it("notifies mounted navigation when the saved preference loads", async () => {
     const { UI_APPEARANCE_STORAGE_KEY, lightTokens } = await import("@livingbot/ui-tokens");
     const { loadAppearancePreference, mobileTokens, subscribeAppearance } = await import(

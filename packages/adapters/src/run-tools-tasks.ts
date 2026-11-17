@@ -1,3 +1,4 @@
+import { resolveBotWorkspaceCwd } from "./computer-support.js";
 import {
   desktopProtectionGuardMessage,
   protectedComputerLifecycleRefusal,
@@ -26,6 +27,7 @@ import {
   skillUpdateFromTool,
 } from "./skill-tools.js";
 import { taskCatalogFromTool } from "./task-catalog.js";
+import { taskWorkLaunchSchema, taskWorkSummary } from "./task-work.js";
 import {
   commentTicket,
   createTicket,
@@ -36,6 +38,35 @@ import {
 
 /** The task catalog, scratchpad, ticket board, schedules and skills. */
 export const taskTools: ToolHandlers = {
+  async start_job(ctx, call) {
+    if (ctx.tools.disabled.has("shell"))
+      return call.finish({ error: "Shell is disabled for this Bot." });
+    const definition = taskWorkLaunchSchema.parse(call.args);
+    for (const command of [definition.start, definition.poll, definition.cancel]) {
+      const refusal = protectedComputerLifecycleRefusal(command);
+      if (refusal) return call.finish({ error: desktopProtectionGuardMessage(refusal) });
+    }
+    // Provisioning is authorized by this tool; later status probes never provision.
+    await ctx.computer.get("tool", call.name);
+    const work = await ctx.deps.taskWork!.start(ctx.run, ctx.runId, call.effectKey, {
+      ...definition,
+      computerId: ctx.computer.stored.id,
+      cwd: resolveBotWorkspaceCwd(ctx.computer.mode, ctx.bot.id, definition.cwd),
+    });
+    return call.finish(taskWorkSummary(work));
+  },
+  async job_status(ctx, call) {
+    const service = ctx.deps.taskWork!;
+    const rows = call.args.id
+      ? [await service.find(ctx.run, String(call.args.id))]
+      : await service.list(ctx.run);
+    return { jobs: rows.map(taskWorkSummary) };
+  },
+  async stop_job(ctx, call) {
+    const work = await ctx.deps.taskWork!.stop(ctx.run, String(call.args.id ?? ""));
+    await ctx.deps.taskWork!.deliver(ctx.run, work);
+    return call.finish(taskWorkSummary(work));
+  },
   async task_catalog(ctx) {
     const { deps, run, bot, thread } = ctx;
     return taskCatalogFromTool(deps, {

@@ -62,7 +62,6 @@ async function runTurn(
     /** Lets a test hold an event write open, to land runtime events while it waits. */
     appendGate?: (event: AppendEventInput) => Promise<void> | undefined;
     requireRoutineOutput?: boolean;
-    expectOutputFailure?: boolean;
   } = {},
 ) {
   vi.mocked(loadBotMessageContext).mockResolvedValue({
@@ -266,6 +265,7 @@ async function runTurn(
       findMany: vi.fn(async () => []),
       findFirst: vi.fn(async () => null),
       findUnique: vi.fn(async () => null),
+      count: vi.fn(async () => 0),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
         id: `effect-${data.idempotencyKey}`,
         ...data,
@@ -323,7 +323,7 @@ async function runTurn(
 
   await executor.continueRun(run.id, "worker-1");
   expect(runtimeRun).toHaveBeenCalled();
-  if (!options.runtimeFailure && !options.expectOutputFailure)
+  if (!options.runtimeFailure)
     expect(finalizeRun).not.toHaveBeenCalledWith(expect.objectContaining({ outcome: "failed" }));
   return { finalizeRun, append, pauseRunForInput, messages, savedEvents, prisma, runtimeRun };
 }
@@ -1439,18 +1439,19 @@ describe("routine silence versus required output", () => {
     expect(finalizeRun).toHaveBeenCalledWith(expect.objectContaining({ outcome: "completed" }));
     expect(finalizeRun.mock.calls[0]![0].blocks.filter((b) => b.kind === "text")).toEqual([]);
   });
-  it("does not accept a silence token as the result of a required-output routine", async () => {
+  it("replaces a silence token with a brief result for a required-output routine", async () => {
     const { finalizeRun } = await runTurn("", true, undefined, [], "fyi", {
       trigger: "routine",
       requireRoutineOutput: true,
-      expectOutputFailure: true,
       runtimeEvents: [
         { type: "text", text: "NO_RESPONSE" },
         { type: "done", text: "NO_RESPONSE" },
       ],
     });
-    expect(finalizeRun).not.toHaveBeenCalledWith(expect.objectContaining({ outcome: "completed" }));
-    expect(finalizeRun).toHaveBeenCalledWith(expect.objectContaining({ outcome: "failed" }));
+    expect(finalizeRun).toHaveBeenCalledWith(expect.objectContaining({ outcome: "completed" }));
+    expect(finalizeRun.mock.calls[0]![0].blocks.filter((b) => b.kind === "text")).toEqual([
+      { kind: "text", text: "本轮已执行，没有需要汇报的结果。" },
+    ]);
     expect(JSON.stringify(finalizeRun.mock.calls)).not.toContain('"text":"NO_RESPONSE"');
   });
 });

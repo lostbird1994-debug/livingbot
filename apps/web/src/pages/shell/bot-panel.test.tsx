@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
 import { i18n } from "@lingui/core";
-import { ORPCError } from "@orpc/client";
 import type { Bot, BotAvatarSet } from "@livingbot/contracts";
+import { ORPCError } from "@orpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
@@ -355,7 +355,7 @@ it("shows the profile and the Advanced tab's controls", async () => {
   );
   expect(container.querySelector('input[aria-label="Name"]')).toBeNull();
   expect([...container.querySelectorAll('[role="tab"]')].map((tab) => tab.textContent)).toEqual([
-    "Files",
+    "Workspace files",
     "Context",
     "Task list",
     "Advanced",
@@ -933,7 +933,7 @@ describe("bili-whale tab", () => {
   it("appears to the right of Advanced when the bot carries the project", async () => {
     await render("Billing", { spawnKey: "bili-whale" });
     const tabs = [...container.querySelectorAll('[role="tab"]')].map((tab) => tab.textContent);
-    expect(tabs).toEqual(["Files", "Context", "Task list", "Advanced", "养鱼"]);
+    expect(tabs).toEqual(["Workspace files", "Context", "Task list", "Advanced", "养鱼"]);
     expect(container.querySelector('[data-testid="bot-settings-whale"]')).not.toBeNull();
   });
 });

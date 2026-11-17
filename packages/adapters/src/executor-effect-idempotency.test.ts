@@ -149,6 +149,14 @@ function fixture(runId = "run-1") {
         return { count: 1 };
       },
     ),
+    count: vi.fn(
+      async ({ where }: { where?: { runId?: string; kind?: string } } = {}) =>
+        effects.filter(
+          (effect) =>
+            (!where?.runId || effect.runId === where.runId) &&
+            (!where?.kind || effect.kind === where.kind),
+        ).length,
+    ),
   };
   const prisma = {
     $transaction: vi.fn(async (write: (tx: unknown) => unknown) => write(prisma)),
@@ -157,11 +165,13 @@ function fixture(runId = "run-1") {
     run: {
       findUnique: vi.fn(async () => run),
       findUniqueOrThrow: vi.fn(async () => run),
+      findFirst: vi.fn(async () => null),
       updateMany: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
         Object.assign(run, data);
         return { count: 1 };
       }),
     },
+    routine: { findFirst: vi.fn(async () => null) },
     chatGroup: { findMany: vi.fn(async () => []) },
     bot: {
       findUniqueOrThrow: vi.fn(async () => ({
@@ -183,7 +193,11 @@ function fixture(runId = "run-1") {
       findUniqueOrThrow: vi.fn(async () => ({ id: run.threadId, groupId: null })),
       update: vi.fn(async () => ({ nextMessageSeq: 2, nextEventSeq: 2 })),
     },
-    message: { findMany: vi.fn(async () => []), create: messageCreate },
+    message: {
+      findFirst: vi.fn(async () => null),
+      findMany: vi.fn(async () => []),
+      create: messageCreate,
+    },
     event: { create: vi.fn(async () => ({ seq: 1 })), findMany: vi.fn(async () => []) },
     artifact: {
       findFirst: vi.fn(

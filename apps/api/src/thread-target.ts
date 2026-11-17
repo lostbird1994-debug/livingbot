@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import type { JobPublisher, ProductAnalytics, SandboxProvider } from "@livingbot/adapter-kit";
 import { runContinueJob } from "@livingbot/adapter-kit";
 import { cancelComputerRunWork, screenLeaseIdForRun, toComputerRef } from "@livingbot/adapters";
@@ -49,6 +48,7 @@ import {
   transientRunEventsWhere,
 } from "@livingbot/db";
 import { getLogger } from "@livingbot/logging";
+import { ORPCError } from "@orpc/server";
 import {
   buildSendPrompt,
   buildUserMessageBlocks,
@@ -65,7 +65,11 @@ export type ThreadTarget =
   | {
       kind: "bot";
       taskSessionId?: string;
-      taskModel?: { modelProvider: string | null; modelId: string | null; thinkingLevel: string | null };
+      taskModel?: {
+        modelProvider: string | null;
+        modelId: string | null;
+        thinkingLevel: string | null;
+      };
       botId: string;
       threadId: string;
       bot: Awaited<ReturnType<ReturnType<typeof createRepos>["getBot"]>>;
@@ -395,14 +399,26 @@ export async function resolveThreadTarget(
     const bot = await repos.getBot(actor, input.botId, options);
     if (!bot.thread) throw new IsolationError();
     if (input.taskSessionId) {
-      const session = await prisma.botTaskSession.findFirst({ where: {
-        id: input.taskSessionId, botId: bot.id, spaceId: actor.spaceId, userId: actor.userId,
-        thread: { taskBotId: bot.id, spaceId: actor.spaceId, userId: actor.userId },
-        mainThreadId: bot.thread.id,
-      } });
+      const session = await prisma.botTaskSession.findFirst({
+        where: {
+          id: input.taskSessionId,
+          botId: bot.id,
+          spaceId: actor.spaceId,
+          userId: actor.userId,
+          thread: { taskBotId: bot.id, spaceId: actor.spaceId, userId: actor.userId },
+          mainThreadId: bot.thread.id,
+          ...(!options.includeArchived ? { archivedAt: null } : {}),
+        },
+      });
       if (!session) throw new IsolationError();
-      return { kind: "bot", botId: bot.id, threadId: session.threadId, bot,
-        taskSessionId: session.id, taskModel: session };
+      return {
+        kind: "bot",
+        botId: bot.id,
+        threadId: session.threadId,
+        bot,
+        taskSessionId: session.id,
+        taskModel: session,
+      };
     }
     return {
       kind: "bot",
@@ -903,12 +919,38 @@ export async function sendThreadMessage(
         const connectorScope = await resolveConnectorScope(tx, actor, input.connectorScope);
         // Match message counter locking before inspecting runs, without changing counters on rejection.
         await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
-        if (target.taskSessionId && await tx.run.findFirst({ where: { threadId: target.threadId,
-          resourceWaitReason: { in: ["unconfirmed", "stopping"] } }, select: { id: true } }))
-          throw new ORPCError("CONFLICT", { message: "原任务状态尚未确认，请先核实或停止；输入已保留。" });
-        if (target.taskSessionId && target.taskModel) await tx.botTaskSession.update({
-          where: { id: target.taskSessionId }, data: { ...target.taskModel, updatedAt: new Date() },
-        });
+        if (target.taskSessionId) {
+          const session = await tx.botTaskSession.findUniqueOrThrow({
+            where: { id: target.taskSessionId },
+          });
+          if (session.archivedAt)
+            throw new ORPCError("CONFLICT", {
+              message: "Restore this conversation before sending.",
+            });
+        }
+        if (
+          target.taskSessionId &&
+          (await tx.run.findFirst({
+            where: {
+              threadId: target.threadId,
+              resourceWaitReason: { in: ["unconfirmed", "stopping"] },
+            },
+            select: { id: true },
+          }))
+        )
+          throw new ORPCError("CONFLICT", {
+            message: "原任务状态尚未确认，请先核实或停止；输入已保留。",
+          });
+        if (target.taskSessionId && target.taskModel)
+          await tx.botTaskSession.update({
+            where: { id: target.taskSessionId },
+            data: {
+              modelProvider: target.taskModel.modelProvider,
+              modelId: target.taskModel.modelId,
+              thinkingLevel: target.taskModel.thinkingLevel,
+              updatedAt: new Date(),
+            },
+          });
         routineRuns = (await startRoutines?.(tx)) ?? [];
         const activeRuns = await tx.run.findMany({
           where: {
@@ -1070,12 +1112,21 @@ export async function sendThreadMessage(
             clientNonce: sendRunClientNonce(input.clientNonce, message.id),
             sourceMessageId: message.id,
             connectorScope,
-            ...(target.taskModel ? { modelProvider: target.taskModel.modelProvider,
-              modelId: target.taskModel.modelId, thinkingLevel: target.taskModel.thinkingLevel,
-              modelPinned: Boolean(target.taskModel.modelProvider && target.taskModel.modelId) } : {}),
+            ...(target.taskModel
+              ? {
+                  modelProvider: target.taskModel.modelProvider,
+                  modelId: target.taskModel.modelId,
+                  thinkingLevel: target.taskModel.thinkingLevel,
+                  modelPinned: Boolean(target.taskModel.modelProvider && target.taskModel.modelId),
+                }
+              : {}),
           },
         });
-        if (target.taskSessionId) await tx.botTaskSession.update({ where: { id: target.taskSessionId }, data: { updatedAt: new Date() } });
+        if (target.taskSessionId)
+          await tx.botTaskSession.update({
+            where: { id: target.taskSessionId },
+            data: { updatedAt: new Date() },
+          });
         await tx.message.update({ where: { id: message.id }, data: { runId: run.id } });
         await cancelSupersededQueuedRuns(tx, {
           threadId: target.threadId,
@@ -1557,14 +1608,23 @@ export async function stopThreadRuns(
     sandbox: SandboxProvider;
     events: ThreadEvents;
     cancelNativeRuns?: (runIds: string[]) => Promise<void>;
+    stopTaskWork?: (
+      scope: { spaceId: string; userId: string; botId: string; threadId: string },
+      runIds?: string[],
+    ) => Promise<boolean>;
   },
   actor: Actor,
   target: ThreadTarget,
-  options: { runIds?: string[] } = {},
+  options: { runIds?: string[]; archiveTaskSession?: boolean } = {},
 ) {
   const { runIds, retryRunIds, computers, leases, eventSeq, pendingMessageCount } =
     await deps.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
+      if (options.archiveTaskSession && target.kind === "bot" && target.taskSessionId)
+        await tx.botTaskSession.update({
+          where: { id: target.taskSessionId },
+          data: { archivedAt: new Date() },
+        });
       const cancelled = await tx.run.updateManyAndReturn({
         where: {
           ...(options.runIds ? { id: { in: options.runIds } } : {}),
@@ -1578,24 +1638,35 @@ export async function stopThreadRuns(
       // A run that was cancelled earlier but never confirmed stopped still needs the
       // native cancellation re-sent; its terminal status keeps it out of the transition
       // above, so select it separately without emitting another terminal event.
-      const retried = options.runIds?.length
-        ? await tx.run.updateManyAndReturn({
-            where: {
-              id: { in: options.runIds },
-              threadId: target.threadId,
-              status: { in: ["cancelled", "failed"] },
-              resourceWaitReason: { in: ["stopping", "unconfirmed"] },
-            },
-            data: { resourceWaitReason: "stopping" },
-            select: { id: true },
-          })
-        : [];
+      const retried =
+        options.runIds?.length || options.archiveTaskSession
+          ? await tx.run.updateManyAndReturn({
+              where: {
+                ...(options.runIds ? { id: { in: options.runIds } } : {}),
+                threadId: target.threadId,
+                status: { in: ["cancelled", "failed"] },
+                resourceWaitReason: { in: ["stopping", "unconfirmed"] },
+              },
+              data: { resourceWaitReason: "stopping" },
+              select: { id: true },
+            })
+          : [];
       const retryRunIds = retried.map((run) => run.id).filter((id) => !ids.includes(id));
+      if (target.kind === "bot" && target.taskSessionId && deps.cancelNativeRuns) {
+        await tx.run.updateMany({
+          where: { id: { in: [...ids, ...retryRunIds] }, taskSlotHeld: true },
+          data: { resourceWaitReason: "stopping" },
+        });
+      }
       const botIds = target.kind === "bot" ? [target.botId] : target.memberBotIds;
       // Capture every message before clearing steering, including pending messages
       // not yet assigned a run. Message.runId alone is only a display association.
       const steering = await tx.steeringMessage.findMany({
-        where: { botId: { in: botIds }, ...(options.runIds ? { runId: { in: options.runIds } } : {}), message: { threadId: target.threadId } },
+        where: {
+          botId: { in: botIds },
+          ...(options.runIds ? { runId: { in: options.runIds } } : {}),
+          message: { threadId: target.threadId },
+        },
         select: { botId: true, messageId: true, claimedAt: true },
       });
       const sourceIds = cancelled.flatMap((run) =>
@@ -1724,12 +1795,20 @@ export async function stopThreadRuns(
   }
   const cancelRunIds = [...runIds, ...retryRunIds];
   if (cancelRunIds.length && deps.cancelNativeRuns) {
-    if (target.kind === "bot" && target.taskSessionId) await deps.prisma.run.updateMany({ where: { id: { in: cancelRunIds }, thread: { taskBotId: { not: null } }, taskSlotHeld: true },
-      data: { resourceWaitReason: "stopping" } });
     await deps.cancelNativeRuns(cancelRunIds).catch((error) => {
       // The durable cancelled run remains for the elected reconciler to retry.
       getLogger().error("native task cancellation", error);
     });
+  }
+  if (deps.stopTaskWork) {
+    const bots = target.kind === "bot" ? [target.botId] : target.memberBotIds;
+    const stopped = await Promise.all(
+      bots.map((botId) =>
+        deps.stopTaskWork!({ ...actor, botId, threadId: target.threadId }, options.runIds),
+      ),
+    );
+    if (stopped.some((confirmed) => !confirmed))
+      throw new ORPCError("CONFLICT", { message: "后台工作尚未确认停止，请稍后核实。" });
   }
   // Keep the DB lease until after teardown so a replacement run cannot claim the
   // screen while we still need the cancelled run's screenLeaseId to release it.
@@ -1791,10 +1870,17 @@ export async function stopThreadRuns(
       await deps.sandbox.releaseScreen?.(ref, context).catch(() => undefined);
     }),
   );
-  const unresolved = target.kind === "bot" && target.taskSessionId
-    ? await deps.prisma.run.findMany({ where: { id: { in: runIds }, resourceWaitReason: { in: ["unconfirmed", "stopping"] } }, select: { id: true } }) : [];
-  const unresolvedIds = new Set(unresolved.map(run => run.id));
-  await expireComputerExecutionLeases(deps.prisma, { runId: { in: runIds.filter(id => !unresolvedIds.has(id)) } });
+  const unresolved =
+    target.kind === "bot" && target.taskSessionId
+      ? await deps.prisma.run.findMany({
+          where: { id: { in: runIds }, resourceWaitReason: { in: ["unconfirmed", "stopping"] } },
+          select: { id: true },
+        })
+      : [];
+  const unresolvedIds = new Set(unresolved.map((run) => run.id));
+  await expireComputerExecutionLeases(deps.prisma, {
+    runId: { in: runIds.filter((id) => !unresolvedIds.has(id)) },
+  });
   await deps.prisma.computer.updateMany({
     where: { executionRunId: { in: runIds } },
     data: {

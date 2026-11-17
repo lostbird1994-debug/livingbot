@@ -437,7 +437,7 @@ export async function runTrial(
           deadline,
         );
       } else {
-        const routines = await prisma.routine.findMany({ where: { botId } });
+        const routines = await prisma.routine.findMany({ where: { botId, builtinKind: null } });
         if (routines.length !== 1)
           throw new EvalFailure("agent", "Expected exactly one authored routine");
         const routine = routines[0]!;
@@ -658,7 +658,7 @@ export async function runTrial(
       botId,
     });
     const routines = await prisma.routine.findMany({
-      where: { botId },
+      where: { botId, builtinKind: null },
       select: { name: true, prompt: true, crons: true, active: true },
     });
     await captureTools();

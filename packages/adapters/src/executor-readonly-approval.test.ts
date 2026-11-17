@@ -8,7 +8,10 @@ import { MEMORY_REVISION_CONFLICT_ERROR } from "@livingbot/adapter-kit";
 import type { ModelRoleSettings } from "@livingbot/contracts";
 import type { ActionApprovalRule } from "@livingbot/core";
 import { inboundRoutineBlock } from "@livingbot/core";
-import { approvalEffectKey, toolEffectIdempotencyKey } from "@livingbot/core/node/approval-effect-key";
+import {
+  approvalEffectKey,
+  toolEffectIdempotencyKey,
+} from "@livingbot/core/node/approval-effect-key";
 import type { PrismaClient } from "@livingbot/db";
 import { createPendingSteeringRun, sendUserMessage } from "@livingbot/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -197,6 +200,7 @@ function fixture({
   };
   const createdAt = new Map<string, Date>();
   const externalEffect = {
+    count: vi.fn(async () => 0),
     findFirst: vi.fn(
       async ({
         where,
@@ -760,7 +764,7 @@ describe("connector read-only metadata and approval enforcement", () => {
           ),
         },
       });
-      await f.run(false, changed);
+      await f.run(changed, changed);
       expect(f.commit).not.toHaveBeenCalled();
       expect(f.pauseRunForInput).not.toHaveBeenCalled();
     },
@@ -3176,7 +3180,9 @@ describe("user_computer_shell", () => {
     f.setCalls([call("ls")]);
     await f.run();
     expect(f.results).toEqual([
-      { error: "The user's computer is not connected. Ask them to open the LivingBot desktop app." },
+      {
+        error: "The user's computer is not connected. Ask them to open the LivingBot desktop app.",
+      },
     ]);
     expect(requests).toEqual([]);
   });
@@ -3318,4 +3324,96 @@ describe("user computer screen control", () => {
     expect(f.results).toEqual([{ error: expect.stringMatching(/^actions\.0/) }]);
     expect(requests).toEqual([]);
   });
+});
+
+it("restricts a built-in daily review at actual dispatch even when a tool is injected", async () => {
+  const f = fixture({ name: "shell", trigger: "routine", builtin: true });
+  const run = await f.prisma.run.findUnique();
+  Object.assign(run!, {
+    routineId: "daily-review-1",
+    routine: {
+      builtinKind: "daily-review",
+      memoryMaintenance: false,
+      spaceId: "space-1",
+      userId: "user-1",
+      botId: "bot-1",
+    },
+    dailyReviewBatch: {
+      ids: ["work"],
+      to: { at: "2026-11-16T10:00:00.000Z", id: "work" },
+      acknowledged: false,
+      cutoff: "2026-11-16T10:00:00.000Z",
+      hasMore: false,
+    },
+  });
+  await f.run(true);
+  const names = [...f.offeredTools()];
+  expect(names).toContain("read_review_work");
+  expect(names).toContain("complete_daily_review");
+  expect(names).not.toContain("shell");
+  expect(names).not.toContain("schedule_create");
+  expect(f.results[0]).toHaveProperty("error");
+  expect(f.execute).not.toHaveBeenCalled();
+  expect(f.commit).not.toHaveBeenCalled();
+});
+
+it("enforces read-only tools throughout a confirmed context audit", async () => {
+  const f = fixture({ name: "write_memory", trigger: "routine", builtin: true });
+  const run = await f.prisma.run.findUnique();
+  Object.assign(run!, {
+    routineId: "context-audit-1",
+    routine: {
+      builtinKind: "context-audit",
+      memoryMaintenance: false,
+      spaceId: "space-1",
+      userId: "user-1",
+      botId: "bot-1",
+    },
+  });
+  Object.assign(f.prisma.routine, { count: vi.fn(async () => 0) });
+  const original = f.prisma.message.findMany.getMockImplementation()!;
+  f.prisma.message.findMany.mockImplementation(async (args?: any) =>
+    args?.where?.blocks?.array_contains?.[0]?.status === "answered"
+      ? ([
+          {
+            blocks: [
+              {
+                kind: "ask",
+                text: "Audit?",
+                contextAudit: true,
+                status: "answered",
+                answer: "start",
+              },
+            ],
+          },
+        ] as never)
+      : original(),
+  );
+  await f.run();
+  expect([...f.offeredTools()]).toContain("read_loaded_context");
+  expect([...f.offeredTools()]).not.toContain("write_memory");
+  expect([...f.offeredTools()]).not.toContain("shell");
+  expect(f.results[0]).toMatchObject({ error: expect.stringContaining("read-only") });
+  expect(f.commit).not.toHaveBeenCalled();
+});
+
+it("keeps workspace organization away from external tools at actual dispatch", async () => {
+  const f = fixture({ name: "web_fetch", trigger: "routine", builtin: true });
+  const run = await f.prisma.run.findUnique();
+  Object.assign(run!, {
+    routineId: "workspace-organization-1",
+    routine: {
+      builtinKind: "workspace-organization",
+      memoryMaintenance: false,
+      spaceId: "space-1",
+      userId: "user-1",
+      botId: "bot-1",
+    },
+  });
+  Object.assign(f.prisma.routine, { count: vi.fn(async () => 0) });
+  await f.run();
+  expect([...f.offeredTools()]).toContain("write_file");
+  expect([...f.offeredTools()]).not.toContain("web_fetch");
+  expect(f.results[0]).toHaveProperty("error");
+  expect(f.execute).not.toHaveBeenCalled();
 });

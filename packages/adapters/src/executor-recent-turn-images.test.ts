@@ -142,11 +142,17 @@ async function runWithModel(
     yield { type: "done" as const, text: "Done" };
   });
   const prisma = {
+    $transaction: vi.fn(async (write: (tx: unknown) => unknown) => write(prisma)),
+    $queryRaw: vi.fn(async () => []),
     user: { findUnique: vi.fn(async () => null) },
     run: {
       findUnique: vi.fn(async () => run),
       findUniqueOrThrow: vi.fn(async () => run),
-      findFirst: vi.fn(async () => ({ bot: { notifyOnFinish: true }, thread: { groupId: null } })),
+      findFirst: vi.fn(async (args?: { where?: { trigger?: { notIn?: string[] } } }) =>
+        args?.where?.trigger?.notIn
+          ? null
+          : { bot: { notifyOnFinish: true }, thread: { groupId: null } },
+      ),
       updateMany: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
         Object.assign(run, data);
         return { count: 1 };
@@ -229,7 +235,7 @@ async function runWithModel(
     vaultCredential: { findMany: vi.fn(async () => []) },
     agentSkill: { findMany: vi.fn(async () => []) },
     scratchpadItem: { findMany: vi.fn(async () => []) },
-    externalEffect: { findMany: vi.fn(async () => []) },
+    externalEffect: { findMany: vi.fn(async () => []), count: vi.fn(async () => 0) },
     spaceSettingOverride: { findUnique: async () => null },
     userActionApprovalRule: { findMany: vi.fn(async () => []) },
     userActionAutoReviewPreference: { findUnique: vi.fn(async () => null) },

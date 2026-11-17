@@ -38,7 +38,7 @@ export function RoutineList({
     >
       <SettingsGroup>
         {routines.map((routine) => {
-          const deletable = canDelete && routine.editable !== false;
+          const deletable = canDelete && !routine.builtinKind && routine.editable !== false;
           const deleteLabel = t("Delete {name}", { name: routine.name });
           const switchLabel = t("Active: {name}", { name: routine.name });
           return (
@@ -57,7 +57,12 @@ export function RoutineList({
                   : onToggle(routine, !routine.active)
               }
               title={routine.name}
-              detail={routineRowDetail(routine, timeZone)}
+              detail={[
+                routine.builtinKind ? t("System task") : "",
+                routineRowDetail(routine, timeZone),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
               onPress={() => onOpen(routine)}
               onLongPress={deletable ? () => onDelete(routine) : undefined}
               trailing={

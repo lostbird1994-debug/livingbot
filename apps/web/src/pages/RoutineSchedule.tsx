@@ -7,6 +7,7 @@ import {
   cronFromPreset,
   cronIntervalAmounts,
   describeCronPreset,
+  formatClock,
   localizedClock,
   russianIntervalUnit,
 } from "@livingbot/core";
@@ -15,16 +16,8 @@ import { Clock } from "lucide-react";
 import { cronLabels, cronUnitLabel } from "../lib/cron";
 
 const UNITS: CronUnit[] = ["minutes", "hours", "days"];
-const TIMES = [
-  "6:00 AM",
-  "7:00 AM",
-  "8:00 AM",
-  "9:00 AM",
-  "12:00 PM",
-  "3:00 PM",
-  "6:00 PM",
-  "9:00 PM",
-];
+// Every half hour, so "8:30 before work" is pickable without the Advanced cron field.
+const TIMES = Array.from({ length: 48 }, (_, i) => formatClock(Math.floor(i / 2), (i % 2) * 30));
 
 const TIMED: CronFreq[] = ["Every day", "Weekdays", "Every week", "Every month"];
 

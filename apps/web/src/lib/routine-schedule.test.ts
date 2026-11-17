@@ -118,3 +118,10 @@ describe("groupRoutinesBySchedule", () => {
     ]);
   });
 });
+
+it("groups message-count routines separately from calendar schedules", () => {
+  const audit = routine("Context audit", [], {
+    usageTrigger: { kind: "human-messages", count: 50, action: "ask" },
+  });
+  expect(outline([audit])).toEqual([["usage", ["Context audit @ Every 50 human messages"]]]);
+});

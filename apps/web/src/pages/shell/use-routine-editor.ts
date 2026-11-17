@@ -159,7 +159,12 @@ export function useRoutineEditor({
                 : null) as ThinkingLevel | null,
             };
             let saved: Routine;
-            if (targetRoutine) {
+            if (targetRoutine?.builtinKind) {
+              saved = await rpc.routines.update({
+                routineId: targetRoutine.id,
+                active: routineDraft.active,
+              });
+            } else if (targetRoutine) {
               const armOneShot = routineNeedsOneShotArm(targetRoutine, crons);
               let runAt: string | undefined;
               if (armOneShot) {
@@ -265,7 +270,7 @@ export function useRoutineEditor({
           }
         },
         onDelete: () => {
-          if (editingRoutine) {
+          if (editingRoutine && !editingRoutine.builtinKind) {
             setDeleteRoutineTarget(editingRoutine);
             return;
           }
@@ -296,6 +301,11 @@ export function useRoutineEditor({
     restoreRoutine,
     editRoutine,
     startRoutine,
+    toggleRoutine: async (routine: Routine, active: boolean) => {
+      const saved = await rpc.routines.update({ routineId: routine.id, active });
+      await refreshThread(routine.botId).catch(() => undefined);
+      return saved;
+    },
     resetRoutineTarget,
     leaveRoutine,
     addSkillRoutine,

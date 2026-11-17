@@ -537,8 +537,7 @@ describe("LocalAgentHomeStore with Go's read-only module cache", () => {
     expect((await stat(outside)).mode & 0o777).toBe(0o555);
   });
 
-  // Root removes read-only directories without making them writable first.
-  it.skipIf(process.getuid?.() === 0)("only makes directories writable that are not", async () => {
+  it("moves the read-only cache without changing directory permissions", async () => {
     const { root, store, home } = await fixture();
     await seedModuleCache(home, root);
     const probe = await open(home, "r");
@@ -549,38 +548,32 @@ describe("LocalAgentHomeStore with Go's read-only module cache", () => {
     await store.remove("bot-1");
 
     await expect(stat(home)).rejects.toThrow();
-    // Only example.com and the module, not the writable home, go, pkg and mod above them.
-    expect(chmodHandle).toHaveBeenCalledTimes(2);
+    expect(chmodHandle).not.toHaveBeenCalled();
   });
 
-  // Root removes read-only directories without making them writable first.
-  it.skipIf(process.getuid?.() === 0)(
-    "stops at a directory swapped for a link while it makes the tree writable",
-    async () => {
-      const { root, store, home } = await fixture();
-      const module = path.join(home, "go/pkg/mod");
-      await mkdir(module, { recursive: true });
-      await writeFile(path.join(module, "go.mod"), "module example.com/m\n");
-      await chmod(module, 0o555);
-      const outside = path.join(root, "outside");
-      // Empty, so cleanup can still remove it.
-      await mkdir(outside);
-      await mkdir(path.join(outside, "pkg"), { mode: 0o555 });
-      hooks.beforeOpen = async (target) => {
-        if (target !== path.join(home, "go/pkg")) return;
-        hooks.beforeOpen = undefined;
-        await rename(path.join(home, "go"), path.join(home, "go-moved"));
-        await symlink(outside, path.join(home, "go"));
-      };
+  it("moves the home without descending into its read-only module tree", async () => {
+    const { root, store, home } = await fixture();
+    const module = path.join(home, "go/pkg/mod");
+    await mkdir(module, { recursive: true });
+    await writeFile(path.join(module, "go.mod"), "module example.com/m\n");
+    await chmod(module, 0o555);
+    const outside = path.join(root, "outside");
+    // Empty, so cleanup can still remove it.
+    await mkdir(outside);
+    await mkdir(path.join(outside, "pkg"), { mode: 0o555 });
+    hooks.beforeOpen = async (target) => {
+      if (target !== path.join(home, "go/pkg")) return;
+      hooks.beforeOpen = undefined;
+      await rename(path.join(home, "go"), path.join(home, "go-moved"));
+      await symlink(outside, path.join(home, "go"));
+    };
 
-      try {
-        await expect(store.remove("bot-1")).rejects.toThrow(/escapes/);
-        expect((await stat(path.join(outside, "pkg"))).mode & 0o777).toBe(0o555);
-      } finally {
-        await chmod(path.join(home, "go-moved/pkg/mod"), 0o755);
-      }
-    },
-  );
+    await store.remove("bot-1");
+    // No traversal opens a descendant, so the old recursive-cleanup race never occurs.
+    expect(hooks.beforeOpen).toBeDefined();
+    await expect(stat(home)).rejects.toThrow();
+    expect((await stat(path.join(outside, "pkg"))).mode & 0o777).toBe(0o555);
+  });
 
   it("replaces a home that holds the module cache", async () => {
     const { root, store, home } = await fixture();

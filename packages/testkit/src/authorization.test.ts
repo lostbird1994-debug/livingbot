@@ -208,11 +208,17 @@ describeWithDatabase("API authorization and resource isolation", () => {
     }
     await rpc(app, owner, "bots/archive", { botId: archived.id }, space.id);
     const botIds = [own.id, other.id, archived.id, cross.id, "missing-bot"];
-    const ownRows = await rpc<unknown[]>(app, owner, "routines/list", { botId: own.id }, space.id);
+    const ownRows = await rpc<Array<{ builtinKind?: string | null }>>(
+      app,
+      owner,
+      "routines/list",
+      { botId: own.id },
+      space.id,
+    );
     expect(await rpc(app, owner, "routines/listForMentions", { botIds }, space.id)).toEqual([
-      { botId: own.id, routines: ownRows },
+      { botId: own.id, routines: ownRows.filter((row) => !row.builtinKind) },
     ]);
-    const peerRows = await rpc<unknown[]>(
+    const peerRows = await rpc<Array<{ builtinKind?: string | null }>>(
       app,
       peer,
       "routines/list",
@@ -220,9 +226,9 @@ describeWithDatabase("API authorization and resource isolation", () => {
       space.id,
     );
     expect(await rpc(app, peer, "routines/listForMentions", { botIds }, space.id)).toEqual([
-      { botId: other.id, routines: peerRows },
+      { botId: other.id, routines: peerRows.filter((row) => !row.builtinKind) },
     ]);
-    const crossRows = await rpc<unknown[]>(
+    const crossRows = await rpc<Array<{ builtinKind?: string | null }>>(
       app,
       owner,
       "routines/list",
@@ -230,7 +236,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
       second.id,
     );
     expect(await rpc(app, owner, "routines/listForMentions", { botIds }, second.id)).toEqual([
-      { botId: cross.id, routines: crossRows },
+      { botId: cross.id, routines: crossRows.filter((row) => !row.builtinKind) },
     ]);
   });
 
@@ -301,6 +307,18 @@ describeWithDatabase("API authorization and resource isolation", () => {
       ["botSections/create", { botId: "missing-bot", name: "Planning" }],
       ["botSections/update", { sectionId: "missing-section", name: "Planning" }],
       ["botSections/remove", { sectionId: "missing-section" }],
+      ["taskSessions/activeRuns"],
+      ["taskSessions/stopAll"],
+      ["taskSessions/capabilities"],
+      ["taskSessions/list"],
+      ["taskSessions/start"],
+      ["taskSessions/delete"],
+      ["taskSessions/rename"],
+      ["taskSessions/archive"],
+      ["threads/find"],
+      ["threads/fileInfo"],
+      ["threads/filePreview"],
+      ["threads/fileAction"],
       ["threads/get", { botId: "missing-bot" }],
       ["threads/get", { groupId: "missing-group" }],
       ["threads/messages", { botId: "missing-bot", before: 1 }],
@@ -351,6 +369,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
       ["computer/uploadFile"],
       ["computer/terminalUrl"],
       ["computer/commands"],
+      ["computer/fileAction"],
       ["memory/list", {}],
       ["memory/update", { documentId: "missing-memory", content: "Nope" }],
       ["memory/exportMarkdown", {}],
@@ -359,6 +378,14 @@ describeWithDatabase("API authorization and resource isolation", () => {
       ["memory/connectProvider"],
       ["memory/setDefaultScope"],
       ["memory/disconnectProvider"],
+      ["memory/updateContextDocument"],
+      ["memory/loadedContext"],
+      ["memory/organizers"],
+      ["memory/setSharedOrganizer"],
+      ["memory/organizationDiary"],
+      ["memory/revisions"],
+      ["memory/revision"],
+      ["memory/restore"],
       ["routines/list", { botId: "missing-bot" }],
       ["routines/listForMentions", { botIds: ["missing-bot"] }],
       ["routines/create", routineInput("missing-bot")],
@@ -415,8 +442,16 @@ describeWithDatabase("API authorization and resource isolation", () => {
       ["artifacts/get"],
       ["artifacts/getById"],
       ["artifacts/remove"],
+      ["artifacts/fileInfo"],
+      ["artifacts/fileAction"],
       ["usage/list"],
       ["usage/summary"],
+      ["usage/thread"],
+      ["biliWhale/get"],
+      ["biliWhale/save"],
+      ["biliWhale/saveCredentials"],
+      ["biliWhale/deps"],
+      ["biliWhale/planNow"],
       ["export/bot", { botId: "missing-bot" }],
       ["export/accountToken"],
       ["notifications/registerPush", { token: "ExponentPushToken[not-real]" }],
@@ -770,7 +805,11 @@ describeWithDatabase("API authorization and resource isolation", () => {
       resourceIdCalls.map(([procedure, input]) => expectDenied(app, intruder, procedure, input)),
     );
 
-    expect(await rpc<unknown[]>(app, intruder, "memory/list", { botId: ownerBot.id })).toEqual([]);
+    expect(
+      await rpc<unknown[]>(app, intruder, "memory/list", {
+        botId: ownerBot.id,
+      }),
+    ).toEqual([]);
     expect(await rpc<string>(app, intruder, "memory/exportMarkdown", { botId: ownerBot.id })).toBe(
       "",
     );
@@ -1310,7 +1349,11 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("reuses provider credentials and selections in a new Space", async () => {
-    const cookie = await signup(app, `space-provider-copy-${stamp}@livingbot.test`, "Provider Copy");
+    const cookie = await signup(
+      app,
+      `space-provider-copy-${stamp}@livingbot.test`,
+      "Provider Copy",
+    );
     const actor = await rpc<Actor>(app, cookie, "me");
     const model = await rpc<ModelCredential>(app, cookie, "models/connect", {
       provider: "copy-provider",
@@ -2212,7 +2255,11 @@ describeWithDatabase("API authorization and resource isolation", () => {
   });
 
   it("binds a new default to the space preference credential, not a newer unused duplicate", async () => {
-    const cookie = await signup(app, `model-duplicates-${stamp}@livingbot.test`, "Model Duplicates");
+    const cookie = await signup(
+      app,
+      `model-duplicates-${stamp}@livingbot.test`,
+      "Model Duplicates",
+    );
     const actor = await rpc<Actor>(app, cookie, "me");
     const olderSecret = await db.secret.create({
       data: {

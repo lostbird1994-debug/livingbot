@@ -7,11 +7,18 @@ import {
   TransientModelError,
 } from "@livingbot/adapter-kit";
 import {
+  BUILTIN_ROUTINES,
+  builtinRoutineKind,
   displayName,
   expandSkillReferencesInPrompt,
   isOneShotRoutineCrons,
   nextRoutineRunDateAcross,
+  QUEUE_HOLDING_RUN_STATUSES,
+  wallClock,
+  zonedDateTime,
 } from "@livingbot/core";
+import type { PrismaClient } from "@livingbot/db";
+import { Prisma } from "@livingbot/db";
 import { getLogger } from "@livingbot/logging";
 import { sanitizedError } from "@livingbot/logging/monitoring";
 import { protectedComputerLifecycleRefusal } from "./desktop-command-guard.js";
@@ -112,13 +119,60 @@ async function notifyFailedRoutineRun(
   );
 }
 
+async function dailyMaintenanceHasActivity(
+  prisma: Pick<PrismaClient, "message">,
+  routine: {
+    spaceId: string;
+    userId: string;
+    botId: string;
+    timezone: string;
+    builtinKind?: string | null;
+    memoryMaintenance?: boolean;
+  },
+) {
+  const kind = builtinRoutineKind(routine);
+  if (
+    kind !== "daily-review" &&
+    kind !== "memory-organization" &&
+    kind !== "workspace-organization"
+  )
+    return true;
+  // Use the execution day, even when a missed tick or retry arrives after midnight.
+  const now = new Date();
+  const start = zonedDateTime(
+    `${wallClock(now, routine.timezone).slice(0, 10)}T00:00:00`,
+    routine.timezone,
+  )!;
+  return Boolean(
+    await prisma.message.findFirst({
+      where: {
+        role: "user",
+        botId: null,
+        externalTranscriptFor: null,
+        createdAt: { gte: start, lte: now },
+        thread: {
+          spaceId: routine.spaceId,
+          userId: routine.userId,
+          OR: [{ botId: routine.botId }, { taskBotId: routine.botId }],
+        },
+      },
+      select: { id: true },
+    }),
+  );
+}
+
 export async function wakeRoutine(deps: ExecutorDeps, routineId: string, scheduledFor: string) {
   const scheduledAt = new Date(scheduledFor);
   if (!Number.isFinite(scheduledAt.getTime())) return;
   const routine = await deps.prisma.routine.findUnique({
     where: { id: routineId },
   });
-  if (!routine?.active || routine.nextRunAt?.getTime() !== scheduledAt.getTime()) return;
+  if (
+    !routine?.active ||
+    routine.usageTrigger ||
+    routine.nextRunAt?.getTime() !== scheduledAt.getTime()
+  )
+    return;
   if (await deferFutureRoutine(deps.jobs, routineId, scheduledAt)) return;
   const bot = await deps.prisma.bot.findUnique({
     where: { id: routine.botId },
@@ -182,6 +236,45 @@ export async function wakeRoutine(deps: ExecutorDeps, routineId: string, schedul
     userId: routine.userId,
   });
   const claimed = await deps.prisma.$transaction(async (tx) => {
+    const kind = builtinRoutineKind(routine);
+    if (!(await dailyMaintenanceHasActivity(tx, routine))) {
+      const advanced = await tx.routine.updateMany({
+        where: { id: routine.id, active: true, nextRunAt: scheduledAt, bot: { archivedAt: null } },
+        data: { nextRunAt, ...(nextRunAt ? {} : { active: false }) },
+      });
+      return advanced.count === 1 ? ("inactive-day" as const) : null;
+    }
+    if (kind) {
+      // Serialize only this bot's maintenance claims, across worker processes.
+      await tx.$queryRaw(
+        Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${`maintenance:${routine.botId}`}, 0))::text`,
+      );
+      const busy = await tx.run.findFirst({
+        where: {
+          spaceId: routine.spaceId,
+          userId: routine.userId,
+          botId: routine.botId,
+          status: { in: [...QUEUE_HOLDING_RUN_STATUSES] },
+          routine: { builtinKind: { not: null } },
+        },
+        select: { id: true },
+      });
+      const reviewDue =
+        builtinRoutineKind(routine) === "memory-organization" &&
+        (await tx.routine.findFirst({
+          where: {
+            spaceId: routine.spaceId,
+            userId: routine.userId,
+            botId: routine.botId,
+            builtinKind: "daily-review",
+            active: true,
+            nextRunAt: { lte: new Date() },
+          },
+          select: { id: true },
+        }));
+      if (busy || reviewDue) return "busy" as const;
+    }
+
     const updated = await tx.routine.updateMany({
       where: {
         id: routine.id,
@@ -206,8 +299,9 @@ export async function wakeRoutine(deps: ExecutorDeps, routineId: string, schedul
       select: { prompt: true, modelProvider: true, modelId: true, thinkingLevel: true },
     });
     if (!current) return null;
+    const definition = BUILTIN_ROUTINES.find((item) => item.kind === builtinRoutineKind(routine));
     const routinePrompt =
-      expandSkillReferencesInPrompt(current.prompt, skillRecords) +
+      expandSkillReferencesInPrompt(definition?.prompt ?? current.prompt, skillRecords) +
       (watchTick?.run ? watchTick.note : "");
     const timerTick = routine.watch == null && !isOneShotRoutineCrons(routine.crons);
     const timerNonce = timerTick ? routineTimerNonce(routine.id, scheduledFor) : undefined;
@@ -256,6 +350,23 @@ export async function wakeRoutine(deps: ExecutorDeps, routineId: string, schedul
     return { ...run, coalesced: false };
   });
   if (!claimed) return;
+  if (claimed === "busy") {
+    const retry = new Date(Date.now() + 60_000);
+    const changed = await deps.prisma.routine.updateMany({
+      where: { id: routine.id, active: true, nextRunAt: scheduledAt },
+      data: { nextRunAt: retry },
+    });
+    if (changed.count) await deps.jobs.enqueue(routineWakeupJob(routine.id, retry));
+    return;
+  }
+  if (claimed === "inactive-day") {
+    getLogger().info("routine.skipped", {
+      "routine.id": routine.id,
+      reason: "no_human_messages_today",
+    });
+    if (nextRunAt) await deps.jobs.enqueue(routineWakeupJob(routine.id, nextRunAt));
+    return;
+  }
   if (claimed === "fired") {
     if (nextRunAt) await deps.jobs.enqueue(routineWakeupJob(routine.id, nextRunAt));
     return;
@@ -348,11 +459,24 @@ export async function retryRoutineRun(deps: ExecutorDeps, runId: string) {
     where: { id: failed.routineId },
     select: {
       active: true,
+      spaceId: true,
+      userId: true,
+      botId: true,
+      timezone: true,
+      builtinKind: true,
+      memoryMaintenance: true,
       crons: true,
       nextRunAt: true,
       bot: { select: { archivedAt: true } },
     },
   });
+  if (routine && !(await dailyMaintenanceHasActivity(deps.prisma, routine))) {
+    getLogger().info("routine.skipped", {
+      "routine.id": failed.routineId,
+      reason: "no_human_messages_today",
+    });
+    return;
+  }
   const laterRun = await deps.prisma.run.findFirst({
     where: { routineId: failed.routineId, createdAt: { gt: failed.createdAt } },
     select: { id: true },

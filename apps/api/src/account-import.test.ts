@@ -1,4 +1,5 @@
 import type { Actor } from "@livingbot/contracts";
+import { ACCOUNT_EXPORT_VERSION } from "@livingbot/contracts";
 import { describe, expect, it } from "vitest";
 import type { AccountImportDeps, ArchiveEntry, ArchiveSink } from "./account-import.js";
 import {
@@ -66,7 +67,10 @@ describe("account import archive", () => {
 
   it("rejects a newer version", async () => {
     const bytes = buildArchive([
-      ["manifest.json", JSON.stringify({ ...manifestFor([]), version: 2 })],
+      [
+        "manifest.json",
+        JSON.stringify({ ...manifestFor([]), version: ACCOUNT_EXPORT_VERSION + 1 }),
+      ],
     ]);
     await expect(importBytes(bytes)).rejects.toThrow("newer version of LivingBot");
   });

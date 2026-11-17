@@ -7,7 +7,13 @@ import type {
 } from "@livingbot/adapter-kit";
 import { runContinueJob } from "@livingbot/adapter-kit";
 import type { MessageBlock } from "@livingbot/contracts";
-import { MEMORY_MAINTENANCE_TOOL_NAMES, PRIVATE_MEMORY_TOOL_NAMES } from "@livingbot/contracts";
+import {
+  CONTEXT_AUDIT_TOOL_NAMES,
+  DAILY_REVIEW_TOOL_NAMES,
+  MEMORY_MAINTENANCE_TOOL_NAMES,
+  PRIVATE_MEMORY_TOOL_NAMES,
+  WORKSPACE_ORGANIZATION_TOOL_NAMES,
+} from "@livingbot/contracts";
 import {
   applyJudgeDecision,
   approvalModeFromPreference,
@@ -29,7 +35,10 @@ import {
   unattendedTriggerToolRequiresApproval,
 } from "@livingbot/core";
 import { normalizedHttpUrl, urlSite } from "@livingbot/core/egress";
-import { approvalEffectKey, toolEffectIdempotencyKey } from "@livingbot/core/node/approval-effect-key";
+import {
+  approvalEffectKey,
+  toolEffectIdempotencyKey,
+} from "@livingbot/core/node/approval-effect-key";
 import type { AuditEventInput } from "@livingbot/db";
 import { recordAuditEvent, runSecretKind } from "@livingbot/db";
 import { getLogger } from "@livingbot/logging";
@@ -141,6 +150,27 @@ export async function gateToolCall(
   request: ToolRequest,
   observer: AgentToolExecutionObserver | undefined,
 ): Promise<GateOutcome> {
+  if (ctx.source.workspaceOrganization && !WORKSPACE_ORGANIZATION_TOOL_NAMES.has(request.name))
+    return { result: { error: "Workspace organization may only maintain its local files." } };
+  if (ctx.source.contextAudit && !CONTEXT_AUDIT_TOOL_NAMES.has(request.name))
+    return { result: { error: "Context audit is read-only." } };
+  if (request.name === "read_loaded_context" && !ctx.source.contextAudit)
+    return { result: { error: "A confirmed context audit is required." } };
+
+  if (
+    ctx.source.dailyReviewBatch?.acknowledged &&
+    !["read_review_work", "complete_daily_review", "read_memory", "search_memory"].includes(
+      request.name,
+    )
+  )
+    return { result: { error: "Review is already acknowledged; end this run." } };
+  if (ctx.source.dailyReview && !DAILY_REVIEW_TOOL_NAMES.has(request.name))
+    return { result: { error: "Daily review may only read work and maintain memory." } };
+  if (
+    ["read_review_work", "complete_daily_review"].includes(request.name) &&
+    !ctx.source.dailyReview
+  )
+    return { result: { error: "A built-in daily review is required." } };
   if (ctx.source.memoryMaintenance && !MEMORY_MAINTENANCE_TOOL_NAMES.has(request.name)) {
     return {
       result: {

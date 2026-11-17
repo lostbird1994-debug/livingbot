@@ -206,6 +206,17 @@ if (args.includes("--decrypt")) {
 `,
   );
   chmodSync(path.join(bin, "age"), 0o755);
+  write(
+    path.join(bin, "flock"),
+    `#!/bin/bash
+set -eu
+if [[ "\${LOCK_HELD:-0}" == 1 ]]; then exit 1; fi
+if [[ "\${1:-}" == -n ]]; then exit 0; fi
+shift
+LOCK_HELD=1 "$@"
+`,
+  );
+  chmodSync(path.join(bin, "flock"), 0o755);
   // rclone stand-in: "name:path" maps to a local directory; FAIL_RCLONE fails one subcommand.
   write(
     path.join(bin, "rclone"),
@@ -246,7 +257,13 @@ esac
   chmodSync(path.join(bin, "pg_restore"), 0o755);
   // No inherited deployment settings, credentials, or executable search paths.
   const env = {
-    PATH: [bin, path.dirname(process.execPath), "/usr/bin", "/bin"].join(path.delimiter),
+    PATH: [
+      bin,
+      ...(process.platform === "darwin" ? [path.join(import.meta.dirname, "test-trash-bin")] : []),
+      path.dirname(process.execPath),
+      "/usr/bin",
+      "/bin",
+    ].join(path.delimiter),
     COMMAND_LOG: path.join(root, "commands.jsonl"),
     SQL_INPUT: path.join(root, "input.sql"),
     SQL_SERVICE_STATE: path.join(root, "sql-service-state"),

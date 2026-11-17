@@ -1,9 +1,10 @@
+import { t } from "@lingui/core/macro";
 import type { Routine } from "@livingbot/contracts";
 import type { CronLabels } from "@livingbot/core";
 import { formatCron, isOneShotRoutineCron, localizedClock } from "@livingbot/core";
 
 /** Cadence buckets the task list groups by, most frequent first. */
-export const ROUTINE_SCHEDULE_GROUPS = ["daily", "weekly", "monthly", "other"] as const;
+export const ROUTINE_SCHEDULE_GROUPS = ["daily", "weekly", "monthly", "usage", "other"] as const;
 export type RoutineScheduleGroup = (typeof ROUTINE_SCHEDULE_GROUPS)[number];
 
 export type RoutineScheduleRow = {
@@ -120,10 +121,12 @@ export function groupRoutinesBySchedule(
   routines.forEach((routine, index) => {
     const cron = routine.crons[0];
     const cadence = cron ? cadenceOf(cron, labels, locale) : null;
-    const group = cadence?.group ?? "other";
+    const group = routine.usageTrigger ? "usage" : (cadence?.group ?? "other");
     const row = {
       routine,
-      detail: cadence?.detail ?? (cron ? formatCron(cron, labels) : ""),
+      detail: routine.usageTrigger
+        ? t`Every ${routine.usageTrigger.count} human messages`
+        : (cadence?.detail ?? (cron ? formatCron(cron, labels) : "")),
       slot: cadence?.slot ?? 0,
       at: cadence?.at ?? 0,
       index,

@@ -1,8 +1,10 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import { glassHeaderOptions } from "../components/glass-title";
 import { NativeActionButton } from "../components/native-action-button";
 import { RoutineRunHistory } from "../components/routine-run-history";
+import { rpc } from "../lib/api";
 import { useI18n } from "../lib/i18n";
 import { native, useMobileTokens } from "../lib/native";
 import { routineStatusLine } from "../lib/routine";
@@ -30,6 +32,25 @@ export default function RoutineDetail() {
     failedSinceShown,
   } = useBotRoutines(botId ?? "", { poll: false });
   const routine = routines?.find((item) => item.id === routineId) ?? null;
+  const pending = useRef(false);
+  const [running, setRunning] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [historyVersion, setHistoryVersion] = useState(0);
+  async function testRun() {
+    if (!routine || routine.editable === false || pending.current) return;
+    pending.current = true;
+    setRunning(true);
+    setRunError(null);
+    try {
+      await rpc("routines/testRun", { routineId: routine.id });
+      setHistoryVersion((version) => version + 1);
+    } catch (error) {
+      setRunError(errorText(error, t("Could not run routine")));
+    } finally {
+      pending.current = false;
+      setRunning(false);
+    }
+  }
   const error =
     !botId || !routineId
       ? t("Routine link is incomplete")
@@ -61,7 +82,9 @@ export default function RoutineDetail() {
             }}
           >
             <Text style={{ color: tokens.mutedForeground, fontSize: 14 }}>
-              {routineStatusLine(routine)}
+              {[routine.builtinKind ? t("System task") : "", routineStatusLine(routine)]
+                .filter(Boolean)
+                .join(" · ")}
             </Text>
           </View>
           <View style={{ gap: 8 }}>
@@ -95,7 +118,22 @@ export default function RoutineDetail() {
               }
             />
           ) : null}
-          <RoutineRunHistory routineId={routine.id} botName={botName} />
+          <NativeActionButton
+            label={running ? t("Running…") : t("Test run")}
+            disabled={routine.editable === false}
+            busy={running}
+            onPress={testRun}
+          />
+          {runError ? (
+            <Text accessibilityRole="alert" style={{ color: tokens.destructive, fontSize: 15 }}>
+              {runError}
+            </Text>
+          ) : null}
+          <RoutineRunHistory
+            key={`${routine.id}:${historyVersion}`}
+            routineId={routine.id}
+            botName={botName}
+          />
         </>
       ) : null}
     </ScrollView>

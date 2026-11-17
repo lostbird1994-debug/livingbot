@@ -901,6 +901,7 @@ async function commitAnswerRunInput(
       userId: true,
       checkpoint: true,
       trigger: true,
+      routine: { select: { id: true, builtinKind: true, active: true } },
       task: { select: { prompt: true } },
     },
   });
@@ -928,6 +929,17 @@ async function commitAnswerRunInput(
   const secretAsk = isSecretAskBlock(pendingAsk);
   const choiceAsk = !approvalAsk && !secretAsk && Boolean(pendingAsk.actions?.length);
   const selectedChoice = choiceAsk ? resolveAskChoice(input.answer, pendingAsk.actions) : undefined;
+  const contextAudit = pendingAsk.contextAudit === true;
+  if (
+    contextAudit &&
+    (run.routine?.builtinKind !== "context-audit" ||
+      run.userId !== input.answeredByUserId ||
+      !selectedChoice ||
+      !["start", "skip"].includes(selectedChoice.id) ||
+      (selectedChoice.id === "start" && !run.routine.active))
+  )
+    return null;
+  const skipAudit = contextAudit && selectedChoice?.id === "skip";
   const dismissed = Boolean(input.dismiss);
   // Only the run's user can turn down a secret request; every other card needs an answer.
   if (dismissed && (!secretAsk || run.userId !== input.answeredByUserId || input.answer))
@@ -1015,13 +1027,35 @@ async function commitAnswerRunInput(
       status: "waiting_input",
     },
     data: {
-      status: "queued",
+      status: skipAudit ? "cancelled" : "queued",
+      ...(skipAudit ? { completedAt: new Date() } : {}),
       ...(resumedTrigger !== run.trigger ? { trigger: resumedTrigger } : {}),
       ...(choiceAsk ? { checkpoint: null } : {}),
     },
   });
   if (queued.count !== 1) return null;
 
+  if (contextAudit) {
+    const updatedRoutine = await tx.routine.updateMany({
+      where: {
+        id: run.routine!.id,
+        spaceId: input.spaceId,
+        userId: run.userId,
+        ...(skipAudit ? {} : { active: true, bot: { archivedAt: null } }),
+      },
+      data: { usageSince: new Date() },
+    });
+    if (updatedRoutine.count !== 1) throw new Error("Context audit is no longer available.");
+    if (skipAudit)
+      await appendEventInTransaction(tx, {
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        botId: run.botId,
+        runId: input.runId,
+        type: "run.cancelled",
+        payload: {},
+      });
+  }
   const recordedAnswer = secretAsk ? "" : (selectedChoice?.id ?? approvalAnswer);
   const callId = callIdFromClientNonce(input.clientNonce);
   const recordsCallUtterance = Boolean(callId && !secretAsk);
@@ -1127,13 +1161,17 @@ async function commitAnswerRunInput(
       : undefined;
     const task = await tx.task.updateMany({
       where: { runs: { some: { id: input.runId } } },
-      data: {
-        prompt: resumePrompt(
-          { ...run, trigger: resumedTrigger },
-          pendingAsk.text,
-          selectedChoice ? `Selected choice ${selectedChoice.id}: ${resumeLabel}` : input.answer,
-        ),
-      },
+      data: contextAudit
+        ? { status: skipAudit ? "cancelled" : "queued", prompt: run.task.prompt }
+        : {
+            prompt: resumePrompt(
+              { ...run, trigger: resumedTrigger },
+              pendingAsk.text,
+              selectedChoice
+                ? `Selected choice ${selectedChoice.id}: ${resumeLabel}`
+                : input.answer,
+            ),
+          },
     });
     if (task.count !== 1) throw new Error("Run task was not available to answer");
   }
@@ -1164,6 +1202,7 @@ async function commitAnswerRunInput(
     threadId: input.threadId,
     botId: run.botId,
     type: "thread.message.updated",
+    allowCancelledRun: skipAudit,
     runId: input.runId,
     payload: { messageId: message.id, role: "bot", blocks },
   });
@@ -1240,7 +1279,9 @@ export async function retireWaitingQuestionInTransaction(
     // Never implicitly dismiss credentials or authorize an external effect, even on a mixed card.
     if (
       pending.some(
-        (block) => block.kind === "ask" && (block.input === "secret" || block.approvalEffectId),
+        (block) =>
+          block.kind === "ask" &&
+          (block.input === "secret" || block.approvalEffectId || block.contextAudit),
       )
     )
       return false;

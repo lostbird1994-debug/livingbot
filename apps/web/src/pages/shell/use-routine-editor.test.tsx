@@ -38,16 +38,18 @@ let root: Root;
 let editor: ReturnType<typeof useRoutineEditor>;
 let finishUpdate: (saved: Routine) => void;
 const update = vi.fn();
+const testRun = vi.fn();
+const refreshThread = vi.fn(async () => ({}) as never);
 
 function Harness() {
   editor = useRoutineEditor({
-    rpc: { routines: { update } } as unknown as ReturnType<typeof createSpaceRpc>,
+    rpc: { routines: { update, testRun } } as unknown as ReturnType<typeof createSpaceRpc>,
     active: { id: "bot-1", webhookConfigured: false } as Bot,
     activeBotId: { current: "bot-1" },
     timezone: "UTC",
     messageProviders: [],
     setBots: () => {},
-    refreshThread: async () => ({}) as never,
+    refreshThread,
     setPanel: () => {},
   });
   return null;
@@ -101,4 +103,69 @@ it("sends on/off only when the save changes it", async () => {
     await editor.editorProps!.onSave();
   });
   expect(update.mock.calls[1]![0]).toMatchObject({ active: false });
+});
+
+it("saves only the toggle for built-ins even if a draft contains other edits", async () => {
+  const builtin = { ...routine, builtinKind: "daily-review" as const };
+  update.mockResolvedValue({ ...builtin, active: false });
+  act(() => editor.editRoutine(builtin));
+  act(() =>
+    editor.editorProps!.onChange({
+      ...editor.editorProps!.draft,
+      name: "Changed",
+      prompt: "Changed",
+      active: false,
+    }),
+  );
+  await act(async () => {
+    await editor.editorProps!.onSave();
+  });
+  expect(update).toHaveBeenCalledWith({ routineId: routine.id, active: false });
+  act(() => editor.editorProps!.onDelete());
+  expect(editor.deleteDialogProps).toBeNull();
+});
+
+it("updates only activation from the list without replacing other task settings", async () => {
+  update.mockResolvedValue({ ...routine, active: false });
+  await act(async () => {
+    await editor.toggleRoutine(routine, false);
+  });
+  expect(update).toHaveBeenCalledWith({ routineId: routine.id, active: false });
+  expect(editor.editingRoutine).toBeNull();
+});
+
+it("test runs a paused built-in once while the request is pending", async () => {
+  let finish!: () => void;
+  testRun.mockImplementation(() => new Promise<void>((resolve) => (finish = resolve)));
+  act(() => editor.editRoutine({ ...routine, builtinKind: "daily-review", active: false }));
+  let running!: Promise<void>;
+  act(() => {
+    running = editor.editorProps!.onTestRun() as unknown as Promise<void>;
+    editor.editorProps!.onTestRun();
+  });
+  expect(testRun).toHaveBeenCalledExactlyOnceWith({ routineId: routine.id });
+  expect(editor.editorProps!.running).toBe(true);
+  await act(async () => {
+    finish();
+    await running;
+  });
+  expect(refreshThread).toHaveBeenCalledWith(routine.botId);
+  expect(editor.editorProps!.running).toBe(false);
+  expect(editor.editingRoutine?.active).toBe(false);
+  expect(update).not.toHaveBeenCalled();
+});
+
+it("shows a system test run failure and enables retry", async () => {
+  testRun.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({});
+  act(() => editor.editRoutine({ ...routine, builtinKind: "memory-organization" }));
+  await act(async () => {
+    await editor.editorProps!.onTestRun();
+  });
+  expect(editor.editorProps!.error).toBe("offline");
+  expect(editor.editorProps!.running).toBe(false);
+  await act(async () => {
+    await editor.editorProps!.onTestRun();
+  });
+  expect(editor.editorProps!.error).toBeNull();
+  expect(testRun).toHaveBeenCalledTimes(2);
 });

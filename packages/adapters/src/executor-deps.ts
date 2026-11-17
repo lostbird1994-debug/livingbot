@@ -17,17 +17,22 @@ import type {
   SecretStore,
   WebProvider,
 } from "@livingbot/adapter-kit";
+import type { Actor } from "@livingbot/contracts";
 import type { PrismaClient, RunLease, ThreadEvents } from "@livingbot/db";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
+import type { NativePeer, NativeStore } from "./openclaw-native-driver.js";
+import type { NativeBootstrapPreview } from "./openclaw-workspace-context.js";
+import type { BotWorkspaceProfiles } from "./openclaw-workspace-profile.js";
 import type { CodexLiveCatalog } from "./pi-codex-catalog.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";
+import type { createTaskWorkService } from "./task-work.js";
 import type { TicketChangeNotifier } from "./ticket-changes.js";
 import type { UserDeviceGateway } from "./user-device-protocol.js";
-import type { BotWorkspaceProfiles } from "./openclaw-workspace-profile.js";
-import type { NativePeer, NativeStore } from "./openclaw-native-driver.js";
 
 export interface ExecutorDeps {
+  /** Product-owned work survives the lifecycle of any one model invocation. */
+  taskWork?: ReturnType<typeof createTaskWorkService>;
   maxUploadSizeBytes?: number;
   contextStrategy?: AgentContextStrategy;
   prisma: PrismaClient;
@@ -36,8 +41,12 @@ export interface ExecutorDeps {
   sandbox: SandboxProvider;
   memory: MemoryStore;
   botWorkspace?: BotWorkspaceProfiles;
+  nativeContextPreview?: (actor: Actor, botId: string) => Promise<NativeBootstrapPreview>;
   nativeWorkspaceFile?: (
-    botId: string, filePath: string, maxBytes: number, context: AdapterContext,
+    botId: string,
+    filePath: string,
+    maxBytes: number,
+    context: AdapterContext,
   ) => Promise<Uint8Array>;
   nativeExecution?: {
     store: NativeStore;

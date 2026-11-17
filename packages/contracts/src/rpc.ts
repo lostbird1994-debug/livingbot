@@ -581,6 +581,7 @@ export const appContract = {
           requestMatched: z.boolean(),
         }),
       ),
+    delete: oc.input(z.object({ botId: Id, taskSessionId: Id })).output(TaskSessionSchema),
     rename: oc
       .input(z.object({ botId: Id, taskSessionId: Id, title: z.string().trim().min(1).max(100) }))
       .output(TaskSessionSchema),

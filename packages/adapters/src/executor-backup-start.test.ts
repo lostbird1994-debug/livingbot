@@ -242,7 +242,7 @@ async function runTurn({
       vaultCredential: { findMany: vi.fn(async () => []) },
       agentSkill: { findMany: vi.fn(async () => []) },
       scratchpadItem: { findMany: vi.fn(async () => []) },
-      externalEffect: { findMany: vi.fn(async () => []) },
+      externalEffect: { findMany: vi.fn(async () => []), count: vi.fn(async () => 0) },
       userActionApprovalRule: { findMany: vi.fn(async () => []) },
       userActionAutoReviewPreference: { findUnique: vi.fn(async () => null) },
       artifact: { findMany: vi.fn(async () => []) },

@@ -12,6 +12,9 @@ const APPROVAL_EXEMPT_TOOLS = new Set([
   "browser_act",
   "list_files",
   "read_file",
+  "read_loaded_context",
+  "read_review_work",
+  "complete_daily_review",
   "read_history",
   "read_memory",
   "search_memory",
@@ -40,6 +43,8 @@ const APPROVAL_EXEMPT_TOOLS = new Set([
 ]);
 
 const APPROVAL_REQUIRED_BUILTIN_TOOLS = new Set([
+  "start_job",
+  "stop_job",
   "generate_image",
   "generate_video",
   "delete_bot",
@@ -242,6 +247,9 @@ const OWN_STATE_RESULT_TOOLS = new Set([
   "list_fleet",
   "list_secrets",
   "message_user",
+  "read_loaded_context",
+  "read_review_work",
+  "complete_daily_review",
   "read_history",
   "recall_memory",
   "remember",

@@ -1,5 +1,6 @@
 import type { AppearancePreference, ResolvedAppearance } from "@livingbot/ui-tokens";
 import {
+  appearanceColorScheme,
   normalizeAppearancePreference,
   resolveAppearance,
   tokensForAppearance,
@@ -15,7 +16,7 @@ let memoryPreference: AppearancePreference | null = null;
 let writeGeneration = 0;
 const listeners = new Set<() => void>();
 
-function systemAppearance(scheme?: ColorSchemeName | null): ResolvedAppearance {
+function systemAppearance(scheme?: ColorSchemeName | null): "light" | "dark" {
   return (scheme ?? Appearance.getColorScheme()) === "light" ? "light" : "dark";
 }
 
@@ -49,8 +50,8 @@ export async function setAppearancePreference(
 export function resolveMobileAppearance(
   preference: AppearancePreference = getCachedAppearancePreference(),
   scheme?: ColorSchemeName | null,
-): ResolvedAppearance {
-  return resolveAppearance(preference, systemAppearance(scheme));
+): "light" | "dark" {
+  return appearanceColorScheme(resolveAppearance(preference, systemAppearance(scheme)));
 }
 
 export function mobileTokens(
@@ -90,7 +91,9 @@ async function persistAppearancePreference(
 // Native surfaces (alerts, action sheets, the keyboard, iOS platform colors) follow the
 // window's scheme, so an explicit app choice overrides it and System hands it back to the OS.
 function applyNativeColorScheme(preference: AppearancePreference) {
-  Appearance.setColorScheme(preference === "system" ? "unspecified" : preference);
+  Appearance.setColorScheme(
+    preference === "system" ? "unspecified" : appearanceColorScheme(preference),
+  );
 }
 
 Appearance.addChangeListener(() => {

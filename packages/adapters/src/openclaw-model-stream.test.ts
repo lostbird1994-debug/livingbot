@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
 import type { AgentRunRequest, AgentRuntimeEvent } from "@livingbot/adapter-kit";
+import { describe, expect, it, vi } from "vitest";
 import type { NativeFrame, NativeRecord, NativeStore } from "./openclaw-native-driver.js";
 
 const files = vi.hoisted(() => new Map<string, string>());
@@ -13,7 +13,8 @@ vi.mock("node:fs/promises", () => ({
     return files.get(name);
   },
 }));
-import { NativeRunJournal, isOpenClawModel, openClawModelStream } from "./openclaw-model-stream.js";
+
+import { isOpenClawModel, NativeRunJournal, openClawModelStream } from "./openclaw-model-stream.js";
 
 class Store implements NativeStore {
   rows = new Map<string, NativeRecord>();
@@ -124,7 +125,7 @@ describe("OpenClaw model compatibility boundary", () => {
     const agent = f.calls.find((c) => c.method === "agent")!;
     expect(agent.params.message).toBe("Current task");
     expect(agent.params.extraSystemPrompt).toContain("Previous question");
-    expect(f.events).toContainEqual({ type: "progress", text: "Read: start", activity: true });
+    expect(f.events).toContainEqual({ type: "progress", text: "正在读取文件…", activity: true });
     expect(f.events.some((e) => e.type === "tool")).toBe(false);
     const second = openClawModelStream(
       { ...request, runId: "next-run" },
@@ -136,7 +137,9 @@ describe("OpenClaw model compatibility boundary", () => {
       f,
     );
     await second.result();
-    expect(f.calls.filter((c) => c.method === "agent")[1]!.params.extraSystemPrompt).toBe("Role");
+    const secondPrompt = f.calls.filter((c) => c.method === "agent")[1]!.params.extraSystemPrompt;
+    expect(secondPrompt).toContain("Role");
+    expect(secondPrompt).not.toContain("Previous question");
     expect(f.closes()).toBe(4);
   });
   it("reconstructs canonical text without artificial newlines between streamed blocks", async () => {

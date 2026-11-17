@@ -583,7 +583,7 @@ export function localizedClock(time: string, locale: string): string {
   }
 }
 
-function formatClock(hour: number, minute: number): string {
+export function formatClock(hour: number, minute: number): string {
   const period = hour >= 12 ? "PM" : "AM";
   const h12 = hour % 12 === 0 ? 12 : hour % 12;
   return `${h12}:${String(minute).padStart(2, "0")} ${period}`;

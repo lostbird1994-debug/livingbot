@@ -1,4 +1,25 @@
 export const ES_MESSAGES: Record<string, string> = {
+  "Test run": "Ejecutar prueba",
+  "Running…": "Ejecutando…",
+  "Could not run routine": "No se pudo ejecutar la rutina",
+  "System task": "Tarea del sistema",
+  "Every {count} human messages": "Cada {count} mensajes del usuario",
+  "This visual could not render.": "No se pudo mostrar esta visualización.",
+  "Add to conversation": "Añadir a la conversación",
+  "Download image": "Descargar imagen",
+  "Loaded context": "Contexto cargado",
+  Identity: "Identidad",
+  Personality: "Personalidad",
+  "User identity": "Perfil del usuario",
+  Backstory: "Historia de fondo",
+  "Shared USER.md, MEMORY.md and profile.md will not load automatically. Private memory is preserved.":
+    "Los archivos compartidos USER.md, MEMORY.md y profile.md no se cargarán automáticamente. La memoria privada se conserva.",
+  "User identity and backstory load only when enabled.":
+    "El perfil del usuario y la historia de fondo solo se cargan cuando están activados.",
+  Download: "Descargar",
+  Enabled: "Activado",
+  Expand: "Expandir",
+  "Finished, no update": "Finalizado, sin novedades",
   "How other bots see it": "Cómo lo ven otros bots",
   "Share to": "Compartir en",
   "{count} files": "{count} archivos",
@@ -759,7 +780,8 @@ export const ES_MESSAGES: Record<string, string> = {
   "Enter a server URL": "Introduce la URL de un servidor",
   "Public servers need https://. HTTP only works on your local network.":
     "Los servidores públicos necesitan https://. HTTP solo funciona en tu red local.",
-  "That URL did not look like a LivingBot server": "Esa URL no parece ser de un servidor de LivingBot",
+  "That URL did not look like a LivingBot server":
+    "Esa URL no parece ser de un servidor de LivingBot",
   "That URL is missing a host": "A esa URL le falta el host",
   "That doesn’t look like a URL": "Eso no parece una URL",
   "Use an http or https URL": "Usa una URL http o https",

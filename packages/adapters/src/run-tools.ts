@@ -1,6 +1,14 @@
 import type { AgentToolExecutionObserver } from "@livingbot/adapter-kit";
-import { MEMORY_MAINTENANCE_TOOL_NAMES } from "@livingbot/contracts";
+import {
+  CONTEXT_AUDIT_TOOL_NAMES,
+  DAILY_REVIEW_TOOL_NAMES,
+  MEMORY_MAINTENANCE_TOOL_NAMES,
+  WORKSPACE_ORGANIZATION_TOOL_NAMES,
+} from "@livingbot/contracts";
 import { toolResultTaintsRun } from "@livingbot/core";
+import { contextAuditTools } from "./context-audit.js";
+import { dailyReviewTools } from "./daily-review.js";
+import { inlineVisualTools } from "./inline-visual-tools.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolHandler } from "./run-tool-gate.js";
@@ -8,7 +16,6 @@ import { auditToolCall, gateToolCall } from "./run-tool-gate.js";
 import { prepareToolRequest, resolveToolRequest } from "./run-tool-request.js";
 import { PAGE_BROWSER_TOOL_NAMES } from "./run-tool-selection.js";
 import { computerTools, pageBrowserTool } from "./run-tools-computer.js";
-import { inlineVisualTools } from "./inline-visual-tools.js";
 import { fileTools } from "./run-tools-files.js";
 import { fleetTools } from "./run-tools-fleet.js";
 import { cloudAgentTool, connectorTool, integrationTools } from "./run-tools-integrations.js";
@@ -41,6 +48,8 @@ const TOOL_HANDLERS = new Map<string, ToolHandler>([
   [USER_COMPUTER_SHELL_TOOL, userComputerShell],
   [USER_COMPUTER_OBSERVE_TOOL, userComputerObserve],
   [USER_COMPUTER_ACT_TOOL, userComputerAct],
+  ...Object.entries(dailyReviewTools),
+  ...Object.entries(contextAuditTools),
   ...Object.entries(purchaseTools),
   ...Object.entries(preferenceTools),
   ...[...PAGE_BROWSER_TOOL_NAMES].map((name) => [name, pageBrowserTool] as const),
@@ -65,11 +74,23 @@ export async function applyTool(
     if (ctx.deps.botWorkspace && name === "update_bot") {
       const target = typeof args.bot_id === "string" && args.bot_id ? args.bot_id : ctx.bot.id;
       return await ctx.deps.botWorkspace.edit(
-        { spaceId: ctx.run.spaceId, userId: ctx.run.userId }, target,
+        { spaceId: ctx.run.spaceId, userId: ctx.run.userId },
+        target,
         () => dispatchTool(ctx, name, args, executionId, observer),
       );
     }
-    return await dispatchTool(ctx, name, args, executionId, observer);
+    const result = await dispatchTool(ctx, name, args, executionId, observer);
+    if (
+      ctx.source.dailyReview &&
+      ["remember", "write_memory", "save_shared_memory"].includes(name)
+    ) {
+      ctx.source.dailyReviewWriteFailures ??= new Set();
+      const failures = ctx.source.dailyReviewWriteFailures;
+      const key = `${name}:${String(args.path ?? "MEMORY.md")}`;
+      if (isToolError(result)) failures.add(key);
+      else failures.delete(key);
+    }
+    return result;
   } finally {
     // Editing its own profile returns only what this run wrote; a child's profile is another bot's.
     const ownProfile = name === "update_bot" && !argumentGiven(args.bot_id);
@@ -85,6 +106,12 @@ async function dispatchTool(
   observer: AgentToolExecutionObserver | undefined,
 ) {
   ctx.context.signal.throwIfAborted();
+  if (ctx.source.workspaceOrganization && !WORKSPACE_ORGANIZATION_TOOL_NAMES.has(name))
+    return { error: "Workspace organization may only maintain its local files." };
+  if (ctx.source.contextAudit && !CONTEXT_AUDIT_TOOL_NAMES.has(name))
+    return { error: "Context audit is read-only." };
+  if (ctx.source.dailyReview && !DAILY_REVIEW_TOOL_NAMES.has(name))
+    return { error: "Daily review may only read work and maintain memory." };
   if (ctx.source.memoryMaintenance && !MEMORY_MAINTENANCE_TOOL_NAMES.has(name)) {
     return { error: "Memory maintenance may only read memory and save review proposals." };
   }
@@ -110,15 +137,42 @@ async function dispatchTool(
   if ("result" in gate) return gate.result;
   // Product effects and commands acquire the same computer/workspace resource as legacy runs.
   // Reads remain eligible for concurrency; unknown connector effects are conservative.
-  const concurrentReads = new Set(["widget_guidelines", "show_widget", "visual_guidelines", "show_visual", "read_file", "list_files", "ask_user", "read_history", "search_history", "read_memory", "search_memory",
-    "recall_memory", "list_fleet", "task_catalog", "schedule_list", "scratchpad_list", "board_tickets", "ticket_get",
-    "skill_read", "web_search", "web_fetch", "list_secrets", "cloud_agent_status", "purchase_status"]);
+  const concurrentReads = new Set([
+    "job_status",
+    "stop_job",
+    "read_loaded_context",
+    "widget_guidelines",
+    "show_widget",
+    "visual_guidelines",
+    "show_visual",
+    "read_file",
+    "list_files",
+    "ask_user",
+    "read_history",
+    "search_history",
+    "read_memory",
+    "search_memory",
+    "recall_memory",
+    "list_fleet",
+    "task_catalog",
+    "schedule_list",
+    "scratchpad_list",
+    "board_tickets",
+    "ticket_get",
+    "skill_read",
+    "web_search",
+    "web_fetch",
+    "list_secrets",
+    "cloud_agent_status",
+    "purchase_status",
+  ]);
   if (!concurrentReads.has(gate.call.name)) {
     await ctx.computer.requireResource?.();
     // A late acquisition updates the context token; preserve its exact fence for pause/cleanup.
-    if (ctx.thread.taskBotId) ctx.computer.lease = await ctx.deps.prisma.computerExecutionLease.findFirst({
-      where: { runId: ctx.runId, botId: ctx.bot.id, computerId: ctx.computer.stored.id },
-    });
+    if (ctx.thread.taskBotId)
+      ctx.computer.lease = await ctx.deps.prisma.computerExecutionLease.findFirst({
+        where: { runId: ctx.runId, botId: ctx.bot.id, computerId: ctx.computer.stored.id },
+      });
   }
   if (!gate.call.applied) return toolHandler(gate.call.name)(ctx, gate.call);
   let outcome: "success" | "failure" = "failure";

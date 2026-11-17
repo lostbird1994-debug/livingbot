@@ -152,6 +152,7 @@ const routine = (id: string, name: string, partial: Partial<Routine> = {}): Rout
   timezone: "UTC",
   active: true,
   notify: false,
+  requireOutput: false,
   webhookEnabled: false,
   githubEnabled: false,
   messageProvider: null,
@@ -272,4 +273,12 @@ it("disables the switch and delete for a routine only its creator can change", (
   expect(swift.toggles).toHaveLength(1);
   expect(swift.toggles[0]!.label).toBe("Active: Morning digest");
   expect(colour(swift.toggles[0]!.modifiers ?? [], "disabled")).toBe(true);
+});
+
+it("keeps built-in routine toggles and omits their delete action", () => {
+  render({ routines: [routine("builtin", "Daily review", { builtinKind: "daily-review" })] });
+  expect(swift.actions).toBe(0);
+  expect(swift.buttons.filter((button) => button.label === "Delete")).toHaveLength(0);
+  expect(swift.toggles).toHaveLength(1);
+  expect(colour(swift.toggles[0]!.modifiers ?? [], "disabled")).toBe(false);
 });

@@ -1,6 +1,4 @@
 import { hostname } from "node:os";
-import { ORPCError, onError } from "@orpc/server";
-import { RPCHandler } from "@orpc/server/fetch";
 import type {
   AgentContextStrategy,
   AgentRuntime,
@@ -141,6 +139,8 @@ import {
 } from "@livingbot/logging";
 import { markExpectedFailure, requestLogging } from "@livingbot/logging/hono";
 import { MarkdownMemoryStore } from "@livingbot/memory";
+import { ORPCError, onError } from "@orpc/server";
+import { RPCHandler } from "@orpc/server/fetch";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { deleteAccountContent } from "./account-deletion.js";
@@ -179,10 +179,10 @@ import { monitoringRoutes } from "./monitoring.js";
 import { pluginSubmissionRoutes } from "./plugin-submissions.js";
 import { sendReferralEmails, startReferralEmails } from "./referral-email.js";
 import { mountApiRequestBodyLimits } from "./request-body-limit.js";
-import { createRequestSessions } from "./session-response.js";
 import { createRouter } from "./router.js";
 import { mountScreenTarget } from "./screen-proxy.js";
 import { createAuthResponseAudit } from "./security-audit.js";
+import { createRequestSessions } from "./session-response.js";
 import { createSpeechSummarizer } from "./speech-summary.js";
 import { isDeferredReservationLost, TeamChatBridge } from "./team-chat-bridge.js";
 import { ModelTeamChatEngagementJudge } from "./team-chat-judge.js";
@@ -417,11 +417,16 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   void home.removeStaleStaging().catch((error) => getLogger().error("home staging cleanup", error));
   const artifacts = createArtifactStore(env.dataDir, prisma);
   const memoryMirror = new MarkdownMemoryStore(prisma);
-  const nativeKernel = env.agentRuntime === "openclaw" && !runtimeOverride
-    ? createOpenClawKernelHost({
-        dataDir: env.dataDir, encryptionKey: env.encryptionKey, prisma, mirror: memoryMirror,
-        notify: (threadId, seq) => events.notify(threadId, seq),
-      }) : undefined;
+  const nativeKernel =
+    env.agentRuntime === "openclaw" && !runtimeOverride
+      ? createOpenClawKernelHost({
+          dataDir: env.dataDir,
+          encryptionKey: env.encryptionKey,
+          prisma,
+          mirror: memoryMirror,
+          notify: (threadId, seq) => events.notify(threadId, seq),
+        })
+      : undefined;
   const memory = nativeKernel?.memory ?? memoryMirror;
   const mcp = new McpConnector(
     prisma,
@@ -639,6 +644,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     memory,
     botWorkspace: nativeKernel?.botWorkspace,
     nativeWorkspaceFile: nativeKernel?.readWorkspaceFile,
+    nativeContextPreview: nativeKernel?.nativeContextPreview,
     nativeExecution: nativeExecutionOverride ?? nativeKernel?.recovery,
     memoryProviders,
     home,
@@ -719,6 +725,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
           lookup: deploymentModelUsageLookup(),
         }),
         reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
+        reconcileExternalAgents: executor.reconcileExternalAgents,
         reconcilePurchases: () => reconcilePurchases({ prisma, jobs, paymentWallet }),
         reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
         reconcileSecurityEventRetention: createSecurityEventPruner(
@@ -746,8 +753,10 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       : undefined;
 
   const router = createRouter({
-    independentTasksAvailable: independentTasksAvailableOverride ?? nativeKernel?.independentTasksAvailable,
+    independentTasksAvailable:
+      independentTasksAvailableOverride ?? nativeKernel?.independentTasksAvailable,
     cancelNativeRuns: (runIds) => executor.reconcileExternalAgents({ runIds }),
+    stopTaskWork: executor.stopTaskWork,
     notificationSummary: createSpeechSummarizer(
       {
         prisma,
@@ -801,7 +810,10 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     remoteConnectors,
     modelConnectionFetch,
     // The scripted runtime never calls a provider, so neither does its connect.
-    modelConnectionCheck: env.agentRuntime === "pi" || env.agentRuntime === "openclaw" ? verifyModelServesAgents : undefined,
+    modelConnectionCheck:
+      env.agentRuntime === "pi" || env.agentRuntime === "openclaw"
+        ? verifyModelServesAgents
+        : undefined,
     artifacts,
     email,
     onEmailError,

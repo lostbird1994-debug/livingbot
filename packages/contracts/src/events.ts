@@ -131,6 +131,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
   }),
   z.object({
     kind: z.literal("ask"),
+    contextAudit: z.literal(true).optional(),
     text: z.string(),
     approvalEffectId: Id.optional(),
     /** Resolved by the backend; clients localize the explanation without interpreting tool args. */
@@ -488,7 +489,12 @@ export const ReplyPreviewSchema = z.object({
 });
 export type ReplyPreview = z.infer<typeof ReplyPreviewSchema>;
 
-export const TaskResultSchema = z.object({ taskSessionId: Id, runId: Id, title: z.string(), status: z.enum(["completed", "failed", "cancelled"]) });
+export const TaskResultSchema = z.object({
+  taskSessionId: Id,
+  runId: Id,
+  title: z.string(),
+  status: z.enum(["completed", "failed", "cancelled"]),
+});
 export const ThreadMessageSchema = z.object({
   taskResult: TaskResultSchema.optional(),
   id: Id,

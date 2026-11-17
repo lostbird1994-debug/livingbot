@@ -22,6 +22,7 @@ import { partitionTools } from "./builtin-tool-bridge.js";
 import type { ComputerExecutionLease } from "./computer-lifecycle.js";
 import type { UnchangedVisualStreak } from "./computer-tools.js";
 import type { selectRunConnections } from "./connection-context.js";
+import type { DailyReviewBatch } from "./daily-review.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { FleetRun } from "./fleet-tools.js";
 import { namedAgentTools } from "./pi-runtime-tools.js";
@@ -190,7 +191,19 @@ export interface RunComputerContext {
 }
 
 export interface RunSource {
+  workspaceOrganization?: boolean;
+  contextAudit?: boolean;
+  contextAuditSnapshot?: string;
+  dailyReview?: boolean;
+  dailyReviewBatch?: DailyReviewBatch;
+  dailyReviewCoverage?: Map<string, { hash: string; read: number }>;
+  dailyReviewRead?: Set<string>;
+  dailyReviewWriteFailures?: Set<string>;
   memoryMaintenance?: boolean;
+  fixedMemorySchedule?: boolean;
+  memoryOrganizationFull?: boolean;
+  memoryOrganizationTargets?: string[];
+  memoryReviewedPaths?: Set<string>;
   memoryOrganizationFailures?: Set<string>;
   memoryReadCoverage?: Map<
     string,

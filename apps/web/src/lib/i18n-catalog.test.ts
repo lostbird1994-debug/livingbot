@@ -126,10 +126,10 @@ describe("lingui catalogs", () => {
       );
       for (const message of [
         "Advanced",
-        "Notifications",
+        "Workspace files",
         "When it finishes or needs input",
         "Model",
-        "Add open work",
+        "Task list",
         "Disable a tool",
         "Edit name",
         "Enable {0}",

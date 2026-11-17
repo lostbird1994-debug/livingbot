@@ -1,6 +1,6 @@
-import { RPCHandler } from "@orpc/server/fetch";
 import type { Actor } from "@livingbot/contracts";
 import type { PrismaClient } from "@livingbot/db";
+import { RPCHandler } from "@orpc/server/fetch";
 import { describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";
@@ -21,6 +21,7 @@ const routine = (botId: string, id: string) => ({
   timezone: "UTC",
   active: false,
   notify: true,
+  requireOutput: false,
   webhookEnabled: false,
   githubEnabled: false,
   messageProvider: null,

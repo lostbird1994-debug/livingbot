@@ -46,14 +46,14 @@ version, and refuses to overwrite changes made since you opened the document.
 
 ## Automatic memory organization
 
-Operators can explicitly upgrade maintenance with `enable-auto`. Existing paused routines stay
-paused, and configured times and timezones are preserved. New routines default to 18:00 local.
-The upgrade checks once immediately, then checks daily. A completed direct human conversation
-can bring the next check forward after 30 distinct human source messages, or when a bot summary
-reaches 16,000 Unicode characters. Checks remain at least six hours apart. Unchanged memory is
-skipped before calling the model; the schedule still runs its lightweight check.
+Built-in memory organization runs daily at 18:10 in the account's timezone. Enabled states
+are preserved when system schedules are updated. Human messages and completed daily reviews
+do not bring this check forward. Unchanged memory is skipped before calling the model.
 
-The restricted model reviews summaries and detailed notes using rubric `memory-organization/1`.
+The restricted model reviews summaries and detailed notes using rubric `memory-organization/2`.
+Daily checks inspect changed documents and related summaries and references. A weekly full check
+revisits all live documents only when memory has changed since the last full check. An incomplete
+read cannot count as a completed review. Daily review writes are inspected at the next scheduled organization check.
 It selects exact original line ranges rather than rewriting facts. Before applying each change,
 the server saves the full original in `memory/archive/<document>.v<revision>.md`, reads it back
 and verifies its content. Only then does it update the source using its expected revision.
@@ -70,7 +70,8 @@ No file or document is deleted or moved.
 
 Settings → Memory shows the shared organizer and every bot's maintenance routine. The user can
 assign another organizer, inspect its actual restricted instructions, pause its routine, or
-select a separate connected execution model without changing the bot's conversational model.
+enable or disable its built-in routine. Its instructions, schedule and execution settings are
+product-owned. Existing execution-model selections are preserved.
 An explicit assignment persists per member and space; pausing that organizer does not silently
 transfer shared work. Until the user selects one, the first eligible active bot remains the default.
 

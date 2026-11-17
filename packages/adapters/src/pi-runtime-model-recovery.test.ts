@@ -1,6 +1,7 @@
 import type { AssistantMessage, Model } from "@earendil-works/pi-ai";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
 import type { AgentRunRequest, AgentRuntimeEvent } from "@livingbot/adapter-kit";
+import { DEFAULT_MODEL_MAX_TOKENS } from "@livingbot/contracts";
 import type * as Core from "@livingbot/core";
 import { MODEL_OUTPUT_CUT_ERROR, MODEL_OUTPUT_LIMIT_ERROR } from "@livingbot/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -33,7 +34,7 @@ vi.mock("./pi-openai-compatible-provider.js", () => ({
 import { PiAgentRuntime } from "./pi-runtime.js";
 import { continuationOverlap, continuationRepeat } from "./pi-runtime-fallback.js";
 
-// A plain model with a card ceiling above the 4k completion default, and a reasoning model
+// A plain model with a card ceiling above the completion default, and a reasoning model
 // already at its 32k default with the input reserve as the limit.
 const plain = model("provider-a", "plain", { reasoning: false, maxTokens: 65_536 });
 const reasoner = model("provider-a", "reasoner", {
@@ -277,7 +278,10 @@ describe("a call that spends its whole output budget on thinking", () => {
       .mockImplementationOnce(() => thinkingOnly(plain, "length"))
       .mockImplementation(() => reply(plain));
     const events = await run(request(plain));
-    expect(sentOptions().map((options) => options.maxTokens)).toEqual([4_096, 8_192]);
+    expect(sentOptions().map((options) => options.maxTokens)).toEqual([
+      DEFAULT_MODEL_MAX_TOKENS,
+      DEFAULT_MODEL_MAX_TOKENS * 2,
+    ]);
     const [first, second] = sentContexts();
     expect(second).toBe(first);
     expect(providerState.delay).not.toHaveBeenCalled();
@@ -338,9 +342,9 @@ describe("a call that spends its whole output budget on thinking", () => {
         (options as StreamOptions).maxTokens,
       ]),
     ).toEqual([
-      [plain.id, 4_096],
-      [plain.id, 8_192],
-      [backup.id, 4_096],
+      [plain.id, DEFAULT_MODEL_MAX_TOKENS],
+      [plain.id, DEFAULT_MODEL_MAX_TOKENS * 2],
+      [backup.id, DEFAULT_MODEL_MAX_TOKENS],
     ]);
     expect(texts(events)).toContain("From the backup.");
   });
@@ -348,14 +352,17 @@ describe("a call that spends its whole output budget on thinking", () => {
   it("takes a smaller output reservation the provider can afford after the raise", async () => {
     const router = model("openrouter", "router", { reasoning: false, maxTokens: 65_536 });
     providerState.models.set("openrouter/router", router as unknown as Record<string, unknown>);
-    const credits =
-      '402: {"message":"This request requires more credits, or fewer max_tokens. You requested up to 8192 tokens, but can only afford 6000.","metadata":{"limit_source":"openrouter_credits"}}';
+    const credits = `402: {"message":"This request requires more credits, or fewer max_tokens. You requested up to ${DEFAULT_MODEL_MAX_TOKENS * 2} tokens, but can only afford 6000.","metadata":{"limit_source":"openrouter_credits"}}`;
     providerState.stream
       .mockImplementationOnce(() => thinkingOnly(router, "length"))
       .mockImplementationOnce(() => thinkingOnly(router, "error", credits))
       .mockImplementation(() => reply(router));
     const events = await run(request(router));
-    expect(sentOptions().map((options) => options.maxTokens)).toEqual([4_096, 8_192, 6_000]);
+    expect(sentOptions().map((options) => options.maxTokens)).toEqual([
+      DEFAULT_MODEL_MAX_TOKENS,
+      DEFAULT_MODEL_MAX_TOKENS * 2,
+      6_000,
+    ]);
     expect(events.at(-1)).toEqual({ type: "done", text: "Recovered." });
   });
 
@@ -547,7 +554,11 @@ describe("a tool call cut at the output limit", () => {
       .mockImplementation(() => reply(plain, "Done."));
     const input = request(plain);
     const events = await run(input);
-    expect(sentOptions().map((options) => options.maxTokens)).toEqual([4_096, 8_192, 4_096]);
+    expect(sentOptions().map((options) => options.maxTokens)).toEqual([
+      DEFAULT_MODEL_MAX_TOKENS,
+      DEFAULT_MODEL_MAX_TOKENS * 2,
+      DEFAULT_MODEL_MAX_TOKENS,
+    ]);
     expect(input.executeTool).toHaveBeenCalledOnce();
     expect(vi.mocked(input.executeTool)?.mock.calls[0]?.slice(0, 2)).toEqual([
       "write_effect",
@@ -615,7 +626,10 @@ describe("a reply cut off at the output limit", () => {
       .mockImplementationOnce(() => replyAtLimit(plain, "Your login just"))
       .mockImplementation(() => streamedReply(plain, " expired. Sign in again."));
     const events = await run(request(plain));
-    expect(sentOptions().map((options) => options.maxTokens)).toEqual([4_096, 8_192]);
+    expect(sentOptions().map((options) => options.maxTokens)).toEqual([
+      DEFAULT_MODEL_MAX_TOKENS,
+      DEFAULT_MODEL_MAX_TOKENS * 2,
+    ]);
     expect(texts(events).join("")).toBe("Your login just expired. Sign in again.");
     expect(events.some((event) => event.type === "turn")).toBe(false);
     expect(events.at(-1)).toEqual({
@@ -749,7 +763,11 @@ describe("a reply cut off at the output limit", () => {
       .mockImplementationOnce(() => replyAtLimit(plain, "Part two. "))
       .mockImplementation(() => streamedReply(plain, "Part three."));
     const events = await run(request(plain));
-    expect(sentOptions().map((options) => options.maxTokens)).toEqual([4_096, 8_192, 16_384]);
+    expect(sentOptions().map((options) => options.maxTokens)).toEqual([
+      DEFAULT_MODEL_MAX_TOKENS,
+      DEFAULT_MODEL_MAX_TOKENS * 2,
+      DEFAULT_MODEL_MAX_TOKENS * 4,
+    ]);
     expect(events.at(-1)).toEqual({ type: "done", text: "Part one. Part two. Part three." });
   });
 
@@ -862,7 +880,10 @@ describe("a reply cut off at the output limit", () => {
       .mockImplementation(() => reply(plain, "Saved."));
     const input = request(plain);
     const events = await run(input);
-    expect(sentOptions().map((options) => options.maxTokens)).toEqual([4_096, 8_192]);
+    expect(sentOptions().map((options) => options.maxTokens)).toEqual([
+      DEFAULT_MODEL_MAX_TOKENS,
+      DEFAULT_MODEL_MAX_TOKENS * 2,
+    ]);
     expect(input.executeTool).not.toHaveBeenCalled();
     expect(sentContexts()[1]).not.toContain("hit the output limit");
     expect(events.at(-1)).toMatchObject({ type: "done" });

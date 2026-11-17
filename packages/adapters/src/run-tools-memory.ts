@@ -276,6 +276,10 @@ export const memoryTools: ToolHandlers = {
         else merged.push([...range]);
       }
       reads.set(document.id, { revision: document.revision, total: totalChars, ranges: merged });
+      if (merged.length === 1 && merged[0]![0] === 0 && merged[0]![1] === totalChars) {
+        ctx.source.memoryReviewedPaths ??= new Set();
+        ctx.source.memoryReviewedPaths.add(`${document.scope}:${document.path}`);
+      }
     }
     return call.finish(result);
   },

@@ -15,6 +15,8 @@ x-logging: &logging
 x-app-environment: &app-environment
   # Runtime
   NODE_ENV: production
+  FFMPEG_PATH:
+  RAKAZO_CONTEXT_STRATEGY:
   # The app's own login, subject to row-level security (docs/self-host-configuration.md#database-roles).
   DATABASE_URL: postgres://rakazo_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-rakazo}
   REALTIME_DATABASE_URL:
@@ -424,6 +426,7 @@ services:
       <<: *app-environment
       # Sign-in, sessions, billing and inbound webhooks: API only.
       API_HOST: "0.0.0.0"
+      MCP_OAUTH_CLIENT_NAME:
       API_PORT:
       BETTER_AUTH_SECRET:
       BETTER_AUTH_URL:

@@ -86,11 +86,13 @@ vi.mock("react-native", () => {
       onPress,
       onLongPress,
       accessibilityLabel,
+      disabled,
     }: {
       children?: ReactNode;
       onPress?: () => void;
       onLongPress?: () => void;
       accessibilityLabel?: string;
+      disabled?: boolean;
     }) =>
       createElement(
         "button",
@@ -99,6 +101,7 @@ vi.mock("react-native", () => {
           onClick: onPress,
           onContextMenu: onLongPress,
           "aria-label": accessibilityLabel,
+          disabled,
         },
         children,
       ),
@@ -242,6 +245,9 @@ function profileRpc(
     removeRoutine = async () => {
       throw new Error("unexpected routines/remove");
     },
+    testRun = async () => {
+      throw new Error("unexpected routines/testRun");
+    },
     history = async () => ({ runs: [], nextCursor: null }),
     computer = async () => ({ state: "stopped" }),
   }: {
@@ -249,6 +255,7 @@ function profileRpc(
     update?: () => Promise<unknown>;
     updateRoutine?: (input: { routineId: string; active: boolean }) => Promise<unknown>;
     removeRoutine?: (input: { routineId: string }) => Promise<unknown>;
+    testRun?: (input: { routineId: string }) => Promise<unknown>;
     history?: (input: { routineId: string; before?: unknown }) => Promise<unknown>;
     computer?: () => Promise<unknown>;
   } = {},
@@ -259,6 +266,7 @@ function profileRpc(
     if (procedure === "bots/update") return update();
     if (procedure === "routines/update") return updateRoutine(input);
     if (procedure === "routines/remove") return removeRoutine(input);
+    if (procedure === "routines/testRun") return testRun(input);
     if (procedure === "routines/history") return history(input);
     if (procedure === "computer/status") return computer();
     return Promise.reject(new Error(`unexpected ${procedure}`));
@@ -950,6 +958,57 @@ describe("routine detail", () => {
   beforeEach(() => {
     params.current = { botId: "bot-fixture", botName: "Fixture", routineId: "r1" };
     profileRpc(async () => [routine("r1", "Morning digest")]);
+  });
+
+  it("test runs a paused system routine once and refreshes its history", async () => {
+    let finish!: (run: unknown) => void;
+    const testRun = vi.fn(() => new Promise((resolve) => (finish = resolve)));
+    const history = vi.fn(async () => ({ runs: [], nextCursor: null }));
+    profileRpc(
+      async () => [routine("r1", "Daily review", { builtinKind: "daily-review", active: false })],
+      { testRun, history },
+    );
+    await render(createElement(RoutineDetail));
+    const control = button("Test run");
+    act(() => {
+      control.click();
+      control.click();
+    });
+    expect(testRun).toHaveBeenCalledExactlyOnceWith({ routineId: "r1" });
+    expect(container.querySelector<HTMLButtonElement>('[aria-label="Running…"]')?.disabled).toBe(
+      true,
+    );
+    const reads = history.mock.calls.length;
+    await act(async () => finish({ runId: "run-1" }));
+    expect(history.mock.calls.length).toBeGreaterThan(reads);
+    expect(button("Test run").disabled).toBe(false);
+    expect(container.textContent).toContain("Paused");
+  });
+
+  it("shows a failed test run and lets the user retry", async () => {
+    const testRun = vi.fn().mockRejectedValueOnce(new Error("offline")).mockResolvedValue({});
+    profileRpc(async () => [routine("r1", "Daily review", { builtinKind: "daily-review" })], {
+      testRun,
+    });
+    await render(createElement(RoutineDetail));
+    await act(async () => button("Test run").click());
+    expect(container.textContent).toContain("offline");
+    expect(button("Test run").disabled).toBe(false);
+    await act(async () => button("Test run").click());
+    expect(container.textContent).not.toContain("offline");
+    expect(testRun).toHaveBeenCalledTimes(2);
+  });
+
+  it("prevents test runs for read-only routines", async () => {
+    const testRun = vi.fn();
+    profileRpc(
+      async () => [routine("r1", "Daily review", { builtinKind: "daily-review", editable: false })],
+      { testRun },
+    );
+    await render(createElement(RoutineDetail));
+    expect(button("Test run").disabled).toBe(true);
+    act(() => button("Test run").click());
+    expect(testRun).not.toHaveBeenCalled();
   });
 
   it("hides Open conversation when opened from Profile", async () => {

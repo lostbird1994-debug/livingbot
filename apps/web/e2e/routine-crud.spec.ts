@@ -1,6 +1,6 @@
+import type { Bot, Routine } from "@livingbot/contracts";
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import type { Bot, Routine } from "@livingbot/contracts";
 import {
   activeBotId,
   captureScreenshot,
@@ -26,6 +26,47 @@ async function saveAndReturn(page: Page, procedure: "routines/create" | "routine
   await page.getByRole("button", { name: "Back" }).click();
   return response.request().postDataJSON().json;
 }
+
+test("a paused system routine can be test run without enabling its schedule", async ({
+  page,
+}, testInfo) => {
+  await signup(page, `system-test-run-${Date.now()}@livingbot.test`, "password12", "System test");
+  await completeOnboarding(page);
+  const botId = activeBotId(page);
+  const routines = await rpc<Routine[]>(page, "routines/list", { botId });
+  const builtin = routines.find((row) => row.builtinKind === "daily-review")!;
+  expect(builtin).toBeTruthy();
+  await rpc(page, "routines/update", { routineId: builtin.id, active: false });
+  await page.reload();
+  await openBotPanelTab(page, "Routines");
+  await page.getByRole("button", { name: builtin.name, exact: true }).click();
+  const control = page.getByRole("button", { name: "Test run", exact: true });
+  await expect(control).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Delete", exact: true })).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "system-routine-test-run");
+  const dispatched = page.waitForResponse((response) =>
+    response.url().includes("/rpc/routines/testRun"),
+  );
+  await control.click();
+  const response = await dispatched;
+  expect(response.ok()).toBe(true);
+  expect(response.request().postDataJSON().json).toEqual({ routineId: builtin.id });
+  await expect(control).toBeEnabled();
+  const saved = (await rpc<Routine[]>(page, "routines/list", { botId })).find(
+    (row) => row.id === builtin.id,
+  );
+  expect(saved).toMatchObject({
+    active: false,
+    builtinKind: builtin.builtinKind,
+    prompt: builtin.prompt,
+    crons: builtin.crons,
+    nextRunAt: null,
+  });
+  const history = await rpc<{ runs: Array<{ id: string }> }>(page, "routines/history", {
+    routineId: builtin.id,
+  });
+  expect(history.runs.length).toBeGreaterThan(0);
+});
 
 test("routine editing updates in place, preserves timezone, deletion persists, and model choice saves", async ({
   page,
@@ -62,7 +103,9 @@ test("routine editing updates in place, preserves timezone, deletion persists, a
   await expect(updatedButton).toContainText("Weekdays at 9:00 AM");
   await expect(page.getByRole("button", { name: /Tokyo check-in/ })).toHaveCount(0);
 
-  const [updated] = await rpc<Routine[]>(page, "routines/list", { botId });
+  const updated = (await rpc<Routine[]>(page, "routines/list", { botId })).find(
+    (row) => row.id === created.id,
+  );
   expect(updated).toMatchObject({
     name: "Weekday check-in",
     prompt: "Send the revised update",
@@ -90,7 +133,9 @@ test("routine editing updates in place, preserves timezone, deletion persists, a
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();
   await removeResponse;
   await expect(updatedButton).toHaveCount(0);
-  expect(await rpc<Routine[]>(page, "routines/list", { botId })).toEqual([]);
+  expect(
+    (await rpc<Routine[]>(page, "routines/list", { botId })).filter((row) => !row.builtinKind),
+  ).toEqual([]);
 
   // A routine runs on the bot's model until another is picked.
   await page.getByRole("button", { name: "Create Routine" }).click();
@@ -144,9 +189,11 @@ test("routine editing updates in place, preserves timezone, deletion persists, a
 
   await page.reload();
   await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
-  expect((await rpc<Routine[]>(page, "routines/list", { botId })).map((r) => r.name)).toEqual([
-    "Renamed model check",
-  ]);
+  expect(
+    (await rpc<Routine[]>(page, "routines/list", { botId }))
+      .filter((r) => !r.builtinKind)
+      .map((r) => r.name),
+  ).toEqual(["Renamed model check"]);
   await expect(updatedButton).toHaveCount(0);
 });
 
@@ -184,7 +231,7 @@ test("a successful routine create is not reported as failed when refresh fails",
 
   await page.unroute("**/rpc/routines/list");
   const routines = await rpc<Routine[]>(page, "routines/list", { botId });
-  expect(routines).toHaveLength(1);
+  expect(routines.filter((row) => !row.builtinKind)).toHaveLength(1);
   expect(routines[0]?.name).toBe("Persisted routine");
 });
 
@@ -381,7 +428,9 @@ test("change-trigger screenshot walkthrough", { tag: "@nightly" }, async ({ page
   await card.getByRole("textbox", { name: "Tool name", exact: true }).fill("");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("alert")).toHaveText("Pick a tool to check");
-  expect(await rpc<Routine[]>(page, "routines/list", { botId })).toEqual([]);
+  expect(
+    (await rpc<Routine[]>(page, "routines/list", { botId })).filter((row) => !row.builtinKind),
+  ).toEqual([]);
   await page.getByRole("alert").scrollIntoViewIfNeeded();
   await captureScreenshot(page, testInfo, "routine-watch-09-validation");
 
@@ -415,4 +464,69 @@ test("change-trigger screenshot walkthrough", { tag: "@nightly" }, async ({ page
     paths: ["inbox/", "reports/latest.csv"],
   });
   await captureScreenshot(page, testInfo, "routine-watch-10-saved-list");
+});
+
+test("built-in routines expose only activation and retain their instructions", async ({
+  page,
+}, testInfo) => {
+  await signup(
+    page,
+    `builtin-routines-${Date.now()}@livingbot.test`,
+    "password12",
+    "Routine settings",
+  );
+  await completeOnboarding(page);
+  const botId = activeBotId(page);
+  const rows = await rpc<Routine[]>(page, "routines/list", { botId });
+  expect(rows.filter((row) => row.builtinKind)).toHaveLength(4);
+  const review = rows.find((row) => row.builtinKind === "daily-review")!;
+  expect(review.crons).toEqual(["0 18 * * *"]);
+  expect(rows.find((row) => row.builtinKind === "memory-organization")!.crons).toEqual([
+    "10 18 * * *",
+  ]);
+  const workspace = rows.find((row) => row.builtinKind === "workspace-organization")!;
+  expect(workspace.name).toBe("Daily workspace organization");
+  expect(workspace.crons).toEqual(["20 18 * * *"]);
+  await page.reload();
+  await openBotPanelTab(page, "Routines");
+  await page.getByRole("button", { name: new RegExp(review.name) }).click();
+  await expect(page.getByRole("switch", { name: "Active", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Delete", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Test run", exact: true })).toHaveCount(0);
+  await expect(page.locator("input, textarea")).toHaveCount(0);
+  await page.getByText("Instruction", { exact: true }).click();
+  await expect(page.locator("pre")).toContainText(review.prompt);
+  await captureScreenshot(page, testInfo, "builtin-daily-review-settings");
+  await page.getByRole("switch", { name: "Active", exact: true }).click();
+  await saveAndReturn(page, "routines/update");
+  const saved = (await rpc<Routine[]>(page, "routines/list", { botId })).find(
+    (row) => row.id === review.id,
+  )!;
+  expect(saved.active).toBe(!review.active);
+  expect(saved.prompt).toBe(review.prompt);
+  const listSwitch = page.getByRole("switch", { name: `Active: ${review.name}`, exact: true });
+  await expect(listSwitch).toBeChecked();
+  const toggled = page.waitForResponse(
+    (response) => response.url().includes("/rpc/routines/update") && response.ok(),
+  );
+  await listSwitch.click();
+  expect((await toggled).request().postDataJSON().json).toEqual({
+    routineId: review.id,
+    active: false,
+  });
+  await expect(listSwitch).not.toBeChecked();
+  await expect(page.getByRole("button", { name: new RegExp(review.name) })).toContainText(
+    "6:00 PM",
+  );
+  await captureScreenshot(page, testInfo, "routine-list-activation-switches");
+  const audit = rows.find((row) => row.builtinKind === "context-audit")!;
+  expect(audit.usageTrigger).toEqual({ kind: "human-messages", count: 50, action: "ask" });
+  expect(audit.crons).toEqual([]);
+  expect(audit.active).toBe(true);
+  await expect(page.getByText("Non-time conditions", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: new RegExp(audit.name) }).click();
+  await expect(page.getByText("Every 50 human messages", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Delete", exact: true })).toHaveCount(0);
+  await expect(page.getByText("System", { exact: true })).toBeVisible();
+  await captureScreenshot(page, testInfo, "builtin-context-audit-settings");
 });

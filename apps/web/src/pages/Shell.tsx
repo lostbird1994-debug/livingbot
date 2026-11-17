@@ -411,6 +411,7 @@ function SpaceShell() {
     restoreRoutine,
     editRoutine,
     startRoutine,
+    toggleRoutine,
     resetRoutineTarget,
     leaveRoutine,
     addSkillRoutine,
@@ -1111,6 +1112,7 @@ function SpaceShell() {
                 key={`${active.id}:${selectedTask}`}
                 bot={active}
                 tabKey={selectedTask}
+                draftTitle={taskTabs.draftTitle(selectedTask)}
                 session={taskTabs.tasks.find((task) => task.id === selectedTask)}
                 rpc={rpc}
                 scope={`${shellSpaceId}:${userId ?? ""}`}
@@ -1333,7 +1335,7 @@ function SpaceShell() {
             }
             onCreate={() => startRoutine()}
             onEdit={startRoutine}
-            onStop={() => void stopRun()}
+            onToggle={toggleRoutine}
           />
         }
         routineEditorProps={routineEditorProps}

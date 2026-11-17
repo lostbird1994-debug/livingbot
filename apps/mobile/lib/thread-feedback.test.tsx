@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 
 import * as core from "@livingbot/core";
-import { AiConsentBlocked, MODEL_REQUIRED_SEND_ERROR, resolveComposerSendPlan } from "@livingbot/core";
+import {
+  AiConsentBlocked,
+  MODEL_REQUIRED_SEND_ERROR,
+  resolveComposerSendPlan,
+} from "@livingbot/core";
 import { router } from "expo-router";
 import type { ReactNode } from "react";
 import { act, createElement, useMemo } from "react";
@@ -118,15 +122,24 @@ describe("composer settlement", () => {
     expect(settleComposer(submitted, structuredClone(submitted))).toEqual({ clearComposer: true });
   });
 
-  it.each<Partial<ComposerSnapshot>>([
+  it.each([
     { promptText: "Edited" },
     { mentions: [{ kind: "bot", id: "bot-2", name: "Bot" }] },
-    { skill: { id: "skill-1", name: "Skill", description: "", source: "user", readOnly: false } },
+    {
+      skill: {
+        id: "skill-1",
+        name: "Skill",
+        description: "",
+        source: "user",
+        readOnly: false,
+        onDemand: false,
+      },
+    },
     { replyTargetId: "reply-2" },
     { replyQuote: "Edited quote" },
     { attachmentIds: ["attachment-1", "attachment-2"] },
     { attachmentIds: [] },
-  ])("keeps an edited composition: %j", (edit) => {
+  ] satisfies Partial<ComposerSnapshot>[])("keeps an edited composition: %j", (edit) => {
     const current = { ...submitted, ...edit };
     const before = structuredClone(current);
     expect(settleComposer(submitted, current)).toEqual({ clearComposer: false });

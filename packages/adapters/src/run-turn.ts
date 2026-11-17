@@ -1,12 +1,11 @@
-import { NativeExecutionError } from "./openclaw-native-driver.js";
 import type { AgentRuntimeEvent } from "@livingbot/adapter-kit";
 import {
   DEFAULT_CONTEXT_STRATEGY,
   historyCompactJob,
   ModelAccountError,
   ModelOutputError,
-  runContinueJob,
   RunInterruptedError,
+  runContinueJob,
   SandboxAllowanceUsedError,
   SandboxRateLimitError,
   TransientModelError,
@@ -29,16 +28,19 @@ import { returnBotMessageOutcome } from "./bot-messages.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import { holdComputerExecutionLeaseForTakeover } from "./computer-lifecycle.js";
 import { resolveBotWorkspacePath } from "./computer-support.js";
+import { maybeOfferContextAudit } from "./context-audit.js";
+import { assertDailyReviewComplete } from "./daily-review.js";
 import {
   COMPACTION_BATCH_SIZE,
   HISTORY_WINDOW_SIZE,
   shouldEnqueueCompaction,
 } from "./history-compaction.js";
 import {
+  isAutomaticMemoryPrompt,
   MEMORY_ORGANIZATION_COOLDOWN_MS,
-  MEMORY_ORGANIZATION_VERSION,
   nudgeMemoryOrganization,
 } from "./memory-organization.js";
+import { NativeExecutionError } from "./openclaw-native-driver.js";
 import {
   backOffRoutineAfterAccountError,
   clearRoutineBackoff,
@@ -659,6 +661,11 @@ export async function completeRun(ctx: RunContext) {
     throw new Error(
       "Memory organization did not finish; failed sources were preserved for a later retry.",
     );
+  if (
+    ctx.source.memoryOrganizationTargets?.some((path) => !ctx.source.memoryReviewedPaths?.has(path))
+  )
+    throw new Error("Memory review did not read all scheduled documents; progress was preserved.");
+  await assertDailyReviewComplete(ctx);
   const { reply } = ctx.state;
   recordExplicitNoResponse(reply, reply.assistantTurnText);
   ctx.computer.lazy.throwIfFailed();
@@ -844,7 +851,15 @@ export async function completeRun(ctx: RunContext) {
     ).catch((error) => getLogger().error("bot message result return", error));
   }
   const notifyBody = completionNotificationPreview(text);
-  if (runSendsFinishNotification(run.trigger) && notifyBody && !completed.continuationRunId) {
+  const hasManagedWork =
+    deps.taskWork &&
+    (await deps.prisma.externalEffect.count({ where: { runId, kind: "task_work_v1" } }));
+  if (
+    runSendsFinishNotification(run.trigger) &&
+    notifyBody &&
+    !completed.continuationRunId &&
+    !hasManagedWork
+  ) {
     await notifyRun(deps, run, {
       kind: "completion",
       title: `${displayName(bot.name, "Bot")} finished`,
@@ -883,7 +898,17 @@ export async function completeRun(ctx: RunContext) {
   }
   try {
     const scope = { spaceId: run.spaceId, userId: run.userId, botId: bot.id };
-    if (ctx.source.memoryMaintenance && ctx.task.prompt.startsWith(MEMORY_ORGANIZATION_VERSION)) {
+    if (ctx.source.memoryOrganizationFull) {
+      await deps.prisma.routine.updateMany({
+        where: { id: run.routineId!, ...scope },
+        data: { organizationFullCheckedAt: new Date() },
+      });
+    }
+    if (
+      ctx.source.memoryMaintenance &&
+      !ctx.source.fixedMemorySchedule &&
+      isAutomaticMemoryPrompt(ctx.task.prompt)
+    ) {
       const nextAllowed = new Date(Date.now() + MEMORY_ORGANIZATION_COOLDOWN_MS);
       await deps.prisma.routine.updateMany({
         where: {
@@ -895,8 +920,17 @@ export async function completeRun(ctx: RunContext) {
         },
         data: { nextRunAt: nextAllowed },
       });
+    } else if (ctx.source.dailyReview) {
+      if (ctx.source.dailyReviewBatch?.hasMore) {
+        await deps.prisma.routine.updateMany({
+          where: { id: run.routineId!, ...scope, active: true, builtinKind: "daily-review" },
+          data: { nextRunAt: new Date() },
+        });
+      }
+      await nudgeMemoryOrganization(deps.prisma, scope, new Date(), true);
     } else if (["user", "follow_up"].includes(run.trigger) && ctx.source.ownerStartedRun) {
       await nudgeMemoryOrganization(deps.prisma, scope);
+      await maybeOfferContextAudit(deps, scope);
     }
   } catch (error) {
     getLogger().error("memory.organization scheduling failed", error);
@@ -1023,6 +1057,13 @@ export async function failRun(
       "status",
       { forceUnread: true },
     ).catch((returnError) => getLogger().error("bot message failure return", returnError));
+  }
+  if (["user", "follow_up"].includes(run.trigger) && ctx.source.ownerStartedRun) {
+    await maybeOfferContextAudit(deps, {
+      spaceId: run.spaceId,
+      userId: run.userId,
+      botId: bot.id,
+    }).catch((error) => getLogger().error("context.audit reminder failed", error));
   }
   // A refusal of the deployment's own key is the operator's problem, not the user's.
   const refusal =

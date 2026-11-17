@@ -483,7 +483,18 @@ export function routineModelIssues(
 
 export const ROUTINE_MENTION_BATCH_MAX = 100;
 
+export const RoutineUsageTriggerSchema = z.object({
+  kind: z.literal("human-messages"),
+  count: z.number().int().min(1).max(1_000_000),
+  action: z.literal("ask"),
+});
+
 export const RoutineSchema = z.object({
+  usageTrigger: RoutineUsageTriggerSchema.nullable().optional(),
+  builtinKind: z
+    .enum(["daily-review", "memory-organization", "context-audit", "workspace-organization"])
+    .nullable()
+    .optional(),
   id: Id,
   botId: Id,
   name: z.string(),
@@ -887,7 +898,8 @@ export const PluginMarketplaceCatalogSchema = z.object({
 export type PluginMarketplaceCatalog = z.infer<typeof PluginMarketplaceCatalogSchema>;
 
 export const PLUGIN_SUBMISSIONS_PATH = "/api/v1/plugin-submissions";
-export const SUBMIT_PLUGIN_URL = "https://github.com/lostbird1994-debug/livingbot/blob/main/docs/build-a-plugin.md";
+export const SUBMIT_PLUGIN_URL =
+  "https://github.com/lostbird1994-debug/livingbot/blob/main/docs/build-a-plugin.md";
 
 const HttpsUrlSchema = z
   .string()

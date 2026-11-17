@@ -955,6 +955,8 @@ describe("cancelScheduleFromTool", () => {
     });
     expect(deleteMany).toHaveBeenCalledWith({
       where: {
+        builtinKind: null,
+        memoryMaintenance: false,
         spaceId: "ws-1",
         botId: "bot-1",
         userId: "user-1",
@@ -1247,4 +1249,25 @@ describe("updateScheduleFromTool", () => {
     });
     await expect(update({ name: "Inbox" })).resolves.toMatchObject({ ok: true, name: "Inbox" });
   });
+});
+
+it("refuses to cancel a built-in routine through an agent scheduling tool", async () => {
+  const remove = vi.fn();
+  const deps = {
+    prisma: {
+      routine: {
+        findFirst: vi.fn().mockResolvedValue({ id: "builtin", builtinKind: "daily-review" }),
+        deleteMany: remove,
+      },
+    },
+    jobs: { cancel: vi.fn() },
+  };
+  const result = await cancelScheduleFromTool(deps as never, {
+    spaceId: "space",
+    userId: "user",
+    botId: "bot",
+    routineId: "builtin",
+  });
+  expect(result).toHaveProperty("error");
+  expect(remove).not.toHaveBeenCalled();
 });

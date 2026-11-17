@@ -1,15 +1,16 @@
-import { ORPCError } from "@orpc/server";
 import { routineWakeupJob } from "@livingbot/adapter-kit";
 import { parseRoutineWatch, parseRoutineWatchState, routineRunModelPin } from "@livingbot/adapters";
 import type { Actor, CreateRoutineInput, Routine } from "@livingbot/contracts";
-import { canonicalPiProviderId } from "@livingbot/contracts";
+import { canonicalPiProviderId, RoutineUsageTriggerSchema } from "@livingbot/contracts";
 import {
+  builtinRoutineKind,
   hasMixedOneShotSchedule,
   isOneShotRoutineCrons,
   nextCronDateAcrossStrict,
 } from "@livingbot/core";
 import type { Prisma, PrismaClient } from "@livingbot/db";
-import { IsolationError } from "@livingbot/db";
+import { ensureBuiltinRoutines, IsolationError } from "@livingbot/db";
+import { ORPCError } from "@orpc/server";
 import type { RouterDeps } from "./router.js";
 import type { RouterContext } from "./routes/context.js";
 
@@ -78,6 +79,9 @@ export function firstWatchCheck(): Date {
 }
 
 export function mapRoutine(row: {
+  usageTrigger?: unknown;
+  builtinKind?: string | null;
+  memoryMaintenance?: boolean;
   id: string;
   botId: string;
   name: string;
@@ -101,6 +105,8 @@ export function mapRoutine(row: {
 }): Routine {
   return {
     id: row.id,
+    usageTrigger: RoutineUsageTriggerSchema.safeParse(row.usageTrigger).data ?? null,
+    builtinKind: builtinRoutineKind(row) as Routine["builtinKind"],
     botId: row.botId,
     name: row.name,
     prompt: row.prompt,
@@ -124,6 +130,7 @@ export function mapRoutine(row: {
 }
 
 export async function listRoutinesDto(deps: RouterDeps, actor: Actor, botId: string) {
+  await ensureBuiltinRoutines(deps.prisma, actor, botId);
   const rows = await deps.prisma.routine.findMany({
     where: { botId, spaceId: actor.spaceId },
   });

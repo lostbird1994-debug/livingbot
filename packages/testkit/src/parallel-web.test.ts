@@ -37,6 +37,7 @@ function executorFixture(
     leaseFence: 0,
   };
   const prisma = {
+    event: { findMany: vi.fn(async () => []) },
     user: { findUnique: vi.fn<() => Promise<{ timezone: string } | null>>(async () => null) },
     run: {
       findUnique: async () => run,
@@ -59,12 +60,13 @@ function executorFixture(
       findMany: async () => [],
     },
     attempt: {
+      findMany: vi.fn(async () => []),
       create: async () => ({ id: "attempt" }),
       update: vi.fn(),
       updateMany: async () => ({ count: 1 }),
     },
     thread: { findUniqueOrThrow: async () => ({ id: "thread", groupId: null }) },
-    message: { findMany: async () => [] },
+    message: { findMany: async () => [], findFirst: async () => null },
     task: {
       findUniqueOrThrow: async () => ({
         id: "task",
@@ -88,7 +90,7 @@ function executorFixture(
     scratchpadItem: { findMany: async () => [] },
     userActionApprovalRule: { findMany: async () => [] },
     userActionAutoReviewPreference: { findUnique: async () => ({ enabled: false }) },
-    externalEffect: { findMany: async () => [] },
+    externalEffect: { findMany: async () => [], count: async () => 0 },
     usageRecord: { createMany: async () => ({ count: 1 }) },
     modelCreditEntry: { findUnique: async () => null },
     $transaction: async (work: (tx: unknown) => Promise<unknown>) => work(prisma),

@@ -1,7 +1,9 @@
 {
   "id": "rakazo-collaboration",
   "name": "LivingBot collaboration",
-  "activation": { "onStartup": true },
+  "activation": {
+    "onStartup": true
+  },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
@@ -14,7 +16,10 @@
       "list_fleet",
       "connect_agent",
       "respond_agent_connection",
-      "message_agent"
+      "message_agent",
+      "start_job",
+      "job_status",
+      "stop_job"
     ]
   }
 }

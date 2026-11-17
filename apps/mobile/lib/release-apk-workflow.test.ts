@@ -11,10 +11,10 @@ const easConfig = JSON.parse(
 ) as { build: Record<string, { extends?: string; android?: { buildType?: string } }> };
 
 describe("Android APK release workflow", () => {
-  it("only runs on demand or from release-mobile, from main with release credentials", () => {
+  it("keeps publishing disabled until an independent publisher is configured", () => {
     expect(workflow).toMatch(/^on:\n {2}workflow_dispatch:\n {2}workflow_call:\n\n/m);
     expect(workflow).toContain("permissions:\n  contents: read");
-    expect(workflow).toContain("if: github.ref == 'refs/heads/main'");
+    expect(workflow).toContain("if: ${{ false }}");
     expect(workflow).toContain("persist-credentials: false");
     expect(workflow).not.toContain("cache: pnpm");
   });
