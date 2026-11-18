@@ -53,6 +53,7 @@ import {
   signupRequiresEmailVerification,
   stopsRunHelpers,
   takeLiveMessage,
+  toolCallFromPayload,
   updateCloudAgentMessages,
   upsertMessageById,
   withAbort,
@@ -1274,6 +1275,8 @@ export function blockText(message: MobileMessage) {
       if (block.kind === "file") {
         return `[file: ${block.name ?? "attachment"}${block.size ? ` (${block.size} bytes)` : ""}]`;
       }
+      // Mobile currently hides execution details; keep reasoning out of previews too.
+      if (block.kind === "reasoning") return "";
       if (block.kind === "steps") {
         return (block.steps ?? [])
           .map((step) => `${step.label}${step.count > 1 ? ` ×${step.count}` : ""}`)
@@ -1709,7 +1712,7 @@ export function applyMobileThreadEvent(
       role: "bot",
       blocks: reduceLiveMessageBlocks((previous?.blocks ?? []) as MessageBlock[], {
         type: "tool",
-        name: String(event.payload?.name ?? ""),
+        call: toolCallFromPayload(event.payload ?? {}),
       }),
       ...(event.botId ? { botId: event.botId } : {}),
       ...(event.runId ? { runId: event.runId } : {}),

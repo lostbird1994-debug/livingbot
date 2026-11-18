@@ -1185,6 +1185,8 @@ model Routine {
   /// Product-owned routine; users may only toggle active.
   builtinKind String?
   organizationFullCheckedAt DateTime?
+  /// Start of the running weekly sweep; a sweep keeps its coverage until it completes.
+  organizationSweepStartedAt DateTime?
   usageTrigger Json?
   usageSince DateTime?
   /// One explicit shared-memory organizer per member and space (partial unique index in SQL).
@@ -1384,6 +1386,29 @@ model MemoryRevision {
 
   @@unique([documentId, revision])
   @@map("memory_revisions")
+}
+
+/// Cross-run record of how far a memory review got with one document revision. `ranges` keeps
+/// the read coverage so a big note resumes in the next run instead of starting over.
+model MemoryDocumentCheck {
+  id         String   @id @default(cuid())
+  spaceId    String
+  botId      String
+  documentId String
+  revision   Int
+  chars      Int
+  /// "reading" (partial coverage), "read" (full text read), "checked" (settled by a finished run).
+  status     String
+  ranges     Json     @default("[]")
+  /// How this revision was settled: "read" (reviewed in full) or "rewrite" (this run wrote it).
+  settledBy  String?
+  runId      String?
+  checkedAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([documentId, revision])
+  @@index([botId, status])
+  @@map("memory_document_checks")
 }
 
 model AgentHome {

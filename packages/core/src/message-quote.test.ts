@@ -161,6 +161,12 @@ describe("deriveMessageQuote", () => {
 });
 
 describe("messageReplyExcerpt", () => {
+  it("excludes provider reasoning from reply previews and quotes", () => {
+    const blocks: MessageBlock[] = [{ kind: "reasoning", text: "Internal provider reasoning" }];
+    expect(messageReplyExcerpt(blocks, "bot")).toBe("");
+    expect(messageReplyPreview(blocks, "bot").text).toBe("");
+    expect(deriveMessageQuote(blocks, "Internal provider reasoning", "markdown")).toBeUndefined();
+  });
   it("uses the first visible line and strips bot Markdown", () => {
     expect(messageReplyExcerpt(textBlock("\n## **First** line\n\nSecond line"), "bot")).toBe(
       "First line",

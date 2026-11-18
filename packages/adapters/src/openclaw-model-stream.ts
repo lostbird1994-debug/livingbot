@@ -12,17 +12,14 @@ import {
   assertAllowedOpenAiCompatibleUrl,
   assertHttpsForKeyedOpenAiCompatibleUrl,
 } from "./openai-compatible-url.js";
-import type {
-  NativeFrame,
-  NativePeer,
-  NativeStore,
-} from "./openclaw-native-driver.js";
+import { connectOpenClawSdk, NativeRunJournal } from "./openclaw-gateway.js";
+import type { NativeFrame, NativeStore } from "./openclaw-native-driver.js";
 import {
   NativeExecutionError,
   nativeRunIndexKey,
   runNativeAgent,
 } from "./openclaw-native-driver.js";
-import { connectOpenClawSdk, NativeRunJournal } from "./openclaw-gateway.js";
+
 export { connectOpenClawSdk, NativeRunJournal } from "./openclaw-gateway.js";
 
 export const isOpenClawModel = (model: AgentRunRequest["model"]) =>
@@ -202,6 +199,9 @@ export function openClawModelStream(
             : undefined,
           onSteered: (fromRunUser) => emit({ type: "steered", fromRunUser }),
           onText,
+          thinking: request.model.thinkingLevel ?? undefined,
+          onThinking: (active) => emit({ type: "thinking", active }),
+          onReasoning: (text) => emit({ type: "thinking", active: true, text }),
           onUsage: (usage) => {
             nativeUsage = usage;
           },

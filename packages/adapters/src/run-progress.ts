@@ -51,7 +51,7 @@ export async function createReplyState(
     textSinceLastStep: "",
     narrationSoFar: "",
     narrationStatusShowing: false,
-    pendingToolNames: [],
+    pendingTools: [],
     pendingProgress: "",
     lastProgressAt: 0,
     hasStreamedText: false,
@@ -111,14 +111,14 @@ export function flushPendingTools(reply: ReplyState) {
     reply.messageSegments = appendTextSegment(reply.messageSegments, reply.currentTextSegment);
     reply.currentTextSegment = "";
   }
-  for (const name of reply.pendingToolNames) {
-    reply.messageSegments = appendToolCallSegment(reply.messageSegments, name);
+  for (const call of reply.pendingTools) {
+    reply.messageSegments = appendToolCallSegment(reply.messageSegments, call);
   }
-  reply.pendingToolNames = [];
+  reply.pendingTools = [];
 }
 
 export function tryFlushPendingTools(reply: ReplyState) {
-  if (reply.pendingToolNames.length > 0 && endsSentence(reply.currentTextSegment))
+  if (reply.pendingTools.length > 0 && endsSentence(reply.currentTextSegment))
     flushPendingTools(reply);
 }
 
@@ -129,12 +129,14 @@ export async function appendInlineVisual(ctx: RunContext, markdown: string) {
   const preview = reply.widgetPreview;
   // Commit the native engine's prose before its visual. Its final cumulative text
   // will skip this prefix, so the same prose cannot be duplicated after the visual.
-  const prefix = preview?.text.startsWith(preview.committed)
-    ? preview.text.slice(preview.committed.length)
-    : "";
+  const committed =
+    preview?.narration && preview.narration.length > preview.committed.length
+      ? preview.narration
+      : (preview?.committed ?? "");
+  const prefix = preview?.text.startsWith(committed) ? preview.text.slice(committed.length) : "";
   if (preview) {
     preview.anchors.push({ at: preview.text.length, markdown });
-    if (prefix) preview.committed = preview.text;
+    if (preview.text.startsWith(committed)) preview.committed = preview.text;
   }
   const text = `${prefix}\n\n${markdown}\n\n`;
   reply.assembled += text;

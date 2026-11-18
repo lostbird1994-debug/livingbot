@@ -701,7 +701,7 @@ describe("threadSnapshot", () => {
           blocks: [
             {
               kind: "steps",
-              steps: [{ label: "Slack find channels", count: 1 }],
+              steps: [{ label: "Slack find channels", count: 1, tool: "SLACK_FIND_CHANNELS" }],
             },
           ],
         }),
@@ -1032,7 +1032,12 @@ describe("threadSnapshot", () => {
       }),
     );
     expect(snapshot.run).toEqual(
-      expect.objectContaining({ id: "run-failed", status: "failed", error: "member exploded", routineName: "Scheduled inventory check" }),
+      expect.objectContaining({
+        id: "run-failed",
+        status: "failed",
+        error: "member exploded",
+        routineName: "Scheduled inventory check",
+      }),
     );
     expect(snapshot.activeRuns).toEqual([]);
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {

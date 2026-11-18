@@ -11,23 +11,26 @@ import type { ChildBotBlock, PeerExchange } from "@livingbot/core";
 import { isPeerReceiptBlocks, isSecretAskBlock, isToolActivityBlock } from "@livingbot/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@livingbot/ui-web";
 import { UserRound } from "lucide-react";
-import { Link } from "react-router-dom";
 import { memo, useCallback, useMemo } from "react";
-import { MessageDeliveryFiles } from "../../components/MessageDeliveryFiles";
+import { Link } from "react-router-dom";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
 import { CloudAgentCard } from "../../components/CloudAgentCard";
 import { LocalMessageFileLink } from "../../components/LocalMessageFileLink";
+import { MessageDeliveryFiles } from "../../components/MessageDeliveryFiles";
 import { SubagentCard } from "../../components/SubagentCard";
 import {
+  ActivityTimeline,
   LIVE_TOOL_STEP_WINDOW,
+  ReasoningActivity,
   StandaloneToolActivity,
   ToolActivityDisclosure,
   ToolOnlyNarration,
   ToolSteps,
 } from "../../components/ToolActivityDisclosure";
 import { SkillDraftCard } from "../../components/teach/SkillDraftCard";
+import { groupActivityBlocks, needsTimeline } from "../../lib/activity-timeline";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { messageProviderLabel } from "../../lib/messaging";
 import {
@@ -131,7 +134,11 @@ export const MessageView = memo(function MessageView({
     message.role === "bot" &&
     message.blocks.length > 0 &&
     message.blocks.every(
-      (block) => block.kind === "text" || block.kind === "progress" || block.kind === "steps",
+      (block) =>
+        block.kind === "text" ||
+        block.kind === "progress" ||
+        block.kind === "steps" ||
+        block.kind === "reasoning",
     );
   const isLive = message.id.startsWith("progress:");
   const deliveredFiles =
@@ -286,13 +293,48 @@ export const MessageView = memo(function MessageView({
                   </span>
                 </div>
               )}
-              {visibleNarrationBlocks.map((block, i) => {
+              {groupActivityBlocks(visibleNarrationBlocks).map((segment, i) => {
+                if (segment.kind === "activity" && needsTimeline(segment))
+                  return (
+                    <ActivityTimeline
+                      key={i}
+                      blocks={segment.blocks}
+                      live={isLive}
+                      activeBlock={visibleNarrationBlocks.at(-1)}
+                      renderText={(block) => (
+                        <div
+                          data-quote-message-id={block.kind === "text" ? quoteMessageId : undefined}
+                        >
+                          <ChatMarkdown
+                            streaming={
+                              isLive &&
+                              block.kind === "progress" &&
+                              block === visibleNarrationBlocks.at(-1)
+                            }
+                            renderMention={renderMention}
+                            renderLocalFile={!isLive ? renderLocalFile : undefined}
+                          >
+                            {block.text}
+                          </ChatMarkdown>
+                        </div>
+                      )}
+                    />
+                  );
+                const block = segment.kind === "activity" ? segment.blocks[0]! : segment.block;
+                if (block.kind === "reasoning")
+                  return (
+                    <ReasoningActivity
+                      key={i}
+                      text={block.text}
+                      live={isLive && block === visibleNarrationBlocks.at(-1)}
+                    />
+                  );
                 if (block.kind === "steps") {
                   return (
                     <ToolActivityDisclosure
                       key={i}
                       live={isLive}
-                      stepCount={toolStepCount(block.steps)}
+                      toolCount={toolStepCount(block.steps)}
                       durationMs={block.durationMs}
                     >
                       <ToolSteps
@@ -310,7 +352,11 @@ export const MessageView = memo(function MessageView({
                       data-quote-message-id={block.kind === "text" ? quoteMessageId : undefined}
                     >
                       <ChatMarkdown
-                        streaming={block.kind === "progress"}
+                        streaming={
+                          isLive &&
+                          block.kind === "progress" &&
+                          block === visibleNarrationBlocks.at(-1)
+                        }
                         renderMention={renderMention}
                         renderLocalFile={
                           message.role === "bot" && !isLive ? renderLocalFile : undefined
@@ -340,14 +386,43 @@ export const MessageView = memo(function MessageView({
           message.role === "user" && !peerReceipt && "items-end",
         )}
       >
-        {blocks.map((block, i) => {
+        {groupActivityBlocks(visibleNarrationBlocks).map((segment, i) => {
+          if (showToolActivity && segment.kind === "activity" && needsTimeline(segment))
+            return (
+              <ActivityTimeline
+                key={i}
+                blocks={segment.blocks}
+                live={isLive}
+                activeBlock={visibleNarrationBlocks.at(-1)}
+                renderText={(block) => (
+                  <ChatMarkdown
+                    streaming={
+                      isLive && block.kind === "progress" && block === visibleNarrationBlocks.at(-1)
+                    }
+                    renderMention={renderMention}
+                    renderLocalFile={!isLive ? renderLocalFile : undefined}
+                  >
+                    {block.text}
+                  </ChatMarkdown>
+                )}
+              />
+            );
+          const block = segment.kind === "activity" ? segment.blocks[0]! : segment.block;
+          if (block.kind === "reasoning" && showToolActivity)
+            return (
+              <ReasoningActivity
+                key={i}
+                text={block.text}
+                live={isLive && block === visibleNarrationBlocks.at(-1)}
+              />
+            );
           if (block.kind === "steps" && shouldRenderToolCard(block, showToolActivity)) {
             return (
               <StandaloneToolActivity
                 key={i}
                 live={isLive}
                 steps={block.steps}
-                stepCount={toolStepCount(block.steps)}
+                toolCount={toolStepCount(block.steps)}
                 durationMs={block.durationMs}
               />
             );
@@ -371,10 +446,8 @@ export const MessageView = memo(function MessageView({
           if (block.kind === "bot_message_sent" || block.kind === "bot_message_received") {
             const sent = block.kind === "bot_message_sent";
             if (
-              i !==
-              blocks.findIndex(
-                (b) => b.kind === "bot_message_sent" || b.kind === "bot_message_received",
-              )
+              block !==
+              blocks.find((b) => b.kind === "bot_message_sent" || b.kind === "bot_message_received")
             )
               return null;
             const peer = peerExchange?.peerBotName ?? (sent ? block.toBotName : block.fromBotName);
@@ -433,7 +506,7 @@ export const MessageView = memo(function MessageView({
                   dir="auto"
                 >
                   <ChatMarkdown
-                    streaming
+                    streaming={isLive && block === visibleNarrationBlocks.at(-1)}
                     renderMention={renderMention}
                     renderLocalFile={
                       message.role === "bot" && !isLive ? renderLocalFile : undefined
@@ -559,7 +632,7 @@ export const MessageView = memo(function MessageView({
                 >
                   <LinkifiedText>{block.text}</LinkifiedText>
                 </div>
-                {i === hoverAnchorIndex ? hoverActions : null}
+                {block === blocks[hoverAnchorIndex] ? hoverActions : null}
               </div>
             );
           }
@@ -582,7 +655,7 @@ export const MessageView = memo(function MessageView({
                     </ChatMarkdown>
                   </div>
                 </div>
-                {i === hoverAnchorIndex ? hoverActions : null}
+                {block === blocks[hoverAnchorIndex] ? hoverActions : null}
               </div>
             );
           }
@@ -617,7 +690,7 @@ export const MessageView = memo(function MessageView({
                   }
                   onDismiss={() => onAnswer(message, "", undefined, true)}
                 />
-                {i === hoverAnchorIndex ? hoverActions : null}
+                {block === blocks[hoverAnchorIndex] ? hoverActions : null}
               </div>
             );
           }

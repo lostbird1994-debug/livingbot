@@ -15,6 +15,7 @@ const skills = vi.hoisted(() => ({
 vi.mock("../../lib/rpc", () => ({ rpc: { skills } }));
 
 vi.mock("@lingui/core/macro", () => ({
+  t: (strings: TemplateStringsArray, ...values: unknown[]) => String.raw(strings, ...values),
   plural: (count: number, forms: { one: string; other: string }) =>
     (count === 1 ? forms.one : forms.other).replace("#", String(count)),
 }));
@@ -120,6 +121,23 @@ it("keeps a received peer marker off the user's side while user replies align to
 
   renderView("user", [{ kind: "text", text: "Thanks." }]);
   expect(container.querySelector(".items-end")?.textContent).toContain("Thanks.");
+});
+
+it("keeps every process paragraph and approval visible when execution details are hidden", () => {
+  renderView("bot", [
+    { kind: "reasoning", text: "Provider thought." },
+    { kind: "text", text: "I will inspect the source." },
+    { kind: "steps", steps: [{ label: "Read", count: 1, detail: "example.ts" }] },
+    { kind: "progress", text: "The source confirms the cause." },
+    { kind: "ask", text: "Continue with the change?", status: "pending" },
+    { kind: "text", text: "The final recommendation." },
+  ]);
+  expect(container.textContent).toContain("I will inspect the source.");
+  expect(container.textContent).toContain("The source confirms the cause.");
+  expect(container.textContent).toContain("Continue with the change?");
+  expect(container.textContent).toContain("The final recommendation.");
+  expect(container.textContent).not.toContain("Provider thought.");
+  expect(container.querySelector('[data-testid="tool-activity"]')).toBeNull();
 });
 
 it("names a new bot inline in the reply, in its color", () => {

@@ -3,6 +3,7 @@ import type {
   AutoReviewProvider,
   ConnectorCall,
   ConnectorTool,
+  MemorySnapshot,
 } from "@livingbot/adapter-kit";
 import { MEMORY_REVISION_CONFLICT_ERROR } from "@livingbot/adapter-kit";
 import type { ModelRoleSettings } from "@livingbot/contracts";
@@ -100,9 +101,11 @@ function fixture({
   userDevices,
   botUserId = "user-1",
   batch,
+  botMemoryDocuments,
 }: {
   /** The tool runs the actions its arguments name; see ConnectorTool.batch. */
   batch?: ConnectorTool["batch"];
+  botMemoryDocuments?: MemorySnapshot["documents"];
   userDevices?: UserDeviceGateway;
   /** The bot's owner; runs are started by user-1. */
   botUserId?: string;
@@ -553,7 +556,9 @@ function fixture({
                   updatedAt: "",
                 },
               ]
-            : [];
+            : request.scope === "bot"
+              ? (botMemoryDocuments ?? [])
+              : [];
         if (advanceRevisionAfterRead && request.path === "MEMORY.md") {
           sharedMemoryState.content = "Someone else edited";
           sharedMemoryState.revision += 1;
@@ -737,6 +742,17 @@ describe("connector read-only metadata and approval enforcement", () => {
         trigger: "routine",
         builtin: true,
         prompt: "Memory organization v1.\nOrganize memory.",
+        botMemoryDocuments: changed
+          ? [
+              {
+                id: "memory-1",
+                path: "MEMORY.md",
+                content: "A fixture note awaiting review.",
+                revision: 1,
+                updatedAt: new Date(Date.now() - 60_000).toISOString(),
+              },
+            ]
+          : [],
       });
       const run = await f.prisma.run.findUnique();
       Object.assign(run!, {
@@ -750,6 +766,10 @@ describe("connector read-only metadata and approval enforcement", () => {
         updateMany: vi.fn(async () => ({ count: 1 })),
       });
       Object.assign(f.prisma, {
+        memoryDocumentCheck: {
+          updateMany: vi.fn(async () => ({ count: 0 })),
+          findMany: vi.fn(async () => []),
+        },
         memoryDocument: {
           findMany: vi.fn(async () =>
             changed

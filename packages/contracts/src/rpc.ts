@@ -931,6 +931,8 @@ export const appContract = {
               completedAt: z.string().nullable(),
               modelId: z.string().nullable(),
               unchanged: z.boolean(),
+              /** Documents left for later runs; present only when the review was partial. */
+              remaining: z.number().int().optional(),
               changes: z.array(MemoryOrganizationChangeSchema.omit({ tool: true })),
             }),
           ),

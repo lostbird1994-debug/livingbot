@@ -238,8 +238,12 @@ msgid "{header}, column {index}"
 msgstr "{header}，第 {index} 列"
 
 #: src/components/ToolActivityDisclosure.tsx
-msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
-msgstr "{hidden, plural, one {+# 个更早的步骤} other {+# 个更早的步骤}}"
+#~ msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
+#~ msgstr "{hidden, plural, one {+# 个更早的步骤} other {+# 个更早的步骤}}"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "{hidden, plural, one {Show # earlier step} other {Show # earlier steps}}"
+msgstr "{hidden, plural, one {查看更早的 # 个步骤} other {查看更早的 # 个步骤}}"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "{hiddenSelectedCount, plural, one {# selected model is hidden by your search.} other {# selected models are hidden by your search.}}"
@@ -1203,6 +1207,10 @@ msgstr "浏览"
 msgid "Browse MCP servers"
 msgstr "浏览 MCP 服务器"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Browsed"
+msgstr "浏览"
+
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Bubble opacity"
 msgstr "气泡不透明度"
@@ -1210,6 +1218,10 @@ msgstr "气泡不透明度"
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Bubbles"
 msgstr "气泡"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Building"
+msgstr "构建项目"
 
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
@@ -1232,6 +1244,14 @@ msgstr "回拨"
 #: src/components/call/CallCard.tsx
 msgid "Call with {0}"
 msgstr "与 {0} 通话"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Called"
+msgstr "调用"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Calling an endpoint"
+msgstr "请求接口"
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Calling you…"
@@ -1329,6 +1349,10 @@ msgstr "更换模型"
 msgid "Change password"
 msgstr "修改密码"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Changing directory"
+msgstr "切换目录"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
 msgstr "正在修改…"
@@ -1410,6 +1434,10 @@ msgstr "正在检查电脑设置…"
 #: src/components/McpServerHealthLine.tsx
 msgid "Checking connection…"
 msgstr "正在检查连接…"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Checking the environment"
+msgstr "查看环境"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
@@ -1631,8 +1659,13 @@ msgid "Complete"
 msgstr "完成"
 
 #: src/components/SubagentCard.tsx
+#: src/components/ToolActivityDisclosure.tsx
 msgid "Completed"
 msgstr "已完成"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Completed {duration}"
+msgstr "已完成 {duration}"
 
 #: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
@@ -2649,6 +2682,10 @@ msgstr "天"
 msgid "Decline"
 msgstr "拒绝"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Deep thought"
+msgstr "深度思考"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/role-model-picker.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -2973,6 +3010,14 @@ msgstr "编辑资料"
 #: src/pages/SettingsOverlay.tsx
 msgid "Editing"
 msgstr "正在编辑"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Editing a file"
+msgstr "修改文件"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Editing files"
+msgstr "修改文件"
 
 #: src/pages/LoadedContextPanel.tsx
 msgid "Edits affect your bots using this document in this workspace."
@@ -3625,6 +3670,10 @@ msgstr "输入"
 msgid "Install update"
 msgstr "安装更新"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Installing dependencies"
+msgstr "安装依赖"
+
 #: src/components/McpServerHealthLine.tsx
 msgid "Installing…"
 msgstr "正在安装…"
@@ -3843,6 +3892,10 @@ msgstr "正在聆听…"
 #: src/components/composer/DictationInput.tsx
 msgid "Listening… Click the microphone to finish."
 msgstr "正在聆听…点击麦克风结束。"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Listing files"
+msgstr "列出文件"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "LivingBot"
@@ -4327,6 +4380,10 @@ msgstr "移动到"
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move up"
 msgstr "上移"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Moving files"
+msgstr "整理文件"
 
 #: src/components/call/CallCard.tsx
 msgid "Mute"
@@ -5126,6 +5183,10 @@ msgstr "私有"
 msgid "Private workspace with its own bots and groups."
 msgstr "单独的工作区，有自己的 Bot 和群组。"
 
+#: src/components/ToolActivityDisclosure.tsx
+#~ msgid "Processed {duration}"
+#~ msgstr "已处理 {duration}"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
 msgstr "效率"
@@ -5168,6 +5229,10 @@ msgstr "排队中"
 msgid "rakazo-shared and IDs starting with bot- are reserved for LivingBot."
 msgstr "rakazo-shared 和以 bot- 开头的 ID 保留给 LivingBot 使用。"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Ran"
+msgstr "运行"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
 msgstr "回应"
@@ -5176,9 +5241,25 @@ msgstr "回应"
 msgid "Reactions"
 msgstr "表情回应"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Read"
+msgstr "读取"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
 msgstr "朗读回复"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reading a file"
+msgstr "查看文件"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reading a page"
+msgstr "读取网页"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reading memory"
+msgstr "查看记忆"
 
 #: src/pages/shell/import-status.ts
 msgid "Ready"
@@ -5611,6 +5692,14 @@ msgstr "检查完成，本次未修改文档"
 msgid "Review provider settings and test again."
 msgstr "请检查提供方设置并重新测试。"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reviewing changes"
+msgstr "查看改动"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reviewing history"
+msgstr "查看提交记录"
+
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Revoke"
@@ -5682,6 +5771,14 @@ msgstr "运行中"
 #: src/pages/RoutineEditor.tsx
 msgid "Running"
 msgstr "运行中"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Running a script"
+msgstr "运行脚本"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Running tests"
+msgstr "运行测试"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Running…"
@@ -5860,6 +5957,22 @@ msgstr "搜索技能"
 #: src/pages/ActivityList.tsx
 msgid "Search: {0}"
 msgstr "搜索：{0}"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searched"
+msgstr "搜索"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searching memory"
+msgstr "搜索记忆"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searching the files"
+msgstr "搜索内容"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searching the web"
+msgstr "网页搜索"
 
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/SpaceSearch.tsx
@@ -7001,6 +7114,10 @@ msgstr "使用工作区默认"
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "最多 512 个字母、数字、_ 或 -。"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Used"
+msgstr "操作"
+
 #: src/pages/BotRoleCardEditor.tsx
 msgid "User identity"
 msgstr "用户身份"
@@ -7111,6 +7228,10 @@ msgstr "请稍候并重新测试。"
 #: src/lib/roster-status.ts
 msgid "Waiting in line…"
 msgstr "排队等候…"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Waiting on a command"
+msgstr "等待命令返回"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Waiting…"
@@ -7266,6 +7387,14 @@ msgstr "工作区设置"
 #: src/pages/LoadedContextPanel.tsx
 msgid "Workspace-shared memory"
 msgstr "工作区共享记忆"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Writing a file"
+msgstr "写入文件"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Wrote"
+msgstr "写入"
 
 #: src/lib/billing.ts
 msgid "year"

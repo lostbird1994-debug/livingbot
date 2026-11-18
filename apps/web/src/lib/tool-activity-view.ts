@@ -11,15 +11,19 @@ export function toolStepCount(steps: readonly { count: number }[]): number {
  * A `progress` block marked `activity: true` never renders, in either mode.
  */
 export function shouldRenderToolCard(block: MessageBlock, showToolActivity: boolean): boolean {
-  return showToolActivity && block.kind === "steps";
+  return showToolActivity && (block.kind === "steps" || block.kind === "reasoning");
 }
 
-/** Blocks that survive into a message render. */
+/**
+ * Legacy tool notes are assistant prose, not reasoning. Expand them in either mode so the
+ * timeline can retain their position without giving every paragraph another disclosure.
+ */
 export function renderableMessageBlocks(
   blocks: readonly MessageBlock[],
   showToolActivity: boolean,
 ): MessageBlock[] {
-  return expandToolStepNotes(blocks).filter((block) => isShown(block, showToolActivity));
+  const display = expandToolStepNotes(blocks);
+  return display.filter((block) => isShown(block, showToolActivity));
 }
 
 function isShown(block: MessageBlock, showToolActivity: boolean): boolean {

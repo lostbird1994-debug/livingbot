@@ -24,6 +24,7 @@ import { sanitizedError } from "@livingbot/logging/monitoring";
 import { protectedComputerLifecycleRefusal } from "./desktop-command-guard.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { routineRunModelPin } from "./model-selection.js";
+import { NATIVE_CONNECT_TIMEOUT_MESSAGE, NativeExecutionError } from "./openclaw-native-driver.js";
 import { findPendingRoutineTick, routineTimerNonce } from "./routine-coalescing.js";
 import { tickRoutineWatch } from "./routine-watch.js";
 import { isUniqueViolation } from "./run-messages.js";
@@ -54,7 +55,15 @@ function routineNextRunIsNear(nextRunAt: Date | null, retryAt: number): boolean 
  * Queue one later retry of a routine run that a transient model error stopped before it posted
  * a message or called a tool. Effects are keyed to their run, so a retry after either could
  * repeat them. Returns whether a retry was queued.
+ *
+ * A briefly unreachable external runtime fails the connect handshake before any model output or
+ * tool call. That is infrastructure, not the model, and one blip must not cost a whole day.
  */
+function isRetryableRoutineFailure(error: unknown) {
+  if (error instanceof TransientModelError) return true;
+  return error instanceof NativeExecutionError && error.message === NATIVE_CONNECT_TIMEOUT_MESSAGE;
+}
+
 export async function scheduleRoutineRetry(
   deps: ExecutorDeps,
   run: {
@@ -66,14 +75,8 @@ export async function scheduleRoutineRetry(
   },
   error: unknown,
 ): Promise<boolean> {
-  if (
-    run.trigger !== "routine" ||
-    !run.routineId ||
-    run.retryOfRunId ||
-    !(error instanceof TransientModelError)
-  ) {
-    return false;
-  }
+  if (run.trigger !== "routine" || !run.routineId || run.retryOfRunId) return false;
+  if (!isRetryableRoutineFailure(error)) return false;
   try {
     const retryAt = Date.now() + ROUTINE_RETRY_DELAY_MS;
     const [routine, toolCalls, botMessages] = await Promise.all([

@@ -1924,6 +1924,17 @@ async function finalizeRunOnce(
       },
     });
     if (terminal.count !== 1) return null;
+    if (input.outcome === "completed") {
+      // `unconfirmed` pauses a turn so the user can verify an execution state the engine
+      // could not report. A finished turn has that state, so the wait must not outlive it;
+      // whatever may already have run stays visible through the conversation-owned work,
+      // which keeps its own row. `background_work` is left alone: work the turn handed to
+      // the host outlives the turn by design.
+      await tx.run.updateMany({
+        where: { id: input.runId, resourceWaitReason: "unconfirmed" },
+        data: { resourceWaitReason: null },
+      });
+    }
     await tx.externalEffect.deleteMany({
       where: {
         runId: input.runId,

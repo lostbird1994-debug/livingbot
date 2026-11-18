@@ -22,26 +22,41 @@ describe("tool step count", () => {
 });
 
 describe("tool card render decisions", () => {
-  it.each([true, false])(
-    "keeps legacy report text visible when showToolActivity=%s",
-    (showTools) => {
-      const blocks: MessageBlock[] = [
-        {
-          kind: "steps",
-          steps: [{ label: "Shell", count: 33, note: "Full report before the later output." }],
-        },
-        { kind: "text", text: "This output confirms it." },
-      ];
-      const visible = renderableMessageBlocks(blocks, showTools);
-      expect(visible.filter((block) => block.kind === "text").map((block) => block.text)).toEqual([
-        "Full report before the later output.",
-        "This output confirms it.",
-      ]);
-      expect(isToolOnlyNarration(blocks, showTools)).toBe(false);
-      expect(messageHasVisibleBlocks([blocks[0]!], showTools)).toBe(true);
-      expect(JSON.stringify(visible)).not.toContain('"note"');
+  it("keeps reasoning separate and hides it with execution details", () => {
+    const reasoning: MessageBlock = { kind: "reasoning", text: "Provider reasoning" };
+    expect(renderableMessageBlocks([reasoning, stepsBlock, textBlock], false)).toEqual([textBlock]);
+    expect(renderableMessageBlocks([reasoning, stepsBlock, textBlock], true)).toEqual([
+      reasoning,
+      stepsBlock,
+      textBlock,
+    ]);
+  });
+  const noted: MessageBlock[] = [
+    {
+      kind: "steps",
+      steps: [{ label: "Shell", count: 33, note: "Full report before the later output." }],
     },
-  );
+    { kind: "text", text: "This output confirms it." },
+  ];
+
+  it("keeps a note readable as text while cards are hidden", () => {
+    const visible = renderableMessageBlocks(noted, false);
+    expect(visible.filter((block) => block.kind === "text").map((block) => block.text)).toEqual([
+      "Full report before the later output.",
+      "This output confirms it.",
+    ]);
+    expect(isToolOnlyNarration(noted, false)).toBe(false);
+  });
+
+  it("keeps process prose between operations while cards are shown", () => {
+    const wedged: MessageBlock[] = [
+      { kind: "steps", steps: [{ label: "Read file", count: 1 }] },
+      { kind: "text", text: "Full report before the later output." },
+      { kind: "steps", steps: [{ label: "Shell", count: 2 }] },
+      { kind: "text", text: "This output confirms it." },
+    ];
+    expect(renderableMessageBlocks(wedged, true)).toEqual(wedged);
+  });
 
   it("renders only steps blocks, and only when the preference is on", () => {
     expect(shouldRenderToolCard(stepsBlock, true)).toBe(true);

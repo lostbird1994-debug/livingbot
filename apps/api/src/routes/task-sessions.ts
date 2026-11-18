@@ -1,16 +1,20 @@
 import { runContinueJob } from "@livingbot/adapter-kit";
 import { validateBotModelChange } from "@livingbot/adapters";
 import type { Actor, TaskSession } from "@livingbot/contracts";
-import { MODEL_REQUIRED_SEND_ERROR } from "@livingbot/core";
+import { isTerminal, MODEL_REQUIRED_SEND_ERROR } from "@livingbot/core";
 import type { BotTaskSession } from "@livingbot/db";
 import {
   appendEventInTransaction,
   availableInSpace,
   createThreadMessageInTransaction,
+  effectiveWaitReason,
   IsolationError,
   listTaskWork,
   primaryActiveRun,
+  TASK_WORK_ACTIVE,
+  TASK_WORK_KIND,
   THREAD_LOCK_TRANSACTION_OPTIONS,
+  UNRESOLVED_RUN_WAIT,
 } from "@livingbot/db";
 import { ORPCError } from "@orpc/server";
 import { buildSendPrompt, buildUserMessageBlocks, resolveSendAttachments } from "../artifacts.js";
@@ -18,6 +22,22 @@ import { withSerializableRetry } from "../serializable-retry.js";
 import { resolveThreadTarget, stopThreadRuns } from "../thread-target.js";
 import type { RouterContext } from "./context.js";
 import { botsRunOwnModels, modelSetup } from "./shared.js";
+
+/** A conversation is as busy as its most attention-needing work item. */
+const WORK_RUN_STATUS: Record<string, string> = {
+  starting: "running",
+  running: "running",
+  polling: "running",
+  stopping: "stopping",
+  unconfirmed: "unconfirmed",
+};
+function workRunStatus(status: string): string {
+  return WORK_RUN_STATUS[status.replace(/^work_/, "")] ?? "running";
+}
+function mostUrgent(current: string | undefined, next: string): string {
+  const rank = (status: string) => (status === "unconfirmed" ? 2 : status === "stopping" ? 1 : 0);
+  return current && rank(current) >= rank(next) ? current : next;
+}
 
 export function taskSessionsRoutes(ctx: RouterContext) {
   const { deps, authed } = ctx;
@@ -63,7 +83,7 @@ export function taskSessionsRoutes(ctx: RouterContext) {
           ? "unconfirmed"
           : work.length
             ? null
-            : (latest?.resourceWaitReason ?? null)),
+            : effectiveWaitReason(latest?.status ?? "", latest?.resourceWaitReason)),
     };
   }
   async function owned(actor: Actor, input: { botId: string; taskSessionId: string }) {
@@ -79,29 +99,83 @@ export function taskSessionsRoutes(ctx: RouterContext) {
   }
   async function activeRuns(actor: Actor, botId: string) {
     await resolveThreadTarget(deps.prisma, actor, { botId }, { includeArchived: true });
-    const runs = await deps.prisma.run.findMany({
-      where: {
-        botId,
-        spaceId: actor.spaceId,
-        userId: actor.userId,
-        thread: { OR: [{ botId }, { taskBotId: botId }] },
-        OR: [
-          { status: { notIn: ["completed", "failed", "cancelled"] } },
-          { resourceWaitReason: { in: ["unconfirmed", "stopping", "background_work"] } },
-        ],
-      },
-      include: { routine: { select: { name: true } }, thread: { include: { taskSession: true } } },
-    });
-    return runs.map((run) => ({
-      id: run.id,
-      threadId: run.threadId,
-      taskSessionId: run.thread.taskSession?.id ?? null,
-      title: run.thread.taskSession?.title ?? run.routine?.name ?? "主聊天",
-      status:
-        run.resourceWaitReason === "background_work"
-          ? "running"
-          : (run.resourceWaitReason ?? run.status),
-    }));
+    const threadScope = { OR: [{ botId }, { taskBotId: botId }] };
+    const [runs, work] = await Promise.all([
+      deps.prisma.run.findMany({
+        where: {
+          botId,
+          spaceId: actor.spaceId,
+          userId: actor.userId,
+          thread: threadScope,
+          OR: [
+            { status: { notIn: ["completed", "failed", "cancelled"] } },
+            // Work a finished turn handed to the host keeps the run listed after its turn.
+            { resourceWaitReason: "background_work" },
+            ...UNRESOLVED_RUN_WAIT.OR,
+          ],
+        },
+        include: {
+          routine: { select: { name: true } },
+          thread: { include: { taskSession: true } },
+        },
+      }),
+      // The work row is what actually keeps a finished turn busy, so it decides on its own
+      // which conversations are still working and can be stopped — even when no run-level
+      // marker is left to say so.
+      deps.prisma.externalEffect.findMany({
+        where: {
+          spaceId: actor.spaceId,
+          kind: TASK_WORK_KIND,
+          status: { in: TASK_WORK_ACTIVE },
+          run: { spaceId: actor.spaceId, userId: actor.userId, thread: threadScope },
+        },
+        select: {
+          runId: true,
+          status: true,
+          run: {
+            select: {
+              threadId: true,
+              routine: { select: { name: true } },
+              thread: { select: { taskSession: { select: { id: true, title: true } } } },
+            },
+          },
+        },
+      }),
+    ]);
+    const listed = new Map<
+      string,
+      { id: string; threadId: string; taskSessionId: string | null; title: string; status: string }
+    >();
+    // A run can own several work items; the one needing attention decides how it reads.
+    const workState = new Map<string, string>();
+    for (const item of work)
+      workState.set(item.runId, mostUrgent(workState.get(item.runId), workRunStatus(item.status)));
+    for (const run of runs) {
+      const waiting = effectiveWaitReason(run.status, run.resourceWaitReason);
+      // A live turn reports its own state; work it handed to the host decides once it ended.
+      const base = waiting === "background_work" ? run.status : (waiting ?? run.status);
+      const status = workState.get(run.id) ?? base;
+      // A finished run with nothing left to wait on has no place in the active list.
+      if (isTerminal(status)) continue;
+      listed.set(run.id, {
+        id: run.id,
+        threadId: run.threadId,
+        taskSessionId: run.thread.taskSession?.id ?? null,
+        title: run.thread.taskSession?.title ?? run.routine?.name ?? "主聊天",
+        status,
+      });
+    }
+    for (const item of work) {
+      if (listed.has(item.runId)) continue;
+      listed.set(item.runId, {
+        id: item.runId,
+        threadId: item.run.threadId,
+        taskSessionId: item.run.thread.taskSession?.id ?? null,
+        title: item.run.thread.taskSession?.title ?? item.run.routine?.name ?? "主聊天",
+        status: workState.get(item.runId) ?? "running",
+      });
+    }
+    return [...listed.values()];
   }
   return {
     taskSessions: {

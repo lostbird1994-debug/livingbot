@@ -260,12 +260,15 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     durationSeconds: z.number().int().nonnegative().optional(),
   }),
   z.object({ kind: z.literal("meta"), text: z.string() }),
+  /** Provider reasoning is execution metadata, never assistant reply text. */
+  z.object({ kind: z.literal("reasoning"), text: z.string() }),
   z.object({
     kind: z.literal("progress"),
     text: z.string(),
     /** Provider-generated tool status rather than assistant-authored narration. */
     activity: z.literal(true).optional(),
-    pendingToolNames: z.array(z.string()).optional(),
+    /** Tool calls the text streamed so far is still about to describe. */
+    pendingTools: z.array(z.object({ name: z.string(), detail: z.string().optional() })).optional(),
   }),
   z.object({
     kind: z.literal("steps"),
@@ -273,6 +276,12 @@ export const MessageBlock = z.discriminatedUnion("kind", [
       z.object({
         label: z.string(),
         count: z.number().int().positive(),
+        /** The tool this step called, which picks its icon and its wording. */
+        tool: z.string().optional(),
+        /** What the call acted on: a file, a query, a command. */
+        detail: z.string().optional(),
+        /** What the call was for, in the model's own words, when the tool asked for it. */
+        action: z.string().optional(),
         /** What the bot wrote just before this step, kept out of its reply. */
         note: z.string().optional(),
       }),

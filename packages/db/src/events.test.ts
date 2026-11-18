@@ -647,6 +647,67 @@ describe("finalizeRun", () => {
       data: { runId: "run-reply", claimedAt: null },
     });
   });
+
+  function savedWaitFixture() {
+    const tx = {
+      externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      $queryRaw: vi.fn(async () => []),
+      run: {
+        findUnique: vi.fn(async () => ({ status: "running", userId: "user-1" })),
+        findUniqueOrThrow: vi.fn(async () => ({ sourceMessage: null })),
+        findFirst: vi.fn(async () => null),
+        updateMany: vi.fn(async () => ({ count: 1 })),
+      },
+      attempt: { updateMany: vi.fn(async () => ({ count: 1 })) },
+      task: { updateMany: vi.fn(async () => ({ count: 1 })) },
+      thread: { update: vi.fn(async () => ({ nextEventSeq: 1 })) },
+      event: {
+        create: vi.fn(async () => ({ threadId: "thread-1", seq: 0 })),
+        deleteMany: vi.fn(async () => ({ count: 0 })),
+      },
+      secret: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      steeringMessage: {
+        deleteMany: vi.fn(async () => ({ count: 0 })),
+        findMany: vi.fn(async () => []),
+        updateMany: vi.fn(async () => ({ count: 0 })),
+      },
+      message: { findFirst: vi.fn(async () => null) },
+      bot: { update: vi.fn(async () => ({})) },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+    const base = {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      runId: "run-1",
+      taskId: "task-1",
+      attemptId: "attempt-1",
+      leaseOwner: "worker-1",
+      leaseFence: 1,
+    };
+    return { tx, prisma, base };
+  }
+
+  it("settles the unknown execution wait of a turn that finished", async () => {
+    const { tx, prisma, base } = savedWaitFixture();
+
+    await finalizeRun(prisma, { ...base, outcome: "completed", blocks: [] });
+
+    expect(tx.run.updateMany).toHaveBeenCalledWith({
+      where: { id: "run-1", resourceWaitReason: "unconfirmed" },
+      data: { resourceWaitReason: null },
+    });
+  });
+
+  it("keeps the unknown execution wait a failed turn still needs verified", async () => {
+    const { tx, prisma, base } = savedWaitFixture();
+
+    await finalizeRun(prisma, { ...base, outcome: "failed", error: "unknown execution state" });
+
+    expect(tx.run.updateMany).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("followThreadEvents", () => {

@@ -672,8 +672,8 @@ export interface ModelCallObserver {
 
 export type AgentRuntimeEvent =
   | { type: "text"; text: string }
-  /** Explicit provider reasoning lifecycle only; never contains reasoning text. */
-  | { type: "thinking"; active: boolean }
+  /** Provider reasoning lifecycle; text, when present, is a cumulative snapshot. */
+  | { type: "thinking"; active: boolean; text?: string }
   /** A new assistant message starts; its text does not continue the previous text. */
   | { type: "turn" }
   /** Messages sent while the bot worked were handed to the model before this turn. */
@@ -687,6 +687,8 @@ export type AgentRuntimeEvent =
       text: string;
       /** Cumulative assistant preview; visual insertions must survive subsequent replacements. */
       replyPreview?: true;
+      /** A completed, assistant-authored process paragraph, not the verified final answer. */
+      narration?: true;
       /** Provider-generated tool status rather than assistant-authored narration. */
       activity?: true;
     }

@@ -24,6 +24,7 @@ import {
   stopsRunHelpers,
   subagentBlockFromPayload,
   takeLiveMessage,
+  toolCallFromPayload,
   updateCloudAgentMessages,
   upsertMessageById,
 } from "@livingbot/core";
@@ -498,7 +499,7 @@ export function reduceThreadSnapshot(
     const { previous, remaining } = takeLiveMessage(prev.messages, liveId);
     const blocks = reduceLiveMessageBlocks(previous?.blocks ?? [], {
       type: "tool",
-      name: String(event.payload.name ?? ""),
+      call: toolCallFromPayload(event.payload),
     });
     const next: ThreadMessage = {
       id: liveId,

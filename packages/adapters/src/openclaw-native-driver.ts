@@ -61,6 +61,8 @@ export interface NativeInput {
   agentId: string;
   modelId?: string;
   thinking?: string;
+  /** Trusted kernel only: sessions.patch requires operator.admin scope. */
+  reasoningLevel?: "off" | "stream";
   gatewayOrigin?: string;
   connectionId?: string;
   message: string;
@@ -71,6 +73,8 @@ export interface NativeInput {
   attachments?: unknown[];
   onText?: (delta: string, replace?: boolean) => void;
   onThinking?: (active: boolean) => void;
+  /** The model's own reasoning text, as it streams, for a chat that shows it. */
+  onReasoning?: (text: string) => void;
   /** Observation only: the native engine already owns execution of this tool. */
   onTool?: (tool: { name: string; args: Record<string, unknown>; executionId: string }) => void;
   onNotice?: (notice: NativeNotice) => void;
@@ -152,6 +156,9 @@ export async function waitForNativeTermination(
   }
   return result;
 }
+/** A runtime that cannot be reached is infrastructure, not the model: callers may retry it. */
+export const NATIVE_CONNECT_TIMEOUT_MESSAGE = "External runtime connection timed out";
+
 export class NativeExecutionError extends Error {
   constructor(
     message: string,
@@ -505,7 +512,9 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
   const steeringResults = new Map<string, { state: string; text: string } | undefined>();
   const observedTools = new Set<string>();
   let thinkingActive = false;
+  let reasoningText = "";
   const setThinking = (active: boolean) => {
+    if (!active) reasoningText = "";
     if (active === thinkingActive) return;
     thinkingActive = active;
     input.onThinking?.(active);
@@ -562,8 +571,17 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
       // Agent RPC's lifecycle is authoritative; a chat delta may contain cumulative text.
     }
     if (frame.event === "agent") {
-      if (p.stream === "thinking") setThinking(true);
-      else if (["assistant", "tool", "lifecycle"].includes(p.stream)) setThinking(false);
+      if (p.stream === "thinking") {
+        setThinking(true);
+        const reasoning =
+          typeof p.data?.text === "string"
+            ? p.data.text
+            : reasoningText + (typeof p.data?.delta === "string" ? p.data.delta : "");
+        if (reasoning && reasoning !== reasoningText) {
+          reasoningText = reasoning;
+          input.onReasoning?.(reasoning);
+        }
+      } else if (["assistant", "tool", "lifecycle"].includes(p.stream)) setThinking(false);
       if (p.stream === "assistant") {
         const delta = typeof p.data?.delta === "string" ? p.data.delta : "";
         if (delta) {
@@ -744,8 +762,8 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         if (closing) value.stop();
         return value;
       }),
-      options.connectMs ?? 15_000,
-      "External runtime connection timed out",
+      options.connectMs ?? 30_000,
+      NATIVE_CONNECT_TIMEOUT_MESSAGE,
     );
     peer = connection;
     const collaboration = input.collaboration;
@@ -830,6 +848,12 @@ export async function runNativeAgent(input: NativeInput, options: NativeOptions)
         throw new NativeExecutionError("External task cancelled before dispatch", "cancelled");
       // Persist BEFORE dispatch. A process crash or lost ACK must never launch another task.
       await persist();
+      // Visibility is session scoped. Never enable reasoning globally for unrelated channels.
+      if (input.reasoningLevel)
+        await connection.request("sessions.patch", {
+          key: sessionKey,
+          reasoningLevel: input.reasoningLevel,
+        });
       // The attachment validator looks up provider and bare model separately.
       // Keep the qualified reference in our record, but split it on the wire.
       const separator = input.modelId?.indexOf("/") ?? -1;

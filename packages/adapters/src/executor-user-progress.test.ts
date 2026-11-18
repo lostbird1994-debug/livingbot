@@ -617,6 +617,76 @@ describe("notes that can't be posted as messages", () => {
     );
   });
 
+  it("keeps provider reasoning separate from step notes and reply text", async () => {
+    const { finalizeRun } = await runTurn("", false, undefined, [], "fyi", {
+      runtimeEvents: [
+        { type: "thinking", active: true, text: "先确认目录里有什么，再决定读哪个文件。" },
+        { type: "tool", name: "shell", args: { command: "ls -la" }, executionId: "call-1" },
+        { type: "done", text: "" },
+      ],
+    });
+    expect(stepNotes(finalizeRun)).toEqual([]);
+    expect(finalizeRun.mock.calls[0]![0].blocks).toContainEqual({
+      kind: "reasoning",
+      text: "先确认目录里有什么，再决定读哪个文件。",
+    });
+    expect(finalText(finalizeRun)).not.toContain("先确认目录");
+  });
+
+  it("keeps complete cumulative reasoning, including a final thought without a following tool", async () => {
+    const first = "思考".repeat(500);
+    const { finalizeRun, savedEvents } = await runTurn(
+      "",
+      false,
+      undefined,
+      ["fixture-secret"],
+      "request",
+      {
+        runtimeEvents: [
+          { type: "thinking", active: true, text: "Initial" },
+          { type: "thinking", active: true, text: first },
+          { type: "tool", name: "read", args: { path: "fixture.txt" }, executionId: "call-1" },
+          { type: "thinking", active: true, text: "Final fixture-secret thought" },
+          { type: "thinking", active: false },
+          { type: "text", text: "Answer." },
+          { type: "done" },
+        ],
+      },
+    );
+    expect(
+      finalizeRun.mock.calls[0]![0].blocks.filter((block) => block.kind === "reasoning"),
+    ).toEqual([
+      { kind: "reasoning", text: first },
+      { kind: "reasoning", text: "Final [redacted] thought" },
+    ]);
+    expect(JSON.stringify(savedEvents)).not.toContain("fixture-secret");
+    expect(finalText(finalizeRun)).toBe("Answer.");
+  });
+
+  it("holds a secret prefix until the next cumulative reasoning frame can redact it", async () => {
+    const { finalizeRun, savedEvents } = await runTurn(
+      "",
+      false,
+      undefined,
+      ["fixture-secret"],
+      "request",
+      {
+        runtimeEvents: [
+          { type: "thinking", active: true, text: "Checking fixture-" },
+          { type: "thinking", active: true, text: "Checking fixture-secret safely." },
+          { type: "text", text: "Answer." },
+          { type: "done" },
+        ],
+      },
+    );
+    const shown = JSON.stringify([savedEvents, finalizeRun.mock.calls[0]![0].blocks]);
+    expect(shown).not.toContain("fixture-");
+    expect(finalizeRun.mock.calls[0]![0].blocks).toContainEqual({
+      kind: "reasoning",
+      text: "Checking [redacted] safely.",
+    });
+  });
+
   it("keeps an answer written before the last step and replies with what follows it", async () => {
     const { finalizeRun } = await runTurn("", false, undefined, [], "fyi", {
       runtimeEvents: [
@@ -627,10 +697,18 @@ describe("notes that can't be posted as messages", () => {
       ],
     });
     expect(finalText(finalizeRun)).toBe("Saved.");
-    expect(finalizeRun.mock.calls[0]![0].blocks).toContainEqual({
-      kind: "steps",
-      steps: [{ label: "Save event", count: 1, note: "The meeting is with Anna." }],
-    });
+    expect(finalizeRun.mock.calls[0]![0].blocks).toContainEqual(
+      expect.objectContaining({
+        kind: "steps",
+        steps: [
+          expect.objectContaining({
+            label: "Save event",
+            count: 1,
+            note: "The meeting is with Anna.",
+          }),
+        ],
+      }),
+    );
   });
 
   it("brings every working-line note back, in order, when nothing follows the last step", async () => {
@@ -1402,7 +1480,11 @@ describe("public coarse thinking lifecycle", () => {
         .filter((event) => event.type === "thread.meta")
         .map(({ payload }) => payload),
     ).toEqual([{ activity: { thinking: true } }, { activity: { thinking: false } }]);
-    expect(JSON.stringify(visible.savedEvents)).not.toContain("private fixture reasoning");
+    expect(
+      visible.savedEvents
+        .filter((event) => event.type === "thread.progress")
+        .map((event) => event.payload),
+    ).toEqual([{ reasoning: { text: "private fixture reasoning", start: true } }]);
     const background = await runTurn("", true, "", [], "fyi", {
       trigger: "tickets",
       runtimeEvents: [privateMarker, { type: "done" }],
@@ -1457,6 +1539,45 @@ describe("routine silence versus required output", () => {
 });
 
 describe("inline widget delivery", () => {
+  it("retains native process prose around operations without treating it as the final answer", async () => {
+    const { finalizeRun, savedEvents, messages } = await runTurn(
+      "Done.",
+      false,
+      "",
+      ["fixture-secret"],
+      "fyi",
+      {
+        runtimeEvents: [
+          { type: "progress", text: "I will inspect the source.", narration: true },
+          { type: "thinking", active: true, text: "Provider thought." },
+          { type: "thinking", active: false },
+          { type: "tool", name: "read_file", args: { path: "example.ts" }, executionId: "read-1" },
+          {
+            type: "progress",
+            text: "The fixture-secret file confirms the cause.",
+            narration: true,
+          },
+          { type: "tool", name: "read_file", args: { path: "other.ts" }, executionId: "read-2" },
+          { type: "text", text: "Done." },
+          { type: "done", text: "Done." },
+        ],
+      },
+    );
+    const blocks = finalizeRun.mock.calls[0]![0].blocks as MessageBlock[];
+    expect(blocks.filter((block) => block.kind === "text")).toEqual([
+      { kind: "text", text: "Done." },
+    ]);
+    expect(blocks.filter((block) => block.kind === "progress")).toHaveLength(2);
+    const serialized = JSON.stringify(blocks);
+    expect(serialized).not.toContain("fixture-secret");
+    expect(serialized.indexOf("I will inspect")).toBeLessThan(serialized.indexOf("example.ts"));
+    expect(serialized.indexOf("confirms the cause")).toBeLessThan(serialized.indexOf("other.ts"));
+    expect(
+      savedEvents.filter((event) => event.type === "thread.progress" && event.payload?.narration),
+    ).toHaveLength(2);
+    expect(messages).toHaveLength(0);
+  });
+
   it("keeps tool-published widgets between narration and final prose without echoing source to the model", async () => {
     const results: unknown[] = [];
     const { finalizeRun, append } = await runTurn("", false, "", [], "fyi", {
@@ -1526,4 +1647,43 @@ describe("inline widget delivery", () => {
       previews.some((text) => text.includes("second idea") && text.includes("livingbot-visual")),
     ).toBe(true);
   });
+  it.each(["before", "after"])(
+    "keeps native prose once when committed %s its visual",
+    async (order) => {
+      const { finalizeRun } = await runTurn("", false, "", [], "fyi", {
+        runtime: async function* (request) {
+          const before = "Opening explanation.\n";
+          const middle = "\nHere is the second idea.\n";
+          request.onReplyPreview?.(before);
+          yield { type: "progress", text: before, replyPreview: true };
+          if (order === "before") yield { type: "progress", text: before, narration: true };
+          await request.executeTool!(
+            "show_widget",
+            { title: "First", widget_code: "<div>First</div>" },
+            "w1",
+          );
+          if (order === "after") yield { type: "progress", text: before, narration: true };
+          request.onReplyPreview?.(before + middle);
+          yield { type: "progress", text: before + middle, replyPreview: true };
+          if (order === "before") yield { type: "progress", text: middle, narration: true };
+          await request.executeTool!(
+            "show_widget",
+            { title: "Second", widget_code: "<div>Second</div>" },
+            "w2",
+          );
+          if (order === "after") yield { type: "progress", text: middle, narration: true };
+          yield { type: "text", text: `${before}${middle}Closing recommendation.` };
+          yield { type: "done", text: `${before}${middle}Closing recommendation.` };
+        },
+      });
+      const blocks = finalizeRun.mock.calls[0]![0].blocks as MessageBlock[];
+      const final = JSON.stringify(blocks);
+      expect(final.match(/Opening explanation/g)).toHaveLength(1);
+      expect(final.match(/Here is the second idea/g)).toHaveLength(1);
+      expect(final.indexOf("Opening explanation")).toBeLessThan(final.indexOf("<div>First"));
+      expect(final.indexOf("<div>First")).toBeLessThan(final.indexOf("Here is the second idea"));
+      expect(final.indexOf("Here is the second idea")).toBeLessThan(final.indexOf("<div>Second"));
+      expect(final.indexOf("<div>Second")).toBeLessThan(final.indexOf("Closing recommendation"));
+    },
+  );
 });

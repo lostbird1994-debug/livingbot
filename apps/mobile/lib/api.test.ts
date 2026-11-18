@@ -177,7 +177,8 @@ describe("mobile API authentication", () => {
   describe.each([
     {
       name: "password reset",
-      request: () => requestPasswordReset("ada@example.test", "https://livingbot.test/reset-password"),
+      request: () =>
+        requestPasswordReset("ada@example.test", "https://livingbot.test/reset-password"),
       fallback: "Could not send reset email",
     },
     {
@@ -3520,14 +3521,24 @@ describe("mobile thread event reduction", () => {
   });
 
   it("retains the scheduled task name when its run fails", () => {
-    const started = applyMobileThreadEvent({ ...snapshot(), run: null, activeRuns: [] }, {
-      type: "run.started", runId: "inspection-run",
-      payload: { trigger: "routine", routineName: "Scheduled inventory check" },
-    });
+    const started = applyMobileThreadEvent(
+      { ...snapshot(), run: null, activeRuns: [] },
+      {
+        type: "run.started",
+        runId: "inspection-run",
+        payload: { trigger: "routine", routineName: "Scheduled inventory check" },
+      },
+    );
     const failed = applyMobileThreadEvent(started, {
-      type: "run.failed", runId: "inspection-run", payload: { error: "External task cancelled" },
+      type: "run.failed",
+      runId: "inspection-run",
+      payload: { error: "External task cancelled" },
     });
-    expect(failed?.run).toMatchObject({ id: "inspection-run", status: "failed", routineName: "Scheduled inventory check" });
+    expect(failed?.run).toMatchObject({
+      id: "inspection-run",
+      status: "failed",
+      routineName: "Scheduled inventory check",
+    });
   });
 
   it("does not infer a started run's bot from the snapshot", () => {
@@ -3824,12 +3835,15 @@ describe("mobile thread event reduction", () => {
       {
         kind: "progress",
         text: "Let me check ",
-        pendingToolNames: ["SLACK_FIND_CHANNELS"],
+        pendingTools: [{ name: "SLACK_FIND_CHANNELS" }],
       },
     ]);
     expect(completed?.messages[0]?.blocks).toEqual([
       { kind: "text", text: "Let me check now." },
-      { kind: "steps", steps: [{ label: "Slack find channels", count: 1 }] },
+      {
+        kind: "steps",
+        steps: [{ label: "Slack find channels", count: 1, tool: "SLACK_FIND_CHANNELS" }],
+      },
     ]);
     expect(blockText(completed?.messages[0] as MobileMessage)).toBe(
       "Let me check now.\nSlack find channels",

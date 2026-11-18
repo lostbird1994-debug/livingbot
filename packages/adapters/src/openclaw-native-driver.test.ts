@@ -92,6 +92,43 @@ function fixture(overrides: Partial<NativeInput> = {}) {
 }
 
 describe("native external Agent lifecycle", () => {
+  it("accepts cumulative and delta reasoning only for the owning run", async () => {
+    const reasoning: string[] = [];
+    const f = fixture({ reasoningLevel: "stream", onReasoning: (text) => reasoning.push(text) });
+    f.setHandler(async (method, params) => {
+      if (method === "sessions.patch") return {};
+      if (method === "agent") {
+        const frame = (runId: string, data: Record<string, string>) =>
+          f.event({ event: "agent", payload: { runId, stream: "thinking", data } });
+        frame("another-run", { text: "Unrelated" });
+        frame(params.idempotencyKey, { text: "First", delta: "First" });
+        frame(params.idempotencyKey, { text: "First", delta: "First" });
+        frame(params.idempotencyKey, { delta: " thought" });
+        f.event({
+          event: "agent",
+          payload: { runId: params.idempotencyKey, stream: "assistant", data: { delta: "Answer" } },
+        });
+        return { runId: params.idempotencyKey };
+      }
+      if (method === "agent.wait") return { status: "ok" };
+      if (method === "chat.history")
+        return {
+          messages: [
+            {
+              role: "assistant",
+              timestamp: Date.now(),
+              content: [{ type: "text", text: "Answer" }],
+            },
+          ],
+        };
+      throw Error(method);
+    });
+    await runNativeAgent(f.input, f.options);
+    expect(reasoning).toEqual(["First", "First thought"]);
+    expect(f.calls.find((call) => call.method === "sessions.patch")?.params).toMatchObject({
+      reasoningLevel: "stream",
+    });
+  });
   it.each([
     ["lease_lost", undefined],
     ["shutdown", undefined],

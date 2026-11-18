@@ -30,7 +30,6 @@ import { uncertainEffectResult } from "./approval-effect.js";
 import { automated, withAutomatedLabels } from "./automated-messages.js";
 import { withCloudflareAuth } from "./cloudflare-ai-gateway.js";
 import { isLocalAgentModel, runLocalAgent } from "./local-agent-runtime.js";
-import { ROUTINE_EMPTY_RESULT_TEXT } from "./run-replies.js";
 import { isOpenClawModel, openClawModelStream } from "./openclaw-model-stream.js";
 import { estimatePiImageTokens } from "./pi-image-context.js";
 import {
@@ -63,7 +62,6 @@ import { conversationSessionId, reliableModelStream } from "./pi-runtime-stream.
 import { MAX_PARALLEL_SUBAGENTS } from "./pi-runtime-subagent.js";
 import type { EventQueue, ToolCallBudget, ToolHost } from "./pi-runtime-tools.js";
 import {
-  describeToolActivity,
   releaseToolCallBudget,
   toAgentTools,
   toolCallBudgetExceededMessage,
@@ -74,10 +72,12 @@ import { PiJsonlSessionRecorder } from "./pi-session.js";
 import { withPiTelemetry } from "./pi-telemetry.js";
 import { withPiThinkingActivity } from "./pi-thinking-activity.js";
 import { observedPiStream } from "./pi-usage.js";
+import { ROUTINE_EMPTY_RESULT_TEXT } from "./run-replies.js";
 import type { RuntimeContextDecision } from "./runtime-context.js";
 import { createRuntimeContextPolicy } from "./runtime-context.js";
 import { deliverFinishedShells } from "./shell-command-stream.js";
 import { isExactNoResponse } from "./silent-reply.js";
+import { describeToolActivity } from "./tool-activity-text.js";
 import {
   restoreTurnCheckpoint,
   serializeTurnCheckpoint,

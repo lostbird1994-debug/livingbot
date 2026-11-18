@@ -6,8 +6,8 @@ import {
   partitionTools,
   USE_TOOL,
 } from "./builtin-tool-bridge.js";
-import { describeToolActivity } from "./pi-runtime-tools.js";
 import { BUILTIN_AGENT_TOOL_NAMES, selectBuiltinToolsForRun } from "./run-tool-selection.js";
+import { describeToolActivity } from "./tool-activity-text.js";
 
 const ownerChat = selectBuiltinToolsForRun({
   graphicalToolsAllowed: false,

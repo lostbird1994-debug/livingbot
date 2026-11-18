@@ -46,6 +46,7 @@ import {
   THREAD_LOCK_TRANSACTION_OPTIONS,
   touchGroupUpdatedAt,
   transientRunEventsWhere,
+  UNRESOLVED_RUN_WAIT,
 } from "@livingbot/db";
 import { getLogger } from "@livingbot/logging";
 import { ORPCError } from "@orpc/server";
@@ -931,10 +932,7 @@ export async function sendThreadMessage(
         if (
           target.taskSessionId &&
           (await tx.run.findFirst({
-            where: {
-              threadId: target.threadId,
-              resourceWaitReason: { in: ["unconfirmed", "stopping"] },
-            },
+            where: { threadId: target.threadId, ...UNRESOLVED_RUN_WAIT },
             select: { id: true },
           }))
         )
@@ -1873,7 +1871,7 @@ export async function stopThreadRuns(
   const unresolved =
     target.kind === "bot" && target.taskSessionId
       ? await deps.prisma.run.findMany({
-          where: { id: { in: runIds }, resourceWaitReason: { in: ["unconfirmed", "stopping"] } },
+          where: { id: { in: runIds }, ...UNRESOLVED_RUN_WAIT },
           select: { id: true },
         })
       : [];

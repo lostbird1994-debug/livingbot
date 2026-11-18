@@ -53,46 +53,36 @@ test("tool activity shows for live and finished runs when the user turned it on"
     await expect(liveLine).toHaveCount(1);
     await expect(page.getByTestId("message-bot-bubble")).toHaveCount(0);
     const liveCard = page.getByTestId("tool-activity");
-    await expect(liveCard.locator("button[aria-expanded]")).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
-    await expect(liveCard.locator("button[aria-expanded]")).toContainText(/Working…\s*8 tools/);
-    await expect(page.getByTestId("tool-rows-hidden")).toHaveText("+2 earlier steps");
-    await expect(page.getByTestId("tool-rows")).not.toContainText("Open calendar");
-    await expect(page.getByTestId("tool-rows")).toContainText("Check conflicts");
+    await expect(liveCard.locator(":scope > button")).toHaveAttribute("aria-expanded", "true");
+    await expect(liveCard.locator(":scope > button")).toContainText(/Working…\s*8 tools/);
+    await expect(page.getByTestId("tool-rows-hidden")).toHaveCount(0);
+    await expect(page.getByTestId("tool-rows")).toContainText("memory-organization.ts");
+    await expect(page.getByTestId("tool-rows")).toContainText("invoice");
     await expect(page.getByTestId("tool-step-note")).toHaveCount(0);
+    await expect(page.getByTestId("tool-step").last()).toHaveAttribute("data-running", "true");
     await expect(page.locator("body")).toHaveJSProperty("scrollWidth", viewport.width);
     await captureScreenshot(page, testInfo, `default-live-${viewport.name}`);
 
-    await liveCard.locator("button[aria-expanded]").click();
-    await expect(liveCard.locator("button[aria-expanded]")).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
+    await liveCard.locator(":scope > button").click();
+    await expect(liveCard.locator(":scope > button")).toHaveAttribute("aria-expanded", "false");
 
     await openThread(page, "done");
     await expect(page.getByTestId("message-bot-bubble")).toContainText(REPLY_TEXT);
     const doneCard = page.getByTestId("tool-activity");
     await expect(doneCard).toHaveCount(1);
-    await expect(doneCard.locator("button[aria-expanded]")).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
-    await expect(doneCard.locator("button[aria-expanded]")).toContainText(/Done\s*8 tools\s*12s/);
-    await captureScreenshot(page, testInfo, `default-done-collapsed-${viewport.name}`);
-
-    await doneCard.locator("button[aria-expanded]").click();
-    await expect(doneCard.locator("button[aria-expanded]")).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
+    await expect(doneCard.locator(":scope > button")).toHaveAttribute("aria-expanded", "false");
+    await doneCard.locator(":scope > button").click();
+    await expect(doneCard.locator(":scope > button")).toHaveAttribute("aria-expanded", "true");
+    await expect(doneCard.locator(":scope > button")).toContainText(/Completed\s*1m\s*28s/);
     await expect(page.getByTestId("tool-rows-hidden")).toHaveCount(0);
-    await expect(page.getByTestId("tool-rows")).toContainText("Open calendar");
-    await expect(page.getByTestId("tool-rows")).toContainText("Check conflicts");
-    await expect(page.getByTestId("tool-step-note")).toHaveText(NOTE_TEXT);
+    await expect(doneCard).toContainText("memory-organization.ts");
+    await expect(doneCard).toContainText("invoice");
+    await expect(doneCard.getByText(NOTE_TEXT)).toBeVisible();
     await expect(page.locator("body")).toHaveJSProperty("scrollWidth", viewport.width);
-    await captureScreenshot(page, testInfo, `default-done-expanded-${viewport.name}`);
+    await captureScreenshot(page, testInfo, `default-done-open-${viewport.name}`);
+
+    await doneCard.locator(":scope > button").click();
+    await expect(doneCard.locator(":scope > button")).toHaveAttribute("aria-expanded", "false");
   }
 });
 
@@ -113,7 +103,7 @@ test("the settings toggle hides and restores tool activity", async ({ page }, te
   await captureScreenshot(page, testInfo, "settings-tool-activity-off");
 
   await openThread(page, "done");
-  await expect(page.getByTestId("message-bot-bubble")).toHaveText(REPLY_TEXT);
+  await expect(page.getByTestId("message-bot-bubble")).toContainText(REPLY_TEXT);
   await expect(page.getByTestId("tool-activity")).toHaveCount(0);
   await expect(page.getByText(/Done\s*8 tools/)).toHaveCount(0);
   await captureScreenshot(page, testInfo, "off-done");
@@ -129,8 +119,70 @@ test("the settings toggle hides and restores tool activity", async ({ page }, te
 
   await openThread(page, "done");
   await expect(page.getByTestId("tool-activity")).toHaveCount(1);
-  await expect(page.getByTestId("tool-activity").locator("button[aria-expanded]")).toContainText(
-    /Done\s*8 tools/,
+  await expect(page.getByTestId("tool-activity").locator(":scope > button")).toContainText(
+    /Completed\s*1m\s*28s/,
   );
   await captureScreenshot(page, testInfo, "on-again-done");
+});
+
+test("provider reasoning is separate from the reply and follows execution visibility", async ({
+  page,
+}, testInfo) => {
+  await seedToolActivityOn(page);
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await page.goto(`${fixture}?phase=live&reasoning=true`);
+    const reasoning = page.getByTestId("reasoning-activity");
+    await expect(reasoning).toHaveCount(3);
+    await expect(reasoning.first().locator(":scope > button")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    await expect(reasoning.last().locator(":scope > button")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await expect(
+      page.getByText("I will inspect the sources before choosing a time."),
+    ).toBeVisible();
+    await expect(page.getByTestId("tool-step")).toHaveCount(8);
+    const liveBody = reasoning.last().getByTestId("reasoning-content");
+    await expect(liveBody).toBeVisible();
+    expect(await liveBody.evaluate((node) => node.clientHeight)).toBeLessThanOrEqual(200);
+    expect(await liveBody.evaluate((node) => node.scrollHeight)).toBeGreaterThan(200);
+    await captureScreenshot(page, testInfo, `reasoning-live-${viewport.name}`);
+    await page.goto(`${fixture}?phase=done&reasoning=true`);
+    const process = page.getByTestId("tool-activity");
+    await expect(process.locator(":scope > button")).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByTestId("message-bot-bubble")).toContainText(REPLY_TEXT);
+    await captureScreenshot(page, testInfo, `reasoning-done-folded-${viewport.name}`);
+    await process.locator(":scope > button").click();
+    await expect(reasoning.first().locator(":scope > button")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    await expect(
+      page.getByText("The sources confirm Tuesday afternoon is available."),
+    ).toBeVisible();
+    const operations = page.getByTestId("tool-operation-group").first();
+    await expect(operations.locator(":scope > button")).toHaveAttribute("aria-expanded", "false");
+    await expect(operations.locator(":scope > button")).toContainText("memory-organization.ts");
+    await operations.locator(":scope > button").click();
+    const command = operations.getByTestId("tool-step").last();
+    await command.locator(":scope > button").click();
+    await expect(command.locator("pre")).toHaveText("git diff --stat");
+    await expect(command.locator("pre")).toBeVisible();
+    await operations.locator(":scope > button").click();
+    await reasoning.first().locator(":scope > button").click();
+    const body = reasoning.first().getByTestId("reasoning-content");
+    await expect(body).toBeVisible();
+    expect(await body.evaluate((node) => node.clientHeight)).toBeLessThanOrEqual(200);
+    await expect(page.locator("body")).toHaveJSProperty("scrollWidth", viewport.width);
+    await captureScreenshot(page, testInfo, `reasoning-done-${viewport.name}`);
+  }
+  await setToggle(page, false);
+  await page.goto(`${fixture}?phase=done&reasoning=true`);
+  await expect(page.getByRole("button", { name: "Deep thought", exact: true })).toHaveCount(0);
+  await expect(page.getByText("I will check the calendar before choosing a time.")).toHaveCount(0);
+  await expect(page.getByTestId("message-bot-bubble")).toContainText(REPLY_TEXT);
 });

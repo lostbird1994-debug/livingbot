@@ -16,6 +16,7 @@
 - [记忆](memory.md)
 - [审批](approvals.md)
 - [聊天中的任务设置](settings-from-chat-tasks.md)
+- [OpenClaw 运行时升级备忘](openclaw-upgrade.md)
 
 ## 历史参考
 

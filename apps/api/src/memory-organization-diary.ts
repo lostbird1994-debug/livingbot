@@ -1,7 +1,11 @@
-import { ORPCError } from "@orpc/server";
 import type { Actor, RoutineRunCursor } from "@livingbot/contracts";
-import { MemoryOrganizationChangeSchema, RunStatus } from "@livingbot/contracts";
+import {
+  MemoryOrganizationChangeSchema,
+  MemoryOrganizationProgressSchema,
+  RunStatus,
+} from "@livingbot/contracts";
 import type { PrismaClient } from "@livingbot/db";
+import { ORPCError } from "@orpc/server";
 
 /** Run records and durable tool receipts survive restarts, including silent checks. */
 export async function memoryOrganizationDiary(
@@ -58,6 +62,13 @@ export async function memoryOrganizationDiary(
         orderBy: { seq: "asc" },
       })
     : [];
+  const progressFor = (receipts: Array<{ payload: unknown }>) => {
+    const remaining = receipts.flatMap(({ payload }) => {
+      const parsed = MemoryOrganizationProgressSchema.safeParse(payload);
+      return parsed.success && parsed.data.remaining !== undefined ? [parsed.data.remaining] : [];
+    });
+    return remaining.length ? remaining.at(-1) : undefined;
+  };
   const last = runs.at(-1);
   return {
     nextCursor:
@@ -69,6 +80,7 @@ export async function memoryOrganizationDiary(
         status: RunStatus.parse(run.status),
         createdAt: run.createdAt.toISOString(),
         completedAt: run.completedAt?.toISOString() ?? null,
+        remaining: progressFor(receipts),
         unchanged: receipts.some(({ payload }) => {
           return (
             payload !== null &&

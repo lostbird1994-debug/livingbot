@@ -4,11 +4,15 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AUTOMATIC_MEMORY_PROMPT,
   enableAutomaticMemoryOrganization,
+  isReviewableMemoryPath,
   memoryOrganizationPlan,
   memoryOrganizationStatus,
+  memoryReviewStalled,
   nudgeMemoryOrganization,
   organizeMemoryDocument,
   ownsSharedMemoryOrganization,
+  recordMemoryRead,
+  settleMemoryRewrites,
 } from "./memory-organization.js";
 
 const source = {
@@ -158,6 +162,7 @@ function policyFixture() {
     task: { prompt: AUTOMATIC_MEMORY_PROMPT },
   };
   const document = {
+    id: "doc-memory",
     path: "MEMORY.md",
     scope: "bot",
     content: "current",
@@ -172,17 +177,33 @@ function policyFixture() {
         .mockResolvedValue(Array.from({ length: 30 }, (_, n) => ({ sourceMessageId: `m${n}` }))),
     },
     memoryDocument: { findMany: vi.fn().mockResolvedValue([document]) },
+    memoryRevision: { findMany: vi.fn().mockResolvedValue([]) },
+    $transaction: vi.fn(async (work: unknown) => {
+      const client = prisma as unknown as Record<string, unknown>;
+      return typeof work === "function"
+        ? (work as (tx: unknown) => Promise<unknown>)(client)
+        : Promise.all(work as Array<Promise<unknown>>);
+    }),
+    memoryDocumentCheck: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      upsert: vi.fn().mockResolvedValue({}),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+      count: vi.fn().mockResolvedValue(0),
+    },
     routine: {
       findFirst: vi.fn(async ({ select, where }) =>
         where.sharedMemoryOrganizer
           ? null
           : select.botId
             ? { botId: "bot" }
-            : {
-                id: "routine",
-                prompt: AUTOMATIC_MEMORY_PROMPT,
-                nextRunAt: new Date("2026-11-09T10:00:00Z"),
-              },
+            : select.organizationFullCheckedAt
+              ? { organizationFullCheckedAt: null, organizationSweepStartedAt: null }
+              : {
+                  id: "routine",
+                  prompt: AUTOMATIC_MEMORY_PROMPT,
+                  nextRunAt: new Date("2026-11-09T10:00:00Z"),
+                },
       ),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       findMany: vi.fn().mockResolvedValue([
@@ -197,38 +218,15 @@ function policyFixture() {
   return { prisma, previous, document };
 }
 describe("memory organization scheduling", () => {
-  it("nudges the existing enabled routine after 30 distinct human turns", async () => {
+  it("nudges the existing enabled routine when memory changed", async () => {
     const { prisma } = policyFixture();
     expect(await nudgeMemoryOrganization(prisma as never, scope, now)).toBe(true);
-    expect(prisma.run.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        distinct: ["sourceMessageId"],
-        take: 30,
-        where: expect.objectContaining({
-          ...scope,
-          status: "completed",
-          sourceMessage: { role: "user" },
-        }),
-      }),
-    );
     expect(prisma.routine.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ ...scope, active: true, memoryMaintenance: true }),
         data: { nextRunAt: now },
       }),
     );
-  });
-  it("does not run for a few turns and small summaries", async () => {
-    const { prisma } = policyFixture();
-    prisma.run.findMany.mockResolvedValue([{ sourceMessageId: "one" }]);
-    expect(await nudgeMemoryOrganization(prisma as never, scope, now)).toBe(false);
-    expect(prisma.routine.updateMany).not.toHaveBeenCalled();
-  });
-  it("nudges on summary pressure even before 30 turns", async () => {
-    const { prisma, document } = policyFixture();
-    prisma.run.findMany.mockResolvedValue([]);
-    prisma.memoryDocument.findMany.mockResolvedValue([{ ...document, content: "x".repeat(16000) }]);
-    expect(await nudgeMemoryOrganization(prisma as never, scope, now)).toBe(true);
   });
   it("enforces the six-hour cooldown", async () => {
     const { prisma, previous } = policyFixture();
@@ -366,7 +364,7 @@ describe("memory organization scheduling", () => {
   });
 });
 
-it("uses changed paths for daily checks and live paths for a weekly full check", async () => {
+it("uses changed documents for daily checks and every live document for a weekly full check", async () => {
   const f = policyFixture();
   const original = f.prisma.routine.findFirst.getMockImplementation()!;
   const lastFull = new Date("2026-11-08T01:00:00Z");
@@ -375,28 +373,439 @@ it("uses changed paths for daily checks and live paths for a weekly full check",
       ? ({ organizationFullCheckedAt: lastFull } as never)
       : original(args),
   );
-  let result = await memoryOrganizationPlan(f.prisma as never, scope, "current", now);
+  // The server only schedules what the memory tools can enumerate; mirror rows without a live
+  // document never become targets, so an unreachable document cannot fail the whole run.
+  let live = [
+    { ...f.document, id: "doc-memory", path: "MEMORY.md" },
+    { ...f.document, id: "doc-ghost", path: "feishu/ghost.md" },
+  ];
+  const readDocuments = async (target: "bot" | "user") =>
+    target === "bot"
+      ? live.map((doc) => ({
+          id: doc.id,
+          path: doc.path,
+          content: doc.content,
+          revision: 1,
+          updatedAt: new Date(doc.updatedAt).toISOString(),
+        }))
+      : [];
+  let result = await memoryOrganizationPlan(
+    f.prisma as never,
+    scope,
+    "current",
+    now,
+    readDocuments,
+  );
   expect(result.full).toBe(false);
   expect(result.paths).toEqual(["bot:MEMORY.md"]);
+  expect(result.ids).toEqual(["doc-memory"]);
   result = await memoryOrganizationPlan(
     f.prisma as never,
     scope,
     "current",
     new Date("2026-11-16T10:00:00Z"),
+    readDocuments,
   );
   expect(result.full).toBe(true);
-  expect(result.paths).toEqual(["bot:MEMORY.md"]);
+  expect(result.ids).toEqual(["doc-memory"]);
   f.prisma.memoryDocument.findMany.mockResolvedValue([
     { ...f.document, updatedAt: new Date("2026-11-07T00:00:00Z") },
+  ]);
+  live = [
+    {
+      ...f.document,
+      id: "doc-memory",
+      path: "MEMORY.md",
+      updatedAt: new Date("2026-11-07T00:00:00Z"),
+    },
+  ];
+  // A document that was never settled counts as work even when it did not change.
+  result = await memoryOrganizationPlan(
+    f.prisma as never,
+    scope,
+    "current",
+    new Date("2026-11-16T10:00:00Z"),
+    readDocuments,
+  );
+  expect(result.full).toBe(false);
+  expect(result.changed).toBe(true);
+  // Once the current revision is settled there is nothing left to do.
+  f.prisma.memoryDocumentCheck.findMany.mockResolvedValue([
+    {
+      documentId: "doc-memory",
+      revision: 1,
+      status: "checked",
+      ranges: [],
+      checkedAt: new Date("2026-11-08T12:00:00Z"),
+    },
   ]);
   result = await memoryOrganizationPlan(
     f.prisma as never,
     scope,
     "current",
     new Date("2026-11-16T10:00:00Z"),
+    readDocuments,
   );
   expect(result.full).toBe(false);
   expect(result.changed).toBe(false);
+});
+
+it("skips settled revisions, budgets the batch and resumes an oversized document", async () => {
+  const f = policyFixture();
+  const snapshot = [
+    {
+      id: "big",
+      path: "memory/big.md",
+      content: "x".repeat(60_000),
+      revision: 2,
+      updatedAt: "2026-11-08T02:00:00.000Z",
+    },
+    {
+      id: "small",
+      path: "memory/small.md",
+      content: "y".repeat(1_000),
+      revision: 1,
+      updatedAt: "2026-11-08T02:00:00.000Z",
+    },
+    {
+      id: "done",
+      path: "memory/done.md",
+      content: "z".repeat(1_000),
+      revision: 1,
+      updatedAt: "2026-11-08T02:00:00.000Z",
+    },
+  ];
+  const original = f.prisma.routine.findFirst.getMockImplementation()!;
+  f.prisma.routine.findFirst.mockImplementation(async (args) =>
+    args.select?.organizationFullCheckedAt
+      ? ({
+          organizationFullCheckedAt: new Date("2026-11-08T11:00:00Z"),
+          organizationSweepStartedAt: null,
+        } as never)
+      : original(args),
+  );
+  f.prisma.memoryDocumentCheck.findMany.mockResolvedValue([
+    {
+      documentId: "big",
+      revision: 2,
+      status: "reading",
+      ranges: [[0, 20_000]],
+      checkedAt: new Date("2026-11-08T03:00:00Z"),
+    },
+    {
+      documentId: "done",
+      revision: 1,
+      status: "checked",
+      ranges: [],
+      checkedAt: new Date("2026-11-08T03:00:00Z"),
+    },
+  ]);
+  const result = await memoryOrganizationPlan(
+    f.prisma as never,
+    scope,
+    "current",
+    now,
+    async (target) => (target === "bot" ? snapshot : []),
+  );
+  // The 60k note is taken first and may exceed one batch; a settled revision is not re-scheduled.
+  expect(result.full).toBe(false);
+  expect(result.ids[0]).toBe("big");
+  expect(result.ids).toContain("small");
+  expect(result.ids).not.toContain("done");
+  expect(result.resume).toEqual([{ path: "memory/big.md", offset: 20_000 }]);
+  expect(result.budget).toBe(80_000);
+  expect(result.remaining).toBe(0);
+});
+
+it("keeps an unfinished sweep instead of restarting the weekly window", async () => {
+  const f = policyFixture();
+  const sweepStartedAt = new Date("2026-11-01T00:00:00Z");
+  const fullAt = new Date("2026-10-25T00:00:00Z");
+  const original = f.prisma.routine.findFirst.getMockImplementation()!;
+  f.prisma.routine.findFirst.mockImplementation(async (args) =>
+    args.select?.organizationFullCheckedAt
+      ? ({ organizationFullCheckedAt: fullAt, organizationSweepStartedAt: sweepStartedAt } as never)
+      : original(args),
+  );
+  // Settled before this sweep began, so it must be reviewed again.
+  f.prisma.memoryDocumentCheck.findMany.mockResolvedValue([
+    {
+      documentId: "doc-memory",
+      revision: 1,
+      status: "checked",
+      ranges: [],
+      checkedAt: new Date("2026-10-20T00:00:00Z"),
+    },
+  ]);
+  const result = await memoryOrganizationPlan(
+    f.prisma as never,
+    scope,
+    "current",
+    now,
+    async (target) =>
+      target === "bot"
+        ? [
+            {
+              id: "doc-memory",
+              path: "MEMORY.md",
+              content: "current",
+              revision: 1,
+              updatedAt: "2026-11-08T02:00:00.000Z",
+            },
+          ]
+        : [],
+  );
+  expect(result.full).toBe(true);
+  expect(result.sweepStartedAt).toEqual(sweepStartedAt);
+  expect(result.ids).toEqual(["doc-memory"]);
+  expect(f.prisma.routine.updateMany).not.toHaveBeenCalledWith(
+    expect.objectContaining({ data: expect.objectContaining({ organizationSweepStartedAt: now }) }),
+  );
+});
+
+it("counts a document changed by its snapshot even when the mirror has not synced", async () => {
+  const f = policyFixture();
+  const original = f.prisma.routine.findFirst.getMockImplementation()!;
+  f.prisma.routine.findFirst.mockImplementation(async (args) =>
+    args.select?.organizationFullCheckedAt
+      ? ({
+          organizationFullCheckedAt: new Date("2026-11-08T11:00:00Z"),
+          organizationSweepStartedAt: null,
+        } as never)
+      : original(args),
+  );
+  // The mirror still holds yesterday's row; the workspace file is newer.
+  f.prisma.memoryDocument.findMany.mockResolvedValue([
+    { ...f.document, updatedAt: new Date("2026-11-07T00:00:00Z") },
+  ]);
+  const result = await memoryOrganizationPlan(
+    f.prisma as never,
+    scope,
+    "current",
+    now,
+    async (target) =>
+      target === "bot"
+        ? [
+            {
+              id: "doc-memory",
+              path: "MEMORY.md",
+              content: "current",
+              revision: 9,
+              updatedAt: "2026-11-08T09:00:00.000Z",
+            },
+          ]
+        : [],
+  );
+  expect(result.changed).toBe(true);
+  expect(result.ids).toEqual(["doc-memory"]);
+});
+
+it("settles only the revisions this run wrote", async () => {
+  const f = policyFixture();
+  // Another run wrote revision 5; this run wrote revision 4. Only 4 may be settled.
+  f.prisma.memoryRevision.findMany.mockResolvedValue([
+    { documentId: "doc-shared", revision: 4, content: "shared summary" },
+  ]);
+  await settleMemoryRewrites(
+    f.prisma as never,
+    { spaceId: "space", botId: "bot" },
+    ["doc-shared"],
+    "run-1",
+  );
+  expect(f.prisma.memoryRevision.findMany).toHaveBeenCalledWith(
+    expect.objectContaining({
+      where: { sourceRunId: "run-1", documentId: { in: ["doc-shared"] } },
+    }),
+  );
+  expect(f.prisma.memoryDocumentCheck.upsert).toHaveBeenCalledTimes(1);
+  expect(f.prisma.memoryDocumentCheck.upsert).toHaveBeenCalledWith(
+    expect.objectContaining({
+      where: { documentId_revision: { documentId: "doc-shared", revision: 4 } },
+      create: expect.objectContaining({ status: "checked", settledBy: "rewrite", runId: "run-1" }),
+    }),
+  );
+});
+
+it("reports a stall when the last three runs settled nothing", async () => {
+  const f = policyFixture();
+  f.prisma.run.findMany.mockResolvedValue([{ id: "a" }, { id: "b" }, { id: "c" }]);
+  f.prisma.memoryDocumentCheck.count.mockResolvedValue(0);
+  expect(
+    await memoryReviewStalled(f.prisma as never, {
+      spaceId: "space",
+      botId: "bot",
+      routineId: "routine",
+    }),
+  ).toBe(true);
+  f.prisma.memoryDocumentCheck.count.mockResolvedValue(2);
+  expect(
+    await memoryReviewStalled(f.prisma as never, {
+      spaceId: "space",
+      botId: "bot",
+      routineId: "routine",
+    }),
+  ).toBe(false);
+});
+
+it("completes a note whose pages were read across two runs", async () => {
+  const f = policyFixture();
+  // First slice read 0..3000 and stopped; the second slice finishes from 3000.
+  f.prisma.memoryDocumentCheck.findUnique.mockResolvedValue({
+    status: "reading",
+    ranges: [[0, 3000]],
+  });
+  const result = await recordMemoryRead(
+    f.prisma as never,
+    { spaceId: "space", botId: "bot" },
+    { id: "doc-memory", revision: 3, chars: 5000 },
+    [[3000, 5000]],
+    false,
+    "run-2",
+  );
+  expect(result.complete).toBe(true);
+  expect(result.ranges).toEqual([[0, 5000]]);
+  expect(f.prisma.memoryDocumentCheck.upsert).toHaveBeenCalledWith(
+    expect.objectContaining({
+      create: expect.objectContaining({ status: "read", runId: "run-2" }),
+      update: expect.objectContaining({ status: "read", ranges: [[0, 5000]] }),
+    }),
+  );
+});
+
+it("keeps an unfinished document in scope after a partial slice", async () => {
+  const f = policyFixture();
+  const original = f.prisma.routine.findFirst.getMockImplementation()!;
+  f.prisma.routine.findFirst.mockImplementation(async (args) =>
+    args.select?.organizationFullCheckedAt
+      ? ({
+          organizationFullCheckedAt: new Date("2026-11-08T11:00:00Z"),
+          organizationSweepStartedAt: null,
+        } as never)
+      : original(args),
+  );
+  // The leftover was written before the previous memory run, so only "unsettled" can select it.
+  const result = await memoryOrganizationPlan(
+    f.prisma as never,
+    scope,
+    "current",
+    now,
+    async (target) =>
+      target === "bot"
+        ? [
+            {
+              id: "doc-left",
+              path: "memory/left.md",
+              content: "left",
+              revision: 1,
+              updatedAt: "2026-11-06T00:00:00.000Z",
+            },
+          ]
+        : [],
+  );
+  expect(result.ids).toEqual(["doc-left"]);
+  expect(result.changed).toBe(true);
+});
+
+it("reopens settled revisions when a new sweep starts", async () => {
+  const f = policyFixture();
+  const original = f.prisma.routine.findFirst.getMockImplementation()!;
+  f.prisma.routine.findFirst.mockImplementation(async (args) =>
+    args.select?.organizationFullCheckedAt
+      ? ({ organizationFullCheckedAt: null, organizationSweepStartedAt: null } as never)
+      : original(args),
+  );
+  f.prisma.memoryDocumentCheck.findMany.mockResolvedValue([
+    {
+      documentId: "doc-memory",
+      revision: 1,
+      status: "checked",
+      ranges: [],
+      checkedAt: new Date("2026-10-01T00:00:00Z"),
+    },
+  ]);
+  const result = await memoryOrganizationPlan(
+    f.prisma as never,
+    scope,
+    "current",
+    now,
+    async (target) =>
+      target === "bot"
+        ? [
+            {
+              id: "doc-memory",
+              path: "MEMORY.md",
+              content: "current",
+              revision: 1,
+              updatedAt: "2026-11-08T09:00:00.000Z",
+            },
+          ]
+        : [],
+  );
+  expect(result.full).toBe(true);
+  expect(result.ids).toEqual(["doc-memory"]);
+  // Every earlier record is reopened, not only settled ones: coverage from a previous window
+  // must not let this window sign off after a single page.
+  expect(f.prisma.memoryDocumentCheck.updateMany).toHaveBeenCalledWith({
+    where: { spaceId: "space", botId: "bot" },
+    data: expect.objectContaining({ status: "reading", ranges: [] }),
+  });
+});
+
+it("does not count re-reading the same page as progress", async () => {
+  const f = policyFixture();
+  f.prisma.memoryDocumentCheck.findUnique.mockResolvedValue({
+    status: "reading",
+    ranges: [[0, 100]],
+  });
+  const result = await recordMemoryRead(
+    f.prisma as never,
+    { spaceId: "space", botId: "bot" },
+    { id: "doc-memory", revision: 2, chars: 5000 },
+    [[0, 100]],
+    false,
+    "run-3",
+  );
+  expect(result.complete).toBe(false);
+  const update = f.prisma.memoryDocumentCheck.upsert.mock.calls.at(-1)?.[0]?.update;
+  // No new coverage: the row keeps the run that actually advanced it, so the stall guard sees it.
+  expect(update).not.toHaveProperty("runId");
+});
+
+it("opens a sweep and reopens stale rows in one transaction", async () => {
+  const f = policyFixture();
+  const original = f.prisma.routine.findFirst.getMockImplementation()!;
+  f.prisma.routine.findFirst.mockImplementation(async (args) =>
+    args.select?.organizationFullCheckedAt
+      ? ({ organizationFullCheckedAt: null, organizationSweepStartedAt: null } as never)
+      : original(args),
+  );
+  await memoryOrganizationPlan(f.prisma as never, scope, "current", now, async () => [
+    {
+      id: "doc-memory",
+      path: "MEMORY.md",
+      content: "current",
+      revision: 1,
+      updatedAt: "2026-11-08T09:00:00.000Z",
+    },
+  ]);
+  expect(f.prisma.$transaction).toHaveBeenCalledTimes(1);
+  // Both writes must be inside the same transaction, not two independent updates.
+  expect(f.prisma.routine.updateMany).toHaveBeenCalledWith(
+    expect.objectContaining({
+      data: expect.objectContaining({ organizationSweepStartedAt: now }),
+    }),
+  );
+  expect(f.prisma.memoryDocumentCheck.updateMany).toHaveBeenCalledWith(
+    expect.objectContaining({ data: expect.objectContaining({ status: "reading" }) }),
+  );
+});
+
+it("schedules a shared MEMORY.md, which the reader does expose", async () => {
+  expect(isReviewableMemoryPath("user", "MEMORY.md")).toBe(true);
+  expect(isReviewableMemoryPath("user", "USER.md")).toBe(true);
+  expect(isReviewableMemoryPath("bot", "USER.md")).toBe(false);
+  expect(isReviewableMemoryPath("bot", "memory/note.md")).toBe(true);
+  expect(isReviewableMemoryPath("bot", "feishu/note.md")).toBe(false);
 });
 
 it("never advances the built-in fixed memory schedule after messages or daily review", async () => {
@@ -416,7 +825,6 @@ it("never advances the built-in fixed memory schedule after messages or daily re
       prisma as never,
       { spaceId: "space", userId: "user", botId: "bot" },
       new Date(),
-      true,
     ),
   ).toBe(false);
   expect(updateMany).not.toHaveBeenCalled();

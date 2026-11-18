@@ -9,7 +9,7 @@ import type {
   WebProvider,
 } from "@livingbot/adapter-kit";
 import type { ComputerMode, MessageBlock } from "@livingbot/contracts";
-import type { ToolCallStreak } from "@livingbot/core";
+import type { ToolCall, ToolCallStreak } from "@livingbot/core";
 import { createStreamingRedactor } from "@livingbot/core";
 import { toolEffectIdempotencyKey } from "@livingbot/core/node/approval-effect-key";
 import type { Bot, Computer, effectiveMemoryScope, Run, Task, Thread } from "@livingbot/db";
@@ -105,11 +105,15 @@ export interface ReplyState {
    * Tool calls that land mid-sentence wait here until the narration catches up to a
    * sentence boundary, so the step chips never render in the middle of a clause.
    */
-  pendingToolNames: string[];
+  pendingTools: ToolCall[];
+  /** Whether the next cumulative reasoning frame replaces the current segment. */
+  reasoningStreaming?: boolean;
   /** Native engines stream cumulative previews before delivering verified final text. */
   widgetPreview?: {
     text: string;
     committed: string;
+    /** Cumulative process prose already frozen before native operations. */
+    narration?: string;
     anchors: Array<{ at: number; markdown: string }>;
   };
   pendingProgress: string;
@@ -202,8 +206,13 @@ export interface RunSource {
   memoryMaintenance?: boolean;
   fixedMemorySchedule?: boolean;
   memoryOrganizationFull?: boolean;
+  /** Document ids the server scheduled for this review; ids, not paths, survive aliasing. */
   memoryOrganizationTargets?: string[];
-  memoryReviewedPaths?: Set<string>;
+  memoryReviewedIds?: Set<string>;
+  /** Targets left unreviewed when the turn ended; the run is partial, not failed. */
+  memoryOrganizationRemaining?: number;
+  /** Targets the plan left for later runs; a sweep only completes when both counts are zero. */
+  memoryOrganizationPendingAfter?: number;
   memoryOrganizationFailures?: Set<string>;
   memoryReadCoverage?: Map<
     string,

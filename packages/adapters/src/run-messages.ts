@@ -36,9 +36,9 @@ export function runLeaseFor(
 
 export function redactBlocks(blocks: MessageBlock[], secrets: string[]): MessageBlock[] {
   return blocks.map((block) => {
-    if (block.kind === "text") {
+    if (block.kind === "text" || block.kind === "reasoning") {
       return {
-        kind: "text" as const,
+        kind: block.kind,
         text: redactSecrets(block.text, secrets),
       };
     }

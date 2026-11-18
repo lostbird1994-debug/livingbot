@@ -48,6 +48,7 @@ import {
   loadRunHistoryMessages,
   loadRunTurnCheckpoint,
   loadThreadStopContext,
+  markExecutionStateUnconfirmed,
   parseComputerMode,
   prioritizeConversation,
   RunHistoryWriteError,
@@ -1825,10 +1826,21 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               { spaceId: run.spaceId, userId: run.userId, botId: bot.id },
               runId,
               run.startedAt ?? now,
+              async (target) => {
+                const request =
+                  target === "bot"
+                    ? { scope: "bot" as const, botId: bot.id }
+                    : { scope: "user" as const };
+                const snapshot = await deps.memory.read(request, context);
+                return snapshot.documents;
+              },
             );
             ctx.source.memoryOrganizationFull = status.full;
-            ctx.source.memoryOrganizationTargets = status.changed ? status.paths : [];
-            prompt += `\n\n服务端检查范围（${status.full ? "完整检查" : "增量检查"}）：${JSON.stringify(status.paths)}。检查这些文档及关联摘要、引用笔记；不必遍历无关专题。`;
+            ctx.source.memoryOrganizationTargets = status.changed ? status.ids : [];
+            ctx.source.memoryOrganizationPendingAfter = status.remaining;
+            prompt += `\n\n服务端检查范围（${status.full ? "完整检查" : "增量检查"}）：${JSON.stringify(status.paths)}。本轮预算约 ${status.budget} 字，已选 ${status.paths.length} 份，另有 ${status.remaining} 份留到下次。检查这些文档及关联摘要、引用笔记；不必遍历无关专题。`;
+            if (status.resume.length)
+              prompt += `\n这些文档上次没读完，本次请从 offset 继续（不要从头重读）：${JSON.stringify(status.resume)}。`;
             if (!status.changed) {
               await deps.events.append({
                 spaceId: run.spaceId,
@@ -1866,18 +1878,12 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               independentTask,
               answeredApproval,
               onExecutionState: async () => {
-                await deps.prisma.run.updateMany({
-                  where: {
-                    id: runId,
-                    spaceId: run.spaceId,
-                    userId: run.userId,
-                    leaseFence: fence,
-                    status: { in: ["running", "cancelled", "waiting_input"] },
-                  },
-                  data: {
-                    error: "底层任务状态未确认，请先核实，勿重复提交。",
-                    resourceWaitReason: "unconfirmed",
-                  },
+                await markExecutionStateUnconfirmed(deps.prisma, {
+                  spaceId: run.spaceId,
+                  userId: run.userId,
+                  runId,
+                  leaseFence: fence,
+                  error: "底层任务状态未确认，请先核实，勿重复提交。",
                 });
               },
               verbatimMcpServers,

@@ -238,8 +238,12 @@ msgid "{header}, column {index}"
 msgstr "{header}, column {index}"
 
 #: src/components/ToolActivityDisclosure.tsx
-msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
-msgstr "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
+#~ msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
+#~ msgstr "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "{hidden, plural, one {Show # earlier step} other {Show # earlier steps}}"
+msgstr "{hidden, plural, one {Show # earlier step} other {Show # earlier steps}}"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "{hiddenSelectedCount, plural, one {# selected model is hidden by your search.} other {# selected models are hidden by your search.}}"
@@ -1203,6 +1207,10 @@ msgstr "Browse"
 msgid "Browse MCP servers"
 msgstr "Browse MCP servers"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Browsed"
+msgstr "Browsed"
+
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Bubble opacity"
 msgstr "Bubble opacity"
@@ -1210,6 +1218,10 @@ msgstr "Bubble opacity"
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Bubbles"
 msgstr "Bubbles"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Building"
+msgstr "Building"
 
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
@@ -1232,6 +1244,14 @@ msgstr "Call back"
 #: src/components/call/CallCard.tsx
 msgid "Call with {0}"
 msgstr "Call with {0}"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Called"
+msgstr "Called"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Calling an endpoint"
+msgstr "Calling an endpoint"
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Calling you…"
@@ -1329,6 +1349,10 @@ msgstr "Change model"
 msgid "Change password"
 msgstr "Change password"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Changing directory"
+msgstr "Changing directory"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
 msgstr "Changing…"
@@ -1410,6 +1434,10 @@ msgstr "Checking computer setup…"
 #: src/components/McpServerHealthLine.tsx
 msgid "Checking connection…"
 msgstr "Checking connection…"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Checking the environment"
+msgstr "Checking the environment"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
@@ -1631,8 +1659,13 @@ msgid "Complete"
 msgstr "Complete"
 
 #: src/components/SubagentCard.tsx
+#: src/components/ToolActivityDisclosure.tsx
 msgid "Completed"
 msgstr "Completed"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Completed {duration}"
+msgstr "Completed {duration}"
 
 #: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
@@ -2649,6 +2682,10 @@ msgstr "days"
 msgid "Decline"
 msgstr "Decline"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Deep thought"
+msgstr "Deep thought"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/role-model-picker.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -2973,6 +3010,14 @@ msgstr "Edit Profile"
 #: src/pages/SettingsOverlay.tsx
 msgid "Editing"
 msgstr "Editing"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Editing a file"
+msgstr "Editing a file"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Editing files"
+msgstr "Editing files"
 
 #: src/pages/LoadedContextPanel.tsx
 msgid "Edits affect your bots using this document in this workspace."
@@ -3625,6 +3670,10 @@ msgstr "Inputs"
 msgid "Install update"
 msgstr "Install update"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Installing dependencies"
+msgstr "Installing dependencies"
+
 #: src/components/McpServerHealthLine.tsx
 msgid "Installing…"
 msgstr "Installing…"
@@ -3843,6 +3892,10 @@ msgstr "Listening…"
 #: src/components/composer/DictationInput.tsx
 msgid "Listening… Click the microphone to finish."
 msgstr "Listening… Click the microphone to finish."
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Listing files"
+msgstr "Listing files"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "LivingBot"
@@ -4327,6 +4380,10 @@ msgstr "Move to"
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move up"
 msgstr "Move up"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Moving files"
+msgstr "Moving files"
 
 #: src/components/call/CallCard.tsx
 msgid "Mute"
@@ -5126,6 +5183,10 @@ msgstr "Private"
 msgid "Private workspace with its own bots and groups."
 msgstr "Private workspace with its own bots and groups."
 
+#: src/components/ToolActivityDisclosure.tsx
+#~ msgid "Processed {duration}"
+#~ msgstr "Processed {duration}"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
 msgstr "Productivity"
@@ -5168,6 +5229,10 @@ msgstr "Queued"
 msgid "rakazo-shared and IDs starting with bot- are reserved for LivingBot."
 msgstr "rakazo-shared and IDs starting with bot- are reserved for LivingBot."
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Ran"
+msgstr "Ran"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
 msgstr "React"
@@ -5176,9 +5241,25 @@ msgstr "React"
 msgid "Reactions"
 msgstr "Reactions"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Read"
+msgstr "Read"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
 msgstr "Read replies aloud"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reading a file"
+msgstr "Reading a file"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reading a page"
+msgstr "Reading a page"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reading memory"
+msgstr "Reading memory"
 
 #: src/pages/shell/import-status.ts
 msgid "Ready"
@@ -5611,6 +5692,14 @@ msgstr "Review completed; no documents changed"
 msgid "Review provider settings and test again."
 msgstr "Review provider settings and test again."
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reviewing changes"
+msgstr "Reviewing changes"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reviewing history"
+msgstr "Reviewing history"
+
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Revoke"
@@ -5682,6 +5771,14 @@ msgstr "running"
 #: src/pages/RoutineEditor.tsx
 msgid "Running"
 msgstr "Running"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Running a script"
+msgstr "Running a script"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Running tests"
+msgstr "Running tests"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Running…"
@@ -5860,6 +5957,22 @@ msgstr "Search skills"
 #: src/pages/ActivityList.tsx
 msgid "Search: {0}"
 msgstr "Search: {0}"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searched"
+msgstr "Searched"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searching memory"
+msgstr "Searching memory"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searching the files"
+msgstr "Searching the files"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searching the web"
+msgstr "Searching the web"
 
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/SpaceSearch.tsx
@@ -7001,6 +7114,10 @@ msgstr "Use space default"
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Use up to 512 letters, digits, _ or -."
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Used"
+msgstr "Used"
+
 #: src/pages/BotRoleCardEditor.tsx
 msgid "User identity"
 msgstr "User identity"
@@ -7111,6 +7228,10 @@ msgstr "Wait a moment and test again."
 #: src/lib/roster-status.ts
 msgid "Waiting in line…"
 msgstr "Waiting in line…"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Waiting on a command"
+msgstr "Waiting on a command"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Waiting…"
@@ -7266,6 +7387,14 @@ msgstr "Workspace settings"
 #: src/pages/LoadedContextPanel.tsx
 msgid "Workspace-shared memory"
 msgstr "Workspace-shared memory"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Writing a file"
+msgstr "Writing a file"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Wrote"
+msgstr "Wrote"
 
 #: src/lib/billing.ts
 msgid "year"

@@ -5,13 +5,16 @@ import {
   ModelAccountError,
   ModelOutputError,
   RunInterruptedError,
+  routineWakeupJob,
   runContinueJob,
   SandboxAllowanceUsedError,
   SandboxRateLimitError,
   TransientModelError,
 } from "@livingbot/adapter-kit";
 import {
+  appendReasoningSegment,
   containsSecret,
+  createStreamingRedactor,
   displayName,
   humanizeToolName,
   isBackgroundRunTrigger,
@@ -19,6 +22,7 @@ import {
   TAKEOVER_COMPUTER_PENDING_STATE,
   userRunError,
   withoutLastToolStepNotes,
+  withRunDuration,
 } from "@livingbot/core";
 import { RunHistoryWriteError, recordUsage } from "@livingbot/db";
 import { getLogger } from "@livingbot/logging";
@@ -38,7 +42,11 @@ import {
 import {
   isAutomaticMemoryPrompt,
   MEMORY_ORGANIZATION_COOLDOWN_MS,
+  MEMORY_SWEEP_COOLDOWN_MS,
+  markMemoryChecked,
+  memoryReviewStalled,
   nudgeMemoryOrganization,
+  settleMemoryRewrites,
 } from "./memory-organization.js";
 import { NativeExecutionError } from "./openclaw-native-driver.js";
 import {
@@ -85,6 +93,7 @@ import {
   stripStrayNoResponse,
 } from "./silent-reply.js";
 import { takeoverCheckpointOf } from "./takeover-resume.js";
+import { toolCallAction, toolCallTarget } from "./tool-activity-text.js";
 import { appendToolCompletionAudit, toolCompletionFromResult } from "./tool-completion-audit.js";
 import { advanceToolCallLoopGuard, loopGuardStopText } from "./tool-loop.js";
 import {
@@ -111,6 +120,33 @@ export async function consumeRunEvents(
   const { deps, run, runId, bot } = ctx;
   const { reply } = ctx.state;
   let thinking = false;
+  let reasoningRaw: string | undefined;
+  let lastReasoningAt = 0;
+  const publishReasoning = async (raw: string, final: boolean) => {
+    if (isBackgroundRunTrigger(run.trigger)) return;
+    // Coalesce cumulative token frames; the next boundary always flushes the final snapshot.
+    if (!final && reply.reasoningStreaming && Date.now() - lastReasoningAt < 250) return;
+    const redactor = createStreamingRedactor(ctx.secrets);
+    const text = (redactor.push(raw) + (final ? redactor.finish() : "")).slice(0, 32_000);
+    if (!text) return;
+    await flushProgress(ctx);
+    flushPendingTools(reply);
+    const start = !reply.reasoningStreaming;
+    const tail = reply.messageSegments.at(-1);
+    if (!start && tail?.kind === "reasoning" && tail.text === text) return;
+    reply.messageSegments = appendReasoningSegment(reply.messageSegments, text, !start);
+    reply.reasoningStreaming = true;
+    lastReasoningAt = Date.now();
+    if (!ctx.scripted && run.trigger !== "routine")
+      await deps.events.append({
+        spaceId: run.spaceId,
+        threadId: run.threadId,
+        botId: bot.id,
+        runId,
+        type: "thread.progress",
+        payload: { reasoning: { text, start } },
+      });
+  };
   const publishThinking = async (active: boolean) => {
     if (thinking === active) return;
     thinking = active;
@@ -138,8 +174,24 @@ export async function consumeRunEvents(
       if (await runLeaseLost(ctx)) return true;
 
       if (event.type === "thinking") {
+        if (event.text?.trim()) reasoningRaw = event.text.trim();
+        if (reasoningRaw) await publishReasoning(reasoningRaw, !event.active);
+        if (!event.active) {
+          reasoningRaw = undefined;
+          reply.reasoningStreaming = false;
+        }
         await publishThinking(event.active);
         continue;
+      }
+      if (
+        event.type === "text" ||
+        event.type === "tool" ||
+        event.type === "turn" ||
+        event.type === "done"
+      ) {
+        if (reasoningRaw) await publishReasoning(reasoningRaw, true);
+        reasoningRaw = undefined;
+        reply.reasoningStreaming = false;
       }
       if (
         (event.type === "text" && event.text.length > 0) ||
@@ -274,6 +326,33 @@ async function streamProgress(ctx: RunContext, event: RuntimeEvent<"progress">) 
   const { reply } = ctx.state;
   ctx.state.toolCallStreak = { key: undefined, count: 0 };
   if (run.trigger === "routine" || isBackgroundRunTrigger(run.trigger)) return;
+  if (event.narration) {
+    await flushProgress(ctx);
+    flushPendingTools(reply);
+    let uncommitted = event.text;
+    const preview = reply.widgetPreview;
+    if (preview) {
+      const previous = preview.narration ?? "";
+      preview.narration = previous + event.text;
+      // A visual may have frozen this native prefix before its process event arrived.
+      if (preview.committed.startsWith(previous))
+        uncommitted = event.text.slice(preview.committed.length - previous.length);
+    }
+    const text = redactSecrets(uncommitted, ctx.secrets);
+    if (!text.trim()) return;
+    // Keep native observations in the process, without promoting them to separate
+    // chat messages or mixing them into the verified answer and its notifications.
+    reply.messageSegments.push({ kind: "progress", text });
+    await deps.events.append({
+      spaceId: run.spaceId,
+      threadId: thread.id,
+      botId: bot.id,
+      runId,
+      type: "thread.progress",
+      payload: { narration: text },
+    });
+    return;
+  }
   // The bot's own note stays the working line until it writes again.
   if (event.activity && reply.narrationStatusShowing) return;
   // Flush batched text deltas first so an activity line cannot land
@@ -488,7 +567,12 @@ async function onToolCalled(ctx: RunContext, event: RuntimeEvent<"tool">): Promi
   // client must see that text before the tool call it describes.
   await flushProgress(ctx);
   // Queued first so the text written before this call becomes its note.
-  reply.pendingToolNames.push(event.name);
+  const call = {
+    name: event.name,
+    detail: toolCallTarget(event.name, event.args),
+    action: toolCallAction(event.name, event.args),
+  };
+  reply.pendingTools.push(call);
   const heldNote = event.name === "message_user" ? undefined : await publishMidTurnNarration(ctx);
   // A step without a note of its own replaces the earlier one in the live view, so its status
   // lines show again.
@@ -501,7 +585,11 @@ async function onToolCalled(ctx: RunContext, event: RuntimeEvent<"tool">): Promi
     botId: bot.id,
     type: "agent.tool.called",
     runId,
-    payload: { name: event.name, executionId: event.executionId },
+    payload: {
+      name: event.name,
+      executionId: event.executionId,
+      ...(call.detail ? { detail: call.detail } : {}),
+    },
   });
   await showNarrationStatus(ctx, heldNote);
   tryFlushPendingTools(reply);
@@ -661,10 +749,29 @@ export async function completeRun(ctx: RunContext) {
     throw new Error(
       "Memory organization did not finish; failed sources were preserved for a later retry.",
     );
-  if (
-    ctx.source.memoryOrganizationTargets?.some((path) => !ctx.source.memoryReviewedPaths?.has(path))
-  )
-    throw new Error("Memory review did not read all scheduled documents; progress was preserved.");
+  // A turn that read less than the scheduled scope is partial, not failed: the next run
+  // resumes from the same documents instead of discarding the work as an error.
+  const targets = ctx.source.memoryOrganizationTargets ?? [];
+  const reviewed = targets.filter((id) => ctx.source.memoryReviewedIds?.has(id));
+  if (ctx.source.memoryMaintenance && reviewed.length) {
+    const scope = { spaceId: run.spaceId, botId: bot.id };
+    await markMemoryChecked(deps.prisma, scope, reviewed, runId);
+    // A note this run rewrote now has a revision the model produced itself; settle it as well.
+    await settleMemoryRewrites(deps.prisma, scope, reviewed, runId);
+  }
+  const remaining =
+    targets.length - reviewed.length + (ctx.source.memoryOrganizationPendingAfter ?? 0);
+  if (remaining) {
+    await deps.events.append({
+      spaceId: run.spaceId,
+      threadId: thread.id,
+      botId: bot.id,
+      runId,
+      type: "effect.recorded",
+      payload: { tool: "memory_organization", status: "partial", remaining },
+    });
+    ctx.source.memoryOrganizationRemaining = remaining;
+  }
   await assertDailyReviewComplete(ctx);
   const { reply } = ctx.state;
   recordExplicitNoResponse(reply, reply.assistantTurnText);
@@ -782,9 +889,13 @@ export async function completeRun(ctx: RunContext) {
   }
   const blocks = ctx.state.handedOff
     ? []
-    : finalBlocksAfterMidTurnProgress(
-        redactBlocks(completionBlocks, ctx.secrets),
-        reply.publishedMidTurnUserMessage || runAllowsSilentEmpty(run.trigger),
+    : withRunDuration(
+        finalBlocksAfterMidTurnProgress(
+          redactBlocks(completionBlocks, ctx.secrets),
+          reply.publishedMidTurnUserMessage || runAllowsSilentEmpty(run.trigger),
+        ),
+        // What the run took, which its step card shows once it ends.
+        Date.now() - (run.startedAt?.getTime() ?? reply.turnStartedAtMs),
       );
   const text = ctx.state.handedOff
     ? ""
@@ -898,11 +1009,53 @@ export async function completeRun(ctx: RunContext) {
   }
   try {
     const scope = { spaceId: run.spaceId, userId: run.userId, botId: bot.id };
-    if (ctx.source.memoryOrganizationFull) {
+    if (ctx.source.memoryOrganizationFull && !ctx.source.memoryOrganizationRemaining) {
+      // The sweep covered every live document: record completion and close the sweep window.
       await deps.prisma.routine.updateMany({
         where: { id: run.routineId!, ...scope },
-        data: { organizationFullCheckedAt: new Date() },
+        data: { organizationFullCheckedAt: new Date(), organizationSweepStartedAt: null },
       });
+    }
+    // Unreviewed targets keep the routine scheduled: waiting for the next daily slot would
+    // leave a large memory collection half-checked for a whole day.
+    if (ctx.source.memoryOrganizationRemaining) {
+      const stalled = await memoryReviewStalled(deps.prisma, {
+        ...scope,
+        botId: bot.id,
+        routineId: run.routineId!,
+      });
+      if (stalled) {
+        // Three slices settled nothing: stop the hourly escalation and leave the daily slot.
+        getLogger().warn("memory.organization_stalled", {
+          "bot.id": bot.id,
+          "routine.id": run.routineId,
+          "memory.remaining": ctx.source.memoryOrganizationRemaining,
+        });
+        await deps.events.append({
+          spaceId: run.spaceId,
+          threadId: thread.id,
+          botId: bot.id,
+          runId,
+          type: "effect.recorded",
+          payload: {
+            tool: "memory_organization",
+            status: "stalled",
+            remaining: ctx.source.memoryOrganizationRemaining,
+          },
+        });
+      } else {
+        const cooldown = ctx.source.memoryOrganizationFull
+          ? MEMORY_SWEEP_COOLDOWN_MS
+          : MEMORY_ORGANIZATION_COOLDOWN_MS;
+        const nextAt = new Date(Date.now() + cooldown);
+        await deps.prisma.routine.updateMany({
+          where: { id: run.routineId!, ...scope, active: true },
+          data: { nextRunAt: nextAt },
+        });
+        // Updating the row alone leaves the queued wakeup at the daily slot; the next slice
+        // must be enqueued for its own time, the same way scheduling tools do it.
+        await deps.jobs.enqueue(routineWakeupJob(run.routineId!, nextAt));
+      }
     }
     if (
       ctx.source.memoryMaintenance &&
@@ -927,7 +1080,7 @@ export async function completeRun(ctx: RunContext) {
           data: { nextRunAt: new Date() },
         });
       }
-      await nudgeMemoryOrganization(deps.prisma, scope, new Date(), true);
+      await nudgeMemoryOrganization(deps.prisma, scope, new Date());
     } else if (["user", "follow_up"].includes(run.trigger) && ctx.source.ownerStartedRun) {
       await nudgeMemoryOrganization(deps.prisma, scope);
       await maybeOfferContextAudit(deps, scope);

@@ -238,8 +238,12 @@ msgid "{header}, column {index}"
 msgstr "{header}, עמודה {index}"
 
 #: src/components/ToolActivityDisclosure.tsx
-msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
-msgstr "{hidden, plural, one {+# שלב קודם} other {+# שלבים קודמים}}"
+#~ msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
+#~ msgstr "{hidden, plural, one {+# שלב קודם} other {+# שלבים קודמים}}"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "{hidden, plural, one {Show # earlier step} other {Show # earlier steps}}"
+msgstr "{hidden, plural, one {הצגת שלב קודם אחד} other {הצגת # שלבים קודמים}}"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "{hiddenSelectedCount, plural, one {# selected model is hidden by your search.} other {# selected models are hidden by your search.}}"
@@ -1203,12 +1207,20 @@ msgstr ""
 msgid "Browse MCP servers"
 msgstr "עיון בשרתי MCP"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Browsed"
+msgstr ""
+
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Bubble opacity"
 msgstr ""
 
 #: src/components/ChatBackgroundSettings.tsx
 msgid "Bubbles"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Building"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -1231,6 +1243,14 @@ msgstr ""
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
 msgid "Call with {0}"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Called"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Calling an endpoint"
 msgstr ""
 
 #: src/components/call/VoiceChatCard.tsx
@@ -1329,6 +1349,10 @@ msgstr "החלפת מודל"
 msgid "Change password"
 msgstr "שינוי סיסמה"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Changing directory"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
 msgstr "משנה…"
@@ -1410,6 +1434,10 @@ msgstr "בודק את הגדרות המחשב…"
 #: src/components/McpServerHealthLine.tsx
 msgid "Checking connection…"
 msgstr "בודק חיבור…"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Checking the environment"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
@@ -1631,8 +1659,13 @@ msgid "Complete"
 msgstr "הושלם"
 
 #: src/components/SubagentCard.tsx
+#: src/components/ToolActivityDisclosure.tsx
 msgid "Completed"
 msgstr "הושלם"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Completed {duration}"
+msgstr "הושלם {duration}"
 
 #: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
@@ -2649,6 +2682,10 @@ msgstr "ימים"
 msgid "Decline"
 msgstr "דחייה"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Deep thought"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/role-model-picker.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -2972,6 +3009,14 @@ msgstr "עריכת פרופיל"
 
 #: src/pages/SettingsOverlay.tsx
 msgid "Editing"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Editing a file"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Editing files"
 msgstr ""
 
 #: src/pages/LoadedContextPanel.tsx
@@ -3625,6 +3670,10 @@ msgstr "קלטים"
 msgid "Install update"
 msgstr "התקנת עדכון"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Installing dependencies"
+msgstr ""
+
 #: src/components/McpServerHealthLine.tsx
 msgid "Installing…"
 msgstr "מתקין…"
@@ -3842,6 +3891,10 @@ msgstr ""
 
 #: src/components/composer/DictationInput.tsx
 msgid "Listening… Click the microphone to finish."
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Listing files"
 msgstr ""
 
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -4327,6 +4380,10 @@ msgstr "העברה אל"
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move up"
 msgstr "הזזה למעלה"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Moving files"
+msgstr ""
 
 #: src/components/call/CallCard.tsx
 msgid "Mute"
@@ -5126,6 +5183,10 @@ msgstr "פרטי"
 msgid "Private workspace with its own bots and groups."
 msgstr "סביבת עבודה פרטית עם בוטים וקבוצות משלה."
 
+#: src/components/ToolActivityDisclosure.tsx
+#~ msgid "Processed {duration}"
+#~ msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
 msgstr ""
@@ -5168,6 +5229,10 @@ msgstr "בתור"
 msgid "rakazo-shared and IDs starting with bot- are reserved for LivingBot."
 msgstr ""
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Ran"
+msgstr ""
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
 msgstr "הוספת אמוג׳י"
@@ -5176,9 +5241,25 @@ msgstr "הוספת אמוג׳י"
 msgid "Reactions"
 msgstr "אמוג׳י"
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Read"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
 msgstr "הקראת תשובות בקול"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reading a file"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reading a page"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reading memory"
+msgstr ""
 
 #: src/pages/shell/import-status.ts
 msgid "Ready"
@@ -5611,6 +5692,14 @@ msgstr ""
 msgid "Review provider settings and test again."
 msgstr "יש לבדוק את הגדרות הספק ולבדוק שוב."
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reviewing changes"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Reviewing history"
+msgstr ""
+
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Revoke"
@@ -5682,6 +5771,14 @@ msgstr "פועל"
 #: src/pages/RoutineEditor.tsx
 msgid "Running"
 msgstr "פועל"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Running a script"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Running tests"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Running…"
@@ -5860,6 +5957,22 @@ msgstr ""
 #: src/pages/ActivityList.tsx
 msgid "Search: {0}"
 msgstr "חיפוש: {0}"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searched"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searching memory"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searching the files"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Searching the web"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/SpaceSearch.tsx
@@ -7001,6 +7114,10 @@ msgstr ""
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr ""
 
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Used"
+msgstr ""
+
 #: src/pages/BotRoleCardEditor.tsx
 msgid "User identity"
 msgstr ""
@@ -7111,6 +7228,10 @@ msgstr "יש להמתין רגע ולבדוק שוב."
 #: src/lib/roster-status.ts
 msgid "Waiting in line…"
 msgstr "ממתין בתור…"
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Waiting on a command"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Waiting…"
@@ -7265,6 +7386,14 @@ msgstr ""
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/LoadedContextPanel.tsx
 msgid "Workspace-shared memory"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Writing a file"
+msgstr ""
+
+#: src/components/ToolActivityDisclosure.tsx
+msgid "Wrote"
 msgstr ""
 
 #: src/lib/billing.ts

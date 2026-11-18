@@ -10,3 +10,10 @@ export const MemoryOrganizationChangeSchema = z.object({
   savedCharacters: z.number().int().optional(),
   error: z.string().optional(),
 });
+
+/** Progress receipts written by the review itself; they are not document changes. */
+export const MemoryOrganizationProgressSchema = z.object({
+  tool: z.literal("memory_organization"),
+  status: z.enum(["partial", "stalled"]),
+  remaining: z.number().int().optional(),
+});

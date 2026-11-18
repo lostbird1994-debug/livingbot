@@ -16,34 +16,52 @@ import { FixtureTranscript } from "./thread-fixture";
 const params = new URLSearchParams(location.search);
 const view = params.get("view") === "settings" ? "settings" : "thread";
 const live = params.get("phase") === "live";
+const withReasoning = params.get("reasoning") === "true";
+const THOUGHT = "I will check the calendar before choosing a time.";
+const longReasoning = Array.from(
+  { length: 12 },
+  (_, i) =>
+    `${i + 1}. ${THOUGHT} Compare the available times with the source and keep the recommendation clear.`,
+).join("\n\n");
 
 const USER_TEXT = "Find a free slot on Tuesday.";
 const REPLY_TEXT = "Tuesday at 2 pm is free.";
-const STEP_LABELS = [
-  "Open calendar",
-  "Read events",
-  "Search inbox",
-  "Read message",
-  "Check time zones",
-  "Compare calendars",
-  "Draft invite",
-  "Check conflicts",
+const STEPS = [
+  { label: "Read file", tool: "read_file", detail: "memory-organization.ts" },
+  { label: "Read file", tool: "read_file", detail: "builtin-routines.ts" },
+  { label: "Search memory", tool: "search_memory", detail: "memory organization prompt" },
+  { label: "Exec", tool: "exec", detail: "git diff --stat" },
+  { label: "Web search", tool: "web_search", detail: "open calendar slots" },
+  { label: "Write file", tool: "write_file", detail: "notes/tuesday.md" },
+  { label: "Read file", tool: "read_file", detail: "memory-organization.ts" },
+  { label: "Memory search", tool: "memory_search", detail: "invoice" },
 ];
 
 const NOTE_TEXT = "Anna is free all Tuesday afternoon.";
 
 const stepsBlock: MessageBlock = {
   kind: "steps",
-  steps: STEP_LABELS.map((label) => ({
-    label,
+  steps: STEPS.map((step) => ({
+    ...step,
     count: 1,
     // A finished reply keeps what the bot wrote before a step on that step.
-    ...(!live && label === "Check conflicts" ? { note: NOTE_TEXT } : {}),
+    ...(!live && step.detail === "invoice" ? { note: NOTE_TEXT } : {}),
   })),
-  ...(live ? {} : { durationMs: 12_400 }),
+  ...(live ? {} : { durationMs: 88_000 }),
 };
 
 const createdAt = "2026-08-16T00:00:01.000Z";
+const processBlocks: MessageBlock[] = withReasoning
+  ? [
+      { kind: "reasoning", text: longReasoning },
+      { kind: "text", text: "I will inspect the sources before choosing a time." },
+      { kind: "steps", steps: stepsBlock.steps.slice(0, 4) },
+      { kind: "reasoning", text: "The sources agree. I can now save the recommendation." },
+      { kind: "progress", text: "The sources confirm Tuesday afternoon is available." },
+      { kind: "steps", steps: stepsBlock.steps.slice(4), durationMs: live ? undefined : 88_000 },
+      ...(live ? [{ kind: "reasoning" as const, text: longReasoning }] : []),
+    ]
+  : [stepsBlock];
 
 // A live run that has only called tools so far, or the finished reply with its tool card.
 const messages: ThreadMessage[] = [
@@ -60,7 +78,7 @@ const messages: ThreadMessage[] = [
     threadId: "thread-1",
     seq: 2,
     role: "bot",
-    blocks: live ? [stepsBlock] : [stepsBlock, { kind: "text", text: REPLY_TEXT }],
+    blocks: live ? processBlocks : [...processBlocks, { kind: "text", text: REPLY_TEXT }],
     botId: "bot-1",
     runId: "run-1",
     createdAt,

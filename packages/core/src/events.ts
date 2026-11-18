@@ -112,7 +112,7 @@ export function projectMessages(
       const live = liveProjection(event, createdAt);
       live.blocks = reduceLiveMessageBlocks(live.blocks, {
         type: "tool",
-        name: String(payload.name ?? ""),
+        call: toolCallFromPayload(payload),
       });
       live.meta = {
         ...live.meta,
@@ -299,12 +299,25 @@ function clampRunFailure(message: string): string {
 
 export type LiveMessageUpdate =
   | { type: "progress"; payload: Record<string, unknown> | undefined }
-  | { type: "tool"; name: string };
+  | { type: "tool"; call: ToolCall };
 
 export function reduceLiveMessageBlocks(
   current: readonly MessageBlock[],
   update: LiveMessageUpdate,
 ): MessageBlock[] {
+  if (update.type === "progress" && typeof update.payload?.narration === "string") {
+    const tail = current.at(-1);
+    const before = tail?.kind === "progress" ? current.slice(0, -1) : current;
+    let blocks = appendTextSegment(before, update.payload.narration);
+    for (const call of tail?.kind === "progress" ? (tail.pendingTools ?? []) : [])
+      blocks = appendToolCallSegment(blocks, call);
+    return blocks;
+  }
+  if (update.type === "progress" && update.payload?.reasoning) {
+    const reasoning = update.payload.reasoning as { text?: unknown; start?: unknown };
+    if (typeof reasoning.text !== "string" || !reasoning.text) return [...current];
+    return appendReasoningSegment(current, reasoning.text, reasoning.start !== true);
+  }
   // A reset drops the text streamed so far (it will not be in the reply) and keeps the steps,
   // including tools still waiting on that text to finish its sentence.
   let blocks = current;
@@ -320,8 +333,8 @@ export function reduceLiveMessageBlocks(
               : [block],
           )
         : current.filter((block) => block.kind !== "text" && block.kind !== "progress");
-    for (const name of waiting?.kind === "progress" ? (waiting.pendingToolNames ?? []) : []) {
-      blocks = appendToolCallSegment(blocks, name);
+    for (const call of waiting?.kind === "progress" ? (waiting.pendingTools ?? []) : []) {
+      blocks = appendToolCallSegment(blocks, call);
     }
     if (update.payload.preserveText === true)
       return [
@@ -344,18 +357,18 @@ export function reduceLiveMessageBlocks(
       : tail?.kind === "progress"
         ? tail.text
         : "";
-  const pendingToolNames = [
-    ...(tail?.kind === "progress" ? (tail.pendingToolNames ?? []) : []),
-    ...(update.type === "tool" ? [update.name] : []),
+  const pendingTools = [
+    ...(tail?.kind === "progress" ? (tail.pendingTools ?? []) : []),
+    ...(update.type === "tool" ? [update.call] : []),
   ];
   const activity =
     update.type === "progress"
       ? update.payload?.activity === true
       : tail?.kind === "progress" && tail.activity === true;
 
-  if (pendingToolNames.length > 0 && endsSentence(tailText)) {
+  if (pendingTools.length > 0 && endsSentence(tailText)) {
     let next = activity ? [...segments] : appendTextSegment(segments, tailText);
-    for (const name of pendingToolNames) next = appendToolCallSegment(next, name);
+    for (const call of pendingTools) next = appendToolCallSegment(next, call);
     return next;
   }
   if (!tailText) return [...segments];
@@ -365,9 +378,24 @@ export function reduceLiveMessageBlocks(
       kind: "progress",
       text: tailText,
       ...(activity ? { activity: true as const } : {}),
-      ...(pendingToolNames.length > 0 ? { pendingToolNames } : {}),
+      ...(pendingTools.length > 0 ? { pendingTools } : {}),
     },
   ];
+}
+
+/** Providers prefix the reasoning text with its own label; the block header already says it. */
+export function stripReasoningLabel(text: string): string {
+  return text.replace(/^\s*(?:reasoning|thinking)\s*[:：]\s*/i, "");
+}
+
+/** A cumulative reasoning frame replaces only its own segment, never reply text. */
+export function appendReasoningSegment(
+  blocks: readonly MessageBlock[],
+  text: string,
+  replace: boolean,
+): MessageBlock[] {
+  const prior = replace && blocks.at(-1)?.kind === "reasoning" ? blocks.slice(0, -1) : blocks;
+  return [...prior, { kind: "reasoning", text: stripReasoningLabel(text) }];
 }
 
 function liveMessageText(blocks: readonly MessageBlock[]): string {
@@ -386,9 +414,22 @@ export function liveMessageComposing(blocks: readonly MessageBlock[]): boolean {
   return (
     tail?.kind === "progress" &&
     !tail.activity &&
-    !tail.pendingToolNames?.length &&
+    !tail.pendingTools?.length &&
     tail.text.trim().length > 0
   );
+}
+
+/** The tool call an `agent.tool.called` event reports, including what it acted on. */
+export function toolCallFromPayload(payload: Record<string, unknown>): ToolCall {
+  const detail = payload.detail;
+  const action = payload.action;
+  const note = payload.note;
+  return {
+    name: String(payload.name ?? ""),
+    ...(typeof detail === "string" && detail ? { detail } : {}),
+    ...(typeof action === "string" && action ? { action } : {}),
+    ...(typeof note === "string" && note ? { note } : {}),
+  };
 }
 
 /** The tool status line the newest live message is showing ("Searching the web: …"), if any. */
@@ -400,7 +441,17 @@ export function liveActivityLine(
   return (tail?.kind === "progress" && tail.activity && tail.text.trim()) || undefined;
 }
 
-export type ToolStep = { label: string; count: number; note?: string };
+/** A tool call as the thread shows it: the tool, and what it acted on when that is known. */
+export type ToolCall = { name: string; detail?: string; action?: string; note?: string };
+
+export type ToolStep = {
+  label: string;
+  count: number;
+  tool?: string;
+  detail?: string;
+  action?: string;
+  note?: string;
+};
 
 /** Assistant text is never execution metadata. Also reads the legacy note format
  * without rewriting stored history. Notes precede their associated tool step. */
@@ -433,13 +484,65 @@ export function expandToolStepNotes(blocks: readonly MessageBlock[]): MessageBlo
   });
 }
 
-export function appendToolStep(steps: readonly ToolStep[], toolName: string): ToolStep[] {
-  const label = humanizeToolName(toolName);
-  const last = steps.at(-1);
-  if (last && last.label === label) {
-    return [...steps.slice(0, -1), { ...last, count: last.count + 1 }];
+/**
+ * The inverse of expandToolStepNotes for display: one run becomes one card. Notes the reply
+ * carries as paragraphs between its step cards go back onto the step each one introduced, and
+ * the cards themselves become a single list. Text before the first card or after the last stays
+ * a paragraph — it may be the reply itself rather than a note.
+ */
+export function collapseToolStepNotes(blocks: readonly MessageBlock[]): MessageBlock[] {
+  const first = blocks.findIndex((block) => block.kind === "steps");
+  const last = blocks.findLastIndex((block) => block.kind === "steps");
+  if (first === -1 || first === last) return [...blocks];
+  // A card, an approval, another card: the run is telling the person something, not just working.
+  if (
+    blocks.slice(first, last + 1).some((block) => block.kind !== "steps" && block.kind !== "text")
+  )
+    return [...blocks];
+
+  const rows: ToolStep[] = [];
+  let durationMs: number | undefined;
+  let note = "";
+  for (const block of blocks.slice(first, last + 1)) {
+    if (block.kind === "text") {
+      const text = block.text.trim();
+      if (text) note = note ? `${note}\n\n${text}` : text;
+      continue;
+    }
+    if (block.kind !== "steps") continue;
+    for (const step of block.steps) {
+      rows.push(note ? { ...step, note: step.note ? `${note}\n\n${step.note}` : note } : step);
+      note = "";
+    }
+    if (block.durationMs !== undefined) durationMs = block.durationMs;
   }
-  return [...steps, { label, count: 1 }];
+  return [
+    ...blocks.slice(0, first),
+    { kind: "steps" as const, steps: rows, ...(durationMs === undefined ? {} : { durationMs }) },
+    ...blocks.slice(last + 1),
+  ];
+}
+
+export function appendToolStep(steps: readonly ToolStep[], call: ToolCall): ToolStep[] {
+  const label = humanizeToolName(call.name);
+  const last = steps.at(-1);
+  // Calls that did the same thing to the same target merge; a different file stays its own row.
+  if (last && last.label === label && last.detail === call.detail) {
+    const merged = { ...last, count: last.count + 1 };
+    if (call.action) merged.action = call.action;
+    return [...steps.slice(0, -1), merged];
+  }
+  return [
+    ...steps,
+    {
+      label,
+      count: 1,
+      tool: call.name,
+      ...(call.detail === undefined ? {} : { detail: call.detail }),
+      ...(call.action === undefined ? {} : { action: call.action }),
+      ...(call.note === undefined ? {} : { note: call.note }),
+    },
+  ];
 }
 
 /** Puts a note on the newest step, splitting it off a run of the same step so it stays in order. */
@@ -449,8 +552,7 @@ export function noteLastToolStep(segments: readonly MessageBlock[], note: string
   const last = block?.kind === "steps" ? block.steps.at(-1) : undefined;
   if (block?.kind !== "steps" || !last) return [...segments];
   const steps = block.steps.slice(0, -1);
-  if (last.count > 1)
-    steps.push({ ...last, count: last.count - 1 }, { label: last.label, count: 1, note });
+  if (last.count > 1) steps.push({ ...last, count: last.count - 1 }, { ...last, count: 1, note });
   else steps.push({ ...last, note: last.note ? `${last.note}\n\n${note}` : note });
   const next = [...segments];
   next[index] = { ...block, steps };
@@ -508,7 +610,8 @@ export function trackToolNameStreak(streak: ToolNameStreak, name: string): ToolN
   return name === streak.name ? { name, count: streak.count + 1 } : { name, count: 1 };
 }
 
-const SENTENCE_END_RE = /[.!?]["'”’)\]]*\s*$/;
+/** A full stop in any script the product ships in, so a Chinese sentence flushes its step too. */
+const SENTENCE_END_RE = /[.!?。！？…]["'”’)\]」』】]*\s*$/;
 
 /** True once `text` ends at a sentence boundary (or is empty) — safe to flush without cutting a clause. */
 export function endsSentence(text: string): boolean {
@@ -526,15 +629,38 @@ export function appendTextSegment(segments: readonly MessageBlock[], text: strin
 
 export function appendToolCallSegment(
   segments: readonly MessageBlock[],
-  toolName: string,
+  call: ToolCall,
 ): MessageBlock[] {
   const last = segments.at(-1);
   const priorSteps = last?.kind === "steps" ? last.steps : [];
-  const steps = appendToolStep(priorSteps, toolName);
+  const steps = appendToolStep(priorSteps, call);
   if (last?.kind === "steps") {
     return [...segments.slice(0, -1), { kind: "steps", steps }];
   }
   return [...segments, { kind: "steps", steps }];
+}
+
+/**
+ * Stamps the run's elapsed time on its newest steps card, which is the one that stands for the
+ * whole run once it ends. Steps recorded before this release carry no total, and either way the
+ * card only shows one when there is one to show.
+ */
+export function withRunDuration(
+  blocks: readonly MessageBlock[],
+  durationMs: number | undefined,
+): MessageBlock[] {
+  const index = blocks.findLastIndex((block) => block.kind === "steps");
+  const block = blocks[index];
+  if (
+    block?.kind !== "steps" ||
+    durationMs === undefined ||
+    !Number.isFinite(durationMs) ||
+    durationMs < 0
+  )
+    return [...blocks];
+  const next = [...blocks];
+  next[index] = { ...block, durationMs: Math.round(durationMs) };
+  return next;
 }
 
 export function humanizeToolName(name: string): string {

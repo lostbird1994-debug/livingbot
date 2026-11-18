@@ -21,7 +21,6 @@ import {
 import { FIND_TOOL, findTools, partitionTools, USE_TOOL } from "./builtin-tool-bridge.js";
 import { shortenToolResultText } from "./context-selection.js";
 import type { PiAgentRuntimeOptions } from "./pi-runtime.js";
-import { sanitizeSensitiveText } from "./pi-runtime-errors.js";
 import { clipToolResultContent, clipToolResultText } from "./pi-runtime-limits.js";
 import type { RuntimeModelTarget } from "./pi-runtime-models.js";
 import { executeSubagent } from "./pi-runtime-subagent.js";
@@ -162,68 +161,6 @@ export function normalizeAgentToolName(name: string): string {
     .replace(/[^a-zA-Z0-9_-]+/g, "_")
     .replace(/^_+|_+$/g, "");
   return (normalized || FALLBACK_AGENT_TOOL_NAME).slice(0, MAX_AGENT_TOOL_NAME_LENGTH);
-}
-
-const ACTIVITY_DETAIL_LIMIT = 90;
-
-/** One human-readable line describing a tool call, shown live in the thread. */
-export function describeToolActivity(toolName: string, args: unknown): string {
-  const record = args && typeof args === "object" ? (args as Record<string, unknown>) : {};
-  if (toolName === USE_TOOL) return describeToolActivity(String(record.name), record.arguments);
-  if (toolName === FIND_TOOL) return "Finding a tool";
-  const detail = (value: unknown): string => {
-    const text = sanitizeSensitiveText(String(value ?? ""))
-      .replaceAll(/\s+/g, " ")
-      .trim();
-    return text.length > ACTIVITY_DETAIL_LIMIT ? `${text.slice(0, ACTIVITY_DETAIL_LIMIT)}…` : text;
-  };
-  if (toolName === "shell") return `Running: ${detail(record.command)}`;
-  if (toolName === "user_computer_shell")
-    return `Running on your computer: ${detail(record.command)}`;
-  if (toolName === "user_computer_observe") return `Looking at ${detail(record.app)}`;
-  if (toolName === "user_computer_act") return `Using ${detail(record.app)}`;
-  if (toolName === "read_file") return `Reading ${detail(record.path)}`;
-  if (toolName === "write_file") return `Writing ${detail(record.path)}`;
-  if (toolName === "list_files") return `Listing ${detail(record.path ?? ".")}`;
-  if (toolName === "attach_file") return `Attaching ${detail(record.path)}`;
-  if (toolName === "open_path") return `Opening ${detail(record.path)}`;
-  if (toolName === "render_plot") return "Rendering a chart";
-  if (toolName === "add_mcp_server") return `Connecting MCP server: ${detail(record.name)}`;
-  if (toolName === "computer_observe") return "Looking at the screen";
-  if (toolName === "browser_navigate")
-    return `Opening page: ${detail(redactActivityUrl(record.url))}`;
-  if (toolName === "browser_snapshot") return "Reading the page";
-  if (toolName === "browser_act") return "Using the page";
-  if (toolName === "computer_act") return "Operating the computer";
-  if (toolName === "run_subagent") return `Delegating to helper: ${detail(record.name)}`;
-  if (toolName === "create_space") return `Creating space: ${detail(record.name)}`;
-  if (toolName === "list_fleet") return "Checking your bots";
-  if (toolName === "create_group") return `Creating group: ${detail(record.name)}`;
-  if (toolName === "update_group")
-    return `Updating group: ${detail(record.group_name ?? record.name)}`;
-  if (toolName === "organize_bot") return "Organizing the sidebar";
-  if (toolName === "set_child_instructions") return "Rewriting a bot's instructions";
-  if (toolName === "set_child_bot_model") return "Setting a bot's model";
-  if (toolName === "create_child_routine") return `Scheduling routine: ${detail(record.name)}`;
-  if (toolName === "remember") return "Saving a note to memory";
-  if (toolName === "read_memory") return `Reading memory: ${detail(record.path)}`;
-  if (toolName === "write_memory") return `Rewriting memory: ${detail(record.path)}`;
-  if (toolName === "search_memory") return `Searching memory: ${detail(record.query)}`;
-  if (toolName === "save_shared_memory") return `Saving shared memory: ${detail(record.path)}`;
-  if (toolName === "web_search") return `Searching the web: ${detail(record.query)}`;
-  if (toolName === "web_fetch") return `Reading page: ${detail(redactActivityUrl(record.url))}`;
-  if (toolName === "skill_read")
-    return record.file
-      ? `Reading ${detail(record.file)} from ${detail(record.name)}`
-      : `Reading skill: ${detail(record.name)}`;
-  if (toolName === "skill_create") return `Creating skill: ${detail(record.name ?? "skill")}`;
-  if (toolName === "skill_update")
-    return `Updating skill: ${detail(record.name ?? record.skillId)}`;
-  if (toolName === "skill_delete")
-    return `Deleting skill: ${detail(record.name ?? record.skillId)}`;
-  const mcp = toolName.match(/^mcp__(.+?)__(.+)$/);
-  if (mcp) return `Using ${mcp[1]}: ${mcp[2]}`;
-  return `Using ${toolName}`;
 }
 
 /**
@@ -671,23 +608,6 @@ function boundAgentToolResult<T>(result: AgentToolResult<T>): AgentToolResult<T>
     ...result,
     content: clipToolResultContent(result.content),
   };
-}
-
-/** Origin + path only for activity chips; drop userinfo, query, and fragment. */
-function redactActivityUrl(value: unknown): string {
-  const raw = String(value ?? "").trim();
-  if (!raw) return raw;
-  try {
-    const url = new URL(raw);
-    url.username = "";
-    url.password = "";
-    url.search = "";
-    url.hash = "";
-    return url.toString();
-  } catch {
-    // Never echo unparsed input — it may still contain userinfo/secrets.
-    return "[invalid URL]";
-  }
 }
 
 export interface EventQueue {

@@ -12,7 +12,12 @@ import { redactConnectorPayload } from "./connector-safety.js";
 import { MAX_RECALLED_MEMORIES } from "./history-compaction.js";
 import { normalizeMemoryPath } from "./memory-context.js";
 import { MemoryConsolidationDecision, renderMemoryProposal } from "./memory-maintenance.js";
-import { organizeMemoryDocument, ownsSharedMemoryOrganization } from "./memory-organization.js";
+import {
+  mergeReadRanges,
+  organizeMemoryDocument,
+  ownsSharedMemoryOrganization,
+  recordMemoryRead,
+} from "./memory-organization.js";
 import { appendMemoryFact } from "./memory-tools.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
@@ -268,17 +273,26 @@ export const memoryTools: ToolHandlers = {
           : []),
         [offset, offset + low],
       ];
-      ranges.sort((a, b) => a[0] - b[0]);
-      const merged: Array<[number, number]> = [];
-      for (const range of ranges) {
-        const last = merged.at(-1);
-        if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]);
-        else merged.push([...range]);
-      }
-      reads.set(document.id, { revision: document.revision, total: totalChars, ranges: merged });
-      if (merged.length === 1 && merged[0]![0] === 0 && merged[0]![1] === totalChars) {
-        ctx.source.memoryReviewedPaths ??= new Set();
-        ctx.source.memoryReviewedPaths.add(`${document.scope}:${document.path}`);
+      const merged = mergeReadRanges([], ranges);
+      const complete = merged.length === 1 && merged[0]![0] === 0 && merged[0]![1] === totalChars;
+      // Coverage survives the run, and so does the completion judgement: a note larger than one
+      // read budget becomes complete on the slice that finally covers it, not only if one slice did.
+      const persisted = await recordMemoryRead(
+        ctx.deps.prisma,
+        { spaceId: ctx.run.spaceId, botId: ctx.bot.id },
+        { id: document.id, revision: document.revision, chars: totalChars },
+        merged,
+        complete,
+        ctx.run.id,
+      );
+      reads.set(document.id, {
+        revision: document.revision,
+        total: totalChars,
+        ranges: persisted.ranges,
+      });
+      if (persisted.complete) {
+        ctx.source.memoryReviewedIds ??= new Set();
+        ctx.source.memoryReviewedIds.add(document.id);
       }
     }
     return call.finish(result);

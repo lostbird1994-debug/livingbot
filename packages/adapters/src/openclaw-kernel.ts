@@ -225,6 +225,7 @@ export class OpenClawAgentRuntime implements AgentRuntime {
           });
         let usage: Record<string, any> | undefined;
         let preview = "";
+        let committedNarration = "";
         let publishedPreview = "";
         let lastPreviewAt = 0;
         const publishPreview = (force = false) => {
@@ -233,7 +234,22 @@ export class OpenClawAgentRuntime implements AgentRuntime {
           publishedPreview = preview;
           lastPreviewAt = Date.now();
         };
-        const collaboration = nativeCollaboration(request, emit, "kernel");
+        const commitNarration = () => {
+          // Only freeze the prefix observed before an operation. A final history
+          // reconciliation may replace the preview and must remain the final answer.
+          if (!preview.startsWith(committedNarration)) return;
+          const text = preview.slice(committedNarration.length);
+          if (text.trim()) emit({ type: "progress", text, narration: true });
+          committedNarration = preview;
+        };
+        const collaboration = nativeCollaboration(
+          request,
+          (event) => {
+            if (event.type === "tool") commitNarration();
+            emit(event);
+          },
+          "kernel",
+        );
         const toolInstruction = collaboration
           ? `\n\nThis run permits only these tools: ${
               [
@@ -241,6 +257,16 @@ export class OpenClawAgentRuntime implements AgentRuntime {
                 ...collaboration.tools.map((tool) => tool.name),
               ].join(", ") || "(none)"
             }. Other engine tools may be visible but are disabled for this run. Do not try them or substitute shell commands for unavailable product actions. If no tool is allowed, answer directly.`
+          : "";
+        // The engine's exec takes a required `description` (scripts/patch-openclaw-exec-description.mjs),
+        // and it is what the chat shows instead of the command. Models skip the field if nothing in
+        // the prompt asks for it, so ask here where every run reads it.
+        // The reasoning panel reads as the bot's own thinking; English reasoning next to a Chinese
+        // reply reads like an internal leak.
+        const languageInstruction =
+          "\n\nReason in the language the user writes in: a Chinese message means Chinese thinking.";
+        const descriptionInstruction = collaboration?.nativeTools?.includes("exec")
+          ? "\n\nEvery exec call must include a `description`: 5-12 words in the user's language, active voice, saying what the command is for. The user reads this line instead of the command, so never leave it out and never describe risk."
           : "";
         const credentialInstruction = collaboration?.tools.some(
           (tool) => tool.name === "rakazo_shell",
@@ -260,7 +286,13 @@ export class OpenClawAgentRuntime implements AgentRuntime {
           request: {
             identity,
             message: request.prompt,
-            instructions: request.instructions + toolInstruction + credentialInstruction + history,
+            instructions:
+              request.instructions +
+              languageInstruction +
+              toolInstruction +
+              descriptionInstruction +
+              credentialInstruction +
+              history,
             attachments: kernelAttachments(request),
           },
         };
@@ -274,6 +306,7 @@ export class OpenClawAgentRuntime implements AgentRuntime {
             modelId: initial.modelId,
             gatewayOrigin: new URL(agent.url).origin,
             ...(initial.thinking ? { thinking: initial.thinking } : {}),
+            reasoningLevel: initial.thinking === "off" ? "off" : "stream",
             message: initial.request!.message,
             instructions: initial.request!.instructions,
             signal,
@@ -301,10 +334,15 @@ export class OpenClawAgentRuntime implements AgentRuntime {
               publishPreview(replace);
             },
             onThinking: (active) => emit({ type: "thinking", active }),
+            // Shown as the model's 深度思考 above the step it was thinking about.
+            onReasoning: (text) => {
+              commitNarration();
+              emit({ type: "thinking", active: true, text });
+            },
             // Non-scripted runtime tool events are observations; the executor
             // renders the step without dispatching it a second time.
             onTool: (tool) => {
-              publishPreview(true);
+              commitNarration();
               emit({ type: "tool", ...tool });
             },
             onUsage(value) {

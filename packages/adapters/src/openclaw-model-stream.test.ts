@@ -123,6 +123,7 @@ describe("OpenClaw model compatibility boundary", () => {
       content: [{ type: "text", text: "Native answer" }],
     });
     const agent = f.calls.find((c) => c.method === "agent")!;
+    expect(f.calls.some((call) => call.method === "sessions.patch")).toBe(false);
     expect(agent.params.message).toBe("Current task");
     expect(agent.params.extraSystemPrompt).toContain("Previous question");
     expect(f.events).toContainEqual({ type: "progress", text: "正在读取文件…", activity: true });
