@@ -115,7 +115,7 @@ describe("connectionFormFields", () => {
       reasoning: false,
       thinkingLevel: null,
       maxTokens: String(DEFAULT_MODEL_MAX_TOKENS),
-      contextWindow: "262144",
+      contextWindow: "128000",
       supportsImages: false,
       maxImagesPerPrompt: "",
       accountId: "",

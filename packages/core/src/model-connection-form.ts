@@ -85,6 +85,7 @@ export function connectionFormFields(input: {
     | "apiProtocol"
     | "reasoning"
     | "thinkingLevel"
+    | "thinkingLevels"
     | "maxTokens"
     | "contextWindow"
     | "supportsImages"
@@ -99,7 +100,7 @@ export function connectionFormFields(input: {
   const compatible = provider === OPENAI_COMPATIBLE_PROVIDER_ID;
   const supportedThinking = compatible
     ? credential?.reasoning
-      ? compatibleThinkingLevels(credential?.apiProtocol)
+      ? (credential.thinkingLevels ?? compatibleThinkingLevels(credential?.apiProtocol))
       : []
     : catalog.find((entry) => entry.provider === provider && entry.id === modelId)?.thinkingLevels;
   return {
