@@ -130,7 +130,7 @@ export class FishAudioVoiceProvider implements VoiceProvider {
     form.set("tag_audio_events", "false");
     const language = asrLanguageHint(request.language);
     if (language) form.set("language", language);
-    const model = resolveFishTranscriptionModel();
+    const model = request.model || resolveFishTranscriptionModel();
     const res = await fetch(`${API}/v1/asr`, {
       method: "POST",
       headers: { ...fishAudioHeaders(request.apiKey), model },
@@ -227,7 +227,7 @@ export function isFishSpeechModelId(value: string): boolean {
  * pins another speech model keeps it; anything unparseable falls back rather than
  * sending a header Fish would reject.
  */
-function resolveFishTranscriptionModel(): string {
+export function resolveFishTranscriptionModel(): string {
   const configured = process.env.FISH_ASR_MODEL?.trim() ?? "";
   if (!configured) return DEFAULT_ASR_MODEL;
   if (isFishSpeechModelId(configured)) return configured;
@@ -261,7 +261,7 @@ export function stripFishAsrTags(text: string): string {
 }
 
 /** Connection override, then `FISH_TTS_MODEL`, then s2.1-pro. */
-function resolveFishSpeechModel(override?: string | null): string {
+export function resolveFishSpeechModel(override?: string | null): string {
   const requested = override?.trim() ?? "";
   if (requested && isFishSpeechModelId(requested)) return requested;
   return deploymentFishSpeechModel();

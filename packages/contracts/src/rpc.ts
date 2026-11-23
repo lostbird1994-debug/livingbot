@@ -1475,6 +1475,8 @@ export const appContract = {
             contentBase64: z.string().min(1),
             /** Unique per upload; a retry with the same nonce returns the artifact it created. */
             clientNonce: z.string().min(1).max(200).optional(),
+            /** Title used when an attachment materializes an unsent task draft. */
+            draftTitle: z.string().max(100).optional(),
           }),
         ),
       )
@@ -1600,7 +1602,7 @@ export const appContract = {
           purpose: z.enum(["speech", "notification"]).optional(),
         }),
       )
-      .output(z.object({ ready: z.boolean(), utterances: z.array(z.string()) })),
+      .output(z.object({ ready: z.boolean(), utterances: z.array(z.string()), announcement: z.string().optional() })),
   },
   externalConversations: {
     updatePolicy: oc

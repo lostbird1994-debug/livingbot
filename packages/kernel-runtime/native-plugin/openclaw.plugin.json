@@ -1,0 +1,48 @@
+{
+  "id": "livingbot",
+  "name": "LivingBot",
+  "description": "Audience-scoped access to LivingBot conversation records.",
+  "categories": [
+    "other"
+  ],
+  "skills": [
+    "./skills"
+  ],
+  "contracts": {
+    "tools": [
+      "livingbot_conversations",
+      "livingbot_deliver_file",
+      "livingbot_revise_document",
+      "livingbot_report_privately",
+      "livingbot_assign_group",
+      "livingbot_admin",
+      "call_user",
+      "end_call"
+    ]
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "endpoint",
+      "token"
+    ],
+    "properties": {
+      "endpoint": {
+        "type": "string"
+      },
+      "token": {
+        "type": "string",
+        "minLength": 32
+      }
+    }
+  },
+  "uiHints": {
+    "token": {
+      "sensitive": true
+    }
+  }
+}

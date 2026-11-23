@@ -20,9 +20,9 @@ import {
 } from "./voice-http.js";
 
 const API = "https://api.elevenlabs.io/v1";
-const MODEL = "eleven_flash_v2_5";
+export const ELEVENLABS_TTS_MODEL = "eleven_flash_v2_5";
 const FORMAT = "mp3_44100_64";
-const TRANSCRIBE_MODEL = "scribe_v2";
+export const ELEVENLABS_STT_MODEL = "scribe_v2";
 
 export class ElevenLabsVoiceProvider implements VoiceProvider {
   describe(): AdapterDescriptor<VoiceCapabilities> {
@@ -74,7 +74,7 @@ export class ElevenLabsVoiceProvider implements VoiceProvider {
           "content-type": "application/json",
           accept: "audio/mpeg",
         },
-        body: JSON.stringify({ text: request.text, model_id: MODEL }),
+        body: JSON.stringify({ text: request.text, model_id: request.model || ELEVENLABS_TTS_MODEL }),
         signal,
       },
     );
@@ -87,7 +87,7 @@ export class ElevenLabsVoiceProvider implements VoiceProvider {
     context: AdapterContext,
   ): Promise<{ text: string }> {
     const form = new FormData();
-    form.set("model_id", TRANSCRIBE_MODEL);
+    form.set("model_id", request.model || ELEVENLABS_STT_MODEL);
     form.set(
       "file",
       new Blob([new Uint8Array(request.audio)], { type: request.mimeType || "audio/webm" }),

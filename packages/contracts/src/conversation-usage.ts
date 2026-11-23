@@ -11,6 +11,7 @@ export const ConversationUsageTotalsSchema = z.object({
   cacheHitRate: z.number().min(0).max(1).nullable(),
   tokensPerSecond: z.number().nonnegative().nullable(),
   modelDurationMs: z.number().nonnegative().nullable(),
+  modelRequestDurationMs: z.number().nonnegative().nullable().optional(),
 });
 
 export const ConversationUsageSchema = z.object({

@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { accessSync, constants } from "node:fs";
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdtemp, readFile, rename, stat } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
   AdapterContext,
@@ -129,7 +129,8 @@ export class MacOsVoiceProvider implements VoiceProvider {
       }
       return { bytes: new Uint8Array(await readFile(file)), mimeType: "audio/wav" };
     } finally {
-      await rm(dir, { recursive: true, force: true });
+      const recovery = await mkdtemp(join(homedir(), ".Trash/LivingBot-speech-"));
+      await rename(dir, join(recovery, "audio"));
     }
   }
 

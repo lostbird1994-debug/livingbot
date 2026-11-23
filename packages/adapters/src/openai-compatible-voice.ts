@@ -369,7 +369,7 @@ export class OpenAiCompatibleVoiceProvider implements VoiceProvider {
       method: "POST",
       headers: headers(secret, { "content-type": "application/json" }),
       body: JSON.stringify({
-        model: secret.ttsModel,
+        model: request.model || secret.ttsModel,
         voice: request.voiceId,
         input: request.text,
         response_format: "mp3",
@@ -394,7 +394,7 @@ export class OpenAiCompatibleVoiceProvider implements VoiceProvider {
   ): Promise<{ text: string }> {
     const secret = parseOpenAiCompatibleVoiceSecret(request.apiKey);
     const form = new FormData();
-    form.set("model", secret.sttModel);
+    form.set("model", request.model || secret.sttModel);
     // mlx-audio streams NDJSON unless asked for the OpenAI shape.
     form.set("response_format", "json");
     const language = request.language?.split("-")[0]?.toLowerCase();

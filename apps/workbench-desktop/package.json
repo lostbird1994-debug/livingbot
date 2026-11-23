@@ -1,0 +1,12 @@
+{
+  "name": "@livingbot/workbench-desktop",
+  "version": "2.0.0-dev.1",
+  "private": true,
+  "description": "Independent local LivingBot 2 desktop",
+  "main": "main.cjs",
+  "scripts": {
+    "test": "node --test src/*.test.mjs",
+    "check": "node --check src/main.cjs && node --check src/preload.cjs && node --check src/backend.mjs && node --check scripts/package.mjs",
+    "package": "node scripts/package.mjs"
+  }
+}

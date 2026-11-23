@@ -1339,11 +1339,10 @@ export const ThreadSnapshotSchema = z.object({
 });
 export type ThreadSnapshot = z.infer<typeof ThreadSnapshotSchema>;
 
-/** Default maximum number of completion tokens for an OpenAI-compatible connection. */
-export const DEFAULT_MODEL_MAX_TOKENS = 8_192;
-
-/** Fallback context window for OpenAI-compatible connections that do not report a size (e.g. Ollama, LM Studio, vLLM). */
-export const DEFAULT_MODEL_CONTEXT_WINDOW = 262_144;
+export {
+  DEFAULT_MODEL_CONTEXT_WINDOW,
+  DEFAULT_MODEL_MAX_TOKENS,
+} from "./model-defaults.js";
 
 export const MAX_MODEL_CONTEXT_WINDOW = 2_147_483_647;
 

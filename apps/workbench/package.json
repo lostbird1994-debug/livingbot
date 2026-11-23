@@ -1,0 +1,14 @@
+{
+  "name": "@livingbot/workbench-server",
+  "version": "2.0.0-dev.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test src/*.test.ts",
+    "start": "node src/main.ts"
+  },
+  "dependencies": {
+    "@livingbot/workbench": "workspace:*",
+    "@livingbot/kernel-runtime": "workspace:*"
+  }
+}

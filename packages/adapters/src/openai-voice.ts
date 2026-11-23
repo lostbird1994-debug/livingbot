@@ -20,8 +20,8 @@ import {
 } from "./voice-http.js";
 
 const API = "https://api.openai.com/v1";
-const TTS_MODEL = "gpt-4o-mini-tts";
-const STT_MODEL = "gpt-4o-mini-transcribe";
+export const OPENAI_TTS_MODEL = "gpt-4o-mini-tts";
+export const OPENAI_STT_MODEL = "gpt-4o-mini-transcribe";
 
 const OPENAI_VOICES: VoiceInfo[] = [
   { id: "alloy", label: "Alloy", description: "Neutral" },
@@ -71,7 +71,7 @@ export class OpenAIVoiceProvider implements VoiceProvider {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: TTS_MODEL,
+        model: request.model || OPENAI_TTS_MODEL,
         voice: request.voiceId,
         input: request.text,
         response_format: "mp3",
@@ -87,7 +87,7 @@ export class OpenAIVoiceProvider implements VoiceProvider {
     context: AdapterContext,
   ): Promise<{ text: string }> {
     const form = new FormData();
-    form.set("model", STT_MODEL);
+    form.set("model", request.model || OPENAI_STT_MODEL);
     form.set(
       "file",
       new Blob([new Uint8Array(request.audio)], { type: request.mimeType || "audio/webm" }),

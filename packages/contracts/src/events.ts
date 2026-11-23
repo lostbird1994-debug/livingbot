@@ -123,6 +123,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("text"),
     text: z.string(),
+    /** Backend-owned document reference; other clients retain the text fallback. */
+    preview: z.object({ blockId: z.string(), title: z.string() }).optional(),
     voicePlayback: VoicePlaybackReceiptSchema.optional(),
   }),
   z.object({

@@ -1,0 +1,10 @@
+{
+  "name": "@livingbot/kernel-runtime",
+  "version": "2.0.0-dev.1",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {"test":"node --test src/*.test.ts","check":"tsc --noEmit -p tsconfig.json"},
+  "dependencies": {"exceljs":"4.4.0","openclaw":"2026.11.5"},
+  "devDependencies": {"@types/node":"24.19.2","typescript":"7.0.2"}
+}

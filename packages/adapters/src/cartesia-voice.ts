@@ -20,7 +20,7 @@ import {
 const API = "https://api.cartesia.ai";
 // From 2026-03-01 errors are JSON with a `message`; `/voices` pages with `limit`.
 const VERSION = "2026-08-14";
-const MODEL = "sonic-3";
+export const CARTESIA_TTS_MODEL = "sonic-3";
 const VOICE_PAGE_LIMIT = 100;
 const VERIFY_PAGE_LIMIT = 1;
 /** Bounds the catalog walk so a very large library cannot spin forever. */
@@ -84,7 +84,7 @@ export class CartesiaVoiceProvider implements VoiceProvider {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model_id: MODEL,
+        model_id: request.model || CARTESIA_TTS_MODEL,
         transcript: request.text,
         voice: { id: request.voiceId },
         // Cartesia's mp3 container takes bit_rate, not encoding: an encoding key rejects the request.

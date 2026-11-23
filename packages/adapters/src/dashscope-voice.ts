@@ -36,7 +36,7 @@ export const DASHSCOPE_VOICE_CATALOG_ENTRY = {
 
 const CLOUD_BASE = "https://dashscope.aliyuncs.com";
 const TTS_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference";
-const TTS_MODEL = "qwen-audio-3.1-tts-flash";
+export const DASHSCOPE_TTS_MODEL = "qwen-audio-3.1-tts-flash";
 const TTS_RATE = 24_000;
 const DEFAULT_VOICE = "longanhuan_v3.1";
 const TTS_TIMEOUT_MS = 45_000;
@@ -55,7 +55,7 @@ const CLOUD_VOICES = [
   { id: "xunanchuan_v3.1", label: "许南川", description: "男" },
   { id: "amingyuan_v3.1", label: "安明远", description: "男" },
 ] as const satisfies readonly VoiceInfo[];
-const ASR_MODEL = "qwen-audio-3.1-asr-flash";
+export const DASHSCOPE_STT_MODEL = "qwen-audio-3.1-asr-flash";
 const GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
 const MODELS_PATH = "/compatible-mode/v1/models";
 
@@ -136,6 +136,7 @@ async function synthesizeOverSocket(
   apiKey: string,
   signal: AbortSignal,
   onChunk?: (chunk: Buffer) => void,
+  model = DASHSCOPE_TTS_MODEL,
 ): Promise<Buffer> {
   const Ctor = await dashscopeSocketConstructor();
   return new Promise((resolve, reject) => {
@@ -190,7 +191,7 @@ async function synthesizeOverSocket(
               task_group: "audio",
               task: "tts",
               function: "SpeechSynthesizer",
-              model: TTS_MODEL,
+              model,
               parameters: { voice, format: "pcm", sample_rate: TTS_RATE },
               input: {},
             },
@@ -350,7 +351,7 @@ export class DashScopeVoiceProvider implements VoiceProvider {
       }
       queue.push(chunk);
       wake?.();
-    })
+    }, request.model)
       .catch((error) => {
         failure = error;
       })
@@ -392,6 +393,8 @@ export class DashScopeVoiceProvider implements VoiceProvider {
           Boolean,
         ) as AbortSignal[],
       ),
+      undefined,
+      request.model,
     );
     if (!pcm.length) throw new Error("Bailian returned no audio.");
     return { bytes: new Uint8Array(wavFromPcm(pcm, TTS_RATE)), mimeType: "audio/wav" };
@@ -453,7 +456,7 @@ export class DashScopeVoiceProvider implements VoiceProvider {
         "X-DashScope-SSE": "disable",
       },
       body: JSON.stringify({
-        model: ASR_MODEL,
+        model: request.model || DASHSCOPE_STT_MODEL,
         input: {
           messages: [
             {

@@ -783,6 +783,8 @@ export interface VoiceSynthesizeRequest {
 }
 
 export interface VoiceTranscribeRequest {
+  /** Explicit connection model; omitted retains the adapter default. */
+  model?: string;
   audio: Uint8Array;
   mimeType: string;
   apiKey: string;
