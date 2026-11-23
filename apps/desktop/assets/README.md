@@ -7,5 +7,5 @@ Mac packaging requires Xcode 26 or newer. Electron builder compiles `LivingBot.i
 into `Assets.car` for Tahoe and generates `icon.icns` for older macOS versions.
 `icon-macos.png` is the matching development export with Dock margins.
 
-`icon.png` and `icon.ico` are matching orange exports for Linux and Windows.
+`icon.png` and `icon.ico` are matching 2.0 purple-eye exports for Linux and Windows.
 Refresh them with `pnpm --filter @livingbot/ui-tokens export:brand`.

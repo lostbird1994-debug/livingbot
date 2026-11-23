@@ -1,21 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
-import { darkTokens } from "../src/index.ts";
 
 const root = new URL("../../../", import.meta.url);
 const path = (name: string) => fileURLToPath(new URL(name, root));
-const source = path("packages/ui-tokens/assets/LivingBot.icon/Assets/orange-bot.png");
-
-// Match the Icon Composer portrait: the character sits 90 points below center.
-const portrait = await sharp(source).resize(1024, 1024).png().toBuffer();
-async function framed(background: string) {
-  return sharp({ create: { width: 1024, height: 1114, channels: 4, background } })
-    .composite([{ input: portrait, top: 90, left: 0 }])
-    .extract({ left: 0, top: 0, width: 1024, height: 1024 })
-    .png()
-    .toBuffer();
-}
+const source = path("packages/ui-tokens/assets/LivingBot.icon/Assets/app-icon.png");
 const mask = Buffer.from(
   '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" rx="200" fill="white"/></svg>',
 );
@@ -25,7 +14,7 @@ async function roundedCorners(input: Buffer) {
     .png()
     .toBuffer();
 }
-const square = await framed(darkTokens.background);
+const square = await sharp(source).resize(1024, 1024).flatten().png().toBuffer();
 const rounded = await roundedCorners(square);
 
 async function png(input: Buffer, name: string, size: number) {
@@ -51,8 +40,9 @@ async function ico(input: Buffer, name: string, sizes: number[]) {
   await writeFile(path(name), Buffer.concat([header, ...frames]));
 }
 
-for (const app of ["web", "www"]) {
+for (const app of ["web", "www", "workbench-web"]) {
   const publicDir = `apps/${app}/public`;
+  await mkdir(path(publicDir), { recursive: true });
   await png(rounded, `${publicDir}/favicon-16x16.png`, 16);
   await png(rounded, `${publicDir}/favicon-32x32.png`, 32);
   await png(rounded, `${publicDir}/favicon.png`, 128);
@@ -64,12 +54,18 @@ for (const app of ["web", "www"]) {
 await mkdir(path("apps/www/public/brand"), { recursive: true });
 await png(rounded, "apps/www/public/brand/rakazo-mark.png", 256);
 await png(rounded, "apps/mobile/assets/favicon.png", 128);
+await png(square, "apps/mobile/assets/icon.png", 1024);
+await png(square, "apps/mobile/assets/adaptive-icon.png", 1024);
 await png(square, "apps/desktop/assets/icon.png", 1024);
 await ico(rounded, "apps/desktop/assets/icon.ico", [16, 32, 48, 64, 128, 256]);
+await sharp(rounded)
+  .resize(824, 824)
+  .extend({ top: 100, bottom: 100, left: 100, right: 100, background: "transparent" })
+  .png()
+  .toFile(path("apps/desktop/assets/icon-macos.png"));
 
-// The splash shows the character alone, with no plate, so it sits on either splash colour.
-// Keep the existing transparent padding so its visual size stays stable.
-await sharp(await roundedCorners(await framed("transparent")))
+// Keep splash padding stable while using the same approved artwork.
+await sharp(rounded)
   .resize(620, 620)
   .extend({ top: 202, bottom: 202, left: 202, right: 202, background: "transparent" })
   .png()
