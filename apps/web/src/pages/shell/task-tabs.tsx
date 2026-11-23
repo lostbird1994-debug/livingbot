@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
   Input,
 } from "@livingbot/ui-web";
-import { History, MoreHorizontal, Plus, X } from "lucide-react";
+import { MoreHorizontal, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { composerDraftBindingsKey, composerDraftStorageKey } from "../../lib/composer-draft";
@@ -45,6 +45,49 @@ export function taskStatus(task: Pick<TaskSession, "status" | "resourceWaitReaso
     )[task.status] ?? "未发送"
   );
 }
+
+/**
+ * Tabs carry a mark instead of status text: a pulsing ring while the task works,
+ * a steady dot when it waits on you or has failed.
+ */
+function taskTabMark(
+  task: Pick<TaskSession, "status" | "resourceWaitReason">,
+): "working" | "attention" | "failed" | null {
+  if (
+    task.resourceWaitReason === "unconfirmed" ||
+    task.resourceWaitReason === "stopping" ||
+    task.resourceWaitReason === "computer" ||
+    task.resourceWaitReason === "task_slot"
+  ) {
+    return "working";
+  }
+  if (task.status === "queued" || task.status === "leased" || task.status === "running") {
+    return "working";
+  }
+  if (task.status === "waiting_input" || task.status === "waiting_takeover") return "attention";
+  if (task.status === "failed") return "failed";
+  return null;
+}
+
+function TabMark({ kind }: { kind: "working" | "attention" | "failed" }) {
+  const tone =
+    kind === "working"
+      ? "bg-status-working"
+      : kind === "attention"
+        ? "bg-warning"
+        : "bg-destructive";
+  return (
+    <span className="relative flex size-1.5 shrink-0">
+      {kind === "working" ? (
+        <span
+          className={`absolute inline-flex size-full animate-ping rounded-full opacity-70 motion-reduce:animate-none ${tone}`}
+        />
+      ) : null}
+      <span className={`relative inline-flex size-1.5 rounded-full ${tone}`} />
+    </span>
+  );
+}
+
 interface Layout {
   botId: string;
   opened: string[];
@@ -393,8 +436,8 @@ export function TaskTabs({
         (filter === "attention" && ["waiting_input", "waiting_takeover"].includes(task.status)) ||
         (filter === "ended" && !active(task))),
   );
-  // With nothing but the main session open there is no second row to show — the two
-  // actions move into the chat header instead (see SessionActions below).
+  // The row only appears once a session or document is open; the new/all session
+  // actions live in the chat header menu at every size.
   return (
     <>
       {opened.length || documents.length ? (
@@ -403,99 +446,117 @@ export function TaskTabs({
           aria-label="会话导航"
         >
           <div
-            className="hidden min-w-0 flex-1 gap-1 overflow-x-auto md:flex"
+            className="hidden min-w-0 flex-1 items-stretch gap-0.5 overflow-x-auto md:flex"
             role="tablist"
             aria-label="打开的会话"
           >
-            <Button
-              size="sm"
-              variant={!selectedDocument && state.selected === null ? "secondary" : "ghost"}
-              role="tab"
-              aria-selected={!selectedDocument && state.selected === null}
-              onClick={() => state.select(null)}
+            <div
+              className={`flex min-w-24 flex-1 basis-0 items-center rounded-t-lg ${
+                !selectedDocument && state.selected === null ? "bg-muted" : "hover:bg-muted/50"
+              }`}
             >
-              主会话
-            </Button>
-            {opened.map(({ id, task }) => (
-              <ContextMenu key={id}>
-                <ContextMenuTrigger
-                  render={<div />}
-                  className="flex shrink-0 items-center rounded-lg bg-transparent"
-                >
-                  <Button
-                    size="sm"
-                    variant={!selectedDocument && state.selected === id ? "secondary" : "ghost"}
-                    role="tab"
-                    aria-selected={!selectedDocument && state.selected === id}
-                    title={task?.title}
-                    onClick={() => state.select(id)}
+              <Button
+                size="sm"
+                variant="ghost"
+                role="tab"
+                aria-selected={!selectedDocument && state.selected === null}
+                onClick={() => state.select(null)}
+                className="min-w-0 flex-1 justify-start rounded-t-lg px-2.5 text-muted-foreground hover:bg-transparent aria-selected:text-foreground"
+              >
+                <span className="min-w-0 truncate">主会话</span>
+              </Button>
+            </div>
+            {opened.map(({ id, task }) => {
+              const selected = !selectedDocument && state.selected === id;
+              const title =
+                task?.title ??
+                (id.startsWith("draft:") ? (state.draftTitle?.(id) ?? "新会话") : "读取会话…");
+              const mark = task ? taskTabMark(task) : null;
+              return (
+                <ContextMenu key={id}>
+                  <ContextMenuTrigger
+                    render={<div />}
+                    className="flex min-w-24 flex-1 basis-0 items-center"
                   >
-                    <span className="max-w-36 truncate">
-                      {task?.title ??
-                        (id.startsWith("draft:")
-                          ? (state.draftTitle?.(id) ?? "新会话")
-                          : "读取会话…")}
-                    </span>
-                    {task ? (
-                      <span
-                        className={
-                          task.status === "waiting_input" ? "text-warning" : "text-muted-foreground"
-                        }
+                    <div
+                      className={`group/tab flex min-w-24 flex-1 basis-0 items-center rounded-t-lg ${
+                        selected ? "bg-muted" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <Button
+                        size="icon-sm"
+                        variant="ghost"
+                        aria-label={`收起会话 ${title}`}
+                        title="收起会话"
+                        onClick={() => state.close(id)}
+                        className="pointer-events-none order-first ms-1 size-5 shrink-0 rounded-full text-muted-foreground opacity-0 transition-opacity group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 motion-reduce:transition-none"
                       >
-                        {taskStatus(task)}
-                        {task.unread ? " ·" : ""}
-                      </span>
-                    ) : null}
-                  </Button>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label={`收起会话 ${task?.title ?? "新会话"}`}
-                    title="收起会话"
-                    onClick={() => state.close(id)}
-                  >
-                    <X size={13} />
-                  </Button>
-                </ContextMenuTrigger>
-                <ContextMenuContent>
-                  <ContextMenuItem
-                    onClick={() =>
-                      state.setEditing({
-                        id,
-                        title: task?.title ?? state.draftTitle?.(id) ?? "新会话",
-                      })
-                    }
-                  >
-                    重命名
-                  </ContextMenuItem>
-                  <ContextMenuItem
-                    className="text-destructive"
-                    onClick={() => state.setDeleting(id)}
-                  >
-                    删除
-                  </ContextMenuItem>
-                </ContextMenuContent>
-              </ContextMenu>
-            ))}
+                        <X size={12} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        role="tab"
+                        aria-selected={selected}
+                        title={task ? `${title} · ${taskStatus(task)}` : title}
+                        onClick={() => state.select(id)}
+                        className="min-w-0 flex-1 justify-start gap-1.5 rounded-t-lg px-1 text-muted-foreground hover:bg-transparent aria-selected:text-foreground"
+                      >
+                        <span className="min-w-0 truncate">{title}</span>
+                        {mark ? <TabMark kind={mark} /> : null}
+                        {task?.unread && !mark ? (
+                          <span className="size-1.5 shrink-0 rounded-full bg-foreground/40" />
+                        ) : null}
+                      </Button>
+                    </div>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem
+                      onClick={() =>
+                        state.setEditing({
+                          id,
+                          title: task?.title ?? state.draftTitle?.(id) ?? "新会话",
+                        })
+                      }
+                    >
+                      重命名
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      className="text-destructive"
+                      onClick={() => state.setDeleting(id)}
+                    >
+                      删除
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
+              );
+            })}
             {documents.map((document) => (
-              <div key={document.id} className="flex shrink-0 items-center">
-                <Button
-                  size="sm"
-                  variant={selectedDocument === document.id ? "secondary" : "ghost"}
-                  role="tab"
-                  aria-selected={selectedDocument === document.id}
-                  title={document.name}
-                  onClick={() => onSelectDocument?.(document.id)}
-                >
-                  <span className="max-w-36 truncate">{document.name}</span>
-                </Button>
+              <div
+                key={document.id}
+                className={`group/tab flex min-w-24 flex-1 basis-0 items-center rounded-t-lg ${
+                  selectedDocument === document.id ? "bg-muted" : "hover:bg-muted/50"
+                }`}
+              >
                 <Button
                   size="icon-sm"
                   variant="ghost"
                   aria-label={`${t`Close preview`} ${document.name}`}
                   onClick={() => onCloseDocument?.(document.id)}
+                  className="pointer-events-none order-first ms-1 size-5 shrink-0 rounded-full text-muted-foreground opacity-0 transition-opacity group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 motion-reduce:transition-none"
                 >
-                  <X size={13} />
+                  <X size={12} />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  role="tab"
+                  aria-selected={selectedDocument === document.id}
+                  title={document.name}
+                  onClick={() => onSelectDocument?.(document.id)}
+                  className="min-w-0 flex-1 justify-start rounded-t-lg px-1 text-muted-foreground hover:bg-transparent aria-selected:text-foreground"
+                >
+                  <span className="min-w-0 truncate">{document.name}</span>
                 </Button>
               </div>
             ))}
@@ -545,7 +606,6 @@ export function TaskTabs({
               <X size={14} />
             </Button>
           ) : null}
-          {state.enabled ? <SessionActions state={state} /> : null}
         </nav>
       ) : null}
       {state.enabled ? (
@@ -560,36 +620,6 @@ export function TaskTabs({
         />
       ) : null}
     </>
-  );
-}
-
-/** 主会话 / 新建 / 全部: kept out of the tab row so the chat header can own it when the row is hidden. */
-export function SessionActions({
-  state,
-  variant = "ghost",
-}: {
-  state: BotTaskTabs;
-  variant?: "ghost" | "floating";
-}) {
-  // `app-no-drag` matters in the chat header: it is a window-drag region, and anything without it
-  // swallows clicks instead of pressing the button.
-  return (
-    <div className="app-no-drag flex shrink-0 items-center gap-1">
-      <Button size="sm" variant={variant} onClick={state.create} aria-label="新会话">
-        <Plus size={14} />
-        <span className="hidden sm:inline">新会话</span>
-      </Button>
-      <Button
-        size="sm"
-        variant={variant}
-        onClick={() => state.setHistory(true)}
-        aria-label="全部会话"
-      >
-        <History size={14} />
-        <span className="hidden sm:inline">全部会话</span>
-        {state.tasks.filter((task) => !task.archivedAt).length + state.drafts.length || ""}
-      </Button>
-    </div>
   );
 }
 

@@ -6,6 +6,7 @@ import { hydrateLocalUiPreferences, uiPreferenceRevision } from "./local-ui-pref
 import { setUiAppearance } from "./ui-appearance";
 import { setToolActivityPreference } from "./tool-activity-preference";
 import { setResponseStreamingPreference } from "./response-streaming";
+import { setChatAvatarVisible } from "./chat-avatar-preference";
 import { setRemoteImagesPreference } from "./remote-images-preference";
 import { setComposerEnterToSend } from "./composer-enter-to-send-pref";
 import { setBotsSidebarDensity } from "./bots-sidebar-density-pref";
@@ -927,6 +928,7 @@ async function bootstrap(
       if (key === "rakazo.responseStreaming" && ["on", "off"].includes(value)) setResponseStreamingPreference(value as "on" | "off");
       if (key === "rakazo.loadRemoteImages" && ["on", "off"].includes(value)) setRemoteImagesPreference(value as "on" | "off");
       if (key === "rakazo.composerEnterToSend" && ["1", "0"].includes(value)) setComposerEnterToSend(value === "1");
+      if (key === "rakazo.chatAvatar" && ["on", "off"].includes(value)) setChatAvatarVisible(value === "on");
       if (key === "rakazo.botsSidebarDensity" && ["compact", "comfortable"].includes(value)) setBotsSidebarDensity(value as "compact" | "comfortable");
     }, () => toast.error("设置未保存，请重试"), preferenceRevision);
   hydrateBotVoicePreferences(preferences, (patch) =>

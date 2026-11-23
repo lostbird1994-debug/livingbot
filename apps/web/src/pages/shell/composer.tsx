@@ -39,6 +39,7 @@ import {
   writeComposerDraft,
 } from "../../lib/composer-draft";
 import { isFileDrag, isFilePaste } from "../../lib/pending-attachments";
+import { CHAT_COLUMN_PADDING } from "../../lib/transcript-layout";
 import { ComposerReplyPreview } from "./chat-context";
 import type { PendingAttachment } from "./chat-shared";
 import { previewMessageText } from "./chat-shared";
@@ -635,7 +636,7 @@ export const Composer = memo(function Composer({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`relative z-30 m-0 min-w-0 border-0 px-3 pb-0 pt-0 md:px-[max(1.5rem,calc((100%_-_60rem)/2))] [&>*]:pointer-events-auto ${fileDragActive ? "pointer-events-auto" : "pointer-events-none"} ${
+      className={`relative z-30 m-0 min-w-0 border-0 pb-0 pt-0 ${CHAT_COLUMN_PADDING} [&>*]:pointer-events-auto ${fileDragActive ? "pointer-events-auto" : "pointer-events-none"} ${
         draggingFiles ? "rounded-[14px] ring-2 ring-inset ring-ring" : ""
       }`}
     >

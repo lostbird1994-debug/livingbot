@@ -335,42 +335,11 @@ export function TaskConversation({
   const title = session?.title ?? "新任务";
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="task-conversation">
-      <div className="flex items-center justify-between gap-2 px-5 py-2 text-sm text-muted-foreground">
-        {isDraft ? <span role="status">未发送</span> : null}
-        <Button
-          size="sm"
-          variant="ghost"
-          aria-label="选择此任务的模型"
-          onClick={() => {
-            setModelOpen(true);
-            void rpc.models
-              .list()
-              .then(setModels)
-              .catch((caught) => setError(errorText(caught)));
-          }}
-        >
-          {selection?.modelId ?? session?.modelId ?? "选择模型"}
-        </Button>
-        {!isDraft && session ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={async () => {
-              const next = window.prompt("任务名称", session.title)?.trim();
-              if (next) {
-                try {
-                  await rpc.taskSessions.rename({ ...target, title: next });
-                  await onChanged();
-                } catch (caught) {
-                  setError(errorText(caught));
-                }
-              }
-            }}
-          >
-            重命名
-          </Button>
-        ) : null}
-      </div>
+      {isDraft ? (
+        <div className="flex items-center gap-2 px-5 py-2 text-sm text-muted-foreground">
+          <span role="status">未发送</span>
+        </div>
+      ) : null}
       {isDraft ? (
         <div className="flex-1 px-6 pt-12 text-center text-sm text-muted-foreground">
           描述一项独立委托

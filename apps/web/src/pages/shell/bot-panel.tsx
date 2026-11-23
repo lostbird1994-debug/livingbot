@@ -691,19 +691,6 @@ export function BotSettings({
     </div>
   ) : null;
 
-  const computerSection = (
-    <SettingsGroup label={t`Computer`} plain>
-      <ComputerModePicker
-        value={computerMode}
-        onChange={setComputerMode}
-        disabled={localConnected()}
-      />
-      {localConnected() ? (
-        <p className="mt-2 text-xs text-muted-foreground">本机模式使用独立工作目录。</p>
-      ) : null}
-      {memoryRow}
-    </SettingsGroup>
-  );
 
   const notifyRow = (
     <label
@@ -978,7 +965,7 @@ export function BotSettings({
               <Trans>Task list</Trans>
             </TabsTrigger>
             <TabsTrigger value="settings" data-testid="bot-panel-tab-settings">
-              <Trans>Advanced</Trans>
+              设置
             </TabsTrigger>
             {hasWhale ? (
               <TabsTrigger value="whale" data-testid="bot-panel-tab-whale">
@@ -1041,7 +1028,7 @@ export function BotSettings({
               </Button>
             ) : null}
             {modelSection}
-            {computerSection}
+            {memoryRow}
             {voiceSection}
             {permissionsSection}
             {appearanceSection}

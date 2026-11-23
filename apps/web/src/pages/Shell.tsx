@@ -20,7 +20,7 @@ import {
 } from "@livingbot/core";
 import { fetchFresh, writeSaved } from "@livingbot/core/query";
 import type { GroupAvatarMember } from "@livingbot/ui-web";
-import { Button } from "@livingbot/ui-web";
+import { BotAvatar, Button, GroupAvatar } from "@livingbot/ui-web";
 import { useIsMobile } from "@livingbot/ui-web/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { Lock, Monitor, Moon, Palette, Plug, Plus, ScrollText, Sun, Users } from "lucide-react";
@@ -53,6 +53,7 @@ import {
 } from "../lib/bots-sidebar-density-pref";
 import { readBotsSidebarCollapsed, writeBotsSidebarCollapsed } from "../lib/bots-sidebar-pref";
 import { setCallMinimized, startCall, useCallSession } from "../lib/call-session";
+import { getChatAvatarVisible, subscribeChatAvatar } from "../lib/chat-avatar-preference";
 import {
   getComposerEnterToSend,
   subscribeComposerEnterToSend,
@@ -185,8 +186,12 @@ function SpaceShell() {
     navigate({ pathname: "/app", search: `?view=${next}` });
   }
   useEffect(() => {
-    if (localConnected() && overlay?.kind === "settings" && ["connections","vault","space-vault"].includes(overlay.section)) {
-      navigate({pathname:"/app",search:"?view=abilities"},{replace:true});
+    if (
+      localConnected() &&
+      overlay?.kind === "settings" &&
+      ["connections", "vault", "space-vault"].includes(overlay.section)
+    ) {
+      navigate({ pathname: "/app", search: "?view=abilities" }, { replace: true });
     }
   }, [overlay, navigate]);
   const queries = spaceQueries(userId ?? null, shellSpaceId);
@@ -987,11 +992,24 @@ function SpaceShell() {
         navigate={navigate}
       />
     ) : null;
-  // With no second row of tabs open, the session actions live in the header menu.
-  const headerShowsSessionActions =
-    taskTabs.enabled && taskTabs.opened.length === 0 && documentTabs.opened.length === 0;
+  // Session actions live in the header menu whether or not the tab row is showing.
+  const headerShowsSessionActions = taskTabs.enabled;
   const headerSessionCount =
     sessionTabs.tasks.filter((task) => !task.archivedAt).length + sessionTabs.drafts.length;
+  const showChatAvatar = useSyncExternalStore(
+    subscribeChatAvatar,
+    getChatAvatarVisible,
+    () => true,
+  );
+  function toggleChatPanel() {
+    if (chatPanelOpen) setPanel(null);
+    else if (inGroup) setPanel("group-settings");
+    else if (active) {
+      setPanel(lastBotTab.current);
+      // Refresh run/computer so Take control isn't stuck on a stale busyBotName.
+      void refreshThread(active.id).catch(() => undefined);
+    }
+  }
 
   const shell = (
     <BotsSidebarLayout
@@ -1181,6 +1199,30 @@ function SpaceShell() {
         <CallReturnBar />
         {/* The header owns its own row: the transcript scrolls below it, never under it. */}
         <div className="relative flex min-h-0 flex-1 flex-col">
+          {showChatAvatar && (inGroup || active) ? (
+            <button
+              type="button"
+              aria-label="打开会话设置"
+              aria-expanded={chatPanelOpen}
+              onClick={toggleChatPanel}
+              className="absolute left-[22px] top-[58px] z-20 rounded-full shadow-[0_6px_18px_-4px_rgba(15,23,42,0.28),0_2px_4px_rgba(15,23,42,0.10)] ring-1 ring-black/5 transition-transform duration-200 ease-out hover:scale-[1.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99] motion-reduce:transition-none motion-reduce:hover:scale-100"
+            >
+              {inGroup ? (
+                <GroupAvatar
+                  members={activeSnapshot?.members ?? activeGroup?.members ?? []}
+                  size={72}
+                />
+              ) : active ? (
+                <BotAvatar
+                  avatarSet={active.avatarSet}
+                  color={active.color}
+                  identity={active.id}
+                  size={72}
+                  status={active.status}
+                />
+              ) : null}
+            </button>
+          ) : null}
           <ChatHeader
             inGroup={inGroup}
             active={active}
@@ -1196,15 +1238,7 @@ function SpaceShell() {
               selectedTask ? taskTabs.requestFind() : setPanel(panel === "find" ? null : "find")
             }
             onOpenNavigation={() => setMobileSidebarOpen(true)}
-            onTogglePanel={() => {
-              if (chatPanelOpen) setPanel(null);
-              else if (inGroup) setPanel("group-settings");
-              else if (active) {
-                setPanel(lastBotTab.current);
-                // Refresh run/computer so Take control isn't stuck on a stale busyBotName.
-                void refreshThread(active.id).catch(() => undefined);
-              }
-            }}
+            onTogglePanel={toggleChatPanel}
           />
           <TaskTabs
             state={sessionTabs}
@@ -1491,6 +1525,7 @@ function SpaceShell() {
           setPanel={setPanel}
           refreshBots={refreshBots}
           removeSpace={removeSpace}
+          renameSpace={renameSpace}
           openSpaceSettings={openSpaceSettings}
           closeMobileSidebar={() => setMobileSidebarOpen(false)}
           createBot={createBot}

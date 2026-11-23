@@ -53,6 +53,7 @@ import {
   setBotsSidebarDensity,
   subscribeBotsSidebarDensity,
 } from "../lib/bots-sidebar-density-pref";
+import { getChatAvatarVisible, setChatAvatarVisible } from "../lib/chat-avatar-preference";
 import {
   getComposerEnterToSend,
   setComposerEnterToSend,
@@ -172,6 +173,8 @@ export function GeneralSettingsPanels({
     () => getRemoteImagesPreference() === "on",
   );
   const loadRemoteImagesId = useId();
+  const [chatAvatar, setChatAvatar] = useState(() => getChatAvatarVisible());
+  const chatAvatarId = useId();
   const timezoneId = useId();
   const showPassword = Boolean(
     accountSecurity?.hasPassword && accountSecurity.passwordChangeEnabled !== false,
@@ -474,6 +477,24 @@ export function GeneralSettingsPanels({
                 onCheckedChange={(checked) => {
                   setLoadRemoteImages(checked);
                   setRemoteImagesPreference(checked ? "on" : "off");
+                }}
+              />
+            }
+          />
+          <SettingsRow
+            label={
+              <Label htmlFor={chatAvatarId} className="text-[14px] font-normal text-foreground">
+                显示会话区内的头像
+              </Label>
+            }
+            control={
+              <Switch
+                id={chatAvatarId}
+                data-testid="chat-avatar-toggle"
+                checked={chatAvatar}
+                onCheckedChange={(checked) => {
+                  setChatAvatar(checked);
+                  setChatAvatarVisible(checked);
                 }}
               />
             }

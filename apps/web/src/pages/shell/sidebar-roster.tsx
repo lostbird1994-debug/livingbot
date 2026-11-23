@@ -398,7 +398,7 @@ export function SidebarRoster({
                     } text-start ${
                       item.kind === "bot" ? "cursor-grab active:cursor-grabbing" : ""
                     } ${
-                      rosterDropKey === rowDropKey || (mini && selected)
+                      selected || rosterDropKey === rowDropKey
                         ? "bg-sidebar-accent"
                         : "group-hover/row:bg-accent"
                     }`}

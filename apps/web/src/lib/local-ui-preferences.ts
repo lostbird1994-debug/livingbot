@@ -1,7 +1,7 @@
 /** Durable native preferences; localStorage is only the current origin's paint cache. */
 export const LOCAL_UI_KEYS = [
   "rakazo.uiAppearance", "rakazo.showToolActivity", "rakazo.responseStreaming",
-  "rakazo.loadRemoteImages", "rakazo.composerEnterToSend", "rakazo.botsSidebarDensity", "rakazo.uiLocale",
+  "rakazo.loadRemoteImages", "rakazo.composerEnterToSend", "rakazo.botsSidebarDensity", "rakazo.uiLocale", "rakazo.chatAvatar",
 ] as const;
 type Key = typeof LOCAL_UI_KEYS[number];
 let save: ((patch: Record<string, string>) => Promise<unknown>) | undefined;

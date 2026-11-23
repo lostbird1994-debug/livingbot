@@ -40,7 +40,7 @@ import type { ArtifactTarget } from "../../lib/artifact-open";
 import { mergeLiveProgress } from "../../lib/live-progress-merge";
 import { quoteDraftForSelection } from "../../lib/quote-selection";
 import { messageHasVisibleBlocks } from "../../lib/tool-activity-view";
-import { TRANSCRIPT_CONTENT_PADDING } from "../../lib/transcript-layout";
+import { CHAT_COLUMN_PADDING } from "../../lib/transcript-layout";
 import { transcriptIsNearEnd, transcriptMovedDown } from "../../lib/transcript-scroll";
 import { TimeSeparator, UnreadDivider } from "./chat-context";
 import type { ImportSetupTarget } from "./import-setup-card";
@@ -473,7 +473,7 @@ export const Transcript = memo(function Transcript({
             following.current = false;
           }
         }}
-        className={`rk-scroll isolate flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto scroll-pt-4 scroll-pb-7 pt-6 pb-12 md:pt-7 md:pb-13 ${TRANSCRIPT_CONTENT_PADDING}`}
+        className={`rk-scroll isolate flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto scroll-pt-4 scroll-pb-7 pt-6 pb-12 md:pt-7 md:pb-13 ${CHAT_COLUMN_PADDING}`}
         style={
           userBubble
             ? ({

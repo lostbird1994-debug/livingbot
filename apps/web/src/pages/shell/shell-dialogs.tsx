@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@livingbot/ui-web";
-import { Settings, Trash2 } from "lucide-react";
+import { Pencil, Settings, Trash2 } from "lucide-react";
 import type { ComponentProps, RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Panel } from "../../lib/right-panel-state";
@@ -95,6 +95,7 @@ export function ShellDialogs({
   setPanel,
   refreshBots,
   removeSpace,
+  renameSpace,
   openSpaceSettings,
   closeMobileSidebar,
   createBot,
@@ -113,6 +114,7 @@ export function ShellDialogs({
   setPanel: (panel: Panel) => void;
   refreshBots: (includeArchived?: boolean) => Promise<void>;
   removeSpace: (spaceId: string) => Promise<void>;
+  renameSpace: (spaceId: string, name: string) => Promise<void>;
   openSpaceSettings: (spaceId: string) => void;
   closeMobileSidebar: () => void;
   createBot: (input: CreateBotDialogInput) => Promise<void>;
@@ -176,6 +178,20 @@ export function ShellDialogs({
             sideOffset={0}
             className="w-[220px]"
           >
+            {spaceMenuTarget?.canRename ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  const next = window.prompt("工作区名称", spaceMenuTarget.name)?.trim();
+                  setSpaceMenu(null);
+                  if (next && next !== spaceMenuTarget.name) {
+                    void renameSpace(spaceMenuTarget.id, next);
+                  }
+                }}
+              >
+                <Pencil />
+                重命名
+              </DropdownMenuItem>
+            ) : null}
             {spaceMenuTarget ? (
               <DropdownMenuItem
                 onClick={() => {

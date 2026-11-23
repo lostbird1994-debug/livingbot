@@ -1,17 +1,15 @@
 import { useLingui } from "@lingui/react/macro";
 import type { Bot, Group, ThreadSnapshot } from "@livingbot/contracts";
 import {
-  BotAvatar,
   Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  GroupAvatar,
 } from "@livingbot/ui-web";
 import { History, Menu, MoreHorizontal, Plus, Search } from "lucide-react";
 
-/** The chat's title bar: navigation, the chat's name and its rarer actions. Owns its own row so the transcript never scrolls under it. */
+/** The chat's title bar: a bare title and its rarer actions on the page background, with no rule under it. */
 export function ChatHeader({
   inGroup,
   active,
@@ -41,45 +39,30 @@ export function ChatHeader({
   const { t } = useLingui();
   const hasMenu = Boolean(onNewSession || onAllSessions || onFind);
   return (
-    <div className="app-drag relative z-10 grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-2 border-b border-border/60 bg-transparent px-3 py-2 md:px-[22px]">
-      <div className="flex items-center">
-        <Button
-          variant="floating"
-          size="icon-lg"
-          aria-label={t`Open navigation`}
-          onClick={onOpenNavigation}
-          className="app-no-drag md:hidden"
-        >
-          <Menu strokeWidth={1.7} className="size-[19px]" />
-        </Button>
-      </div>
+    <div className="app-drag relative z-10 flex items-center gap-2 px-3 py-2 md:px-[22px]">
       <Button
         variant="floating"
+        size="icon-lg"
+        aria-label={t`Open navigation`}
+        onClick={onOpenNavigation}
+        className="app-no-drag md:hidden"
+      >
+        <Menu strokeWidth={1.7} className="size-[19px]" />
+      </Button>
+      <Button
+        variant="ghost"
         data-testid="bot-settings-trigger"
         aria-expanded={panelOpen}
         onClick={onTogglePanel}
-        className="app-no-drag h-auto min-w-0 gap-2 py-1 ps-1 pe-3.5"
+        className="app-no-drag -ms-2 h-auto min-w-0 rounded-lg px-2 py-1 hover:bg-accent/60"
       >
-        {inGroup ? (
-          <GroupAvatar members={activeSnapshot?.members ?? activeGroup?.members ?? []} size={26} />
-        ) : active ? (
-          <BotAvatar
-            avatarSet={active.avatarSet}
-            color={active.color}
-            identity={active.id}
-            size={26}
-            status={active.status}
-          />
-        ) : null}
-        <span className="min-w-0">
-          <span className="block truncate text-[15px] font-medium text-foreground" dir="auto">
-            {inGroup
-              ? (activeGroup?.name ?? activeSnapshot?.groupName ?? t`Group`)
-              : (active?.name ?? t`Select a bot`)}
-          </span>
+        <span className="min-w-0 truncate text-[15px] font-medium text-foreground" dir="auto">
+          {inGroup
+            ? (activeGroup?.name ?? activeSnapshot?.groupName ?? t`Group`)
+            : (active?.name ?? t`Select a bot`)}
         </span>
       </Button>
-      <div className="flex items-center justify-self-end">
+      <div className="ms-auto flex shrink-0 items-center gap-1">
         {hasMenu ? (
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -107,7 +90,9 @@ export function ChatHeader({
                   <History />
                   全部会话
                   {sessionCount ? (
-                    <span className="ms-auto text-muted-foreground tabular-nums">{sessionCount}</span>
+                    <span className="ms-auto text-muted-foreground tabular-nums">
+                      {sessionCount}
+                    </span>
                   ) : null}
                 </DropdownMenuItem>
               ) : null}

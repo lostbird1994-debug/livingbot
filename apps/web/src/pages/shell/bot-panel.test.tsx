@@ -345,7 +345,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it("shows the profile and the Advanced tab's controls", async () => {
+it("shows the profile and the settings tab's controls", async () => {
   vi.mocked(rpc.voice.voices).mockResolvedValueOnce([
     { id: "fixture-voice", label: "Fixture voice" },
   ]);
@@ -358,7 +358,7 @@ it("shows the profile and the Advanced tab's controls", async () => {
     "Workspace files",
     "Context",
     "Task list",
-    "Advanced",
+    "设置",
   ]);
   expect(
     [...container.querySelectorAll("button")].some((button) => button.textContent === "Save"),
@@ -377,7 +377,6 @@ it("shows the profile and the Advanced tab's controls", async () => {
   ).toBe("bot-settings-tools");
   const labels = {
     model: "Model",
-    computer: "Computer",
     memoryScope: "Memory scope",
     voice: "Voice",
     readAloud: "Read replies aloud",
@@ -394,7 +393,6 @@ it("shows the profile and the Advanced tab's controls", async () => {
   );
   expect([...new Set(controls)]).toEqual([
     "model",
-    "computer",
     "memoryScope",
     "voice",
     "readAloud",
@@ -402,7 +400,7 @@ it("shows the profile and the Advanced tab's controls", async () => {
   ]);
 });
 
-it("places open work alongside routines rather than in Advanced", async () => {
+it("places open work alongside routines rather than in settings", async () => {
   await act(async () =>
     root.render(
       <QueryClientProvider client={queryClient}>
@@ -930,10 +928,10 @@ describe("bili-whale tab", () => {
     expect(container.querySelector('[data-testid="bot-settings-whale"]')).toBeNull();
   });
 
-  it("appears to the right of Advanced when the bot carries the project", async () => {
+  it("appears to the right of settings when the bot carries the project", async () => {
     await render("Billing", { spawnKey: "bili-whale" });
     const tabs = [...container.querySelectorAll('[role="tab"]')].map((tab) => tab.textContent);
-    expect(tabs).toEqual(["Workspace files", "Context", "Task list", "Advanced", "养鱼"]);
+    expect(tabs).toEqual(["Workspace files", "Context", "Task list", "设置", "养鱼"]);
     expect(container.querySelector('[data-testid="bot-settings-whale"]')).not.toBeNull();
   });
 });
