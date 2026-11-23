@@ -1,0 +1,386 @@
+{
+  "project": "LivingBot 2.0",
+  "description": "Independent local OpenClaw backend with the selected 1.0-derived incremental frontend and explicitly requested WorkBuddy mechanisms.",
+  "scope_revision": "2026-11-20: user removed Creative/Expert modules and their dedicated workflows. The replacement workbench UI is rejected; frontend inheritance and installation acceptance must be re-established.",
+  "features": [
+    {
+      "id": "s1-isolation",
+      "category": "foundation",
+      "priority": 1,
+      "description": "Independent source, application identity, configuration, credentials and data; the previous version remains runnable.",
+      "file": "apps/workbench/src/paths.ts",
+      "steps": [
+        "Record the baseline without changing production.",
+        "Create independent paths and enforce isolation.",
+        "Verify both versions can coexist."
+      ],
+      "passes": true,
+      "verification": "Isolation tests and a real independent service launch; previous checkout and service unchanged."
+    },
+    {
+      "id": "s1-experience",
+      "category": "foundation",
+      "priority": 1,
+      "description": "Freeze the complete existing and WorkBuddy experience matrix without silent exclusions.",
+      "file": "docs/v2/experience-matrix.md",
+      "steps": [
+        "Inventory reviewed mechanisms and existing workflows.",
+        "Associate every requirement with implementation and acceptance evidence."
+      ],
+      "passes": false,
+      "verification": "Reopened: the prior matrix omitted existing avatar/section/pinning behavior and treated speculative Creative/Expert workflows as user requirements. Reconcile the selected incremental frontend with the retained backend before accepting inheritance."
+    },
+    {
+      "id": "s2-events",
+      "category": "kernel",
+      "priority": 2,
+      "description": "Run OpenClaw as the sole supervised kernel with official event and control contracts.",
+      "file": "packages/kernel-runtime/src/runtime.ts",
+      "steps": [
+        "Supervise the pinned real Node Gateway.",
+        "Use official SDK exports.",
+        "Persist and push execution facts without normal state polling."
+      ],
+      "passes": true,
+      "verification": "Official runtime integration: tool, assistant, lifecycle, final and provider error events."
+    },
+    {
+      "id": "s2-recovery",
+      "category": "kernel",
+      "priority": 2,
+      "description": "Durable submission, queue, final writes and graceful-restart continuation.",
+      "file": "packages/kernel-runtime/src/runtime.ts",
+      "steps": [
+        "Keep stable submission identities.",
+        "Associate resumed engine runs with their original task.",
+        "Verify ordered queued input and complete resumed answers."
+      ],
+      "passes": true,
+      "verification": "Lost acknowledgment, duplicate input, reconnect delta/reset, graceful restart and hard crash integrations."
+    },
+    {
+      "id": "s2-interaction",
+      "category": "kernel",
+      "priority": 2,
+      "description": "Approvals, questions, steering and continuation retain exact execution ownership.",
+      "file": "packages/kernel-runtime/src/runtime.ts",
+      "steps": [
+        "Expose supported approval and question events.",
+        "Resolve against the original execution.",
+        "Verify steering and independent sessions."
+      ],
+      "passes": true,
+      "verification": "Approve, deny, answer, disconnect and resume scenarios with no unrelated task blocking."
+    },
+    {
+      "id": "s2-stop",
+      "category": "kernel",
+      "priority": 2,
+      "description": "Stop turns, ordinary commands, independent services and delegated work with confirmed cleanup.",
+      "file": "packages/kernel-runtime/src/runtime.ts",
+      "steps": [
+        "Separate cancellation receipts from termination.",
+        "Use official process instance controls.",
+        "Handle partial cleanup without blocking unrelated work."
+      ],
+      "passes": true,
+      "verification": "Actual child process exit, scoped cancellation, timeout and cleanup-failure tests."
+    },
+    {
+      "id": "s3-conversation",
+      "category": "experience",
+      "priority": 3,
+      "description": "Persistent conversations, attachments, streaming and ordered text/reasoning/tool presentation.",
+      "file": "apps/workbench-web/src/App.tsx",
+      "steps": [
+        "Preserve ordered execution blocks.",
+        "Show full-width document replies.",
+        "Recover the same rendering after service or client restart."
+      ],
+      "passes": true,
+      "verification": "Native conversation integration keeps one ordered document (tool results, no invented final) across SIGKILL, product reopen and explicit continuation; an existing real-kernel browser fixture replays two reasoning stages, commentary, a tool step and a final outside the process, persisting across reload; synthetic projection renders an interrupted document; wide/light and 390px/dark reviewed without overflow; same-millisecond input/reply order fixed."
+    },
+    {
+      "id": "s3-background",
+      "category": "experience",
+      "priority": 3,
+      "description": "Long tasks, progress, task handoff, delivery receipts and notifications.",
+      "file": "packages/workbench/src/tasks.ts",
+      "steps": [
+        "Persist task ownership and reporting destinations.",
+        "Retain background work and actionable states.",
+        "Associate real files and completion notifications."
+      ],
+      "passes": true,
+      "verification": "Native conversation integration holds one Bot's turn while a second Bot in its own conversation completes and delivers an exact file, with one result notice bound to that reply; scheduled result delivery, work records and notification navigation were accepted earlier. OS-level popups remain separately unverified."
+    },
+    {
+      "id": "s3-workspace",
+      "category": "files",
+      "priority": 3,
+      "description": "Consistent private, project, task, inbox, archive and explicit shared workspace rules.",
+      "file": "packages/workbench/src/workspaces.ts",
+      "steps": [
+        "Create predictable per-Bot directories.",
+        "Enforce authorized roots and safe paths.",
+        "Track artifact origin and prevent destructive overwrite."
+      ],
+      "passes": true,
+      "verification": "Traversal, symlink, filename collision and cross-Bot scope tests plus real file delivery."
+    },
+    {
+      "id": "s3-rich-delivery",
+      "category": "experience",
+      "priority": 3,
+      "description": "Markdown tables, inline visualization, code, HTML/SVG preview and export.",
+      "file": "apps/workbench-web/src/Reply.tsx",
+      "steps": [
+        "Render native document content.",
+        "Sandbox active previews.",
+        "Provide file, code and table actions."
+      ],
+      "passes": true,
+      "verification": "Browser acceptance covers table copy/export with exact bytes, sandboxed HTML/SVG preview from a code fence and file preview/export; deterministic tests pin code export names and media types, preview eligibility, escaping and CSV/TSV serializers; wide/light and 390px/dark reviewed."
+    },
+    {
+      "id": "s3-routines",
+      "category": "experience",
+      "priority": 3,
+      "description": "Durable scheduled tasks and notifications with cancellation and catch-up semantics.",
+      "file": "packages/workbench/src/routines.ts",
+      "steps": [
+        "Use official automation execution contracts.",
+        "Persist user-facing schedule and delivery.",
+        "Verify restart and cancellation behavior."
+      ],
+      "passes": true,
+      "verification": "A scheduled synthetic task produces one intended delivery across restart."
+    },
+    {
+      "id": "s4-memory",
+      "category": "memory",
+      "priority": 4,
+      "description": "Native memory, same-agent private conversation recall, Chinese intent and provenance.",
+      "file": "packages/kernel-runtime/src/memory.ts",
+      "steps": [
+        "Configure native memory and Active Memory.",
+        "Preserve stable agent identity and private metadata.",
+        "Verify Chinese recall and unrelated-agent exclusion."
+      ],
+      "passes": false,
+      "verification": "Real native memory integrations and opt-in rubric-based semantic acceptance."
+    },
+    {
+      "id": "s4-forget",
+      "category": "memory",
+      "priority": 4,
+      "description": "Previewable, scoped memory forgetting with recoverable backup.",
+      "file": "packages/kernel-runtime/src/memory.ts",
+      "steps": [
+        "Preview affected source lineage.",
+        "Require explicit apply with a verified backup.",
+        "Keep user files recoverable and disclose coverage."
+      ],
+      "passes": true,
+      "verification": "Preview is nonmutating; applied forgetting affects only selected memories and can be restored."
+    },
+    {
+      "id": "s4-migration",
+      "category": "migration",
+      "priority": 4,
+      "description": "Preview, backup, import and validate identity, memory and abilities of all eight selected Bots.",
+      "file": "packages/workbench/src/migration.ts",
+      "steps": [
+        "Read sources without modifying them.",
+        "Produce manifests and verified backups.",
+        "Import only after explicit user action.",
+        "Validate every selected Bot."
+      ],
+      "passes": false,
+      "verification": "Synthetic migration failures preserve sources; all eight real Bot acceptance records and verified backups."
+    },
+    {
+      "id": "s5-groups",
+      "category": "collaboration",
+      "priority": 5,
+      "description": "LivingBot-internal group conversations with persistent membership and per-Bot identity.",
+      "file": "packages/workbench/src/conversations.ts",
+      "steps": [
+        "Create groups and membership.",
+        "Associate Bot replies and tasks with their origin.",
+        "Retain private conversations independently."
+      ],
+      "passes": true,
+      "verification": "A group with multiple Bots completes an actual coordinated synthetic task."
+    },
+    {
+      "id": "s5-context",
+      "category": "collaboration",
+      "priority": 5,
+      "description": "Private/group contextual recall with source and audience boundaries.",
+      "file": "packages/workbench/src/context.ts",
+      "steps": [
+        "Retrieve relevant permitted messages and summaries.",
+        "Distinguish private reasoning access from public disclosure.",
+        "Retain evidence and explicit sharing."
+      ],
+      "passes": true,
+      "verification": "Official-kernel suite rerun on the current build: a native tool call from a private turn reads a permitted group, refuses another Bot's private conversation and unshared private records from a group, and reads only the selected shared private excerpt while refusing reads after revocation. Deterministic selector tests cover implicit disclosure."
+    },
+    {
+      "id": "s5-reporting",
+      "category": "collaboration",
+      "priority": 5,
+      "description": "Group task delegation and separate private reporting are understood and executed.",
+      "file": "packages/workbench/src/tasks.ts",
+      "steps": [
+        "Create structured task assignments.",
+        "Persist exact reporting destinations.",
+        "Deliver and reconcile child outcomes."
+      ],
+      "passes": true,
+      "verification": "Native scheduled coordinator run on the current build assigns two owned child tasks, one delivers an exact private file and one fails through a provider rejection; both outcomes retain their own private reports, notices and file, and survive full restart without reexecution."
+    },
+    {
+      "id": "s6-abilities",
+      "category": "capabilities",
+      "priority": 6,
+      "description": "One ordinary-language ability center for skills, services, connectors, tools and account authorization.",
+      "file": "packages/workbench/src/abilities.ts",
+      "steps": [
+        "Normalize the capability inventory.",
+        "Preview access and source.",
+        "Enable or disable per Bot and revoke authorization."
+      ],
+      "passes": true,
+      "verification": "Browser and service tests manage different ability types through the same product flow."
+    },
+    {
+      "id": "s6-delegation",
+      "category": "capabilities",
+      "priority": 6,
+      "description": "Bots can delegate work to Codex and WorkBuddy while OpenClaw remains the kernel.",
+      "file": "packages/workbench/src/delegation.ts",
+      "steps": [
+        "Verify each supported external protocol.",
+        "Implement progress, cancel and file delivery.",
+        "Expose delegated work as owned child tasks."
+      ],
+      "passes": false,
+      "verification": "Actual supported executor calls for both products, including stop and result delivery."
+    },
+    {
+      "id": "s6-market",
+      "category": "marketplace",
+      "priority": 6,
+      "description": "GitHub-backed Bot and ability packages with author submission, review, versioned installation and update/revocation.",
+      "file": "packages/workbench/src/marketplace.ts",
+      "steps": [
+        "Define reviewed data-only packages.",
+        "Validate paths, permissions and provenance.",
+        "Pin installation to reviewed revisions.",
+        "Support export and submission without leaking personal memory."
+      ],
+      "passes": true,
+      "verification": "Install, update, reject executable/traversal packages and export a sanitized Bot; real GitHub read path."
+    },
+    {
+      "id": "s6-office",
+      "category": "parity",
+      "priority": 6,
+      "description": "Task/file routing, precise document revisions, bulk imports and partial failure recovery.",
+      "file": "docs/v2/experience-matrix.md",
+      "steps": [
+        "Provide original task-method capabilities.",
+        "Preserve anchors, batches and per-item receipts.",
+        "Verify representative document and table workflows."
+      ],
+      "passes": true,
+      "verification": "Reviewed document edits and batch replay do not overwrite unrelated content or duplicate successful items."
+    },
+    {
+      "id": "s7-design",
+      "category": "design",
+      "priority": 7,
+      "description": "Distinct shared visual system, new icon language, light/dark themes and accessible controls.",
+      "file": "apps/workbench-web/src/styles.css",
+      "steps": [
+        "Explore actionable design alternatives.",
+        "Use shared semantic tokens and existing component primitives.",
+        "Verify contrast, focus, motion and responsiveness."
+      ],
+      "passes": false,
+      "verification": "Rendered desktop/narrow screenshots and keyboard acceptance; user review of visual direction."
+    },
+    {
+      "id": "s7-panorama",
+      "category": "design",
+      "priority": 7,
+      "description": "Clickable Bot panorama backed by real task states, with compact navigation.",
+      "file": "apps/workbench-web/src/Panorama.tsx",
+      "steps": [
+        "Map Bots and actionable waiting states.",
+        "Navigate directly to conversation.",
+        "Retain efficient compact navigation."
+      ],
+      "passes": false,
+      "verification": "Reopened: the tested replacement panorama is not the user-selected frontend. Verify the incremental panorama against the retained backend, including existing avatars, Bot sections and pinning."
+    },
+    {
+      "id": "s7-platforms",
+      "category": "platform",
+      "priority": 7,
+      "description": "Shared product contracts across desktop, browser and applicable native mobile workflows.",
+      "file": "apps/workbench-desktop/src/main.ts",
+      "steps": [
+        "Host web UI and local kernel in an independent desktop app.",
+        "Expose an authenticated shared API.",
+        "Implement or explicitly validate safe platform-specific degradation."
+      ],
+      "passes": false,
+      "verification": "Reopened: earlier desktop/browser evidence covers the rejected replacement frontend. Re-establish installed desktop and browser workflows using the selected incremental frontend."
+    },
+    {
+      "id": "s8-clean-scope",
+      "category": "release",
+      "priority": 8,
+      "description": "The new product does not depend on legacy cloud/VM products, vendor catalogs or old runtime bridges.",
+      "file": "apps/workbench/package.json",
+      "steps": [
+        "Audit dependency and build entry graphs.",
+        "Exclude unnecessary legacy products.",
+        "Retain the previous runnable release."
+      ],
+      "passes": true,
+      "verification": "Independent build/start works without cloud computer, VM or old bridge configuration."
+    },
+    {
+      "id": "s8-release",
+      "category": "release",
+      "priority": 8,
+      "description": "Independent installable release, complete workflow acceptance, verified backup/recovery and user-controlled switch.",
+      "file": "apps/workbench-desktop/package.json",
+      "steps": [
+        "Build an independent installation.",
+        "Verify requirement-level completion evidence.",
+        "Trial all selected Bots and full experience matrix.",
+        "Leave default-version switching to the user."
+      ],
+      "passes": false,
+      "verification": "Actual installable artifact, full acceptance record, unchanged previous release and verified rollback."
+    }
+  ],
+  "evidence_scope": {
+    "2026-11-20-remaining-ui": {
+      "backend": "群聊批量与私聊汇报、上下文工具、停止/重启等由 kernel.integration.ts（官方内核 + 隔离合成模型）通过",
+      "selected_frontend": "私聊主链（model/stream/history/stop/queue/approval/file/attachment）由 Codex 接手批在选定前端验证",
+      "not_verified": [
+        "群聊在选定前端的界面操作",
+        "能力/任务/文件操作/定时/模型设置 五处页面数据",
+        "真实模型体验",
+        "八 Bot 真实迁移"
+      ],
+      "ledger_unchanged": "18/26，本批不新增任何 passes"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "project": "LivingBot 2.0",
+  "status": "in_progress",
+  "baseline": "559259bcc7843f9a1dfd97d2894058bb97e516df",
+  "harness": {"feature_list":"feature_list.json","progress_log":"progress.txt","init_script":"init.sh"},
+  "rules": [
+    "Preserve all requirements; do not mark a feature passed without matching runtime or artifact evidence.",
+    "Never modify the previous checkout, production data or Bot workspaces during development.",
+    "Never permanently delete files or fixtures; move obsolete owned material to Trash.",
+    "Use synthetic data in tracked source and tests.",
+    "Keep private deployment and migration evidence in ignored local directories.",
+    "Prefer supported OpenClaw interfaces over private runtime modules.",
+    "Commit reviewed source changes locally; external publication follows the user's authorized scope."
+  ],
+  "milestones": [
+    {"name":"Isolation and experience inventory","prefix":"s1"},
+    {"name":"Kernel reliability","prefix":"s2"},
+    {"name":"Single-Bot complete work experience","prefix":"s3"},
+    {"name":"Memory and migration","prefix":"s4"},
+    {"name":"Groups and collaboration","prefix":"s5"},
+    {"name":"Abilities, delegation, market and WorkBuddy parity","prefix":"s6"},
+    {"name":"Visual system and platform surfaces","prefix":"s7"},
+    {"name":"Acceptance and independent release","prefix":"s8"}
+  ]
+}
