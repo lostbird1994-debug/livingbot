@@ -29,7 +29,17 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
   const rulesQuery = useQuery(queries.approvalRules.list.queryOptions({ input }));
   const autoReviewQuery = useQuery(queries.autoReview.get.queryOptions({ input }));
   const rules = rulesQuery.data ?? [];
-  const autoReview = autoReviewQuery.data ?? null;
+  const autoReview = (autoReviewQuery.data ?? null) as
+    | (ActionAutoReviewSettings & {
+        native?: { mode: string; hasOverrides: boolean };
+      })
+    | null;
+  const nativePolicy = autoReview?.native;
+  const nativeNeedsApply =
+    nativePolicy &&
+    (nativePolicy.hasOverrides ||
+      nativePolicy.mode === "deny" ||
+      nativePolicy.mode === "allowlist");
   const loading = rulesQuery.isPending || autoReviewQuery.isPending;
   const loadFailed = rulesQuery.error ?? autoReviewQuery.error;
   const [saving, setSaving] = useState(false);
@@ -38,8 +48,8 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
     actionError ?? (loadFailed ? errorText(loadFailed, t`Could not load approval rules`) : null);
   const modes: Array<{ mode: ApprovalMode; label: string }> = [
     { mode: "never", label: t`Never ask` },
-    // Auto needs an approval model; it stays listed while chosen so the choice is visible.
-    ...(autoReview?.checkerAvailable || autoReview?.mode === "auto"
+    // Native Auto can be configured before its reviewer model; failures ask a human.
+    ...(nativePolicy || autoReview?.checkerAvailable || autoReview?.mode === "auto"
       ? [{ mode: "auto" as const, label: t`Auto` }]
       : []),
     { mode: "ask", label: t`Ask` },
@@ -95,6 +105,11 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
 
   return (
     <div data-testid="approval-settings" className="space-y-8">
+      {nativePolicy && (
+        <p className="text-sm text-muted-foreground">
+          所有 Bot 统一使用此命令审批设置。网页操作、发送消息和直接编辑文件不由此开关统一审批。
+        </p>
+      )}
       <SettingsGroup>
         <SettingsRow
           label={<Trans>Mode</Trans>}
@@ -102,9 +117,10 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
             <ToggleGroup
               aria-label={t`Mode`}
               data-testid="approval-mode"
-              value={autoReview ? [autoReview.mode] : []}
+              value={autoReview && !nativeNeedsApply ? [autoReview.mode] : []}
               onValueChange={([next]) => {
-                if (next && next !== autoReview?.mode) void setMode(next as ApprovalMode);
+                if (next && (nativeNeedsApply || next !== autoReview?.mode))
+                  void setMode(next as ApprovalMode);
               }}
               disabled={loading || saving || !autoReview}
               spacing={1}
@@ -118,7 +134,23 @@ export function ApprovalRulesSettings({ scope }: { scope: SettingsScope }) {
             </ToggleGroup>
           }
         >
-          {autoReview?.mode === "auto" && !autoReview.checkerAvailable ? (
+          {nativePolicy ? (
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              {nativePolicy.hasOverrides ? (
+                "部分 Bot 有独立命令策略，重新选择模式后统一应用。"
+              ) : nativePolicy.mode === "deny" ? (
+                "原生策略已禁止执行本机命令。"
+              ) : nativePolicy.mode === "allowlist" ? (
+                "仅运行已授权命令，其余命令直接拒绝。"
+              ) : autoReview?.mode === "auto" ? (
+                "先由原生审查器审核，需要确认或审查失败时再询问你。"
+              ) : autoReview?.mode === "never" ? (
+                "本机命令不再触发普通审批提示。"
+              ) : (
+                "已授权命令直接运行，新命令询问你。"
+              )}
+            </p>
+          ) : autoReview?.mode === "auto" && !autoReview.checkerAvailable ? (
             <p className="mt-1 text-[13px] text-muted-foreground">
               <Trans>Add a model in Settings to use this.</Trans>
             </p>

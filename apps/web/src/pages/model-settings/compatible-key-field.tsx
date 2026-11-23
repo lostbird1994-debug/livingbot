@@ -5,10 +5,12 @@ import type { ReactNode } from "react";
 
 export function CompatibleKeyField({
   baseUrl,
+  defaultOpen = false,
   className,
   children,
 }: {
   baseUrl: string;
+  defaultOpen?: boolean;
   className?: string;
   children: ReactNode;
 }) {
@@ -20,7 +22,7 @@ export function CompatibleKeyField({
       {children}
     </div>
   ) : (
-    <Disclosure className={className} summary={<Trans>API key</Trans>}>
+    <Disclosure defaultOpen={defaultOpen} className={className} summary={<Trans>API key</Trans>}>
       {children}
     </Disclosure>
   );

@@ -342,7 +342,7 @@ export function VoiceAssistant({
             !notification.ready
           )
             return;
-          const line = announcementLine(bot.name, notification.utterances.join(""));
+          const line = notification.announcement ?? announcementLine(bot.name, notification.utterances.join(""));
           if (line) announcer.announce(line, bot.id, allowed);
         })
         .catch(() => {

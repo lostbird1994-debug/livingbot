@@ -1,3 +1,4 @@
+import { persistLocalUiPreference } from "./local-ui-preferences";
 import type { AppearancePreference, ResolvedAppearance } from "@livingbot/ui-tokens";
 import {
   appearanceColorScheme,
@@ -46,6 +47,7 @@ export function applyUiAppearance(
 
 export function setUiAppearance(preference: AppearancePreference): ResolvedAppearance {
   persistAppearancePreference(preference);
+  persistLocalUiPreference("rakazo.uiAppearance", preference);
   return applyUiAppearance(preference);
 }
 

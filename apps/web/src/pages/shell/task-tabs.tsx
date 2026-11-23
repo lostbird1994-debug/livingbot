@@ -21,6 +21,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { composerDraftBindingsKey, composerDraftStorageKey } from "../../lib/composer-draft";
 import type { DocumentTab } from "../../lib/document-tabs";
+import { localConnected, useLocalJournalRefresh } from "../../lib/local-workbench";
 import type { RpcClient } from "../../lib/rpc";
 import { clearTaskDraftFiles } from "../../lib/task-draft-files";
 
@@ -137,12 +138,16 @@ export function useBotTaskTabs(
       }
     };
     void update();
-    const timer = window.setInterval(() => void update(), 3000);
+    const timer = localConnected() ? undefined : window.setInterval(() => void update(), 3000);
     return () => {
       alive = false;
-      window.clearInterval(timer);
+      if (timer !== undefined) window.clearInterval(timer);
     };
   }, [botId, enabled, refresh]);
+  // Native sessions use the durable journal, including its reconnect replay.
+  useLocalJournalRefresh(["tasks.changed", "conversations.changed", "runs.changed"], () => {
+    if (botId && enabled) void refresh().catch(() => undefined);
+  });
   const change = useCallback(
     (next: Layout) => {
       setLayout(next);

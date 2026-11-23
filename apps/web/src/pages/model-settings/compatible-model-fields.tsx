@@ -24,6 +24,7 @@ import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ModelPreflightFeedback } from "../../components/ModelConnectionPreflightNotice";
 import { ModelHeadersEditor } from "../../components/ModelHeadersEditor";
+import { localConnected } from "../../lib/local-workbench";
 
 import type { ModelSettingsState } from "./use-model-settings";
 
@@ -110,6 +111,7 @@ export function CompatibleModelFields({
   | "updateBaseUrl"
 >) {
   const { t } = useLingui();
+  const native = localConnected();
   const thinkingLevelLabels = {
     minimal: t`Minimal`,
     low: t`Low`,
@@ -138,7 +140,9 @@ export function CompatibleModelFields({
     [compatibleRows, enabledModelIds, hasSearchQuery, modelId, query],
   );
   return (
-    <div className="block text-[13.5px] text-muted-foreground">
+    <div
+      className={`block text-sm text-muted-foreground ${native ? "settings-compatible-fields" : ""}`}
+    >
       <label className="block" htmlFor="model-base-url">
         <Trans>Server URL</Trans>
         <Input
@@ -151,18 +155,26 @@ export function CompatibleModelFields({
           className="mt-2 h-10 text-foreground"
         />
       </label>
-      <div className="mt-3 flex items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={busy || probing || !effectiveBaseUrl}
-          onClick={() => void probeServerModels()}
-        >
-          {probing ? <Trans>Finding…</Trans> : <Trans>Find models</Trans>}
-        </Button>
-      </div>
-      {!isOllamaCloudBaseUrl(baseUrl) ? (
+      {!native || (credential && savedHeaderEndpointMatches) ? (
+        <div className="mt-3 flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy || probing || !effectiveBaseUrl}
+            onClick={() => void probeServerModels()}
+          >
+            {probing ? (
+              <Trans>Finding…</Trans>
+            ) : native ? (
+              <Trans>Refresh</Trans>
+            ) : (
+              <Trans>Find models</Trans>
+            )}
+          </Button>
+        </div>
+      ) : null}
+      {!native && !isOllamaCloudBaseUrl(baseUrl) ? (
         <Disclosure
           className="mt-3 text-[13.5px] text-muted-foreground"
           summary={<Trans>Setup help</Trans>}
@@ -246,7 +258,7 @@ export function CompatibleModelFields({
             className="mt-2 h-10 text-foreground"
           />
         )}
-        {compatibleRows.length || hasSearchQuery ? (
+        {!native && (compatibleRows.length || hasSearchQuery) ? (
           <div className="mt-3 grid gap-2" data-testid="compatible-model-rows">
             {compatibleRows.length > MODEL_SEARCH_THRESHOLD || hasSearchQuery ? (
               <InputGroup className="h-10">
@@ -307,6 +319,7 @@ export function CompatibleModelFields({
         ) : null}
       </div>
       <ModelThinkingOptions
+        defaultOpen={native}
         reasoning={reasoning}
         onReasoningChange={(value) => {
           selectionRevisionRef.current += 1;
@@ -323,10 +336,20 @@ export function CompatibleModelFields({
           setThinkingLevel(value as ThinkingLevel | null);
           setNotice(null);
         }}
-        thinkingLevelOptions={compatibleThinkingLevels(apiProtocol).map((level) => ({
-          value: level,
-          label: thinkingLevelLabels[level],
-        }))}
+        thinkingLevelOptions={compatibleThinkingLevels(apiProtocol)
+          .filter(
+            (level) =>
+              !native ||
+              !savedHeaderEndpointMatches ||
+              credential?.modelId !== modelId ||
+              (credential.apiProtocol ?? "chat-completions") !== apiProtocol ||
+              credential.thinkingLevels === undefined ||
+              credential.thinkingLevels.includes(level),
+          )
+          .map((level) => ({
+            value: level,
+            label: thinkingLevelLabels[level],
+          }))}
         thinkingLevelLabel={t`Reasoning effort`}
         thinkingLevelDefaultLabel={t`Default`}
         maxTokens={maxTokens}
@@ -351,11 +374,15 @@ export function CompatibleModelFields({
         }}
         imagesLabel={t`Supports images`}
         maxImagesPerPrompt={maxImagesPerPrompt}
-        onMaxImagesPerPromptChange={(value) => {
-          selectionRevisionRef.current += 1;
-          setMaxImagesPerPrompt(value);
-          setNotice(null);
-        }}
+        onMaxImagesPerPromptChange={
+          native
+            ? undefined
+            : (value) => {
+                selectionRevisionRef.current += 1;
+                setMaxImagesPerPrompt(value);
+                setNotice(null);
+              }
+        }
         maxImagesLabel={t`Maximum images per request`}
       >
         <ModelHeadersEditor

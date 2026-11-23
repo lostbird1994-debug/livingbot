@@ -1,5 +1,10 @@
 const SETTINGS_SECTIONS = [
   "general",
+  "chat",
+  "regional",
+  "advanced",
+  "connections",
+  "data",
   "space",
   "models",
   "memory",
@@ -101,6 +106,7 @@ export function searchString(params: URLSearchParams): string {
 /** Only the overlay params, for redirects that change the route but should keep the overlay open. */
 export function shellOverlaySearch(params: URLSearchParams): string {
   const next = withShellOverlay(new URLSearchParams(), readShellOverlay(params));
+  if (params.has("view")) next.set("view", params.get("view") ?? "");
   // The plan choice opens above the shell from its own link, so it survives the redirect too.
   if (params.has("plans")) next.set("plans", "");
   return searchString(next);

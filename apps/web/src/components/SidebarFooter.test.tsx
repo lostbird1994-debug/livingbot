@@ -34,6 +34,7 @@ async function render(
   onIntegrations = vi.fn(),
   onBoard?: () => void,
   logos?: Array<{ name: string; logo?: string }>,
+  onSettings = vi.fn(),
 ) {
   const email = "account@livingbot.test";
   await act(async () =>
@@ -56,7 +57,7 @@ async function render(
           onSkills={vi.fn()}
           onBoard={onBoard}
           onArtifacts={() => {}}
-          onSettings={() => {}}
+          onSettings={onSettings}
           onUsage={() => {}}
           onLogOut={() => {}}
           signingOut={false}
@@ -209,4 +210,13 @@ it("keeps at most three marks with the same tile and a missing-logo fallback", a
   expect(tiles).toHaveLength(3);
   expect(new Set(tiles.map((tile) => tile.className)).size).toBe(1);
   expect(tiles[1]!.textContent).toBe("N");
+});
+
+it("opens settings directly without a scope submenu", async () => {
+  const onSettings = vi.fn();
+  await render("Demo User", undefined, undefined, undefined, undefined, onSettings);
+  const entry = document.querySelector<HTMLButtonElement>('[data-testid="account-menu-settings"]')!;
+  await act(async () => entry.click());
+  expect(onSettings).toHaveBeenCalledWith("global");
+  expect(document.querySelector('[data-testid="settings-panels"]')).toBeNull();
 });

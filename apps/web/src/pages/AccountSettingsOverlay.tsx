@@ -60,6 +60,7 @@ import {
 } from "../lib/composer-enter-to-send-pref";
 import { getActiveUiLocale, setUiLocale } from "../lib/i18n";
 import { localTimezone, sameTimeZone, timezoneOptions } from "../lib/local-timezone";
+import { localConnected } from "../lib/local-workbench";
 import { usePasskeysSupported } from "../lib/passkeys";
 import {
   getRemoteImagesPreference,
@@ -98,8 +99,10 @@ export function GeneralSettingsPanels({
   onTimezoneChange,
   onAccountImported,
   onImportAgent,
-}: SettingsGeneralProps) {
+  section,
+}: SettingsGeneralProps & { section?: "appearance" | "chat" | "regional" }) {
   const { t } = useLingui();
+  const hostedAccount = !localConnected();
   const account = accountDisplay({ name, email }, t`You`);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
@@ -203,264 +206,285 @@ export function GeneralSettingsPanels({
   }
 
   return (
-    <div className="space-y-8">
-      <SettingsGroup title={<Trans>Account</Trans>} data-testid="account-card">
-        {editingName ? (
-          <form
-            className="space-y-3 px-4 py-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void saveName();
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.stopPropagation();
-                if (event.nativeEvent.isComposing || event.keyCode === 229) return;
-                if (!namePending) setEditingName(false);
-              }
-            }}
-          >
-            <Field>
-              <FieldLabel htmlFor={nameId}>
-                <Trans>Name</Trans>
-              </FieldLabel>
-              <Input
-                id={nameId}
-                autoComplete="name"
-                autoFocus
-                maxLength={80}
-                value={nameDraft}
-                disabled={namePending}
-                onChange={(event) => {
-                  setNameDraft(event.target.value);
-                  setNameError(null);
-                }}
-              />
-            </Field>
-            {nameError ? (
-              <p role="alert" className="text-[12.5px] text-destructive">
-                {nameError}
-              </p>
-            ) : null}
-            <div className="flex items-center gap-3">
-              <Button type="submit" disabled={namePending || !nameDraft.trim()}>
-                <Trans>Save</Trans>
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={namePending}
-                onClick={() => setEditingName(false)}
-              >
-                <Trans>Cancel</Trans>
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <SettingsRow
-            label={
-              <>
-                <p className="break-words">{account.label}</p>
-                {email && account.label !== email ? (
-                  <p className="mt-0.5 break-words text-[13px] text-muted-foreground">{email}</p>
-                ) : null}
-              </>
-            }
-            control={
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setNameDraft(account.label === email ? "" : displayName(name, ""));
-                  setNameError(null);
-                  setEditingName(true);
-                }}
-              >
-                <Trans>Edit</Trans>
-              </Button>
-            }
-          />
-        )}
-      </SettingsGroup>
-
-      <SettingsGroup title={<Trans>Preferences</Trans>}>
-        <SettingsRow
-          label={<Trans>Appearance</Trans>}
-          control={
-            <AppearancePicker
-              value={appearance}
-              onChange={(next) => {
-                setAppearance(next);
-                setUiAppearance(next);
+    <div className="settings-overview">
+      {!section && hostedAccount && (
+        <SettingsGroup title={<Trans>Account</Trans>} data-testid="account-card">
+          {editingName ? (
+            <form
+              className="space-y-3 px-4 py-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void saveName();
               }}
-            />
-          }
-        />
-        <SettingsRow
-          label={
-            <span id={sidebarDensityLabelId}>
-              <Trans>Sidebar density</Trans>
-            </span>
-          }
-          control={
-            <ToggleGroup
-              aria-labelledby={sidebarDensityLabelId}
-              data-testid="bots-sidebar-density-select"
-              value={[sidebarDensity]}
-              onValueChange={([next]) => {
-                if (next) setBotsSidebarDensity(next as BotsSidebarDensity);
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.stopPropagation();
+                  if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+                  if (!namePending) setEditingName(false);
+                }
               }}
-              spacing={1}
-              className="grid min-w-0 grid-cols-2 rounded-lg bg-muted p-1"
             >
-              <ToggleGroupItem
-                value="comfortable"
-                data-testid="bots-sidebar-density-comfortable"
-                className="text-[13px] aria-pressed:bg-background aria-pressed:shadow-sm"
-              >
-                <Trans>Comfortable</Trans>
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                value="compact"
-                data-testid="bots-sidebar-density-compact"
-                className="text-[13px] aria-pressed:bg-background aria-pressed:shadow-sm"
-              >
-                <Trans>Compact</Trans>
-              </ToggleGroupItem>
-            </ToggleGroup>
-          }
-        />
-        <SettingsRow
-          label={<Trans>Language</Trans>}
-          control={<UiLocalePicker value={locale} onChange={chooseLocale} />}
-        />
-        {onTimezoneChange ? (
-          <div data-testid="timezone-settings">
-            <SettingsRow
-              label={
-                <span id={timezoneId}>
-                  <Trans>Timezone</Trans>
-                </span>
-              }
-              control={
-                <NativeSelect
-                  aria-labelledby={timezoneId}
-                  data-testid="timezone-select"
-                  value={timezone ?? deviceTimezone}
-                  disabled={timezonePending}
-                  onChange={(event) => void chooseTimezone(event.target.value)}
-                  className="w-56 max-w-full"
-                >
-                  {timezoneOptions(timezone ?? deviceTimezone).map((zone) => (
-                    <NativeSelectOption key={zone} value={zone}>
-                      {zone.replaceAll("_", " ")}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              }
-            >
-              {!timezone || !sameTimeZone(timezone, deviceTimezone) ? (
-                <div className="mt-2 flex justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-auto max-w-full py-1.5 text-left whitespace-normal"
-                    disabled={timezonePending}
-                    data-testid="timezone-use-device"
-                    onClick={() => void chooseTimezone(deviceTimezone)}
-                  >
-                    <Trans comment="Switches the saved timezone to this device's, e.g. 'Use Pacific/Auckland'">
-                      Use {deviceTimezone.replaceAll("_", " ")}
-                    </Trans>
-                  </Button>
-                </div>
-              ) : null}
-              {timezoneError ? (
-                <p role="alert" className="mt-2 text-right text-[12.5px] text-destructive">
-                  {timezoneError}
+              <Field>
+                <FieldLabel htmlFor={nameId}>
+                  <Trans>Name</Trans>
+                </FieldLabel>
+                <Input
+                  id={nameId}
+                  autoComplete="name"
+                  autoFocus
+                  maxLength={80}
+                  value={nameDraft}
+                  disabled={namePending}
+                  onChange={(event) => {
+                    setNameDraft(event.target.value);
+                    setNameError(null);
+                  }}
+                />
+              </Field>
+              {nameError ? (
+                <p role="alert" className="text-[12.5px] text-destructive">
+                  {nameError}
                 </p>
               ) : null}
-            </SettingsRow>
-          </div>
-        ) : null}
-      </SettingsGroup>
+              <div className="flex items-center gap-3">
+                <Button type="submit" disabled={namePending || !nameDraft.trim()}>
+                  <Trans>Save</Trans>
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={namePending}
+                  onClick={() => setEditingName(false)}
+                >
+                  <Trans>Cancel</Trans>
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <SettingsRow
+              label={
+                <>
+                  <p className="break-words">{account.label}</p>
+                  {hostedAccount && email && account.label !== email ? (
+                    <p className="mt-0.5 break-words text-[13px] text-muted-foreground">{email}</p>
+                  ) : null}
+                </>
+              }
+              control={
+                hostedAccount ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setNameDraft(account.label === email ? "" : displayName(name, ""));
+                      setNameError(null);
+                      setEditingName(true);
+                    }}
+                  >
+                    <Trans>Edit</Trans>
+                  </Button>
+                ) : null
+              }
+            />
+          )}
+        </SettingsGroup>
+      )}
 
-      <SettingsGroup title={<Trans>Chat</Trans>}>
-        <SettingsRow
-          label={
-            <Label htmlFor={enterToSendId} className="text-[14px] font-normal text-foreground">
-              <Trans>Send with Enter</Trans>
-            </Label>
-          }
-          control={
-            <Switch
-              id={enterToSendId}
-              data-testid="composer-enter-to-send-toggle"
-              checked={enterToSend}
-              onCheckedChange={(checked) => setComposerEnterToSend(checked)}
-            />
-          }
-        />
-        <SettingsRow
-          label={
-            <Label htmlFor={streamRepliesId} className="text-[14px] font-normal text-foreground">
-              <Trans>Stream replies</Trans>
-            </Label>
-          }
-          control={
-            <Switch
-              id={streamRepliesId}
-              data-testid="response-streaming-toggle"
-              checked={streamReplies}
-              onCheckedChange={(checked) => {
-                setStreamReplies(checked);
-                setResponseStreamingPreference(checked ? "on" : "off");
-              }}
-            />
-          }
-        />
-        <SettingsRow
-          label={
-            <Label htmlFor={showToolActivityId} className="text-[14px] font-normal text-foreground">
-              <Trans>Show tool activity</Trans>
-            </Label>
-          }
-          control={
-            <Switch
-              id={showToolActivityId}
-              data-testid="tool-activity-toggle"
-              checked={showToolActivity}
-              onCheckedChange={(checked) => {
-                setShowToolActivity(checked);
-                setToolActivityPreference(checked ? "on" : "off");
-              }}
-            />
-          }
-        />
-        <SettingsRow
-          label={
-            <Label htmlFor={loadRemoteImagesId} className="text-[14px] font-normal text-foreground">
-              <Trans>Load web images automatically</Trans>
-            </Label>
-          }
-          control={
-            <Switch
-              id={loadRemoteImagesId}
-              data-testid="remote-images-toggle"
-              checked={loadRemoteImages}
-              onCheckedChange={(checked) => {
-                setLoadRemoteImages(checked);
-                setRemoteImagesPreference(checked ? "on" : "off");
-              }}
-            />
-          }
-        />
-      </SettingsGroup>
+      {section !== "chat" && (
+        <SettingsGroup title={section ? undefined : <Trans>Preferences</Trans>}>
+          {section !== "regional" && (
+            <>
+              <SettingsRow label={section === "appearance" ? "主题" : <Trans>Appearance</Trans>}>
+                <div className="py-2">
+                  <AppearancePicker
+                    value={appearance}
+                    onChange={(next) => {
+                      setAppearance(next);
+                      setUiAppearance(next);
+                    }}
+                  />
+                </div>
+              </SettingsRow>
+              <SettingsRow
+                label={
+                  <span id={sidebarDensityLabelId}>
+                    <Trans>Sidebar density</Trans>
+                  </span>
+                }
+                control={
+                  <ToggleGroup
+                    aria-labelledby={sidebarDensityLabelId}
+                    data-testid="bots-sidebar-density-select"
+                    value={[sidebarDensity]}
+                    onValueChange={([next]) => {
+                      if (next) setBotsSidebarDensity(next as BotsSidebarDensity);
+                    }}
+                    spacing={1}
+                    className="grid min-w-0 grid-cols-2 rounded-lg bg-muted p-1"
+                  >
+                    <ToggleGroupItem
+                      value="comfortable"
+                      data-testid="bots-sidebar-density-comfortable"
+                      className="text-[13px] aria-pressed:bg-background aria-pressed:shadow-sm"
+                    >
+                      <Trans>Comfortable</Trans>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem
+                      value="compact"
+                      data-testid="bots-sidebar-density-compact"
+                      className="text-[13px] aria-pressed:bg-background aria-pressed:shadow-sm"
+                    >
+                      <Trans>Compact</Trans>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                }
+              />
+            </>
+          )}
+          {section !== "appearance" && (
+            <>
+              <SettingsRow
+                label={<Trans>Language</Trans>}
+                control={<UiLocalePicker value={locale} onChange={chooseLocale} />}
+              />
+              {onTimezoneChange ? (
+                <div data-testid="timezone-settings">
+                  <SettingsRow
+                    label={
+                      <span id={timezoneId}>
+                        <Trans>Timezone</Trans>
+                      </span>
+                    }
+                    control={
+                      <NativeSelect
+                        aria-labelledby={timezoneId}
+                        data-testid="timezone-select"
+                        value={timezone ?? deviceTimezone}
+                        disabled={timezonePending}
+                        onChange={(event) => void chooseTimezone(event.target.value)}
+                        className="w-56 max-w-full"
+                      >
+                        {timezoneOptions(timezone ?? deviceTimezone).map((zone) => (
+                          <NativeSelectOption key={zone} value={zone}>
+                            {zone.replaceAll("_", " ")}
+                          </NativeSelectOption>
+                        ))}
+                      </NativeSelect>
+                    }
+                  >
+                    {!timezone || !sameTimeZone(timezone, deviceTimezone) ? (
+                      <div className="mt-2 flex justify-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-auto max-w-full py-1.5 text-left whitespace-normal"
+                          disabled={timezonePending}
+                          data-testid="timezone-use-device"
+                          onClick={() => void chooseTimezone(deviceTimezone)}
+                        >
+                          <Trans comment="Switches the saved timezone to this device's, e.g. 'Use Pacific/Auckland'">
+                            Use {deviceTimezone.replaceAll("_", " ")}
+                          </Trans>
+                        </Button>
+                      </div>
+                    ) : null}
+                    {timezoneError ? (
+                      <p role="alert" className="mt-2 text-right text-[12.5px] text-destructive">
+                        {timezoneError}
+                      </p>
+                    ) : null}
+                  </SettingsRow>
+                </div>
+              ) : null}
+            </>
+          )}
+        </SettingsGroup>
+      )}
 
-      <TrustedLinkSitesSettings />
-      <ComputerDeviceSettings />
+      {(!section || section === "chat") && (
+        <SettingsGroup title={section ? undefined : <Trans>Chat</Trans>}>
+          <SettingsRow
+            label={
+              <Label htmlFor={enterToSendId} className="text-[14px] font-normal text-foreground">
+                <Trans>Send with Enter</Trans>
+              </Label>
+            }
+            control={
+              <Switch
+                id={enterToSendId}
+                data-testid="composer-enter-to-send-toggle"
+                checked={enterToSend}
+                onCheckedChange={(checked) => setComposerEnterToSend(checked)}
+              />
+            }
+          />
+          <SettingsRow
+            label={
+              <Label htmlFor={streamRepliesId} className="text-[14px] font-normal text-foreground">
+                <Trans>Stream replies</Trans>
+              </Label>
+            }
+            control={
+              <Switch
+                id={streamRepliesId}
+                data-testid="response-streaming-toggle"
+                checked={streamReplies}
+                onCheckedChange={(checked) => {
+                  setStreamReplies(checked);
+                  setResponseStreamingPreference(checked ? "on" : "off");
+                }}
+              />
+            }
+          />
+          <SettingsRow
+            label={
+              <Label
+                htmlFor={showToolActivityId}
+                className="text-[14px] font-normal text-foreground"
+              >
+                <Trans>Show thinking and tool activity</Trans>
+              </Label>
+            }
+            control={
+              <Switch
+                id={showToolActivityId}
+                data-testid="tool-activity-toggle"
+                checked={showToolActivity}
+                onCheckedChange={(checked) => {
+                  setShowToolActivity(checked);
+                  setToolActivityPreference(checked ? "on" : "off");
+                }}
+              />
+            }
+          />
+          <SettingsRow
+            label={
+              <Label
+                htmlFor={loadRemoteImagesId}
+                className="text-[14px] font-normal text-foreground"
+              >
+                <Trans>Load web images automatically</Trans>
+              </Label>
+            }
+            control={
+              <Switch
+                id={loadRemoteImagesId}
+                data-testid="remote-images-toggle"
+                checked={loadRemoteImages}
+                onCheckedChange={(checked) => {
+                  setLoadRemoteImages(checked);
+                  setRemoteImagesPreference(checked ? "on" : "off");
+                }}
+              />
+            }
+          />
+        </SettingsGroup>
+      )}
 
-      {showPassword || passkeysSupported || canLinkSso ? (
+      {(!section || section === "chat") && <TrustedLinkSitesSettings />}
+      {!section && <ComputerDeviceSettings />}
+
+      {!section && hostedAccount && (showPassword || passkeysSupported || canLinkSso) ? (
         <SettingsGroup title={<Trans>Security</Trans>}>
           {showPassword ? <ChangePasswordRow email={email} /> : null}
           {canLinkSso ? <LinkSsoRow /> : null}
@@ -468,10 +492,12 @@ export function GeneralSettingsPanels({
         </SettingsGroup>
       ) : null}
 
-      <SettingsGroup title={<Trans>Data</Trans>} data-testid="account-data">
-        <AccountDataSettings onImported={onAccountImported} onImportAgent={onImportAgent} />
-        <AccountAccess onSecurity={setAccountSecurity} />
-      </SettingsGroup>
+      {!section && hostedAccount ? (
+        <SettingsGroup title={<Trans>Data</Trans>} data-testid="account-data">
+          <AccountDataSettings onImported={onAccountImported} onImportAgent={onImportAgent} />
+          <AccountAccess onSecurity={setAccountSecurity} />
+        </SettingsGroup>
+      ) : null}
     </div>
   );
 }
@@ -785,10 +811,7 @@ function AppearancePicker({
   ];
 
   return (
-    <div
-      data-testid="ui-appearance-select"
-      className="flex max-w-[330px] flex-wrap justify-end gap-1.5"
-    >
+    <div data-testid="ui-appearance-select" className="flex flex-wrap justify-start gap-2">
       {options.map((option) => (
         <button
           key={option.value}
@@ -796,7 +819,7 @@ function AppearancePicker({
           data-testid={`ui-appearance-${option.value}`}
           aria-pressed={option.value === value}
           onClick={() => onChange(option.value)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[12px] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground aria-pressed:border-primary aria-pressed:text-foreground"
+          className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-[13px] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground aria-pressed:border-primary aria-pressed:text-foreground"
         >
           <span
             aria-hidden="true"

@@ -26,6 +26,8 @@ import { SETTINGS_PANEL_DEFAULT } from "../settings-nav";
 import type { SettingsSection } from "../shell-overlay";
 import { SidebarHeader } from "./sidebar-header";
 import type { SidebarSearch } from "./use-sidebar-search";
+import type { WorkspaceView } from "./workspace-navigation";
+import { WorkspaceNavigation } from "./workspace-navigation";
 
 /** Focuses the search box once it renders, its text selected so typing replaces it. */
 export function focusSidebarSearch() {
@@ -64,6 +66,9 @@ export function ShellSidebar({
   openSettings,
   openIntegrations,
   openSkills,
+  workspaceView,
+  settingsOpen,
+  onWorkspaceNavigate,
 }: {
   isMobile: boolean;
   mobileOpen: boolean;
@@ -89,6 +94,9 @@ export function ShellSidebar({
   openSettings: (section: SettingsSection) => void;
   openIntegrations: () => void;
   openSkills: () => void;
+  workspaceView: WorkspaceView | null;
+  settingsOpen: boolean;
+  onWorkspaceNavigate: (view: WorkspaceView) => void;
 }) {
   const { t } = useLingui();
   const {
@@ -147,20 +155,16 @@ export function ShellSidebar({
             toggleActivityMode();
           }}
           searchOpen={searchOpen && !mini}
-          onSearch={
-            activityMode && !mini
-              ? undefined
-              : () => {
-                  if (searchOpen && !mini) {
-                    setQuery("");
-                    setSearchOpen(false);
-                    return;
-                  }
-                  if (mini) setCollapsedPref(false);
-                  setSearchOpen(true);
-                  focusSidebarSearch();
-                }
-          }
+          onSearch={() => {
+            if (searchOpen && !mini) {
+              setQuery("");
+              setSearchOpen(false);
+              return;
+            }
+            if (mini) setCollapsedPref(false);
+            setSearchOpen(true);
+            focusSidebarSearch();
+          }}
           setBotsSidebarCollapsedPref={setCollapsedPref}
           bots={bots}
           setMobileSidebarOpen={setMobileOpen}
@@ -168,6 +172,15 @@ export function ShellSidebar({
           navigate={navigate}
           setNewSpaceOpen={setNewSpaceOpen}
           setCreateBotOpen={setCreateBotOpen}
+        />
+        <WorkspaceNavigation
+          mini={mini}
+          view={workspaceView}
+          settingsOpen={settingsOpen}
+          onNavigate={(view) => {
+            setMobileOpen(false);
+            onWorkspaceNavigate(view);
+          }}
         />
         {mini || !(activityMode || searchOpen || query) ? null : (
           <InputGroup
@@ -226,6 +239,19 @@ export function ShellSidebar({
           </InputGroup>
         )}
         <div className="rk-scroll scroll-fade-y scroll-fade-12 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-2.5">
+          {!mini ? (
+            <div className="flex items-center justify-between px-2.5 pb-1 text-xs text-muted-foreground">
+              <span>我的 Bot</span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="新建 Bot"
+                onClick={() => setCreateBotOpen(true)}
+              >
+                +
+              </Button>
+            </div>
+          ) : null}
           {showSpaceSearch && !mini ? (
             <SpaceSearchResults
               hits={searchHits}

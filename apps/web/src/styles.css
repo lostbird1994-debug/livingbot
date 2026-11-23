@@ -1,8 +1,111 @@
 @import "tailwindcss";
 @import "@livingbot/ui-web/styles.css";
 
-@source "../../packages/ui-web/src/**/*.{ts,tsx}";
-@source "./src/**/*.{ts,tsx}";
+@source "../../../packages/ui-web/src/**/*.{ts,tsx}";
+@source "./**/*.{ts,tsx}";
+
+.panorama-sections {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: 24px 18px;
+}
+.panorama-cards {
+  display: grid;
+  grid-template-columns: repeat(var(--panorama-columns, 1), minmax(0, 1fr));
+  gap: 18px;
+}
+@media (min-width: 1600px) {
+  .panorama-sections {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1100px) {
+  .panorama-sections {
+    display: flex;
+    flex-direction: column;
+  }
+  .panorama-sections > * {
+    width: 100%;
+  }
+  .panorama-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .panorama-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  [data-testid="workspace-main"] > header,
+  [data-testid="workspace-main"] > div > header {
+    padding-inline-start: 48px;
+  }
+}
+
+.panorama-bot {
+  padding: 8px 8px 4px;
+}
+.panorama-bot-portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 240px;
+  aspect-ratio: 1;
+}
+.panorama-bot-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 12px;
+  transition: transform 180ms ease-out;
+}
+.panorama-bot-open:hover .panorama-bot-photo {
+  transform: scale(1.015);
+}
+.panorama-bot-open:active .panorama-bot-photo {
+  transform: scale(0.985);
+}
+.panorama-bot-aura {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--status-working) 65%, transparent),
+    0 0 12px 3px color-mix(in srgb, var(--status-working) 52%, transparent),
+    0 0 28px 8px color-mix(in srgb, var(--status-working) 32%, transparent);
+  opacity: 0.7;
+  animation: panorama-avatar-glow 3s ease-in-out infinite;
+}
+.panorama-bot-menu {
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+.panorama-bot:hover .panorama-bot-menu,
+.panorama-bot:focus-within .panorama-bot-menu,
+.panorama-bot-menu[data-popup-open] {
+  opacity: 1;
+}
+@media (hover: none) {
+  .panorama-bot-menu { opacity: 1; }
+}
+@keyframes panorama-avatar-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panorama-bot .panorama-bot-photo,
+  .panorama-bot-aura {
+    animation: none;
+    transition: none;
+  }
+  .panorama-bot-open:hover .panorama-bot-photo,
+  .panorama-bot-open:active .panorama-bot-photo { transform: none; }
+}
 
 html,
 body,
@@ -151,11 +254,7 @@ body,
 /* Cards inside the transcript (ask cards, artifacts, tool results) follow the
    bubble slider: they are message content, so they should recede together. */
 .rk-card {
-  background: color-mix(
-    in srgb,
-    var(--card) calc(var(--rk-bubble-alpha, 1) * 100%),
-    transparent
-  );
+  background: color-mix(in srgb, var(--card) calc(var(--rk-bubble-alpha, 1) * 100%), transparent);
 }
 
 /* ---- Chat backdrop surfaces -------------------------------------------------

@@ -17,6 +17,7 @@ export function ModelThinkingOptions({
   onMaxImagesPerPromptChange,
   disabled,
   advancedLabel,
+  defaultOpen = false,
   thinkingLabel,
   showThinking = true,
   thinkingLevel,
@@ -42,6 +43,7 @@ export function ModelThinkingOptions({
   onMaxImagesPerPromptChange?: (maxImagesPerPrompt: string) => void;
   disabled?: boolean;
   advancedLabel: string;
+  defaultOpen?: boolean;
   thinkingLabel?: string;
   showThinking?: boolean;
   thinkingLevel?: string | null;
@@ -65,7 +67,11 @@ export function ModelThinkingOptions({
   const imagesId = useId();
   const maxImagesId = useId();
   return (
-    <Disclosure className="mt-4 text-sm text-muted-foreground" summary={advancedLabel}>
+    <Disclosure
+      className="mt-4 text-sm text-muted-foreground"
+      summary={advancedLabel}
+      defaultOpen={defaultOpen}
+    >
       {showThinking && onReasoningChange && thinkingLabel ? (
         <label htmlFor={id} className="mt-3 flex items-center gap-2">
           <Checkbox

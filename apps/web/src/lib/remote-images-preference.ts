@@ -1,3 +1,4 @@
+import { persistLocalUiPreference } from "./local-ui-preferences";
 import type { RemoteImagesPreference } from "@livingbot/core";
 import { normalizeRemoteImagesPreference, REMOTE_IMAGES_STORAGE_KEY } from "@livingbot/core";
 
@@ -35,6 +36,7 @@ export function setRemoteImagesPreference(
   preference: RemoteImagesPreference,
 ): RemoteImagesPreference {
   memoryPreference = preference;
+  persistLocalUiPreference("rakazo.loadRemoteImages", preference);
   try {
     getLocalStorage()?.setItem(REMOTE_IMAGES_STORAGE_KEY, preference);
   } catch {

@@ -114,6 +114,60 @@ it("sets the mode, and lists Auto only when an approval model is there", async (
   }
 });
 
+it("keeps native Auto selectable without a model and explains its human fallback", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  rpcMock.approvalRules.list.mockResolvedValue([]);
+  rpcMock.autoReview.get.mockResolvedValue({
+    ...settings,
+    mode: "auto",
+    checkerAvailable: false,
+    native: { mode: "auto", hasOverrides: false },
+  });
+  const { container, root } = await render();
+  try {
+    await vi.waitFor(() =>
+      expect(button(container, "Auto")?.getAttribute("aria-pressed")).toBe("true"),
+    );
+    expect(container.textContent).toContain("先由原生审查器审核");
+    expect(container.textContent).toContain("审查失败时再询问你");
+    expect(container.textContent).not.toContain("Add a model in Settings");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+it.each([
+  ["deny", false, "原生策略已禁止执行本机命令"],
+  ["allowlist", false, "其余命令直接拒绝"],
+  ["ask", true, "部分 Bot 有独立命令策略"],
+])(
+  "explains native %s policy instead of claiming all commands can prompt",
+  async (mode, hasOverrides, text) => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    rpcMock.approvalRules.list.mockResolvedValue([]);
+    rpcMock.autoReview.get.mockResolvedValue({ ...settings, native: { mode, hasOverrides } });
+    const { container, root } = await render();
+    try {
+      await vi.waitFor(() => expect(container.textContent).toContain(text));
+      // A native blocked/mixed policy must not look like the legacy Ask selection,
+      // and choosing Ask must be able to apply it without toggling through Full.
+      expect(button(container, "Ask")?.getAttribute("aria-pressed")).toBe("false");
+      rpcMock.autoReview.set.mockResolvedValue({
+        ...settings,
+        native: { mode: "ask", hasOverrides: false },
+      });
+      await act(async () => button(container, "Ask")!.click());
+      expect(rpcMock.autoReview.set).toHaveBeenLastCalledWith({ scope: "account", mode: "ask" });
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
+      vi.unstubAllGlobals();
+    }
+  },
+);
+
 it("blocks or removes an allowed tool", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const allowed = {

@@ -1,6 +1,5 @@
 import type {
   Bot,
-  ConversationUsage,
   LoginFieldInput,
   ModelCatalogEntry,
   TaskSession,
@@ -18,7 +17,9 @@ import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, toast } from 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { writeComposerDraft } from "../../lib/composer-draft";
+import { localConnected } from "../../lib/local-workbench";
 import { readFileAsBase64 } from "../../lib/pending-attachments";
+import { useSpaceQueries } from "../../lib/query";
 import type { RpcClient } from "../../lib/rpc";
 import type { TaskDraftFile } from "../../lib/task-draft-files";
 import { readTaskDraftFiles, writeTaskDraftFiles } from "../../lib/task-draft-files";
@@ -28,6 +29,7 @@ import { Composer } from "./composer";
 import { ComposerUsage } from "./composer-usage";
 import { ConversationFindPanel } from "./conversation-find-panel";
 import { Transcript } from "./transcript";
+import { useConversationUsage } from "./use-conversation-usage";
 import { useFindRequest } from "./use-find-request";
 
 interface DraftSelection {
@@ -35,6 +37,7 @@ interface DraftSelection {
   modelId: string;
   thinkingLevel: string | null;
 }
+
 export function TaskConversation({
   bot,
   tabKey,
@@ -85,7 +88,7 @@ export function TaskConversation({
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [sent, setSent] = useState(0);
   const [reply, setReply] = useState<{ message: ThreadMessage; quote?: string } | null>(null);
-  const [usage, setUsage] = useState<ConversationUsage>();
+  const queries = useSpaceQueries();
   const [modelOpen, setModelOpen] = useState(false);
   const [findOpen, setFindOpen] = useFindRequest(isDraft ? 0 : findRequest);
   const [models, setModels] = useState<ModelCatalogEntry[]>([]);
@@ -124,6 +127,7 @@ export function TaskConversation({
       try {
         const value = await rpc.threads.get(target, { signal: controller.signal });
         commit(value);
+        if (!controller.signal.aborted && mounted.current) setError(null);
         await rpc.threads.markRead(target, { signal: controller.signal });
         const events = await rpc.threads.subscribe(
           { ...target, cursor: value.cursor },
@@ -131,6 +135,17 @@ export function TaskConversation({
         );
         for await (const event of events) {
           if (controller.signal.aborted) return;
+          // Match the main chat's native journal → full snapshot path. Message-only
+          // reducers cannot reconcile run completion or native question cards.
+          if (localConnected() && event.type === "thread.meta") {
+            const current = await rpc.threads.get(target, { signal: controller.signal });
+            if (controller.signal.aborted) return;
+            commit(current);
+            setError(null);
+            if (["tasks.changed", "runs.changed"].includes(String(event.payload.localJournalType)))
+              void onChanged();
+            continue;
+          }
           const next = reduceThreadSnapshot(snapshotRef.current, event);
           if (next) commit(next);
           if (event.type === "thread.message.created" && document.visibilityState === "visible")
@@ -149,13 +164,6 @@ export function TaskConversation({
       if (retryTimer) clearTimeout(retryTimer);
     };
   }, [tabKey, bot.id, rpc]);
-  useEffect(() => {
-    if (!isDraft)
-      void rpc.usage
-        .thread(target)
-        .then(setUsage)
-        .catch(() => {});
-  }, [tabKey, session?.status, snapshot?.run?.id]);
   useEffect(() => {
     let alive = true;
     void readTaskDraftFiles(draftKey)
@@ -201,6 +209,13 @@ export function TaskConversation({
         (!["completed", "failed", "cancelled"].includes(session.status) ||
           ["unconfirmed", "stopping"].includes(session.resourceWaitReason ?? ""))),
   );
+  const usageQuery = useConversationUsage({
+    queries,
+    target,
+    enabled: !isDraft,
+    running,
+    revision: `${session?.status ?? ""}:${snapshot?.run?.id ?? ""}:${snapshot?.run?.status ?? ""}`,
+  });
   const canContinue =
     session?.resourceWaitReason !== "unconfirmed" && session?.resourceWaitReason !== "stopping";
   async function send(
@@ -221,10 +236,12 @@ export function TaskConversation({
           if (!entry.file) throw new Error("附件内容不可用，请重新选择");
           const created = await rpc.artifacts.create({
             botId: bot.id,
+            taskSessionId: tabKey,
+            ...(isDraft ? { draftTitle } : {}),
             name: entry.name,
             mimeType: entry.type || "application/octet-stream",
             contentBase64: await readFileAsBase64(entry.file),
-            clientNonce: `task-file:${entry.id}`,
+            clientNonce: entry.id,
           });
           id = created.id;
           await saveFiles(
@@ -476,7 +493,7 @@ export function TaskConversation({
           replyTargetName={bot.name}
           onClearReply={() => setReply(null)}
         />
-        <ComposerUsage usage={usage} />
+        <ComposerUsage usage={usageQuery.data} failed={usageQuery.isError} />
       </div>
       <Dialog open={findOpen} onOpenChange={setFindOpen}>
         <DialogContent showCloseButton={false} className="h-[min(80dvh,48rem)] p-0 sm:max-w-xl">

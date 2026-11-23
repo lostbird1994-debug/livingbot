@@ -7,6 +7,7 @@ import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { adoptConnection, forgetConnection } from "../../lib/local-workbench";
 
 vi.mock("../../lib/rpc", () => {
   const rpc = {
@@ -499,4 +500,35 @@ it("treats cross-space communication as on unless turned off", async () => {
   await act(async () => toggle?.click());
   await flush();
   expect(onSave).toHaveBeenCalledWith({ crossSpaceCommunication: false });
+});
+
+it("disables unsupported computer sharing in local mode without submitting a change", async () => {
+  adoptConnection({ origin: "http://127.0.0.1:1234", token: "synthetic" });
+  const onSave = vi.fn(async () => undefined);
+  try {
+    await renderSettings(onSave);
+    const options = [...container.querySelectorAll<HTMLButtonElement>("button")].filter(
+      (button) => button.textContent === "Team" || button.textContent === "Private",
+    );
+    expect(options).toHaveLength(2);
+    expect(options.every((button) => button.disabled)).toBe(true);
+    await act(async () => options[0]!.click());
+    expect(onSave).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("本机模式使用独立工作目录。");
+  } finally {
+    forgetConnection();
+  }
+});
+
+it("hides unsupported cross-space and fleet permissions in local Bot settings", async () => {
+  adoptConnection({ origin: "http://127.0.0.1:1234", token: "synthetic" });
+  try {
+    const onSave = vi.fn(async () => undefined);
+    await renderSettings(onSave);
+    expect(container.querySelector('[id$="-cross-space"]')).toBeNull();
+    expect(container.querySelector('[id$="-fleet-management"]')).toBeNull();
+    expect(onSave).not.toHaveBeenCalled();
+  } finally {
+    forgetConnection();
+  }
 });

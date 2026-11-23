@@ -21,6 +21,7 @@ import {
   openLogoAvatarActivityFeed,
   webLogoAvatarActivity,
 } from "../../lib/logo-avatar-activity.js";
+import { localConnected, openLocalThreadEvents } from "../../lib/local-workbench";
 import { markOnce } from "../../lib/performance";
 import type { SpaceQueries } from "../../lib/query";
 import { queryClient } from "../../lib/query";
@@ -256,6 +257,53 @@ export function useThreadSync({
     });
   }
 
+  // Both local private and group chats consume the same durable native journal.
+  // Refresh through their existing snapshot path; journal cursors are not message seqs.
+  async function* localThreadFeed(
+    cursor: number,
+    signal: AbortSignal,
+    target: { threadId: string; botId: string },
+    refresh: (signal: AbortSignal) => Promise<ThreadSnapshot>,
+    sidebarRefresh: () => Promise<void>,
+  ): AsyncGenerator<ProductEvent> {
+    for await (const stored of openLocalThreadEvents(signal, cursor)) {
+      if (stored.type === "heartbeat") {
+        yield {
+          id: "local:heartbeat",
+          spaceId: "local",
+          botId: target.botId,
+          threadId: target.threadId,
+          seq: 0,
+          type: "heartbeat",
+          createdAt: new Date().toISOString(),
+          payload: {},
+        };
+        continue;
+      }
+      if (["tasks.changed", "bots.changed", "conversations.changed"].includes(stored.type)) {
+        void sidebarRefresh().catch(() => undefined);
+      }
+      if (
+        stored.type === "runs.changed" &&
+        typeof stored.data.id === "string" &&
+        ["completed", "failed", "cancelled"].includes(String(stored.data.state))
+      ) {
+        terminalRunReceipts.current.add(stored.data.id);
+      }
+      await refresh(threadSnapshotSignal(signal));
+      yield {
+        id: `local:${stored.cursor}`,
+        spaceId: "local",
+        threadId: target.threadId,
+        botId: target.botId,
+        seq: stored.cursor,
+        type: "thread.meta",
+        createdAt: new Date().toISOString(),
+        payload: { localJournalType: stored.type },
+      };
+    }
+  }
+
   async function loadOlderMessages() {
     const targetBotId = inGroup ? undefined : active?.id;
     const targetGroupId = inGroup ? groupId : undefined;
@@ -333,9 +381,16 @@ export function useThreadSync({
       refresh: () => refreshThread(active.id, threadSnapshotSignal(abort.signal)),
       currentSnapshot: () => snapshotRef.current,
       subscribe: (cursor, signal) =>
-        openLogoAvatarActivityFeed(avatarSource, snapshotRef.current, cursor, signal, () =>
-          rpc.threads.subscribe({ botId: active.id, cursor }, { signal }),
-        ),
+        localConnected()
+          ? Promise.resolve(localThreadFeed(
+              cursor, signal,
+              { botId: active.id, threadId: snapshotRef.current?.threadId ?? active.threadId },
+              (signal) => refreshThread(active.id, signal),
+              () => sidebarRefresh.invalidate(),
+            ))
+          : openLogoAvatarActivityFeed(avatarSource, snapshotRef.current, cursor, signal, () =>
+              rpc.threads.subscribe({ botId: active.id, cursor }, { signal }),
+            ),
       beforeEvent: (event) => {
         webLogoAvatarActivity.apply(avatarSource, event);
         if (isRunTerminalEvent(event) && event.runId) {
@@ -428,9 +483,16 @@ export function useThreadSync({
       refresh: () => refreshGroupThread(groupId, threadSnapshotSignal(abort.signal)),
       currentSnapshot: () => snapshotRef.current,
       subscribe: (cursor, signal) =>
-        openLogoAvatarActivityFeed(avatarSource, snapshotRef.current, cursor, signal, () =>
-          rpc.threads.subscribe({ groupId, cursor }, { signal }),
-        ),
+        localConnected()
+          ? Promise.resolve(localThreadFeed(
+              cursor, signal,
+              { threadId: activeGroup.threadId, botId: activeGroup.members[0]?.botId ?? "" },
+              (signal) => refreshGroupThread(groupId, signal),
+              () => sidebarRefresh.invalidate(),
+            ))
+          : openLogoAvatarActivityFeed(avatarSource, snapshotRef.current, cursor, signal, () =>
+              rpc.threads.subscribe({ groupId, cursor }, { signal }),
+            ),
       beforeEvent: (event) => webLogoAvatarActivity.apply(avatarSource, event),
       applyEvent: (event) =>
         applyThreadEvent(

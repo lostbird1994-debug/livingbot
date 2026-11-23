@@ -95,7 +95,8 @@ describe("ToolActivityDisclosure", () => {
   it("folds a finished run away so the chat stays readable", () => {
     const html = markup({ live: false, stepCount: 2 });
     expect(html).toContain('aria-expanded="false"');
-    expect(html).toContain("Shell ×2");
+    expect(html).toContain("×2");
+    expect(html).toContain('title="Shell"');
   });
 
   it("closes itself when the run finishes", () => {
@@ -122,7 +123,7 @@ describe("ToolActivityDisclosure", () => {
 });
 
 describe("ToolSteps", () => {
-  it("names what a call acted on beside the verb for its tool", () => {
+  it("keeps the recorded description while retaining the target in its tooltip", () => {
     const html = renderToStaticMarkup(
       <ToolSteps
         steps={[
@@ -130,7 +131,7 @@ describe("ToolSteps", () => {
         ]}
       />,
     );
-    expect(visibleText(html)).toBe("Read memory-organization.ts");
+    expect(visibleText(html)).toBe("Read file");
     expect(html).toContain('title="Read file: memory-organization.ts"');
   });
 
@@ -172,12 +173,12 @@ describe("ToolSteps", () => {
     const html = renderToStaticMarkup(
       <ToolSteps steps={[{ label: "Process", count: 2, tool: "process" }]} />,
     );
-    expect(visibleText(html)).toBe("Waiting on a command ×2");
+    expect(visibleText(html)).toBe("Called Process ×2");
   });
 
   it("falls back to the recorded label when a step has no target", () => {
     const html = renderToStaticMarkup(<ToolSteps steps={[{ label: "Web search", count: 1 }]} />);
-    expect(visibleText(html)).toBe("Web search");
+    expect(visibleText(html)).toBe("Called Web search");
   });
 
   it("lists only the last steps and counts the earlier ones when limited", () => {
@@ -225,7 +226,7 @@ describe("ToolSteps", () => {
         ]}
       />,
     );
-    expect(visibleText(html)).toBe("Read calendar The meeting is with Anna . Save event");
+    expect(visibleText(html)).toBe("Called calendar The meeting is with Anna . Called Save event");
     expect(html).toContain("<strong>Anna</strong>");
   });
 });
@@ -339,17 +340,16 @@ describe("execution timeline", () => {
     expect(html).toContain('data-testid="reasoning-content"');
   });
 
-  it("closes a reasoning block when the model moves to an operation and lets the reader reopen it", async () => {
+  it("starts raw reasoning collapsed and preserves the reader opening it when the model moves on", async () => {
     const container = document.createElement("div");
     const root = createRoot(container);
     const render = (live: boolean) =>
       flushSync(() => root.render(<ReasoningActivity text="Thought" live={live} />));
     render(true);
     const button = () => container.querySelector<HTMLButtonElement>("button[aria-expanded]")!;
-    expect(button().getAttribute("aria-expanded")).toBe("true");
-    await act(async () => render(false));
     expect(button().getAttribute("aria-expanded")).toBe("false");
     flushSync(() => button().click());
+    await act(async () => render(false));
     expect(button().getAttribute("aria-expanded")).toBe("true");
     const body = container.querySelector('[data-testid="reasoning-content"]')!;
     expect(body.className).toContain("max-h-[200px]");
@@ -381,6 +381,7 @@ describe("execution timeline", () => {
       scrollHeight: { get: () => height },
       clientHeight: { get: () => 200 },
     });
+    await act(async () => container.querySelector<HTMLButtonElement>("button[aria-expanded]")!.click());
     await act(async () => render("First thought continued"));
     body.scrollTop = 300;
     body.dispatchEvent(new Event("scroll", { bubbles: true }));

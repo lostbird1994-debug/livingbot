@@ -83,11 +83,14 @@ export function ShellSidePanel({
   onClearBot: (bot: Bot) => void;
 }) {
   const { t } = useLingui();
-  const open = Boolean(panel && (active || activeGroup || panel === "import-agent"));
+  const open = Boolean(
+    panel && (active || activeGroup || panel === "import-agent" || panel === "create-group"),
+  );
   const botTab =
     panel === "computer" ||
     panel === "routines" ||
     panel === "loaded" ||
+    panel === "skills" ||
     panel === "settings" ||
     panel === "whale"
       ? panel

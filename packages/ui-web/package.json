@@ -5,10 +5,13 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./ai": "./src/ai/primitives.tsx",
+    "./native-interaction": "./src/ai/InteractionCard.tsx",
     "./styles.css": "./src/styles.css",
     "./lib/utils": "./src/lib/utils.ts",
     "./components/ui/*": "./src/components/ui/*.tsx",
-    "./hooks/*": "./src/hooks/*.ts"
+    "./hooks/*": "./src/hooks/*.ts",
+    "./native-preview": "./src/ai/NativePreviewFrame.tsx"
   },
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",

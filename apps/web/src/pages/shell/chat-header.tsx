@@ -1,40 +1,45 @@
 import { useLingui } from "@lingui/react/macro";
 import type { Bot, Group, ThreadSnapshot } from "@livingbot/contracts";
-import { BotAvatar, Button, GroupAvatar } from "@livingbot/ui-web";
-import { Menu, Phone, Search } from "lucide-react";
-import type { ReactNode } from "react";
-import { IconTooltip } from "../../components/IconTooltip";
+import {
+  BotAvatar,
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  GroupAvatar,
+} from "@livingbot/ui-web";
+import { History, Menu, MoreHorizontal, Plus, Search } from "lucide-react";
 
-/** The chat's title bar: navigation, the chat's name and call. Occupies its own row so the transcript never scrolls under it. */
+/** The chat's title bar: navigation, the chat's name and its rarer actions. Owns its own row so the transcript never scrolls under it. */
 export function ChatHeader({
   inGroup,
   active,
   activeGroup,
   activeSnapshot,
-  phoneCallsEnabled,
-  inCall,
   panelOpen,
   onOpenNavigation,
   onTogglePanel,
-  onCall,
+  onNewSession,
+  onAllSessions,
+  sessionCount,
   onFind,
-  sessionActions,
 }: {
   inGroup: boolean;
   active: Bot | undefined;
   activeGroup: Group | undefined;
   activeSnapshot: ThreadSnapshot | null;
-  phoneCallsEnabled: boolean;
-  inCall: boolean;
   panelOpen: boolean;
   onOpenNavigation: () => void;
   onTogglePanel: () => void;
-  onCall: (bot: Bot) => void;
+  /** Present while the chat has only its main session open and no tabs are shown. */
+  onNewSession?: () => void;
+  onAllSessions?: () => void;
+  sessionCount?: number;
   onFind?: () => void;
-  /** New / all sessions: lives here while the chat has only its main session open. */
-  sessionActions?: ReactNode;
 }) {
   const { t } = useLingui();
+  const hasMenu = Boolean(onNewSession || onAllSessions || onFind);
   return (
     <div className="app-drag relative z-10 grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-2 border-b border-border/60 bg-transparent px-3 py-2 md:px-[22px]">
       <div className="flex items-center">
@@ -74,23 +79,46 @@ export function ChatHeader({
           </span>
         </span>
       </Button>
-      <div className="flex items-center justify-self-end gap-2">
-        {sessionActions}
-        {onFind && (active || activeGroup) ? <IconTooltip label="查找此对话"><Button variant="floating" size="icon-lg" aria-label="查找此对话" onClick={onFind} className="app-no-drag"><Search strokeWidth={1.7} className="size-[18px]" /></Button></IconTooltip> : null}
-        {phoneCallsEnabled && !inGroup && active ? (
-          <IconTooltip label={inCall ? t`Open call` : t`Call`}>
-            <Button
-              variant="floating"
-              size="icon-lg"
-              data-testid="call-button"
-              aria-label={inCall ? t`Open call` : t`Call`}
-              onClick={() => onCall(active)}
-              data-active={inCall ? "" : undefined}
-              className="app-no-drag"
+      <div className="flex items-center justify-self-end">
+        {hasMenu ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              data-testid="chat-more-button"
+              aria-label={t`More`}
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
+                  className="app-no-drag rounded-full text-muted-foreground hover:text-foreground"
+                />
+              }
             >
-              <Phone strokeWidth={1.6} className="size-[17px]" />
-            </Button>
-          </IconTooltip>
+              <MoreHorizontal strokeWidth={1.7} className="size-[19px]" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-auto min-w-44">
+              {onNewSession ? (
+                <DropdownMenuItem onClick={onNewSession}>
+                  <Plus />
+                  新会话
+                </DropdownMenuItem>
+              ) : null}
+              {onAllSessions ? (
+                <DropdownMenuItem onClick={onAllSessions}>
+                  <History />
+                  全部会话
+                  {sessionCount ? (
+                    <span className="ms-auto text-muted-foreground tabular-nums">{sessionCount}</span>
+                  ) : null}
+                </DropdownMenuItem>
+              ) : null}
+              {onFind ? (
+                <DropdownMenuItem onClick={onFind}>
+                  <Search />
+                  查找此对话
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : null}
       </div>
     </div>

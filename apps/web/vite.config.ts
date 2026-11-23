@@ -5,6 +5,7 @@ import http from "node:http";
 import https from "node:https";
 import net from "node:net";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import tls from "node:tls";
 import { lingui } from "@lingui/vite-plugin";
 import { widgetShellDocument } from "@livingbot/chat-ui/widget";
@@ -502,6 +503,20 @@ export default defineConfig(({ command, mode }) => {
     crisp: parseCrispWebsiteId(process.env.CRISP_WEBSITE_ID ?? rootEnv.CRISP_WEBSITE_ID) !== null,
   });
   return {
+    // One React for the app and every shared package. Without this a package that
+    // resolves its own copy renders hooks against a different instance.
+    // Every import of React must land on one file. The links in this tree can
+    // otherwise resolve to a second copy, and hooks then run against null.
+    resolve: {
+      dedupe: ["react", "react-dom"],
+      alias: [
+        { find: /^react$/, replacement: fileURLToPath(new URL("./node_modules/react/index.js", import.meta.url)) },
+        { find: /^react\/jsx-runtime$/, replacement: fileURLToPath(new URL("./node_modules/react/jsx-runtime.js", import.meta.url)) },
+        { find: /^react\/jsx-dev-runtime$/, replacement: fileURLToPath(new URL("./node_modules/react/jsx-dev-runtime.js", import.meta.url)) },
+        { find: /^react-dom$/, replacement: fileURLToPath(new URL("./node_modules/react-dom/index.js", import.meta.url)) },
+        { find: /^react-dom\/client$/, replacement: fileURLToPath(new URL("./node_modules/react-dom/client.js", import.meta.url)) },
+      ],
+    },
     build: {
       sourcemap: true,
       rolldownOptions: {

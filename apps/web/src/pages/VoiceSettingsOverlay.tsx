@@ -1,3 +1,5 @@
+import { NativeVoiceModels, NativeVoiceNotification } from "../components/voice/NativeVoiceModels";
+import { localConnected } from "../lib/local-workbench";
 import { Trans, useLingui } from "@lingui/react/macro";
 import type {
   SettingsScope,
@@ -245,8 +247,7 @@ export function VoiceSettingsOverlay({
         ...(selfHosted
           ? {
               baseUrl: baseUrl.trim(),
-              ttsModel: ttsModel.trim() || undefined,
-              sttModel: sttModel.trim() || undefined,
+              ...(!localConnected() || !credential ? { ttsModel: ttsModel.trim() || undefined, sttModel: sttModel.trim() || undefined } : {}),
             }
           : {}),
       });
@@ -435,7 +436,7 @@ export function VoiceSettingsOverlay({
                   />
                 </Field>
               )}
-              {selfHosted ? (
+              {selfHosted && (!localConnected() || !credential) ? (
                 <>
                   <Field className="mt-5">
                     <FieldLabel htmlFor={ttsModelId}>
@@ -564,7 +565,7 @@ export function VoiceSettingsOverlay({
                   </NativeSelect>
                 )}
               </Field>
-              {selected.id === "fish-audio" ? (
+              {selected.id === "fish-audio" && !localConnected() ? (
                 <Field className="mt-6">
                   <FieldLabel htmlFor={speechModelId}>
                     <Trans>Speech model</Trans>
@@ -590,6 +591,7 @@ export function VoiceSettingsOverlay({
                   />
                 </Field>
               ) : null}
+              {localConnected() && credential && <NativeVoiceModels key={`${provider}:${scope}`} provider={provider} scope={scope} spaceId={spaceId} onBusyChange={onBusyChange} />}
               <Button
                 type="button"
                 variant="secondary"
@@ -603,11 +605,12 @@ export function VoiceSettingsOverlay({
           ) : null}
         </>
       ) : null}
+      {localConnected() && <NativeVoiceNotification key={scope} scope={scope} spaceId={spaceId} onBusyChange={onBusyChange} />}
     </>
   );
 
   if (embedded) {
-    return <div data-testid="voice-settings">{content}</div>;
+    return <div className="max-w-[760px]" data-testid="voice-settings">{content}</div>;
   }
 
   return (

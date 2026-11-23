@@ -1,3 +1,4 @@
+import { persistLocalUiPreference } from "./local-ui-preferences";
 export type ToolActivityPreference = "on" | "off";
 
 export const TOOL_ACTIVITY_STORAGE_KEY = "rakazo.showToolActivity";
@@ -76,6 +77,7 @@ export function setToolActivityPreference(
   preference: ToolActivityPreference,
 ): ToolActivityPreference {
   memoryPreference = preference;
+  persistLocalUiPreference("rakazo.showToolActivity", preference);
   persistToolActivityPreference(preference);
   notify();
   return preference;

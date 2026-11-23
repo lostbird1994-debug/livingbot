@@ -44,10 +44,21 @@ export function SidebarHeader({
   const toggleLabel = mini ? t`Show bots` : t`Minimize bots`;
   return (
     <div
-      className={`app-drag flex items-center ${mini ? `flex-col gap-2 px-0 pb-2 ${hasWindowChrome ? "pt-4" : "pt-2"}` : "justify-between px-[18px] pb-3 pt-4"}`}
+      className={`app-drag flex items-center ${mini ? `flex-col gap-2 px-0 pb-2 ${hasWindowChrome ? "pt-4" : "pt-2"}` : "justify-between px-3 pb-3 pt-4"}`}
     >
-      {!mini || hasWindowChrome ? <WindowChrome /> : null}
-      <div className={`relative flex items-center ${mini ? "flex-col gap-0.5" : "gap-2.5"}`}>
+      {hasWindowChrome ? <WindowChrome /> : null}
+      {!mini && !hasWindowChrome ? (
+        <button
+          type="button"
+          onClick={() => navigate("/app?view=bots")}
+          aria-label="LivingBot 首页"
+          className="app-no-drag flex items-center gap-2 text-base font-semibold tracking-tight"
+        >
+          <img src="/favicon.png" alt="" className="size-7 object-contain" />
+          LivingBot
+        </button>
+      ) : null}
+      <div className={`relative flex items-center gap-0.5 ${mini ? "flex-col" : ""}`}>
         {onSearch ? (
           <IconTooltip label={t`Search`}>
             <Button

@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 
 import { i18n } from "@lingui/core";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { AgentSkillCatalogEntry, ThreadMessage } from "@livingbot/contracts";
 import type { ComposerMention } from "@livingbot/core";
 import { MODEL_REQUIRED_SEND_ERROR, resolveComposerSendPlan } from "@livingbot/core";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ComponentProps, ReactNode } from "react";
 import { act, createRef } from "react";
 import type { Root } from "react-dom/client";
@@ -17,11 +17,32 @@ vi.mock("@lingui/react/macro", () => {
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
 
-vi.mock("../../lib/query", () => ({ useSpaceQueries: () => ({
-  capabilities: { list: { queryOptions: () => ({ queryKey: ["test-capabilities"], queryFn: async () => [], initialData: [], enabled: false }) } },
-  agentSkills: { list: { queryOptions: () => ({ queryKey: ["test-skills"], queryFn: async () => [], initialData: [], enabled: false }) } },
-}) }));
+vi.mock("../../lib/query", () => ({
+  useSpaceQueries: () => ({
+    capabilities: {
+      list: {
+        queryOptions: () => ({
+          queryKey: ["test-capabilities"],
+          queryFn: async () => [],
+          initialData: [],
+          enabled: false,
+        }),
+      },
+    },
+    agentSkills: {
+      list: {
+        queryOptions: () => ({
+          queryKey: ["test-skills"],
+          queryFn: async () => [],
+          initialData: [],
+          enabled: false,
+        }),
+      },
+    },
+  }),
+}));
 
+import { readComposerDraft, writeComposerDraft } from "../../lib/composer-draft";
 import { dictation } from "../../lib/dictation";
 import { Composer } from "./composer";
 
@@ -107,7 +128,13 @@ function renderComposer(
 
 function rerenderComposer(overrides: Partial<ComponentProps<typeof Composer>>) {
   composerProps = { ...composerProps, ...overrides };
-  act(() => root?.render(<QueryClientProvider client={queryClient}><Composer {...composerProps} /></QueryClientProvider>));
+  act(() =>
+    root?.render(
+      <QueryClientProvider client={queryClient}>
+        <Composer {...composerProps} />
+      </QueryClientProvider>,
+    ),
+  );
 }
 
 it("shows a readable run error with raw details, while preserving send errors", () => {
@@ -223,6 +250,39 @@ function pressEnter(textarea: HTMLTextAreaElement) {
     textarea.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
   });
 }
+
+it("switches conversation drafts without replacing the textarea or its focus", () => {
+  writeComposerDraft("bot:bot-2", "Second draft");
+  const textarea = renderComposer(async () => true);
+  type(textarea, "First draft");
+  textarea.focus();
+  rerenderComposer({ draftKey: "bot:bot-2", artifactTarget: { botId: "bot-2" } });
+  expect(container?.querySelector("textarea")).toBe(textarea);
+  expect(document.activeElement).toBe(textarea);
+  expect(textarea.value).toBe("Second draft");
+  type(textarea, "Changed second draft");
+  rerenderComposer({ draftKey: "bot:bot-1", artifactTarget: { botId: "bot-1" } });
+  expect(textarea.value).toBe("First draft");
+  expect(readComposerDraft("bot:bot-2")).toBe("Changed second draft");
+});
+
+it("does not restore a previous conversation's failed send into the active draft", async () => {
+  let settle!: (accepted: boolean) => void;
+  const textarea = renderComposer(
+    () =>
+      new Promise<boolean>((resolve) => {
+        settle = resolve;
+      }),
+  );
+  type(textarea, "First send");
+  pressEnter(textarea);
+  writeComposerDraft("bot:bot-2", "Second draft");
+  rerenderComposer({ draftKey: "bot:bot-2", artifactTarget: { botId: "bot-2" } });
+  await act(async () => settle(false));
+  expect(textarea.value).toBe("Second draft");
+  rerenderComposer({ draftKey: "bot:bot-1", artifactTarget: { botId: "bot-1" } });
+  expect(textarea.value).toBe("First send");
+});
 
 describe("Composer", () => {
   it.each(["Enter", "Tab", "pointer"])(
@@ -549,7 +609,13 @@ describe("Composer", () => {
     type(textarea, `${textarea.value}then @Bo`);
     act(() => container?.querySelectorAll<HTMLButtonElement>('[role="option"]')[1]?.click());
     type(textarea, `${textarea.value}please`);
-    act(() => root?.render(<QueryClientProvider client={queryClient}><Composer key="restored" {...composerProps} /></QueryClientProvider>));
+    act(() =>
+      root?.render(
+        <QueryClientProvider client={queryClient}>
+          <Composer key="restored" {...composerProps} />
+        </QueryClientProvider>,
+      ),
+    );
     textarea = container!.querySelector("textarea")!;
     expect(textarea.value).toBe("ask @Bob then @Bob please");
     expect(container?.querySelectorAll('[data-testid="mention-chip"]')).toHaveLength(2);
@@ -1458,19 +1524,31 @@ it.each([10, -30, window.innerHeight - 10])(
 
 it("offers a guarded stop action for an unresolved native task without resending it", async () => {
   let finish!: () => void;
-  const onStop = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
+  const onStop = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+  );
   const onSend = vi.fn(async () => true);
-  renderComposer(onSend, { onStop,
-    runError: "An earlier task in this native session is unresolved; inspect it before submitting another task",
-    runErrorId: "blocked-run" });
-  const button = [...container!.querySelectorAll("button")].find(b => b.textContent === "停止旧任务");
+  renderComposer(onSend, {
+    onStop,
+    runError:
+      "An earlier task in this native session is unresolved; inspect it before submitting another task",
+    runErrorId: "blocked-run",
+  });
+  const button = [...container!.querySelectorAll("button")].find(
+    (b) => b.textContent === "停止旧任务",
+  );
   expect(button).toBeTruthy();
   act(() => button!.click());
   expect(onStop).toHaveBeenCalledTimes(1);
   expect(button!.disabled).toBe(true);
   expect(button!.textContent).toBe("正在核实停止…");
   expect(onSend).not.toHaveBeenCalled();
-  await act(async () => { finish(); });
+  await act(async () => {
+    finish();
+  });
   expect(button!.disabled).toBe(false);
   rerenderComposer({ running: true });
   expect(container!.textContent).not.toContain("停止旧任务");

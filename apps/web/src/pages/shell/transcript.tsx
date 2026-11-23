@@ -37,6 +37,7 @@ import {
 import { ActiveBotGlyph } from "../../components/ai/CollaborationMarker";
 import { VoiceChatCard } from "../../components/call/VoiceChatCard";
 import type { ArtifactTarget } from "../../lib/artifact-open";
+import { mergeLiveProgress } from "../../lib/live-progress-merge";
 import { quoteDraftForSelection } from "../../lib/quote-selection";
 import { messageHasVisibleBlocks } from "../../lib/tool-activity-view";
 import { TRANSCRIPT_CONTENT_PADDING } from "../../lib/transcript-layout";
@@ -160,9 +161,14 @@ export const Transcript = memo(function Transcript({
     );
   }, [scrollRequest, transcript]);
   const messages = useMemo(
-    () => expandPeerReplies(transcript, expandedPeerMarkers),
+    () => mergeLiveProgress(expandPeerReplies(transcript, expandedPeerMarkers)),
     [transcript, expandedPeerMarkers],
   );
+  // The newest bot reply belongs to the run that is still working, so its
+  // thoughts and actions stay expanded until that run ends.
+  const activeBotMessageId = running
+    ? messages.findLast((message) => message.role === "bot")?.id
+    : undefined;
   const messageById = useMemo(
     () => new Map(messages.map((message) => [message.id, message])),
     [messages],
@@ -586,6 +592,7 @@ export const Transcript = memo(function Transcript({
                       onOpenComputer={onOpenComputer}
                       onOpenImportSetup={onOpenImportSetup}
                       showToolActivity={showToolActivity}
+                      active={message.id === activeBotMessageId}
                       onReply={onReply}
                       onMarkUnread={onMarkUnread}
                       onReact={onReact}

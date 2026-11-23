@@ -1,7 +1,7 @@
 import type { Bot, Group } from "@livingbot/contracts";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { NavigateFunction, NavigateOptions, To } from "react-router-dom";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { guardShellNavigate } from "../../lib/space-switch";
 import type { ShellOverlay } from "../shell-overlay";
 import {
@@ -10,9 +10,12 @@ import {
   shellOverlaySearch,
   withShellOverlay,
 } from "../shell-overlay";
+import { workspaceView } from "./workspace-navigation";
 
 /** Router access for the shell: navigation stops once it unmounts, and overlays live in the URL. */
-export function useShellNavigation() {
+export function useShellNavigation(blocked = false) {
+  const blockedRef = useRef(blocked);
+  blockedRef.current = blocked;
   const routerNavigate = useNavigate();
   const navigateRef = useRef(routerNavigate);
   navigateRef.current = routerNavigate;
@@ -35,6 +38,7 @@ export function useShellNavigation() {
   );
   const navigate = useMemo<NavigateFunction>(
     () => (to: To | number, options?: NavigateOptions) => {
+      if (blockedRef.current) return;
       navigationRevision.current += 1;
       return typeof to === "number" ? guardedNavigate(to) : guardedNavigate(to, options);
     },
@@ -46,18 +50,31 @@ export function useShellNavigation() {
   // effect, which should only restart when the active bot changes).
   const searchParamsRef = useRef(searchParams);
   searchParamsRef.current = searchParams;
+  const location = useLocation();
+  const pathnameRef = useRef(location.pathname);
+  pathnameRef.current = location.pathname;
   /** Automatic route repair preserves overlays without counting as newer user navigation. */
   const redirectKeepingOverlay = useCallback(
-    (pathname: string) =>
-      guardedNavigate(
+    (pathname: string) => {
+      if (blockedRef.current) return;
+      // Roster refreshes repair missing chats, but never leave an explicit workspace page.
+      if (
+        workspaceView(searchParamsRef.current.get("view")) ||
+        pathnameRef.current === "/app" ||
+        pathnameRef.current.startsWith("/app/artifacts")
+      )
+        return;
+      return guardedNavigate(
         { pathname, search: shellOverlaySearch(searchParamsRef.current) },
         { replace: true },
-      ),
+      );
+    },
     [guardedNavigate],
   );
   const overlay = readShellOverlay(searchParams);
   // Overlays replace the URL rather than adding history, so opening and closing never race a navigation.
   function setOverlay(next: ShellOverlay) {
+    if (blockedRef.current) return;
     overlayRevision.current += 1;
     guardedNavigate(
       { search: searchString(withShellOverlay(searchParams, next)) },

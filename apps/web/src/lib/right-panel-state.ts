@@ -2,6 +2,7 @@ export type Panel =
   | "find"
   | "computer"
   | "routines"
+  | "skills"
   | "loaded"
   | "settings"
   | "whale"
@@ -18,6 +19,7 @@ const durablePanels: readonly Panel[] = [
   "computer",
   "routines",
   "loaded",
+  "skills",
   "settings",
   "whale",
   "routine",

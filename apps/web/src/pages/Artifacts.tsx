@@ -44,6 +44,7 @@ import { SandboxedHtmlViewer } from "../components/SandboxedHtmlViewer";
 import { decodeArtifactBase64, downloadArtifactBytes } from "../lib/artifact-open";
 import { takeInitialBootstrap } from "../lib/bootstrap";
 import { desktopBridge } from "../lib/desktop";
+import { localConnected, localRpc } from "../lib/local-workbench";
 import { useSpaceQueries } from "../lib/query";
 import { formatRelativeTime } from "../lib/relative-time";
 import { rpc } from "../lib/rpc";
@@ -89,7 +90,7 @@ function matchesCalendarDateFilter(iso: string, filter: DateFilter, now: Date): 
   return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
 }
 
-export function ArtifactsPage() {
+export function ArtifactsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { artifactId } = useParams<{ artifactId?: string }>();
   const navigate = useNavigate();
   const { t } = useLingui();
@@ -102,6 +103,7 @@ export function ArtifactsPage() {
   const [pendingDelete, setPendingDelete] = useState<ArtifactSummary | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [trashReceipt, setTrashReceipt] = useState<{ original: string; recovery: string } | null>(null);
 
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
@@ -187,7 +189,10 @@ export function ArtifactsPage() {
     setDeleteBusy(true);
     setDeleteError(null);
     try {
-      await rpc.artifacts.remove({ artifactId: pendingDelete.id });
+      if (localConnected()) {
+        const receipt = await localRpc("artifacts.remove", { artifactId: pendingDelete.id }) as { original: string; recovery: string };
+        setTrashReceipt(receipt);
+      } else await rpc.artifacts.remove({ artifactId: pendingDelete.id });
       await writeSaved(queryClient, listingOptions.queryKey, (current) => ({
         pages: (current?.pages ?? []).map((page) => ({
           ...page,
@@ -216,16 +221,18 @@ export function ArtifactsPage() {
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <div className="flex items-center gap-2">
             {/* This route is the window's leading edge, so Electron window controls sit in the header. */}
-            {desktopBridge() ? <WindowChrome /> : null}
-            <Link
-              to="/app"
-              className="app-no-drag flex shrink-0 items-center gap-0.5 rounded-lg py-1 pe-1.5 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-              <ChevronLeft size={16} strokeWidth={1.9} aria-hidden="true" />
-              <Trans>Bots</Trans>
-            </Link>
-            <h1 className="text-heading2 font-semibold">
-              <Trans>Artifacts</Trans>
+            {!embedded && desktopBridge() ? <WindowChrome /> : null}
+            {!embedded ? (
+              <Link
+                to="/app"
+                className="app-no-drag flex shrink-0 items-center gap-0.5 rounded-lg py-1 pe-1.5 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              >
+                <ChevronLeft size={16} strokeWidth={1.9} aria-hidden="true" />
+                <Trans>Bots</Trans>
+              </Link>
+            ) : null}
+            <h1 className={embedded ? "text-[15px] font-medium" : "text-heading2 font-semibold"}>
+              {embedded ? "产出" : <Trans>Artifacts</Trans>}
             </h1>
           </div>
           <div className="app-no-drag flex shrink-0 items-center gap-2">
@@ -354,6 +361,11 @@ export function ArtifactsPage() {
         )}
       </div>
 
+      {trashReceipt ? (
+        <p role="status" className="break-all border-t border-border px-5 py-3 text-sm text-muted-foreground">
+          已移入废纸篓：{trashReceipt.original}<br />恢复位置：{trashReceipt.recovery}
+        </p>
+      ) : null}
       {pendingDelete ? (
         <AlertDialog
           open
@@ -367,7 +379,7 @@ export function ArtifactsPage() {
                 <Trans>Delete "{pendingDelete.name}"?</Trans>
               </AlertDialogTitle>
               <AlertDialogDescription>
-                {pendingDelete.versionCount > 1 ? (
+                {localConnected() ? "文件将移入 macOS 废纸篓，可恢复。" : pendingDelete.versionCount > 1 ? (
                   <Trans>
                     This deletes all {pendingDelete.versionCount} versions of this artifact. This
                     can't be undone.

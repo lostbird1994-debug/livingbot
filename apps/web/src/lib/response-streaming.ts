@@ -1,3 +1,4 @@
+import { persistLocalUiPreference } from "./local-ui-preferences";
 import type { ResponseStreamingPreference } from "@livingbot/core";
 import {
   normalizeResponseStreamingPreference,
@@ -71,6 +72,7 @@ export function setResponseStreamingPreference(
   preference: ResponseStreamingPreference,
 ): ResponseStreamingPreference {
   memoryPreference = preference;
+  persistLocalUiPreference("rakazo.responseStreaming", preference);
   persistResponseStreamingPreference(preference);
   notify();
   return preference;

@@ -1,3 +1,4 @@
+import { persistLocalUiPreference } from "./local-ui-preferences";
 export const COMPOSER_ENTER_TO_SEND_STORAGE_KEY = "rakazo.composerEnterToSend";
 
 type EnterToSendStorage = Pick<Storage, "getItem" | "setItem">;
@@ -78,6 +79,7 @@ export function setComposerEnterToSend(
   storage: EnterToSendStorage | null = getLocalStorage(),
 ): boolean {
   memoryPreference = preference;
+  persistLocalUiPreference("rakazo.composerEnterToSend", preference ? "1" : "0");
   persistComposerEnterToSend(preference, storage);
   for (const listener of listeners) listener();
   return preference;

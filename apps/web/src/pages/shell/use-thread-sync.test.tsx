@@ -6,6 +6,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { useThreadSync } from "./use-thread-sync";
+import { localConnected, openLocalThreadEvents } from "../../lib/local-workbench";
 
 vi.mock("@livingbot/core", async (original) => ({
   ...(await original<typeof import("@livingbot/core")>()),
@@ -19,6 +20,13 @@ vi.mock("../../lib/query", () => ({
   },
 }));
 vi.mock("@livingbot/core/query", () => ({ fetchFresh: vi.fn(async () => []) }));
+vi.mock("../../lib/local-workbench", async (original) => ({
+  ...(await original<typeof import("../../lib/local-workbench")>()),
+  localConnected: vi.fn(() => false),
+  openLocalThreadEvents: vi.fn(async function* () {
+    yield { cursor: 0, type: "heartbeat", data: {} };
+  }),
+}));
 
 const ref = <T,>(current: T) => ({ current });
 const flush = () => act(async () => {});
@@ -35,9 +43,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it.each([false, true])(
-  "coalesces real %s group event callbacks and drops queued work on leave",
-  async (inGroup) => {
+it.each([[false, false], [true, false], [false, true], [true, true]])(
+  "coalesces callbacks and drops queued work on leave (group=%s, local=%s)",
+  async (inGroup, local) => {
+    vi.mocked(localConnected).mockReturnValue(local);
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
     const snapshot = {
       threadId: "thread-1",
@@ -83,7 +92,7 @@ it.each([false, true])(
         refreshComputerScreen: vi.fn(async () => {}),
       },
       active: inGroup ? undefined : { id: "bot-1", name: "Bot" },
-      activeGroup: inGroup ? { id: "group-1", name: "Group" } : undefined,
+      activeGroup: inGroup ? { id: "group-1", threadId: "thread-1", name: "Group", members: [{ botId: "bot-1" }] } : undefined,
       inGroup,
       groupId: inGroup ? "group-1" : undefined,
       activeBotId: ref(inGroup ? undefined : "bot-1"),
@@ -102,6 +111,13 @@ it.each([false, true])(
     const root = createRoot(document.createElement("div"));
     await act(async () => root.render(createElement(Probe)));
     const subscription = vi.mocked(runThreadSubscription).mock.calls[0]![0];
+    if (local) {
+      const stream = await subscription.subscribe(12, subscription.signal);
+      const iterator = stream[Symbol.asyncIterator]();
+      expect((await iterator.next()).value).toMatchObject({ type: "heartbeat" });
+      expect(openLocalThreadEvents).toHaveBeenCalledWith(subscription.signal, 12);
+      await iterator.return?.();
+    }
     const event = { type: "run.completed", payload: {}, runId: "run-1" } as ProductEvent;
     const deliver = () => subscription.onEvent(event, snapshot);
     deliver();

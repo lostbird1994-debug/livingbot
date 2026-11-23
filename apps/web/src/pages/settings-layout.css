@@ -1,0 +1,161 @@
+.settings-workspace {
+  container: settings-workspace / inline-size;
+}
+.settings-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+}
+.settings-sidebar {
+  display: flex;
+  flex-direction: column;
+  padding-top: 24px;
+  background: var(--background);
+}
+.settings-mobile-nav {
+  display: none;
+}
+.settings-content {
+  container: settings-content / inline-size;
+}
+.settings-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.settings-overview > * {
+  min-width: 0;
+  margin-top: 0;
+}
+.settings-page-content {
+  max-width: 960px;
+}
+.settings-overview {
+  max-width: 760px;
+}
+@container settings-workspace (max-width: 699px) {
+  .settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .settings-sidebar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    border-inline-end: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+  }
+  .settings-nav-heading,
+  .settings-desktop-nav {
+    display: none;
+  }
+  .settings-search {
+    margin: 0;
+  }
+  .settings-mobile-nav {
+    display: block;
+    padding: 0;
+  }
+}
+@container settings-workspace (max-width: 460px) {
+  .settings-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 12px 16px;
+  }
+}
+.local-knowledge .connection-content,
+.local-knowledge .connection-form {
+  display: grid;
+  gap: 20px;
+}
+.local-knowledge .connection-content > .empty-label {
+  display: none;
+}
+.local-knowledge .connection-content > button {
+  justify-self: start;
+}
+.local-knowledge .connection-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-block: 12px;
+}
+.local-knowledge .connection-row > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.local-knowledge .connection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.local-knowledge .connection-form {
+  max-width: 760px;
+  padding-block: 12px;
+}
+.local-knowledge .connection-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+.local-knowledge .connection-form .connection-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.local-knowledge .connection-form details > label {
+  margin-block-start: 12px;
+}
+.local-knowledge .connection-form .ability-bots,
+.local-knowledge .marketplace-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.local-knowledge .connection-content .empty-label {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+@container settings-content (min-width: 820px) {
+  .settings-compatible-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 32px;
+    align-items: start;
+  }
+  .settings-compatible-fields > :not([data-slot="disclosure"]) {
+    grid-column: 1;
+  }
+  .settings-compatible-fields > [data-slot="disclosure"] {
+    grid-column: 2;
+    grid-row: 1 / span 8;
+    margin-top: 0;
+    padding-inline-start: 24px;
+    border-inline-start: 1px solid var(--border);
+  }
+}
+.local-knowledge .memory-center > h1 {
+  display: none;
+}
+
+.settings-topbar {
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 480px) {
+  .settings-topbar {
+    gap: 8px;
+    padding-inline: 16px;
+  }
+}
+
+.settings-native-mac .settings-topbar {
+  padding-inline-start: 100px;
+}

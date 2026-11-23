@@ -73,6 +73,10 @@ export function useSidebarSearch({
     const params = new URLSearchParams();
     if (hit.messageId) params.set("m", hit.messageId);
     if (hit.routineId) params.set("routine", hit.routineId);
+    // A hit inside a task session reopens that session; without it the sidebar would
+    // land on the Bot's main thread and the message would be missing there.
+    const sessionId = (hit as SearchHit & { taskSessionId?: string }).taskSessionId;
+    if (sessionId) params.set("task", sessionId);
     navigate({
       pathname: hit.groupId ? `/app/g/${hit.groupId}` : `/app/${hit.botId}`,
       search: params.toString() ? `?${params.toString()}` : undefined,

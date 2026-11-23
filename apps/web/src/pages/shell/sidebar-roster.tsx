@@ -398,7 +398,7 @@ export function SidebarRoster({
                     } text-start ${
                       item.kind === "bot" ? "cursor-grab active:cursor-grabbing" : ""
                     } ${
-                      selected || rosterDropKey === rowDropKey
+                      rosterDropKey === rowDropKey || (mini && selected)
                         ? "bg-sidebar-accent"
                         : "group-hover/row:bg-accent"
                     }`}
@@ -503,7 +503,7 @@ export function SidebarRoster({
                           <div
                             dir="auto"
                             data-roster-preview={!workStatusLabel ? "true" : undefined}
-                            className={`mt-1 truncate text-label ${
+                            className={`mt-1 min-h-[1lh] truncate text-label ${
                               workStatusLabel
                                 ? "font-semibold text-status-working"
                                 : item.chat.unread

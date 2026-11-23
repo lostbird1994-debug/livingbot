@@ -27,6 +27,7 @@ type ComputerPanelProps = {
   onRecoveryDismissed: () => void;
   onOpenComputerSettings?: () => void;
   onOpen: () => void;
+  localWorkspace?: boolean;
 };
 
 export function ComputerPanel({
@@ -46,7 +47,9 @@ export function ComputerPanel({
   onRecoveryDismissed,
   onOpenComputerSettings,
   onOpen,
+  localWorkspace = false,
 }: ComputerPanelProps) {
+  if (localWorkspace) return <BotFilesPanel botId={bot.id} />;
   // A clickable preview invites a boot that costs money, so an idle computer only wakes from its button.
   const idle =
     !computerOpen &&

@@ -5205,7 +5205,7 @@ msgstr "受保护输入"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Protocol"
-msgstr ""
+msgstr "协议"
 
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
@@ -7713,3 +7713,7 @@ msgstr "重试"
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "首次配置请同时填写 SESSDATA 和 bili_jct"
 msgstr "首次配置请同时填写 SESSDATA 和 bili_jct"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Show thinking and tool activity"
+msgstr "显示思考与执行过程"

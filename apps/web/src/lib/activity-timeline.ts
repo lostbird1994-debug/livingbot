@@ -1,12 +1,16 @@
 import type { MessageBlock } from "@livingbot/contracts";
 import { isToolActivityBlock } from "@livingbot/core";
 
-/** Prose before an operation belongs to its process; the trailing answer stays outside. */
+/** Preserve WorkBuddy-style longest-body and last-body anchors outside folded execution. */
 export type ActivitySegment =
   | { kind: "block"; block: MessageBlock }
   | { kind: "activity"; blocks: MessageBlock[] };
 
 export function groupActivityBlocks(blocks: readonly MessageBlock[]): ActivitySegment[] {
+  const texts = blocks.flatMap((block, index) => block.kind === "text" && !block.preview && block.text.trim()
+    ? [{ index, size: block.text.trim().length }] : []);
+  const largest = Math.max(0, ...texts.map((item) => item.size));
+  const anchors = new Set(texts.filter((item) => item.size === largest || item === texts.at(-1)).map((item) => item.index));
   const segments: ActivitySegment[] = [];
   let run: MessageBlock[] = [];
   const flush = () => {
@@ -17,7 +21,8 @@ export function groupActivityBlocks(blocks: readonly MessageBlock[]): ActivitySe
     for (const block of run.slice(lastActivity + 1)) segments.push({ kind: "block", block });
     run = [];
   };
-  for (const block of blocks) {
+  for (const [index, block] of blocks.entries()) {
+    if ((block.kind === "text" && block.preview) || anchors.has(index)) { flush(); segments.push({ kind: "block", block }); continue; }
     if (isToolActivityBlock(block) || block.kind === "text" || block.kind === "progress") {
       run.push(block);
       continue;

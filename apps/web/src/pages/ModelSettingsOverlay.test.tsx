@@ -29,6 +29,10 @@ const models = vi.hoisted(() => ({
   finishOAuth: vi.fn(),
   submitOAuthCode: vi.fn(),
 }));
+const localMode = vi.hoisted(() => ({ connected: false }));
+vi.mock("../lib/local-workbench", () => ({
+  localConnected: () => localMode.connected,
+}));
 
 vi.mock("../lib/rpc", () => {
   const rpc = {
@@ -114,18 +118,23 @@ vi.mock("@livingbot/ui-web", async (importOriginal) => {
     DialogHeader: Pass,
     DialogTitle: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
     Input: (props: ComponentProps<"input">) => <input {...props} />,
-    ModelThinkingOptions: (props: {
-      children?: ReactNode;
-      maxTokens?: string;
-      maxTokensLabel?: string;
-      onMaxTokensChange?: (value: string) => void;
-      thinkingLevel?: string | null;
-      thinkingLevelLabel?: string;
-      thinkingLevelOptions?: { value: string; label: string }[];
-      onThinkingLevelChange?: (value: string) => void;
-    }) =>
+    ModelThinkingOptions: (props: ComponentProps<UiWebModule["ModelThinkingOptions"]>) =>
       props.onMaxTokensChange || props.onThinkingLevelChange ? (
         <>
+          {props.onContextWindowChange ? (
+            <input
+              aria-label={props.contextWindowLabel}
+              value={props.contextWindow ?? ""}
+              onChange={(event) => props.onContextWindowChange?.(event.target.value)}
+            />
+          ) : null}
+          {props.onMaxImagesPerPromptChange ? (
+            <input
+              aria-label={props.maxImagesLabel}
+              value={props.maxImagesPerPrompt ?? ""}
+              onChange={(event) => props.onMaxImagesPerPromptChange?.(event.target.value)}
+            />
+          ) : null}
           {props.onMaxTokensChange ? (
             <input
               aria-label={props.maxTokensLabel}
@@ -339,6 +348,7 @@ async function renderSettings(
 }
 
 beforeEach(() => {
+  localMode.connected = false;
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.stubGlobal(
     "ResizeObserver",
@@ -780,6 +790,73 @@ const compatibleCredential = {
   modelId: "model-a",
   enabledModelIds: ["model-a"],
 };
+
+it("shows only working native connection controls and retains saved advanced values", async () => {
+  localMode.connected = true;
+  vi.mocked(rpc.me).mockResolvedValue(account("openai-compatible", "model-a"));
+  models.list.mockResolvedValue([compatibleEntry]);
+  models.credentials.mockResolvedValue([
+    {
+      ...compatibleCredential,
+      contextWindow: 160000,
+      maxTokens: 32000,
+      reasoning: true,
+      thinkingLevel: "high",
+      thinkingLevels: ["low", "high", "xhigh"],
+      supportsImages: true,
+      headerNames: ["X-Synthetic"],
+    },
+  ]);
+  const view = await renderSettings();
+  try {
+    expect(view.container.querySelector('[data-testid="model-role-main"]')).toBeNull();
+    expect(view.container.textContent).not.toContain("Approval model");
+    expect(view.container.textContent).not.toContain("Add provider");
+    // The current native connection opens directly.
+    expect(view.container.textContent).not.toContain("Find models");
+    expect(view.container.textContent).not.toContain("Disconnect");
+    expect(view.container.textContent).not.toContain("Setup help");
+    expect(view.container.querySelector('input[aria-label="Context limit"]')).toHaveProperty(
+      "value",
+      "160000",
+    );
+    expect(
+      view.container.querySelector('input[aria-label="Maximum output tokens"]'),
+    ).toHaveProperty("value", "32000");
+    expect(
+      view.container.querySelector('input[aria-label="Maximum images per request"]'),
+    ).toBeNull();
+    expect(view.container.querySelector('select[aria-label="Reasoning effort"]')).toHaveProperty(
+      "value",
+      "high",
+    );
+    const efforts = view.container.querySelector(
+      'select[aria-label="Reasoning effort"]',
+    ) as HTMLSelectElement;
+    expect([...efforts.options].map((option) => option.value)).toEqual(["low", "high", "xhigh"]);
+    expect(buttons(view.container, "Refresh")).toHaveLength(1);
+    await typeInto(
+      view.container.querySelector('input[aria-label="Context limit"]') as HTMLInputElement,
+      "128000",
+    );
+    await click(buttons(view.container, "Save")[0]);
+    expect(models.connect).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        contextWindow: 128000,
+        maxTokens: 32000,
+        reasoning: true,
+        thinkingLevel: "high",
+        supportsImages: true,
+        makeDefault: true,
+      }),
+    );
+    expect(models.probeOpenAiCompatible).not.toHaveBeenCalled();
+    expect(models.rename).not.toHaveBeenCalled();
+    expect(models.role).not.toHaveBeenCalled();
+  } finally {
+    await view.unmount();
+  }
+});
 
 /** Renders a saved compatible connection as the main model and opens its dialog. */
 async function renderCompatible(credential: object = compatibleCredential) {

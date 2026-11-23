@@ -1,3 +1,5 @@
+import { ExclusiveSkills } from "./skill-document";
+import { NativeAdvancedSettings } from "../NativeSystemSettings";
 import { Trans, useLingui } from "@lingui/react/macro";
 import type {
   AgentSkillCatalogEntry,
@@ -47,6 +49,7 @@ import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary
 import { InstructionSettings } from "../../components/InstructionSettings";
 import { BotVoiceSettings } from "../../components/voice/BotVoiceSettings";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
+import { localConnected } from "../../lib/local-workbench";
 import { thinkingLevelLabel } from "../../lib/model-catalog";
 import { lazyComponent } from "../../lib/preload-recovery";
 import { useSpaceQueries } from "../../lib/query";
@@ -80,15 +83,18 @@ function advancedValues(bot: Bot) {
 export function ComputerModePicker({
   value,
   onChange,
+  disabled = false,
 }: {
   value: ComputerMode;
   onChange: (value: ComputerMode) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
       {BOT_COMPUTER_MODES.map((mode) => (
         <Toggle
           key={mode}
+          disabled={disabled}
           pressed={value === mode}
           onPressedChange={(pressed) => {
             if (pressed) onChange(mode);
@@ -102,7 +108,7 @@ export function ComputerModePicker({
   );
 }
 
-export type BotPanelTab = "computer" | "routines" | "loaded" | "settings" | "whale";
+export type BotPanelTab = "computer" | "routines" | "loaded" | "skills" | "settings" | "whale";
 
 /** The sections the Bot settings dialog shows one at a time. */
 export type BotSettingsPage = "role" | "model" | "voice" | "memory" | "tools";
@@ -593,7 +599,12 @@ export function BotSettings({
   );
   const descriptionField = <SettingsGroup label={t`How other bots see it`} plain>{descriptionInput}</SettingsGroup>;
 
-  const modelSection = (
+  const modelSection = localConnected() ? (
+    <SettingsGroup label={t`Model`} plain>
+      <p className="text-sm text-muted-foreground">使用全局模型与思考设置。</p>
+      {onOpenConnections && <Button variant="outline" onClick={onOpenConnections}>修改全局模型</Button>}
+    </SettingsGroup>
+  ) : (
     <div ref={modelRef}>
       <div className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground pe-1">
         <Trans>Model</Trans>
@@ -682,7 +693,14 @@ export function BotSettings({
 
   const computerSection = (
     <SettingsGroup label={t`Computer`} plain>
-      <ComputerModePicker value={computerMode} onChange={setComputerMode} />
+      <ComputerModePicker
+        value={computerMode}
+        onChange={setComputerMode}
+        disabled={localConnected()}
+      />
+      {localConnected() ? (
+        <p className="mt-2 text-xs text-muted-foreground">本机模式使用独立工作目录。</p>
+      ) : null}
       {memoryRow}
     </SettingsGroup>
   );
@@ -758,7 +776,7 @@ export function BotSettings({
     </Disclosure>
   );
 
-  const permissionsGroup = (
+  const permissionsGroup = localConnected() ? null : (
     <SettingsGroup label={t`Permissions`}>
       <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
         <label htmlFor={`${ids}-cross-space`} className={rowLabelClass}>
@@ -948,13 +966,14 @@ export function BotSettings({
         <div className="sticky top-0 z-10 -mx-5 border-b border-border/60 bg-background px-5 pb-3 pt-2">
           <span aria-hidden="true" className="absolute inset-x-0 bottom-full h-5 bg-background" />
           {profileHeader}
-          <TabsList className="w-full rounded-xl bg-muted/60 p-1 [&>button]:transition-none">
+          <TabsList className="w-full flex-wrap rounded-xl bg-muted/60 p-1 [&>button]:transition-none">
             <TabsTrigger value="computer" data-testid="bot-panel-tab-computer">
               <Trans>Workspace files</Trans>
             </TabsTrigger>
             <TabsTrigger value="loaded" data-testid="bot-panel-tab-loaded">
               <Trans>Context</Trans>
             </TabsTrigger>
+            {localConnected() && <TabsTrigger value="skills" data-testid="bot-panel-tab-skills">专属技能</TabsTrigger>}
             <TabsTrigger value="routines" data-testid="bot-panel-tab-routines">
               <Trans>Task list</Trans>
             </TabsTrigger>
@@ -983,6 +1002,7 @@ export function BotSettings({
             </div>
           ) : null}
         </TabsContent>
+        {localConnected() && tab === "skills" && <TabsContent value="skills" className="pt-4"><ExclusiveSkills key={bot.id} botId={bot.id} /></TabsContent>}
         <TabsContent value="loaded" className="pt-4" keepMounted>
           {loadedOpened ? (
             <ErrorBoundary fallback={<SectionLoadFailed />}>
@@ -1026,6 +1046,7 @@ export function BotSettings({
             {permissionsSection}
             {appearanceSection}
             {dataSection}
+            {localConnected() && tab === "settings" && <NativeAdvancedSettings key={bot.id} botId={bot.id} />}
           </div>
           {saveButton}
         </TabsContent>

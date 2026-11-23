@@ -10,6 +10,7 @@ import {
 import { rpc, selectedSpaceId, withSpaceHeaders } from "./rpc.js";
 import { errorText, voiceAccountErrorText } from "./user-error.js";
 import { VoicePlayback } from "./voice-playback.js";
+import { localVoiceFetch as voiceFetch } from "./local-workbench.js";
 
 export type SpeechStatus = "idle" | "preparing" | "speaking";
 
@@ -176,7 +177,7 @@ export class Speaker {
     signal: AbortSignal,
     spaceId: string | null,
   ): Promise<boolean> {
-    const response = await fetch("/api/voice/speak-stream", {
+    const response = await voiceFetch("/api/voice/speak-stream", {
       method: "POST",
       credentials: "include",
       headers: withSpaceHeaders({ "content-type": "application/json" }, spaceId),
@@ -331,7 +332,7 @@ export class Speaker {
     );
     try {
       const res = await withAbort(
-        fetch("/api/voice/speak", {
+        voiceFetch("/api/voice/speak", {
           method: "POST",
           headers: withSpaceHeaders({ "content-type": "application/json" }, spaceId),
           credentials: "include",

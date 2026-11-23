@@ -8,7 +8,8 @@ test("renames a draft through its context menu and confirms deletion", async ({
   await completeOnboarding(page);
   const capabilities = await rpc<{ enabled: boolean }>(page, "taskSessions/capabilities", {});
   test.skip(!capabilities.enabled, "Independent conversations need a compatible runtime.");
-  await page.getByRole("button", { name: "新会话", exact: true }).click();
+  await page.getByTestId("chat-more-button").click();
+  await page.getByRole("menuitem", { name: "新会话", exact: true }).click();
   await page.getByRole("tab", { name: "新会话", exact: true }).click({ button: "right" });
   await page.getByRole("menuitem", { name: "重命名", exact: true }).click();
   await page.getByRole("textbox", { name: "会话名称", exact: true }).fill("Travel plans");

@@ -32,6 +32,7 @@ export function ProvidersSection({
   onOpen,
   panel,
   panelAt,
+  allowAdd = true,
 }: {
   credentials: ModelCredential[];
   /** Every provider that can be connected, connected ones included. */
@@ -45,6 +46,7 @@ export function ProvidersSection({
   panel?: ReactNode;
   /** The connection id the form belongs to, or "add" for a new one. */
   panelAt?: string | null;
+  allowAdd?: boolean;
 }) {
   return (
     <section className="mb-8" data-testid="model-providers">
@@ -79,9 +81,11 @@ export function ProvidersSection({
               {panelAt === credential.id ? <div className="px-3 pb-3">{panel}</div> : null}
             </li>
           ))}
-        <li>
-          <AddProvider providers={providers} disabled={disabled} onPick={onAdd} />
-        </li>
+        {allowAdd ? (
+          <li>
+            <AddProvider providers={providers} disabled={disabled} onPick={onAdd} />
+          </li>
+        ) : null}
       </ul>
       {panelAt === "add" ? panel : null}
     </section>

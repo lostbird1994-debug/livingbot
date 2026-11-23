@@ -1,0 +1,40 @@
+/* Native memory/migration view layout, reused from workbench-web/styles.css. */
+.local-knowledge :is(.memory-center, .migration-center) { display: grid; gap: 16px; min-width: 0; font-size: 13px; }
+.local-knowledge h1 { font-size: 15px; font-weight: 500; }
+.local-knowledge .ability-bots { display: flex; flex-wrap: wrap; gap: 8px; }
+.local-knowledge .memory-health { display: flex; gap: 14px; color: var(--muted-foreground); font-size: 12px; }
+.local-knowledge .memory-search { display: flex; align-items: center; gap: 8px; }
+.local-knowledge .memory-search input { min-width: 0; flex: 1; }
+.local-knowledge .memory-hit { padding-block: 16px; border-bottom: 1px solid var(--border); }
+.local-knowledge :is(.memory-hit > div, .memory-source > header) { display: flex; align-items: center; gap: 10px; }
+.local-knowledge :is(.memory-hit > div > button, .memory-source > header > button) { margin-left: auto; flex-shrink: 0; }
+.local-knowledge :is(.memory-hit > p, .memory-source pre) { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.85; }
+.local-knowledge :is(.memory-source, .memory-forget-report) { border: 1px solid var(--border); background: var(--card); padding: 16px; border-radius: 12px; }
+.local-knowledge .memory-source pre { max-height: 45dvh; overflow: auto; }
+.local-knowledge :is(.memory-forget, .memory-recovery-preparation) { border-top: 1px solid var(--border); padding-top: 16px; }
+.local-knowledge summary { cursor: pointer; }
+.local-knowledge .memory-forget-conversations { display: grid; gap: 12px; margin-block: 18px; max-height: 240px; overflow: auto; }
+.local-knowledge :is(.memory-forget-conversations label, .memory-forget-confirm, .migration-ack) { display: flex; align-items: flex-start; gap: 10px; margin-block: 12px; }
+.local-knowledge .memory-forget-conversations small { display: block; color: var(--muted-foreground); }
+.local-knowledge :is(.memory-forget-report dl, .migration-counts) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
+.local-knowledge dt { color: var(--muted-foreground); }
+.local-knowledge dd { margin: 4px 0 0; font-variant-numeric: tabular-nums; }
+.local-knowledge .migration-center form { display: grid; gap: 18px; margin-top: 16px; }
+.local-knowledge .migration-center form label { display: grid; gap: 8px; }
+.local-knowledge :is(.migration-actions, .migration-heading) { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 16px; }
+.local-knowledge .migration-center details ul { max-height: 32dvh; overflow: auto; padding-left: 20px; }
+.local-knowledge :is(code, p, .memory-forget-conversations span) { overflow-wrap: anywhere; }
+.local-knowledge .migration-history { display: grid; gap: 10px; }
+/* Sharing form reused from workbench-web Marketplace. */
+.local-market .marketplace-form { display: grid; gap: 12px; margin-block: 16px; }
+.local-market .marketplace-form label { display: grid; gap: 6px; }
+.local-market .marketplace-form button { justify-self: start; }
+.local-market .marketplace-form fieldset { min-width: 0; border: 0; margin: 0; padding: 0; }
+.local-market .marketplace-target { display: grid; gap: 8px; margin-block: 12px; }
+.local-market .marketplace-target select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px; color: var(--foreground); background: var(--background); }
+.local-market .marketplace-review { display: flex; align-items: center; gap: 8px; margin-block: 16px; }
+.local-market .marketplace-share-preview { display: grid; gap: 12px; padding-block: 16px; border-top: 1px solid var(--border); }
+.local-market pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow: auto; }
+.local-market .marketplace-source { color: var(--muted-foreground); font-size: 12px; overflow-wrap: anywhere; }
+.local-market .marketplace-link { text-decoration: underline; text-underline-offset: 3px; }
+.local-market .marketplace-export { margin-top: 16px; }

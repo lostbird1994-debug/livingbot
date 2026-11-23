@@ -1,3 +1,4 @@
+import { persistLocalUiPreference } from "./local-ui-preferences";
 export type BotsSidebarDensity = "comfortable" | "compact";
 
 export const BOTS_SIDEBAR_DENSITY_STORAGE_KEY = "rakazo.botsSidebarDensity";
@@ -48,6 +49,7 @@ export function getBotsSidebarDensity(): BotsSidebarDensity {
 
 export function setBotsSidebarDensity(density: BotsSidebarDensity): BotsSidebarDensity {
   memoryPreference = normalizeBotsSidebarDensity(density);
+  persistLocalUiPreference("rakazo.botsSidebarDensity", normalizeBotsSidebarDensity(density));
   persistBotsSidebarDensity(memoryPreference);
   for (const listener of listeners) listener();
   return memoryPreference;

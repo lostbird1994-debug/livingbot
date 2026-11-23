@@ -106,7 +106,6 @@
       "icon": "./assets/icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "monochromeImage": "./assets/monochrome-icon.png",
         "backgroundImage": "./assets/icon-background.png"
       }
     },

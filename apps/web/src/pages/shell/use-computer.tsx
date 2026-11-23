@@ -400,6 +400,7 @@ export function useComputerControls({
   activeGroupId,
   runStatus,
   sandboxProvider,
+  localWorkspace = false,
   refreshThread,
   refreshGroupThread,
 }: {
@@ -413,6 +414,7 @@ export function useComputerControls({
   activeGroupId: RefObject<string | undefined>;
   runStatus: Run["status"] | undefined;
   sandboxProvider: Me["sandboxProvider"] | undefined;
+  localWorkspace?: boolean;
   refreshThread: (botId: string) => Promise<ThreadSnapshot>;
   refreshGroupThread: (groupId: string) => Promise<ThreadSnapshot>;
 }) {
@@ -537,6 +539,7 @@ export function useComputerControls({
   }
 
   useEffect(() => {
+    if (localWorkspace) return;
     if (panel !== "computer") {
       autoBooted.current = null;
       return;
@@ -566,7 +569,7 @@ export function useComputerControls({
     return () => {
       cancelled = true;
     };
-  }, [panel, active?.id]);
+  }, [panel, active?.id, localWorkspace]);
 
   useEffect(() => {
     setComputerOpen(false);
@@ -610,6 +613,7 @@ export function useComputerControls({
   }, [computerOpen]);
 
   useEffect(() => {
+    if (localWorkspace) return;
     const heartbeatBotId = computerBot?.id ?? active?.id;
     if ((panel !== "computer" && !computerOpen) || !heartbeatBotId || computer?.state !== "running")
       return;
@@ -623,10 +627,11 @@ export function useComputerControls({
     const timer = window.setInterval(ping, 60_000);
     ping();
     return () => window.clearInterval(timer);
-  }, [panel, computerOpen, computerBot?.id, active?.id, computer?.state]);
+  }, [panel, computerOpen, computerBot?.id, active?.id, computer?.state, localWorkspace]);
 
   /** Open the computer view. Only an explicit Take control asks for the lease. */
   async function openComputer(botId?: string, takeControl = false) {
+    if (localWorkspace) return false;
     const id = botId ?? active?.id;
     if (!id) return false;
     const bot = botsRef.current.find((candidate) => candidate.id === id);
@@ -672,6 +677,7 @@ export function useComputerControls({
   }, []);
 
   async function releaseComputer(reason?: ComputerReleaseReason) {
+    if (localWorkspace) return;
     const botId = computerBotIdRef.current ?? activeBotId.current;
     if (!botId) return;
     try {

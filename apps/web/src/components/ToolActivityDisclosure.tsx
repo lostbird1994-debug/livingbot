@@ -82,6 +82,21 @@ const FAMILY_VERB: Record<ToolFamily, ReactNode> = {
   tool: <Trans>Called</Trans>,
 };
 
+// A tool title already says what the step did ("Exec 核对中断后状态"); the tool name in
+// front of it is noise next to the row's icon.
+const TOOL_NAME_PREFIX =
+  /^(?:exec|bash|shell|read|write|edit|ls|glob|grep|web_search|web_fetch|browser|apply_patch)\b[\s:：-]*/i;
+
+/** What the row says: the model's own short description, never the raw call payload. */
+function stepSummary(step: ToolStep): ReactNode {
+  const bare = (step.label ?? "").trim().replace(TOOL_NAME_PREFIX, "").trim();
+  if (bare) return bare;
+  const detail = (step.detail ?? "").trim();
+  // A JSON payload is arguments, not a description; keep it in the expanded section only.
+  if (detail && !detail.startsWith("{") && !detail.startsWith("[")) return shortDetail(detail);
+  return TOOL_LABELS[step.tool ?? ""] ?? "操作";
+}
+
 export function ToolSteps({
   steps,
   currentIndex,
@@ -153,13 +168,11 @@ export function ToolSteps({
                           <span className="text-muted-foreground/70"> {actionTarget}</span>
                         ) : null}
                       </>
-                    ) : step.detail ? (
+                    ) : (
                       <>
                         <span className="text-muted-foreground/70">{FAMILY_VERB[family]} </span>
-                        {shortDetail(step.detail)}
+                        {stepSummary(step)}
                       </>
-                    ) : (
-                      (TOOL_LABELS[step.tool ?? ""] ?? step.label)
                     )}
                     {step.count > 1 ? ` ×${step.count}` : ""}
                   </span>
@@ -244,7 +257,12 @@ export function ToolActivityDisclosure({
         />
       </CollapsibleTrigger>
       <CollapsibleContent hiddenUntilFound>
-        <div className="mt-2 min-w-0" data-testid="tool-activity-body">
+        {/* Indent the body behind a hairline so the thoughts and steps read as
+            what happened inside this fold, not as siblings of its title. */}
+        <div
+          className="mt-1.5 ms-2 min-w-0 border-s border-border/70 ps-4"
+          data-testid="tool-activity-body"
+        >
           {children}
         </div>
       </CollapsibleContent>
@@ -252,12 +270,28 @@ export function ToolActivityDisclosure({
   );
 }
 
+/** A short readable line for a folded thought; the body keeps the full text. */
+function firstSentence(text: string): string {
+  const line =
+    text
+      .split(/\n+/)
+      .map((part) => part.trim())
+      .find(Boolean) ?? "";
+  const sentence = line.split(/(?<=[。！？.!?])\s*/)[0] ?? line;
+  return sentence.length > 40 ? `${sentence.slice(0, 40)}…` : sentence;
+}
+
 export function ReasoningActivity({ text, live }: { text: string; live: boolean }) {
-  const [open, setOpen] = useState(live);
+  // The step's narration stays on the timeline; the raw reasoning waits behind this
+  // row so a working turn reads like a sequence of actions, not a transcript of
+  // the model thinking to itself.
+  const [open, setOpen] = useState(false);
+  // Collapsed, the row still says what this thought was about, so six of them in a
+  // long turn do not read as six empty headings.
+  const summary = firstSentence(text);
   const body = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
   const lastScrollTop = useRef(0);
-  useEffect(() => setOpen(live), [live]);
   useEffect(() => {
     const element = body.current;
     if (live && open && follow.current && element) {
@@ -267,10 +301,13 @@ export function ReasoningActivity({ text, live }: { text: string; live: boolean 
   }, [text, live, open]);
   return (
     <Collapsible open={open} onOpenChange={setOpen} data-testid="reasoning-activity">
-      <CollapsibleTrigger className="flex min-h-7 cursor-pointer items-center gap-1 rounded-md text-[15px] leading-7 text-muted-foreground outline-none hover:text-foreground/75 focus-visible:ring-2 focus-visible:ring-ring">
-        <span className={live ? "motion-safe:animate-pulse" : undefined}>
+      <CollapsibleTrigger className="flex min-h-7 w-full min-w-0 cursor-pointer items-center gap-1 rounded-md text-start text-[15px] leading-7 text-muted-foreground outline-none hover:text-foreground/75 focus-visible:ring-2 focus-visible:ring-ring">
+        <span className={`shrink-0 ${live ? "motion-safe:animate-pulse" : ""}`}>
           <Trans>Deep thought</Trans>
         </span>
+        {open ? null : (
+          <span className="min-w-0 truncate text-muted-foreground/60">· {summary}</span>
+        )}
         <ChevronRight
           aria-hidden
           size={13}
@@ -393,8 +430,10 @@ export function ActivityTimeline({
   return (
     <div className="flex justify-start" dir="ltr" data-testid="activity-timeline">
       <div className="w-full min-w-0 ps-1">
+        {/* One fold per turn: it opens while the run works and closes when it ends, so a
+            finished answer never leaves a wall of thoughts and steps in the transcript. */}
         <ToolActivityDisclosure live={live} toolCount={toolCount} durationMs={durationMs}>
-          <div className="space-y-4">
+          <div className="space-y-2.5">
             {blocks.map((block, index) => {
               if (block.kind === "reasoning") {
                 return (

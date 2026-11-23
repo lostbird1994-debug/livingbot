@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 /** Under the web app's root. The container images create it and Compose mounts a volume there. */
@@ -66,13 +67,30 @@ function recentlyTouched(file: string, now: number): boolean {
   }
 }
 
+/**
+ * Nothing here is deleted permanently: obsolete material moves into the system
+ * Trash, keeping its own name so it can be put back by hand. A failure to move
+ * is an error, not a reason to delete.
+ */
+export function moveToTrash(target: string): string {
+  if (!fs.existsSync(target)) return "";
+  const trash = path.join(os.homedir(), ".Trash");
+  fs.mkdirSync(trash, { recursive: true });
+  const base = path.basename(target);
+  let destination = path.join(trash, base);
+  if (fs.existsSync(destination)) destination = path.join(trash, `${Date.now()}-${base}`);
+  fs.renameSync(target, destination);
+  return destination;
+}
+
 function writeAtomically(target: string, write: (temporary: string) => void) {
   const temporary = path.join(path.dirname(target), `.tmp-${randomUUID()}`);
   try {
     write(temporary);
     fs.renameSync(temporary, target);
   } finally {
-    fs.rmSync(temporary, { force: true });
+    // Even this call's own scratch file goes to the Trash, not to a permanent delete.
+    moveToTrash(temporary);
   }
 }
 
@@ -131,10 +149,12 @@ export function archiveAssets(options: {
   const archived = fs
     .readdirSync(archivedAssets)
     .filter(
-      (name) => !name.startsWith(".tmp-") && !recentlyTouched(path.join(archivedAssets, name), now),
+      // Dot entries are this run's temporaries and the recoverable .trash folder.
+      (name) => !name.startsWith(".") && !recentlyTouched(path.join(archivedAssets, name), now),
     );
   const prune = planAssetPrune(builds, archived, buildId, now);
-  for (const id of prune.builds) fs.rmSync(path.join(buildsDir, `${id}.json`), { force: true });
-  for (const file of prune.files) fs.rmSync(path.join(archivedAssets, file), { force: true });
+  // Pruned builds and files go to the archive's own trash, with the original name kept.
+  for (const id of prune.builds) moveToTrash(path.join(buildsDir, `${id}.json`));
+  for (const file of prune.files) moveToTrash(path.join(archivedAssets, file));
   return archivedAssets;
 }

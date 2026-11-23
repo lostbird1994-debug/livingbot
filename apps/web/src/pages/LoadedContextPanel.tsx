@@ -54,7 +54,6 @@ export function LoadedContextPanel({
   const query = useQuery({
     ...queries.memory.loadedContext.queryOptions({ input: { botId } }),
     refetchOnMount: "always",
-    refetchInterval: active ? 15_000 : false,
     enabled: active,
   });
   const data = query.data;

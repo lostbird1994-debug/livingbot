@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { i18n } from "@lingui/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { act } from "react";
@@ -32,11 +33,18 @@ vi.mock("@livingbot/ui-web", () => ({
     "children"
   >) => <div {...props}>{children}</div>,
   DialogTitle: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
+  Input: (props: React.ComponentProps<"input">) => <input {...props} />,
   NativeSelect: ({ children, ...props }: React.ComponentProps<"select">) => (
     <select {...props}>{children}</select>
   ),
   NativeSelectOption: ({ children, ...props }: React.ComponentProps<"option">) => (
     <option {...props}>{children}</option>
+  ),
+}));
+
+vi.mock("./LocalKnowledgeSettings", () => ({
+  LocalKnowledgeSettings: ({ view }: { view?: string }) => (
+    <div data-testid="local-knowledge-pages">{view ?? "memory"}</div>
   ),
 }));
 
@@ -87,7 +95,6 @@ vi.mock("./shell/bot-panel", () => ({
     <div data-testid={`bot-page-${page}`}>{bot.name}</div>
   ),
 }));
-vi.mock("../components/SettingsRows", () => ({ SETTINGS_CONTENT_WIDTH: "" }));
 vi.mock("../components/ComputersUnavailableHint", () => ({
   computersAreUnavailable: () => false,
 }));
@@ -120,16 +127,69 @@ vi.mock("../lib/query", () => ({
     spaceSettings: {
       overrides: { queryOptions: () => ({ queryKey: ["overrides"], queryFn: async () => [] }) },
     },
+    models: {
+      credentials: {
+        queryOptions: () => ({
+          queryKey: ["models", "credentials"],
+          queryFn: async () => [
+            {
+              id: "local:synthetic",
+              isDefault: true,
+              modelId: "synthetic-model",
+              reasoning: true,
+              thinkingLevel: "high",
+              contextWindow: 128000,
+              maxTokens: 32000,
+            },
+          ],
+        }),
+      },
+    },
   }),
   queryClient: { setQueryData: () => undefined, invalidateQueries: () => undefined },
 }));
 
+import { adoptConnection, forgetConnection } from "../lib/local-workbench";
 import { SettingsOverlay } from "./SettingsOverlay";
 
 const acme = { id: "space-a", name: "Acme" };
 const spaces = [acme, { id: "space-b", name: "Beta" }];
 
+it("opens local workspace voice settings without unsupported customization controls", async () => {
+  adoptConnection({ origin: "http://127.0.0.1:1234", token: "synthetic" });
+  const { container, cleanup } = await render({
+    requestedSection: "space-voice",
+    space: acme,
+    spaces,
+  });
+  try {
+    expect(container.querySelector('[data-testid="voice-pages"]')?.textContent).toBe("space");
+    expect(container.querySelector('[data-testid="space-setting-voice"]')).toBeNull();
+  } finally {
+    await cleanup();
+    forgetConnection();
+  }
+});
+
+it.each(["vault", "space-vault"] as const)(
+  "does not offer unsupported local credential writes in %s",
+  async (requestedSection) => {
+    adoptConnection({ origin: "http://127.0.0.1:1234", token: "synthetic" });
+    const { container, cleanup } = await render({ requestedSection, space: acme, spaces });
+    try {
+      expect(container.querySelector('[data-testid="vault-pages"]')).toBeNull();
+      expect(container.querySelector('[data-testid="space-setting-credentials"]')).toBeNull();
+      expect(container.querySelector('[data-testid="local-knowledge-pages"]')).toBeNull();
+      expect(shown(container)).toBe("general");
+    } finally {
+      await cleanup();
+      forgetConnection();
+    }
+  },
+);
+
 async function render(props: Partial<React.ComponentProps<typeof SettingsOverlay>>) {
+  i18n.loadAndActivate({ locale: "en", messages: {} });
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const container = document.createElement("div");
   document.body.append(container);
@@ -177,19 +237,98 @@ const panelOf = (container: HTMLElement) =>
 const nav = (container: HTMLElement, id: string) =>
   container.querySelector(`[data-testid="settings-nav-${id}"]`);
 
-it("opens the global panel with only the account's own pages", async () => {
+it("searches actual settings across scopes without changing the open page", async () => {
+  adoptConnection({ origin: "http://127.0.0.1:1234", token: "synthetic" });
+  const onSectionChange = vi.fn();
+  const { container, cleanup } = await render({ requestedSection: "general", onSectionChange });
+  try {
+    const input = container.querySelector<HTMLInputElement>('input[type="search"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(
+        input,
+        "上下文",
+      );
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(shown(container)).toBe("general");
+    expect(nav(container, "general")).toBeNull();
+    expect(nav(container, "models")).not.toBeNull();
+    // A filtered mobile picker must not imply the model page is already open.
+    expect(container.querySelector<HTMLSelectElement>('select[aria-label="设置分类"]')?.value).toBe(
+      "",
+    );
+    await act(async () => (nav(container, "models") as HTMLButtonElement).click());
+    expect(onSectionChange).toHaveBeenCalledWith("models");
+  } finally {
+    await cleanup();
+    forgetConnection();
+  }
+});
+
+it("routes the native Bot model page to global settings instead of offering ignored overrides", async () => {
+  adoptConnection({ origin: "http://127.0.0.1:1234", token: "synthetic" });
+  const onSectionChange = vi.fn();
+  const { container, cleanup } = await render({
+    requestedSection: "bot-model",
+    space: acme,
+    botId: "bot-1",
+    onSectionChange,
+  });
+  try {
+    await flush();
+    await flush();
+    expect(container.querySelector('[data-testid="local-model-inheritance"]')).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="local-model-inheritance"]')?.textContent,
+    ).toContain("synthetic-model");
+    const button = [...container.querySelectorAll("button")].find(
+      (item) => item.textContent === "修改全局模型",
+    )!;
+    await act(async () => button.click());
+    expect(onSectionChange).toHaveBeenCalledWith("models");
+  } finally {
+    await cleanup();
+    forgetConnection();
+  }
+});
+
+it("mounts the unified embedded navigation in its portal", async () => {
+  const host = document.createElement("div");
+  host.id = "workspace-settings-host";
+  document.body.append(host);
+  const observe = vi.fn();
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe = observe;
+      disconnect() {}
+    },
+  );
+  const { cleanup } = await render({ embedded: true, requestedSection: "models" });
+  try {
+    expect(host.querySelector('[data-testid="settings-nav-models"]')).not.toBeNull();
+    expect(host.querySelector('input[aria-label="搜索设置"]')).not.toBeNull();
+  } finally {
+    await cleanup();
+    host.remove();
+  }
+});
+
+it("shows the current scope categories and keeps scope switching available", async () => {
   const { container, cleanup } = await render({ requestedSection: "models", space: acme, spaces });
   try {
     expect(panelOf(container)).toBe("global");
-    expect(container.querySelector("h2")?.textContent).toBe("Global settings");
+    expect(container.querySelector(".settings-page-heading")?.textContent).toContain("Models");
     expect(nav(container, "models")).not.toBeNull();
     // Workspace pages stay out of the account panel.
     expect(nav(container, "usage")).toBeNull();
     expect(nav(container, "space-models")).toBeNull();
     // The account panel says it covers every workspace, and offers nothing to pick.
     const scope = container.querySelector('[data-testid="settings-scope"]');
-    expect(scope?.textContent).toContain("Applies to every workspace");
-    expect(scope?.querySelector("select")).toBeNull();
+    expect(container.querySelector('fieldset[aria-label="设置范围"]')?.textContent).toContain(
+      "全局",
+    );
+    expect(scope?.querySelector("select")).toBeUndefined();
     expect(container.querySelector('[data-testid="models-pages"]')?.textContent).toBe("account");
   } finally {
     await cleanup();
@@ -200,7 +339,7 @@ it("opens the workspace panel with that workspace's pages", async () => {
   const { container, cleanup } = await render({ requestedSection: "space", space: acme, spaces });
   try {
     expect(panelOf(container)).toBe("workspace");
-    expect(container.querySelector("h2")?.textContent).toBe("Workspace settings");
+    expect(container.querySelector(".settings-page-heading")?.textContent).toContain("Overview");
     for (const id of ["space", "space-models", "memory", "usage"]) {
       expect(nav(container, id)).not.toBeNull();
     }
@@ -249,7 +388,9 @@ it("opens the bot panel with a bot picker and that bot's pages", async () => {
   try {
     await flush();
     expect(panelOf(container)).toBe("bot");
-    expect(container.querySelector("h2")?.textContent).toBe("Bot settings");
+    expect(container.querySelector(".settings-page-heading")?.textContent).toContain(
+      "Role and instructions",
+    );
     for (const id of ["bot-role", "bot-model", "bot-memory", "bot-voice", "bot-tools"]) {
       expect(nav(container, id)).not.toBeNull();
     }

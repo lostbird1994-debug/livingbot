@@ -5,7 +5,6 @@ import type * as UiWeb from "@livingbot/ui-web";
 import type { ReactNode } from "react";
 import { act, useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { MemoryRouter } from "react-router-dom";
 import { afterEach, expect, it, vi } from "vitest";
 
 vi.mock("@lingui/react/macro", () => ({
@@ -29,6 +28,8 @@ vi.mock("@livingbot/ui-web", async (importOriginal) => ({
     <label htmlFor={htmlFor}>{children}</label>
   ),
   Input: (props: React.ComponentProps<"input">) => <input {...props} />,
+  NativeSelect: (props: React.ComponentProps<"select">) => <select {...props} />,
+  NativeSelectOption: (props: React.ComponentProps<"option">) => <option {...props} />,
   Label: ({ children, htmlFor }: { children?: ReactNode; htmlFor?: string }) => (
     <label htmlFor={htmlFor}>{children}</label>
   ),
@@ -350,11 +351,7 @@ it("does not expose server integration configuration", async () => {
   const root = createRoot(container);
   try {
     await act(async () => {
-      root.render(
-        <MemoryRouter>
-          <GeneralSettingsPanels name="Jamie" />
-        </MemoryRouter>,
-      );
+      root.render(<GeneralSettingsPanels name="Jamie" />);
     });
 
     expect(container.querySelector('a[href="/integrations/setup"]')).toBeNull();
@@ -578,3 +575,37 @@ it("closes the name editor before refresh finishes and ignores a refresh failure
     await editor.cleanup();
   }
 });
+
+it.each(["appearance", "chat", "regional"] as const)(
+  "keeps the %s category separate",
+  async (section) => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    try {
+      await act(async () =>
+        root.render(
+          <GeneralSettingsPanels
+            name="Example"
+            section={section}
+            onTimezoneChange={async () => undefined}
+          />,
+        ),
+      );
+      expect(Boolean(container.querySelector('[data-testid="ui-appearance-select"]'))).toBe(
+        section === "appearance",
+      );
+      expect(Boolean(container.querySelector('[data-testid="response-streaming-toggle"]'))).toBe(
+        section === "chat",
+      );
+      expect(Boolean(container.querySelector('[data-testid="timezone-settings"]'))).toBe(
+        section === "regional",
+      );
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
+      vi.unstubAllGlobals();
+    }
+  },
+);

@@ -12,6 +12,7 @@ import { DictationStream } from "./dictation-stream.js";
 import { getActiveUiLocale } from "./i18n.js";
 import { selectedSpaceId, withSpaceHeaders } from "./rpc.js";
 import { errorText, voiceAccountErrorText } from "./user-error.js";
+import { localVoiceFetch } from "./local-workbench.js";
 
 export type DictationMode = "hold" | "endpoint";
 
@@ -642,7 +643,7 @@ export class Dictation {
       const audioBase64 = await blobToBase64(blob);
       if (this.token !== mine) return;
       const res = await withAbort(
-        fetch("/api/voice/transcribe", {
+        localVoiceFetch("/api/voice/transcribe", {
           method: "POST",
           headers: withSpaceHeaders({ "content-type": "application/json" }, spaceId),
           credentials: "include",

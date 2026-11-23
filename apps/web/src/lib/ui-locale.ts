@@ -1,3 +1,4 @@
+import { persistLocalUiPreference } from "./local-ui-preferences";
 import { matchUiLocale } from "@livingbot/core";
 
 export const UI_LOCALES = [
@@ -118,6 +119,7 @@ export function persistUiLocale(
     ? localStorage
     : null,
 ): void {
+  persistLocalUiPreference(UI_LOCALE_STORAGE_KEY, locale);
   if (!storage) return;
   try {
     storage.setItem(UI_LOCALE_STORAGE_KEY, locale);

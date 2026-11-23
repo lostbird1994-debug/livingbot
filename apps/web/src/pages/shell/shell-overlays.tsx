@@ -73,6 +73,7 @@ export function AppOverlays({
 
 /** Settings, opened from the URL, and a bot's conversation with another bot. */
 export function SettingsOverlays({
+  onBusyChange,
   rpc,
   queries,
   overlay,
@@ -83,7 +84,6 @@ export function SettingsOverlays({
   renameSpace,
   refreshSpaces,
   openAgentImport,
-  alive,
   user,
   refetchSession,
   bootstrapMe,
@@ -94,6 +94,7 @@ export function SettingsOverlays({
   active,
   peerBot,
 }: {
+  onBusyChange: (busy: boolean) => void;
   rpc: ReturnType<typeof createSpaceRpc>;
   queries: SpaceQueries;
   overlay: ShellOverlay;
@@ -121,6 +122,8 @@ export function SettingsOverlays({
     <>
       {overlay?.kind === "settings" && showSettings ? (
         <SettingsOverlay
+          embedded
+          onBusyChange={onBusyChange}
           space={settingsSpace}
           spaces={spaces}
           onRenameSpace={renameSpace}

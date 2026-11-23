@@ -80,6 +80,21 @@ describe("withShellOverlay", () => {
 });
 
 describe("shellOverlaySearch", () => {
+  it("keeps the workspace destination when a missing chat is repaired", () => {
+    const params = new URLSearchParams("view=abilities&settings=bot-tools&bot=bot-example&m=old");
+    const restored = new URLSearchParams(shellOverlaySearch(params));
+    expect(restored.get("view")).toBe("abilities");
+    expect(readShellOverlay(restored)).toEqual({
+      kind: "settings",
+      section: "bot-tools",
+      spaceId: null,
+      botId: "bot-example",
+    });
+    expect(restored.has("m")).toBe(false);
+    restored.delete("settings");
+    restored.delete("bot");
+    expect(restored.get("view")).toBe("abilities");
+  });
   it("carries only the overlay into a redirect", () => {
     expect(shellOverlaySearch(new URLSearchParams("?m=msg_1&settings=voice"))).toBe(
       "?settings=voice",

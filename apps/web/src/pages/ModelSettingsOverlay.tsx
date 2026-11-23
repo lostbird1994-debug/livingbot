@@ -28,6 +28,7 @@ import {
 } from "@livingbot/ui-web";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { localConnected } from "../lib/local-workbench";
 import type { ModelCredential } from "../lib/model-auth";
 import type { ModelRoleConnectIntent } from "./ModelRoleSettings";
 import { ModelRoleSettings } from "./ModelRoleSettings";
@@ -40,10 +41,12 @@ import { useModelSettings } from "./model-settings/use-model-settings";
 
 export function ModelSettingsOverlay({
   onClose,
+  onBusyChange,
   embedded = false,
   scope,
 }: {
   onClose: () => void;
+  onBusyChange?: (busy: boolean) => void;
   /** Render the content only, inside the shared Settings shell's scroller. */
   embedded?: boolean;
   /**
@@ -53,6 +56,7 @@ export function ModelSettingsOverlay({
   scope: SettingsScope;
 }) {
   const { t } = useLingui();
+  const native = localConnected();
   const model = useModelSettings(onClose, scope);
   const {
     baseUrl,
@@ -87,13 +91,17 @@ export function ModelSettingsOverlay({
     setNotice,
     settingsDirty,
   } = model;
+  useEffect(() => {
+    onBusyChange?.(model.busy);
+    return () => onBusyChange?.(false);
+  }, [model.busy, onBusyChange]);
   // Where the connection form opens: under a role's list, under a provider row, or at the
   // end of Providers when adding one. The rest of the page stays where it was.
   const [connectionAt, setConnectionAt] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    panelRef.current?.scrollIntoView?.({ block: "nearest" });
-  }, [connectionAt]);
+    if (!native) panelRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [connectionAt, native]);
 
   const providers: ConnectableProvider[] = groups
     .filter((group) => !credentialByProvider.has(group.id))
@@ -148,7 +156,7 @@ export function ModelSettingsOverlay({
   ) {
     model.chooseProvider(next.id, next.baseUrl, credentialId);
     intentRef.current = {
-      makeDefault: intent?.makeDefault ?? false,
+      makeDefault: native || (intent?.makeDefault ?? false),
       onConnected: async (choice) => {
         setConnectionAt(null);
         intentRef.current = null;
@@ -158,24 +166,38 @@ export function ModelSettingsOverlay({
     setConnectionAt(at);
   }
 
+  const openedNative = useRef(false);
+  useEffect(() => {
+    if (!native || loading || !me || openedNative.current) return;
+    openedNative.current = true;
+    const first = credentials[0];
+    openConnection(
+      { id: first?.provider ?? OPENAI_COMPATIBLE_PROVIDER_ID, name: "兼容服务" },
+      null,
+      first?.id ?? null,
+      first ? `providers:${first.id}` : "providers:add",
+    );
+  }, [native, loading, me, credentials]);
+
   function closeConnection() {
     cancelOAuthAttempt();
     intentRef.current = null;
     setConnectionAt(null);
   }
 
-  const disconnectButton = connected ? (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      className="mt-6 -ml-2.5 text-muted-foreground"
-      disabled={busy}
-      onClick={() => setConfirmDisconnect(true)}
-    >
-      {pending === "disconnect" ? <Trans>Disconnecting…</Trans> : <Trans>Disconnect</Trans>}
-    </Button>
-  ) : null;
+  const disconnectButton =
+    connected && !native ? (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="mt-6 -ml-2.5 text-muted-foreground"
+        disabled={busy}
+        onClick={() => setConfirmDisconnect(true)}
+      >
+        {pending === "disconnect" ? <Trans>Disconnecting…</Trans> : <Trans>Disconnect</Trans>}
+      </Button>
+    ) : null;
 
   const connection = selected ? (
     isOpenAiCompatible ? (
@@ -265,7 +287,7 @@ export function ModelSettingsOverlay({
       ) : null}
       {/* Edits made while a save is in flight would be replaced by what it saved. */}
       <fieldset className="contents" disabled={pending === "connect" || pending === "settings"}>
-        {connected && credential ? (
+        {connected && credential && !native ? (
           <ConnectionNameField
             key={credential.id}
             credential={credential}
@@ -289,7 +311,32 @@ export function ModelSettingsOverlay({
           {notice}
         </p>
       ) : null}
-      {me ? (
+      {me && native ? (
+        <ProvidersSection
+          credentials={credentials}
+          providers={groups.map((group) => ({ id: group.id, name: group.name }))}
+          name={connectionName}
+          disabled={busy}
+          allowAdd={credentials.length === 0}
+          onAdd={(next) => openConnection(next, null, null, "providers:add")}
+          onOpen={(entry) =>
+            connectionAt === `providers:${entry.id}`
+              ? closeConnection()
+              : openConnection(
+                  { id: entry.provider, name: entry.provider },
+                  null,
+                  entry.id,
+                  `providers:${entry.id}`,
+                )
+          }
+          panel={
+            connectionAt?.startsWith("providers:")
+              ? panelFor(connectionAt === "providers:add")
+              : null
+          }
+          panelAt={connectionAt?.slice("providers:".length) ?? null}
+        />
+      ) : me ? (
         <>
           <ModelRoleSettings
             userId={me.userId}

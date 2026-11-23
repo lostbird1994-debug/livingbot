@@ -19,7 +19,7 @@ import {
   updateComposerMentionBindings,
 } from "@livingbot/core";
 import { Button } from "@livingbot/ui-web";
-import { ArrowUp, Box, Paperclip, Plus, Settings, Square, X } from "lucide-react";
+import { ArrowUp, Box, Paperclip, Phone, Plus, Settings, Square, X } from "lucide-react";
 import type { ClipboardEvent, DragEvent, RefObject } from "react";
 import { memo, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
@@ -77,6 +77,7 @@ export const Composer = memo(function Composer({
   onRemoveAttachment,
   onSend,
   onStop,
+  onStartCall,
   dictationTranscribe,
   replyTarget,
   replyQuote,
@@ -116,7 +117,8 @@ export const Composer = memo(function Composer({
     imageHandling?: "file",
   ) => Promise<boolean>;
   onStop: () => Promise<void>;
-  phoneCallsEnabled?: boolean;
+  /** Present when this chat can be called; the call button sits beside the composer. */
+  onStartCall?: () => void;
   /** Hold-to-talk falls back to the voice provider's transcription; undefined while unknown. */
   dictationTranscribe?: boolean;
   artifactTarget: ArtifactTarget;
@@ -145,7 +147,10 @@ export const Composer = memo(function Composer({
       const text = (event as CustomEvent<{ text?: unknown }>).detail?.text;
       if (disabled || typeof text !== "string" || !text.trim() || text.length > 96_000) return;
       const current = compositionRef.current.text;
-      commitComposition({ text: current ? `${current}\n\n${text}` : text, bindings: compositionRef.current.bindings });
+      commitComposition({
+        text: current ? `${current}\n\n${text}` : text,
+        bindings: compositionRef.current.bindings,
+      });
       onDraftEdited?.();
     };
     window.addEventListener(INLINE_VISUAL_REFERENCE_EVENT, reference);
@@ -317,6 +322,27 @@ export const Composer = memo(function Composer({
   const draftKeyRef = useRef(draftKey);
   draftKeyRef.current = draftKey;
   const mountedRef = useRef(true);
+  const loadedDraftKey = useRef(draftKey);
+  // The shell keeps the editor mounted while changing its conversation.
+  // Restore that conversation's draft before paint and discard transient edits.
+  useLayoutEffect(() => {
+    if (loadedDraftKey.current === draftKey) return;
+    loadedDraftKey.current = draftKey;
+    const text = readComposerDraft(draftKey);
+    commitComposition({ text, bindings: readComposerDraftBindings(draftKey) }, false);
+    setMentionQuery(null);
+    setMentionHighlightKey(null);
+    setSlashQuery(null);
+    setSelectedSkill(null);
+    retryNonce.current = null;
+    editRevision.current += 1;
+    pendingCaret.current = null;
+    completedSelection.current = null;
+    dictationSelection.current = null;
+    dragDepth.current = 0;
+    setDraggingFiles(false);
+    setFileDragActive(false);
+  }, [draftKey]);
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -483,7 +509,12 @@ export const Composer = memo(function Composer({
       return;
     }
     // Restore only an untouched draft, retaining its nonce for an unchanged retry.
-    if (editRevision.current !== revision) return;
+    if (
+      !mountedRef.current ||
+      draftKeyRef.current !== draftKey ||
+      editRevision.current !== revision
+    )
+      return;
     retryNonce.current = clientNonce;
     commitComposition(submitted, false);
     setSelectedSkill(selectedSkill);
@@ -913,9 +944,7 @@ export const Composer = memo(function Composer({
               disabled={disabled}
               placeholder={
                 showComposerPlaceholder
-                  ? targetLabel ?? (activeName
-                    ? t`Message ${activeName}`
-                    : t`Message…`)
+                  ? (targetLabel ?? (activeName ? t`Message ${activeName}` : t`Message…`))
                   : undefined
               }
               aria-label={targetLabel ?? (activeName ? t`Message ${activeName}` : t`Message`)}
@@ -946,6 +975,19 @@ export const Composer = memo(function Composer({
             expanded ? "row-start-2" : ""
           }`}
         >
+          {onStartCall ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              data-testid="call-button"
+              aria-label={t`Call`}
+              disabled={disabled || sending}
+              onClick={onStartCall}
+              className="size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <Phone size={15} strokeWidth={1.8} />
+            </Button>
+          ) : null}
           {talk.recording?.locked ? (
             <DictationControls talk={talk} />
           ) : running ? (

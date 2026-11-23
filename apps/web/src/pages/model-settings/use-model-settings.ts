@@ -40,6 +40,7 @@ import { fetchFresh } from "@livingbot/core/query";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useCopyText } from "../../lib/copy-text";
+import { localConnected } from "../../lib/local-workbench";
 import { providerDisplayName } from "../../lib/localized-provider-hint";
 import type { ModelCatalogEntry } from "../../lib/model-auth";
 import type { ModelPreflightFailure } from "../../lib/model-connection-preflight";
@@ -466,11 +467,21 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
         }
         setPreflightTarget(null);
         setPreflightFailure(null);
-        setNotice(openAiCompatibleProbeSuccessMessage(models.length));
+        void queryClient.invalidateQueries({ queryKey: credentialsQuery.queryKey });
+        void queryClient.invalidateQueries({ queryKey: catalogQuery.queryKey });
+        setNotice(localConnected() ? null : openAiCompatibleProbeSuccessMessage(models.length));
       },
       onError: (err) => {
         if (!preflightStillCurrent(revision)) return;
-        setPreflightFailure(classifyModelConnectionFailure(err, { modelId }));
+        const failure = classifyModelConnectionFailure(err, { modelId });
+        setPreflightFailure(
+          localConnected()
+            ? {
+                ...failure,
+                nextAction: "检查服务地址、网络和密钥，保存修改后再刷新。",
+              }
+            : failure,
+        );
         setNotice(null);
       },
     });

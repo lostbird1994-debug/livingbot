@@ -10,7 +10,6 @@ import {
 } from "@livingbot/ui-web";
 import {
   BookOpen,
-  ChevronRight,
   Download,
   FolderOpen,
   Gauge,
@@ -25,7 +24,6 @@ import {
 } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { SettingsPanel } from "../pages/settings-nav";
-import { SETTINGS_PANELS, useSettingsPanelLabels } from "../pages/settings-nav";
 import { useSidebarUpdate } from "./DesktopUpdates";
 import { IconTooltip } from "./IconTooltip";
 
@@ -80,11 +78,7 @@ export function SidebarFooter({
   logOutError,
 }: Props) {
   const { t } = useLingui();
-  const panelLabels = useSettingsPanelLabels();
   const update = useSidebarUpdate();
-  // The three panels live one level down from Settings, so the row opens on hover.
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const settingsHoverTimer = useRef<number | undefined>(undefined);
   const [failedImage, setFailedImage] = useState<string | null>(null);
   const pillRef = useRef<HTMLButtonElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
@@ -114,17 +108,7 @@ export function SidebarFooter({
       data-testid="sidebar-footer"
       className={`flex shrink-0 items-center gap-2 bg-transparent ${mini ? "flex-col px-1 py-2" : "px-2.5 py-3"}`}
     >
-      <Popover
-        open={open}
-        onOpenChange={(next) => {
-          // A closed menu forgets the submenu, so reopening starts from the rows.
-          if (!next) {
-            window.clearTimeout(settingsHoverTimer.current);
-            setSettingsOpen(false);
-          }
-          onOpenChange(next);
-        }}
-      >
+      <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger
           data-testid="user-menu-trigger"
           aria-label={t`Account menu for ${name}`}
@@ -169,57 +153,15 @@ export function SidebarFooter({
                 <Trans>Connect apps</Trans>
               </Button>
             ) : null}
-            {/* The panels open beside the row: expanding them inside would push the rows below. */}
-            <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
-              <PopoverTrigger
-                data-testid="account-menu-settings"
-                aria-label={t`Settings`}
-                onMouseEnter={() => {
-                  window.clearTimeout(settingsHoverTimer.current);
-                  setSettingsOpen(true);
-                }}
-                onMouseLeave={() => {
-                  window.clearTimeout(settingsHoverTimer.current);
-                  settingsHoverTimer.current = window.setTimeout(() => setSettingsOpen(false), 140);
-                }}
-                className={`${buttonVariants({ variant: "ghost" })} h-9 w-full justify-start gap-2.5 font-normal`}
-              >
-                <Settings className="text-muted-foreground" strokeWidth={1.75} />
-                <Trans>Settings</Trans>
-                <ChevronRight
-                  className="ms-auto size-3.5 text-muted-foreground"
-                  strokeWidth={1.75}
-                />
-              </PopoverTrigger>
-              <PopoverContent
-                data-testid="settings-panels"
-                side="inline-end"
-                align="start"
-                sideOffset={6}
-                collisionAvoidance={{ side: "shift", align: "shift" }}
-                onMouseEnter={() => window.clearTimeout(settingsHoverTimer.current)}
-                onMouseLeave={() => {
-                  window.clearTimeout(settingsHoverTimer.current);
-                  settingsHoverTimer.current = window.setTimeout(() => setSettingsOpen(false), 140);
-                }}
-                className="w-[180px] gap-0 p-1"
-              >
-                {SETTINGS_PANELS.map((panel) => (
-                  <Button
-                    key={panel}
-                    variant="ghost"
-                    className="h-8 w-full justify-start gap-2 font-normal"
-                    data-testid={`settings-panel-${panel}`}
-                    onClick={() => {
-                      setSettingsOpen(false);
-                      onSettings(panel);
-                    }}
-                  >
-                    <span className="text-[13px]">{panelLabels[panel]}</span>
-                  </Button>
-                ))}
-              </PopoverContent>
-            </Popover>
+            <Button
+              variant="ghost"
+              data-testid="account-menu-settings"
+              className="h-9 w-full justify-start gap-2.5 font-normal"
+              onClick={() => onSettings("global")}
+            >
+              <Settings className="text-muted-foreground" strokeWidth={1.75} />
+              <Trans>Settings</Trans>
+            </Button>
             <Button
               variant="ghost"
               className="h-9 w-full justify-start gap-2.5 font-normal"

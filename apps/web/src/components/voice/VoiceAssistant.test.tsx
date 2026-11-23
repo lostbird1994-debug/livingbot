@@ -53,6 +53,7 @@ vi.mock("../../lib/announcer", async (original) => ({
   ...(await original<typeof import("../../lib/announcer")>()),
   announcer: { announce: fake.announce, clear: vi.fn(), setBlockedCheck: vi.fn() },
 }));
+vi.mock("@livingbot/ui-web", () => ({ Button: ({children, variant: _variant, size: _size, ...props}: any) => <button {...props}>{children}</button> }));
 const client = { threads: { get: fake.get }, voice: { prepare: fake.prepare } };
 let root: ReturnType<typeof createRoot>;
 let host: HTMLDivElement;

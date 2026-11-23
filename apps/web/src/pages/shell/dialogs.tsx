@@ -488,6 +488,7 @@ export function DeleteSpaceDialog({
           />
         ) : undefined
       }
+      description={<Trans>Its Bots, chats, and files are kept in the local space.</Trans>}
       onCancel={onCancel}
       onConfirm={onConfirm}
     />

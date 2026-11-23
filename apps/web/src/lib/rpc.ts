@@ -6,6 +6,7 @@ import { CLIENT_BUILD_HEADER, formatClientBuild } from "@livingbot/contracts";
 import { displayIdentityEvent, displayIdentityResult } from "@livingbot/core";
 import { clientCorrelationHeaders, responseCorrelation } from "@livingbot/logging/monitoring";
 import { authClient } from "./auth";
+import { localConnection, localRpc, localThreadSubscription } from "./local-workbench";
 import { CLIENT_BUILD } from "./client-build";
 import { i18n } from "./i18n";
 import { identityLabels } from "./identity-display";
@@ -78,6 +79,32 @@ const link = new RPCLink<RpcClientContext>({
     const headers = withSpaceHeaders(request.headers, spaceId);
     if (CLIENT_BUILD) headers.set(CLIENT_BUILD_HEADER, formatClientBuild("web", CLIENT_BUILD));
     for (const [key, value] of Object.entries(correlation)) headers.set(key, value);
+    // A local desktop service answers the shell's procedures itself; anything it
+    // does not implement fails locally because there is no remote API behind it.
+    const local = await localConnection().catch(() => null);
+    if (local) {
+      const procedure = new URL(request.url).pathname.replace(/^\/rpc\/?/, "");
+      if (procedure) {
+        try {
+          const url = new URL(request.url);
+          const payload = request.method === "GET"
+            ? (() => {
+                const data = url.searchParams.get("data");
+                return data ? JSON.parse(data) as unknown : undefined;
+              })()
+            : request.body ? await request.clone().json().catch(() => undefined) : undefined;
+          const output = await localRpc(procedure, (payload as { json?: unknown } | undefined)?.json ?? payload, spaceId);
+          const body = JSON.stringify({ json: output });
+          return new Response(body, { status: 200, headers: { "content-type": "application/json" } });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          // In local mode there is no remote API behind /rpc: report the gap instead of
+          // pretending a request to a server that does not exist succeeded.
+          return new Response(JSON.stringify({ json: { defined: false, code: "LOCAL_UNSUPPORTED", status: 501, message } }),
+            { status: 501, headers: { "content-type": "application/json" } });
+        }
+      }
+    }
     let response: Response;
     try {
       response = await fetch(request, {
@@ -137,6 +164,24 @@ export type RpcClient = ContractRouterClient<AppContract, RpcClientContext>;
 const displayLink = {
   call: async (...args: Parameters<typeof link.call>) => {
     const [path, input, options] = args;
+    // A task session's chat subscribes over the same local journal as the main chat;
+    // there is no second transport to keep in sync.
+    if (path.join("/") === "threads/subscribe") {
+      const local = await localConnection().catch(() => null);
+      if (local) {
+        const controller = new AbortController();
+        options?.signal?.addEventListener("abort", () => controller.abort(), { once: true });
+        const events = localThreadSubscription(
+          (input ?? {}) as Parameters<typeof localThreadSubscription>[0],
+          controller.signal,
+        );
+        return (async function* () {
+          for await (const event of events) {
+            yield displayIdentityEvent(event, identityLabels());
+          }
+        })();
+      }
+    }
     const result = await link.call(path, input, options);
     if (path.join("/") === "threads/subscribe") {
       return (async function* () {

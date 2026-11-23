@@ -24,6 +24,7 @@ import {
 } from "../lib/activity-list-filters";
 import { useSpaceQueries } from "../lib/query";
 import { formatRelativeTime } from "../lib/relative-time";
+import { localConnected } from "../lib/local-workbench";
 
 export function statusTone(status: RunActivityRow["status"], updatedAt?: string): string {
   if (status === "failed") return "text-destructive";
@@ -56,7 +57,7 @@ export function ActivityList({
   // Polls while open; a refused request (signed out, forbidden) stops polling.
   const poll = {
     refetchInterval: (query: { state: { error: unknown } }) =>
-      query.state.error && !isRetryableError(query.state.error) ? false : 15_000,
+      localConnected() || (query.state.error && !isRetryableError(query.state.error)) ? false : 15_000,
   } as const;
   const active = useQuery(queries.runs.list.queryOptions({ input: { filter: "active" }, ...poll }));
   const recent = useQuery(queries.runs.list.queryOptions({ input: { filter: "recent" }, ...poll }));

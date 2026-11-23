@@ -1,3 +1,4 @@
+import { LocalDocumentPreview } from "../../components/LocalDocumentPreview";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ChatMarkdown, LinkifiedText, withBlockMentions } from "@livingbot/chat-ui/web";
@@ -10,8 +11,10 @@ import type {
 import type { ChildBotBlock, PeerExchange } from "@livingbot/core";
 import { isPeerReceiptBlocks, isSecretAskBlock, isToolActivityBlock } from "@livingbot/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@livingbot/ui-web";
+import type { InteractionDraft } from "@livingbot/ui-web/native-interaction";
+import { InteractionCard } from "@livingbot/ui-web/native-interaction";
 import { UserRound } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
@@ -32,6 +35,7 @@ import {
 import { SkillDraftCard } from "../../components/teach/SkillDraftCard";
 import { groupActivityBlocks, needsTimeline } from "../../lib/activity-timeline";
 import type { ArtifactTarget } from "../../lib/artifact-open";
+import { localInteraction, localInteractionClient } from "../../lib/local-workbench";
 import { messageProviderLabel } from "../../lib/messaging";
 import {
   isToolOnlyNarration,
@@ -51,6 +55,20 @@ import {
   McpApprovalCard,
 } from "./message-cards";
 import { MessageHoverActions } from "./message-hover-actions";
+
+function LocalInteraction({ id, onRefresh }: { id: string; onRefresh: () => Promise<void> }) {
+  const [draft, setDraft] = useState<InteractionDraft>();
+  const prompt = localInteraction(id);
+  return prompt ? (
+    <InteractionCard
+      prompt={prompt}
+      client={localInteractionClient}
+      draft={draft}
+      onDraftChange={setDraft}
+      onResolved={() => void onRefresh()}
+    />
+  ) : null;
+}
 
 export const MessageView = memo(function MessageView({
   artifactTarget,
@@ -73,6 +91,7 @@ export const MessageView = memo(function MessageView({
   onOpenComputer,
   onOpenImportSetup,
   showToolActivity,
+  active = false,
   onReply,
   onMarkUnread,
   markedUnread = false,
@@ -112,6 +131,8 @@ export const MessageView = memo(function MessageView({
   /** Opens where an imported item's setup is finished. */
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
   showToolActivity: boolean;
+  /** The run that produced this message is still working, so its activity stays open. */
+  active?: boolean;
   onReply: (message: ThreadMessage) => void;
   onMarkUnread: (message: ThreadMessage) => void;
   markedUnread?: boolean;
@@ -140,7 +161,7 @@ export const MessageView = memo(function MessageView({
         block.kind === "steps" ||
         block.kind === "reasoning",
     );
-  const isLive = message.id.startsWith("progress:");
+  const isLive = active || message.id.startsWith("progress:");
   const deliveredFiles =
     message.role === "bot" && !isLive ? (
       <MessageDeliveryFiles message={message} target={artifactTarget} />
@@ -345,6 +366,7 @@ export const MessageView = memo(function MessageView({
                     </ToolActivityDisclosure>
                   );
                 }
+                if (block.kind === "text" && block.preview) return <LocalDocumentPreview key={i} preview={block.preview} message={message} />;
                 if (block.kind === "text" || block.kind === "progress") {
                   return (
                     <div
@@ -636,6 +658,7 @@ export const MessageView = memo(function MessageView({
               </div>
             );
           }
+          if (block.kind === "text" && block.preview) return <LocalDocumentPreview key={i} preview={block.preview} message={message} />;
           if (block.kind === "text") {
             return (
               <div key={i} className="relative flex w-full min-w-0 flex-wrap justify-start">
@@ -676,6 +699,15 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "ask") {
+            if (block.approvalRequestId && localInteraction(block.approvalRequestId)) {
+              return (
+                <LocalInteraction
+                  key={block.approvalRequestId}
+                  id={block.approvalRequestId}
+                  onRefresh={onRefresh}
+                />
+              );
+            }
             return (
               <div
                 key={i}

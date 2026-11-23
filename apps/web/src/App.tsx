@@ -18,6 +18,7 @@ import { MarkdownLinkPrompt } from "./components/markdown-link-prompt";
 import { PageLoading } from "./components/PageLoading";
 import { SubscriptionGate } from "./components/SubscriptionGate";
 import { authClient } from "./lib/auth";
+import { useLocalSession } from "./lib/local-workbench";
 import { getTicketBoardEnabled, subscribeTicketBoardEnabled } from "./lib/bootstrap";
 import { syncCallIdentity } from "./lib/call-session";
 import { desktopBridge } from "./lib/desktop";
@@ -55,9 +56,6 @@ const WelcomePage = lazyComponent(() =>
 );
 const NotFoundPage = lazyComponent(() =>
   import("./pages/NotFound").then((module) => module.NotFoundPage),
-);
-const ArtifactsPage = lazyComponent(() =>
-  import("./pages/Artifacts").then((module) => module.ArtifactsPage),
 );
 const BoardPage = lazyComponent(() => import("./pages/Board").then((module) => module.BoardPage));
 const AdminPluginsPage = lazyComponent(() =>
@@ -125,7 +123,7 @@ function SessionApp() {
     getTicketBoardEnabled,
     () => false,
   );
-  const session = authClient.useSession();
+  const session = useLocalSession(() => authClient.useSession());
   const { pathname, search } = useLocation();
   const screen = analyticsScreen(pathname);
   const analyticsUserId = session.data?.user.id;
@@ -275,8 +273,8 @@ function SessionApp() {
                 <Route path="/onboarding/:step?" element={<OnboardingPage />} />
                 <Route path="/app" element={<ShellPage />} />
                 <Route path="/app/g/:groupId" element={<ShellPage />} />
-                <Route path="/app/artifacts" element={<ArtifactsPage />} />
-                <Route path="/app/artifacts/:artifactId" element={<ArtifactsPage />} />
+                <Route path="/app/artifacts" element={<ShellPage />} />
+                <Route path="/app/artifacts/:artifactId" element={<ShellPage />} />
                 {ticketBoardEnabled ? <Route path="/app/board" element={<BoardPage />} /> : null}
                 <Route path="/app/x/:linkId" element={<NavLinkPage />} />
                 <Route path="/app/:botId" element={<ShellPage />} />

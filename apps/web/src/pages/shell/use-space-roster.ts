@@ -15,6 +15,7 @@ import type { RefObject } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { takeInitialBootstrap } from "../../lib/bootstrap";
 import { localTimezone } from "../../lib/local-timezone";
+import { localConnected } from "../../lib/local-workbench";
 import { markOnce } from "../../lib/performance";
 import type { ChatTarget } from "../../lib/query";
 import { lastChatKey, queryClient, seedOnLeave, spaceSeedKey } from "../../lib/query";
@@ -111,6 +112,7 @@ export function useSpaceRoster({
         setGroups((previous) => replaceEqualDeep(previous, groupList));
         setSpaces((previous) => replaceEqualDeep(previous, navigation.spaces));
         setInitialBotsLoaded(true);
+        setInitialLoadFailed(false);
         botsRefreshApplied.current = request;
         if (
           includeArchived &&
@@ -430,7 +432,7 @@ export function useSpaceBootstrap({
     document.addEventListener("visibilitychange", refreshVisibleBots);
     // Poll skips while a refresh is in flight; focus/visibility and event-driven
     // callers still bump botsRefreshEpoch so only the latest response applies.
-    const poll = window.setInterval(() => {
+    const poll = localConnected() ? undefined : window.setInterval(() => {
       if (botsRefreshInFlight.current > 0) return;
       refreshVisibleBots();
     }, 3_000);
