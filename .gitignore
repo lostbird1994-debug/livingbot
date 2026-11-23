@@ -57,3 +57,8 @@ apps/*/dist-local-file-candidate/
 # Personal plans, review evidence and isolated validation builds
 local/
 apps/*/dist-branding-check/
+
+# Per-worktree dependency install used by the pnpm wrapper, and the local
+# development journal, which quotes paths from one machine.
+.install/
+progress.txt
