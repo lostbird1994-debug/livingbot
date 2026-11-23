@@ -2,11 +2,11 @@
 /**
  * A cron result reaches the conversation once, not once per delivery target.
  *
- * The gateway commits a scheduled run's visible reply to its session transcript by mirroring
- * every outbound payload. One reply fans out to each channel that receives it (private chat,
- * a group, an approval bot), so the same text appears several times, and the conversation
- * shows the whole report two to six times over. Delivery itself is unchanged: the mirror only
- * needs one copy of a reply with identical text and media.
+ * A scheduled run's reply is sent to every channel that receives it (private chat, a group,
+ * an approval bot). When the run is committed to its session transcript, the gateway mirrors
+ * each payload and joins the mirrored texts with newlines, so one report shows up two to six
+ * times: once per channel. The mirror only needs one copy of a reply with identical text.
+ * Real delivery is untouched, and each payload's media still travels separately.
  *
  * Usage: node scripts/patch-openclaw-cron-results.mjs [--runtime /absolute/path/to/openclaw]
  */
@@ -24,22 +24,25 @@ const runtime = args.length
   ? resolve(args[1])
   : resolve(dirname(require.resolve("openclaw/plugin-sdk/gateway-runtime")), "../..");
 const dist = join(runtime, "dist");
-const names = (await readdir(dist)).filter((name) => /^background-result-payloads-.*\.mjs$/.test(name));
-if (names.length !== 1) throw new Error("Expected one background result module; nothing changed");
-const file = join(dist, names[0]);
 
-const target = "\tconst t = e.payloads.map(toTranscriptPayload);";
-const replacement = `\tconst t = (() => { const seen = new Set(); return e.payloads.map(toTranscriptPayload).filter((payload) => { const key = JSON.stringify([payload.text ?? "", payload.mediaUrl ?? "", payload.mediaUrls ?? [], payload.attachments ?? []]); if (seen.has(key)) return false; seen.add(key); return true; }); })();`;
+const target = `\t\ttext: e.map(({ payload: e }) => resolveOutboundPayloadMirrorText(e)).filter((e) => Boolean(e)).join("\\n"),`;
+const patched = `\t\ttext: [...new Set(e.map(({ payload: e }) => resolveOutboundPayloadMirrorText(e)).filter((e) => Boolean(e)))].join("\\n"),`;
 
-const before = await readFile(file, "utf8");
-if (!before.includes(target)) {
-  if (before.includes("const seen = new Set(); return e.payloads.map(toTranscriptPayload)")) {
-    console.log(`Already patched: ${file}`);
+const names = (await readdir(dist)).filter((name) => /^payloads-.*\.mjs$/.test(name));
+const matches = [];
+for (const name of names) {
+  const body = await readFile(join(dist, name), "utf8");
+  if (body.includes(patched)) {
+    console.log(`Already patched: ${join(dist, name)}`);
     process.exit(0);
   }
-  throw new Error("Background result module changed shape; nothing changed");
+  if (body.includes(target)) matches.push(name);
 }
-const after = before.replace(target, replacement);
+if (matches.length !== 1) throw new Error(`Expected one outbound payload module; found ${matches.length}`);
+
+const file = join(dist, matches[0]);
+const before = await readFile(file, "utf8");
+const after = before.replace(target, patched);
 const check = spawnSync(process.execPath, ["--input-type=module", "--check"], {
   input: after,
   encoding: "utf8",
