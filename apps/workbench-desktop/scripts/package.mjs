@@ -3,6 +3,7 @@ import { cp, readFile, mkdir, mkdtemp, writeFile, chmod, access, rename, readdir
 import { join, resolve, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
+import { applySilentSkillNoticePatch } from "../../../scripts/openclaw-silent-skill-notice.mjs";
 
 // Fresh staging only: repeated packaging never removes or replaces a previous build.
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -75,6 +76,7 @@ const walkBundle = async (dir) => {
 };
 await walkBundle(resources);
 if (escaping.length) throw new Error(`Bundle contains ${escaping.length} escaping links, e.g. ${escaping[0]}`);
+await applySilentSkillNoticePatch(join(runtime, "node_modules/openclaw"), join(stage, "kernel-patch-backups"));
 // The selected product frontend (the upgraded 1.0 shell), not the replacement UI.
 await cp(join(root, "apps/web/dist"), join(resources, "web"), { recursive: true,
   filter: (path) => !path.endsWith(".map") });
