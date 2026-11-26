@@ -271,7 +271,12 @@ export class OpenClawAgentRuntime implements AgentRuntime {
         const credentialInstruction = collaboration?.tools.some(
           (tool) => tool.name === "rakazo_shell",
         )
-          ? "\n\nUse rakazo_shell for commands in independent tasks; native exec is disabled there. In ordinary chats use native exec for ordinary commands. When a command needs this Bot's managed environment variables, use rakazo_shell; the host injects current credentials per command and redacts results. Never read or print credential values to populate native exec. Deliver user-facing files with attach_file so the conversation receives a persistent clickable attachment."
+          ? "\n\nUse rakazo_shell for commands in independent tasks; native exec is disabled there. In ordinary chats use native exec for ordinary commands. When a command needs this Bot's managed environment variables, use rakazo_shell; the host injects current credentials per command and redacts results. Never read or print credential values to populate native exec."
+          : "";
+        const fileDeliveryInstruction = collaboration?.tools.some(
+          (tool) => tool.name === "attach_file",
+        )
+          ? "\n\nWhen you create or update a user-requested deliverable in the workspace, attach the final file with attach_file before your final reply. Do not treat a filesystem path or a claim that the file was saved as delivery. If attachment fails, say clearly that the file was not delivered; never claim it was attached."
           : "";
         const initial: NativeRecord = frozen ?? {
           version: 1 as const,
@@ -292,6 +297,7 @@ export class OpenClawAgentRuntime implements AgentRuntime {
               toolInstruction +
               descriptionInstruction +
               credentialInstruction +
+              fileDeliveryInstruction +
               history,
             attachments: kernelAttachments(request),
           },

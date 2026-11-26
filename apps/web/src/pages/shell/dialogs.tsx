@@ -460,10 +460,10 @@ export type SettingsSpace = {
   name: string;
   canRename?: boolean;
   canDelete?: boolean;
-  /** Every bot deleting the space removes, from the server. */
+  /** Bots that will be archived when the space is removed. */
   botCount?: number;
 };
-/** Names what goes with the space: its bots, and with them their chats and groups. */
+/** Removing a space retains its data and archives its Bots in the local space. */
 export function DeleteSpaceDialog({
   space,
   onCancel,
@@ -483,12 +483,12 @@ export function DeleteSpaceDialog({
         botCount > 0 ? (
           <Plural
             value={botCount}
-            one={`Delete ${name} and its # bot?`}
-            other={`Delete ${name} and its # bots?`}
+            one={`Delete ${name} and archive its # bot?`}
+            other={`Delete ${name} and archive its # bots?`}
           />
         ) : undefined
       }
-      description={<Trans>Its Bots, chats, and files are kept in the local space.</Trans>}
+      description={<Trans>Its Bots will be archived in the local space and their routines paused. Chats and files will be kept.</Trans>}
       onCancel={onCancel}
       onConfirm={onConfirm}
     />

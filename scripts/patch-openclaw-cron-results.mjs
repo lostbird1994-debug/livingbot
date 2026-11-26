@@ -1,12 +1,7 @@
 #!/usr/bin/env node
 /**
- * A cron result reaches the conversation once, not once per delivery target.
- *
- * A scheduled run's reply is sent to every channel that receives it (private chat, a group,
- * an approval bot). When the run is committed to its session transcript, the gateway mirrors
- * each payload and joins the mirrored texts with newlines, so one report shows up two to six
- * times: once per channel. The mirror only needs one copy of a reply with identical text.
- * Real delivery is untouched, and each payload's media still travels separately.
+ * Replay each cron occurrence once, preserving report text verbatim.
+ * Remove older text-based fallbacks when upgrading an existing installation.
  *
  * Usage: node scripts/patch-openclaw-cron-results.mjs [--runtime /absolute/path/to/openclaw]
  */
@@ -14,50 +9,67 @@ import { spawnSync } from "node:child_process";
 import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import {
+  restoreCronPayloadMirror,
+  restoreCronResultCommit,
+  patchCronResultReplay,
+} from "./openclaw-cron-result-patches.mjs";
 
-const args = process.argv.slice(2);
-if (args.length && (args.length !== 2 || args[0] !== "--runtime"))
-  throw new Error("Usage: script [--runtime /absolute/path/to/openclaw]");
-const require = createRequire(new URL("../packages/adapters/package.json", import.meta.url));
-const runtime = args.length
-  ? resolve(args[1])
-  : resolve(dirname(require.resolve("openclaw/plugin-sdk/gateway-runtime")), "../..");
-const dist = join(runtime, "dist");
-
-const target = `\t\ttext: e.map(({ payload: e }) => resolveOutboundPayloadMirrorText(e)).filter((e) => Boolean(e)).join("\\n"),`;
-const patched = `\t\ttext: [...new Set(e.map(({ payload: e }) => resolveOutboundPayloadMirrorText(e)).filter((e) => Boolean(e)))].join("\\n"),`;
-
-const names = (await readdir(dist)).filter((name) => /^payloads-.*\.mjs$/.test(name));
-const matches = [];
-for (const name of names) {
-  const body = await readFile(join(dist, name), "utf8");
-  if (body.includes(patched)) {
-    console.log(`Already patched: ${join(dist, name)}`);
-    process.exit(0);
+export async function applyCronResultPatches(runtime, backupRoot = join(homedir(), ".openclaw/backups")) {
+  const dist = join(runtime, "dist");
+  const names = await readdir(dist);
+  const plans = [];
+  for (const [pattern, marker, patch] of [
+    [/^payloads-.*\.mjs$/, "function projectOutboundPayloadPlanForMirror(", restoreCronPayloadMirror],
+    [/^background-result-payloads-.*\.mjs$/, "async function commitBackgroundResultToSession(", restoreCronResultCommit],
+    [/^replay-history-.*\.mjs$/, "function normalizeAssistantReplayContent(", patchCronResultReplay],
+  ]) {
+    const matches = [];
+    for (const name of names.filter((name) => pattern.test(name))) {
+      const file = join(dist, name);
+      const before = await readFile(file, "utf8");
+      if (before.includes(marker)) matches.push({ file, before });
+    }
+    if (matches.length !== 1) throw new Error(`Expected one ${marker} module; found ${matches.length}`);
+    const { file, before } = matches[0];
+    const after = patch(before);
+    const check = spawnSync(process.execPath, ["--input-type=module", "--check"], { input: after, encoding: "utf8" });
+    if (check.status !== 0) throw new Error(check.stderr || "Syntax check failed; nothing changed");
+    if (after !== before) plans.push({ file, before, after });
   }
-  if (body.includes(target)) matches.push(name);
+  if (!plans.length) return { changed: [], backups: [] };
+  const backups = join(backupRoot, `cron-results-${new Date().toISOString().replaceAll(/[:.]/g, "-")}`);
+  await mkdir(backups, { recursive: true, mode: 0o700 });
+  for (const plan of plans) {
+    plan.backup = join(backups, basename(plan.file));
+    await copyFile(plan.file, plan.backup);
+    if (await readFile(plan.backup, "utf8") !== plan.before) throw new Error("Runtime backup verification failed; nothing changed");
+  }
+  for (const plan of plans) {
+    if (await readFile(plan.file, "utf8") !== plan.before) throw new Error("Runtime changed during patch preparation");
+  }
+  const written = [];
+  try {
+    for (const plan of plans) {
+      written.push(plan);
+      await writeFile(plan.file, plan.after);
+      if ((await readFile(plan.file, "utf8")) !== plan.after) throw new Error("Runtime write verification failed");
+    }
+  } catch (error) {
+    for (const plan of written) await copyFile(plan.backup, plan.file);
+    throw error;
+  }
+  return { changed: plans.map((plan) => plan.file), backups: plans.map((plan) => plan.backup) };
 }
-if (matches.length !== 1) throw new Error(`Expected one outbound payload module; found ${matches.length}`);
 
-const file = join(dist, matches[0]);
-const before = await readFile(file, "utf8");
-const after = before.replace(target, patched);
-const check = spawnSync(process.execPath, ["--input-type=module", "--check"], {
-  input: after,
-  encoding: "utf8",
-});
-if (check.status !== 0) throw new Error(check.stderr || "Syntax check failed; nothing changed");
-
-const backups = join(homedir(), ".openclaw/backups");
-await mkdir(backups, { recursive: true, mode: 0o700 });
-const backup = join(backups, `cron-results-${new Date().toISOString().replaceAll(/[:.]/g, "-")}.mjs`);
-await copyFile(file, backup);
-try {
-  await writeFile(file, after);
-  if ((await readFile(file, "utf8")) !== after) throw new Error("Runtime write verification failed");
-} catch (error) {
-  await copyFile(backup, file);
-  throw error;
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  const args = process.argv.slice(2);
+  if (args.length && (args.length !== 2 || args[0] !== "--runtime"))
+    throw new Error("Usage: script [--runtime /absolute/path/to/openclaw]");
+  const require = createRequire(new URL("../packages/kernel-runtime/package.json", import.meta.url));
+  const runtime = args.length ? resolve(args[1])
+    : resolve(dirname(require.resolve("openclaw/plugin-sdk/gateway-runtime")), "../..");
+  console.log(JSON.stringify(await applyCronResultPatches(runtime), null, 2));
 }
-console.log(`Patched: ${file}\nBackup: ${backup}`);

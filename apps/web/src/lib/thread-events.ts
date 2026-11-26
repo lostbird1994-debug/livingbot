@@ -13,6 +13,7 @@ import {
   isActive,
   isBackgroundRunTrigger,
   isRunTerminalEvent,
+  isRunWorking,
   mergeThreadHistory,
   prependThreadHistoryPage,
   progressMessageId,
@@ -74,6 +75,19 @@ export function activeThreadRuns(
   snapshot: ThreadSnapshot | null,
 ): NonNullable<ThreadSnapshot["activeRuns"]> {
   return snapshot?.activeRuns ?? (snapshot?.run ? [snapshot.run] : []);
+}
+
+/**
+ * Runs still working on this thread. A reply carries the id of the run that produced it, so this
+ * tells the chat which reply is speaking right now — an earlier turn's answer stays folded even
+ * while the next one is queued.
+ */
+export function workingThreadRunIds(snapshot: ThreadSnapshot | null): ReadonlySet<string> {
+  return new Set(
+    activeThreadRuns(snapshot)
+      .filter((run) => isRunWorking(run.status))
+      .map((run) => run.id),
+  );
 }
 
 /**
@@ -573,7 +587,13 @@ export function reduceThreadSnapshot(
     const liveId = progressMessageId(event);
     const { remaining } = takeLiveMessage(prev.messages, liveId);
     const without = remaining.filter((message) => !replacedSubagent(message, replacedSubagentIds));
-    return { ...prev, cursor: event.seq, messages: upsertMessageById(without, next) };
+    const messages = upsertMessageById(without, next);
+    // Local history can deliver a newly restored continuation after a later user
+    // input. Match its durable ordering instead of its network arrival order.
+    if (event.payload.localTranscript === true) {
+      messages.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+    }
+    return { ...prev, cursor: event.seq, messages };
   }
   return prev;
 }

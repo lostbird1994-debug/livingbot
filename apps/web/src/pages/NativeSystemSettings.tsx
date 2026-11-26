@@ -303,10 +303,10 @@ export function NativeAdvancedSettings({
   onBusyChange?: (busy: boolean) => void;
   botId?: string;
 }) {
-  const state = useNativeSettings<AuditView>(botId ? `/api/bots/${encodeURIComponent(botId)}/capability-audit` : "/api/system/advanced");
-  const [migrationOpen, setMigrationOpen] = useState(false);
-  const [migrationBusy, setMigrationBusy] = useState(false);
-  const busy = state.busy || migrationBusy;
+  const state = useNativeSettings<AuditView>(
+    botId ? `/api/bots/${encodeURIComponent(botId)}/capability-audit` : "/api/system/advanced",
+  );
+  const busy = state.busy;
   useEffect(() => {
     onBusyChange?.(busy);
     return () => onBusyChange?.(false);
@@ -314,10 +314,34 @@ export function NativeAdvancedSettings({
   const [draft, setDraft] = useState<AuditSettingsInput>();
   useEffect(() => {
     if (state.data) {
-      const { enabled, cadence, hour, minute, weekday, timezone } = state.data;
-      setDraft({ enabled, cadence, hour, minute, weekday, timezone });
+      const {
+        enabled,
+        cadence,
+        hour,
+        minute,
+        weekday,
+        timezone,
+        mode,
+        consolidateVersions,
+        scopeConfirmed,
+      } = state.data;
+      setDraft({
+        enabled,
+        cadence,
+        hour,
+        minute,
+        weekday,
+        timezone,
+        ...(botId
+          ? {
+              mode: mode ?? "confirm",
+              consolidateVersions: consolidateVersions ?? false,
+              scopeConfirmed: scopeConfirmed ?? false,
+            }
+          : {}),
+      });
     }
-  }, [state.data]);
+  }, [state.data, botId]);
   const patch = (value: Partial<AuditSettingsInput>) =>
     setDraft((current) => current && { ...current, ...value });
   return (
@@ -327,9 +351,13 @@ export function NativeAdvancedSettings({
         !state.error && <LoadingState label="正在读取高级设置" />
       ) : (
         <>
-          <SettingsGroup title={botId ? "专属能力审计" : "共享能力审计"}>
+          <SettingsGroup title={botId ? "Bot 体检" : "共享能力审计"}>
             <SettingsRow
-              label={<Label htmlFor={botId ? `ability-audit-${botId}` : "ability-audit"}>定期审计</Label>}
+              label={
+                <Label htmlFor={botId ? `ability-audit-${botId}` : "ability-audit"}>
+                  {botId ? "定期体检" : "定期审计"}
+                </Label>
+              }
               control={
                 <Switch
                   id={botId ? `ability-audit-${botId}` : "ability-audit"}
@@ -339,12 +367,62 @@ export function NativeAdvancedSettings({
                 />
               }
             />
-            <ScheduleFields
-              value={draft}
-              onChange={patch}
-              disabled={busy || !draft.enabled}
-            />
+            <ScheduleFields value={draft} onChange={patch} disabled={busy || !draft.enabled} />
             <SettingsRow label="时区" control={<span className="text-sm">{draft.timezone}</span>} />
+            {botId && (
+              <>
+                <SettingsRow
+                  label="体检完成后"
+                  control={
+                    <NativeSelect
+                      aria-label="体检完成后"
+                      value={draft.mode ?? "confirm"}
+                      disabled={busy}
+                      onChange={(event) =>
+                        patch({ mode: event.target.value as "confirm" | "silent" })
+                      }
+                    >
+                      <NativeSelectOption value="confirm">发送报告，确认后优化</NativeSelectOption>
+                      <NativeSelectOption value="silent">静默处理已授权事项</NativeSelectOption>
+                    </NativeSelect>
+                  }
+                />
+                {draft.mode === "silent" && (
+                  <>
+                    <p className="px-4 py-3 text-sm text-muted-foreground">
+                      首次只检查并发送报告。之后可自动整理体检记录；旧版本按下方开关处理。
+                    </p>
+                    <SettingsRow
+                      label="自动清理相同副本"
+                      control={
+                        <Switch
+                          aria-label="自动清理相同副本"
+                          checked={draft.consolidateVersions ?? false}
+                          disabled={busy}
+                          onCheckedChange={(consolidateVersions) => patch({ consolidateVersions })}
+                        />
+                      }
+                    />
+                    <p className="px-4 py-3 text-sm text-muted-foreground">
+                      保留一份，将确认不再使用的相同文件移入废纸篓。内容不同的版本仍先问你。
+                    </p>
+                  </>
+                )}
+                {draft.enabled && !state.data?.scopeConfirmed && (
+                  <SettingsRow
+                    label="允许检查本 Bot 的工作区、上下文、记忆和专属技能"
+                    control={
+                      <Switch
+                        aria-label="允许体检范围"
+                        checked={draft.scopeConfirmed ?? false}
+                        disabled={busy}
+                        onCheckedChange={(scopeConfirmed) => patch({ scopeConfirmed })}
+                      />
+                    }
+                  />
+                )}
+              </>
+            )}
             {state.data?.routine && (
               <SettingsRow
                 label="下次执行"
@@ -356,16 +434,21 @@ export function NativeAdvancedSettings({
               />
             )}
           </SettingsGroup>
-          <details>
-            <summary className="cursor-pointer text-sm">查看审计指令</summary>
-            <Textarea
-              aria-label="能力审计指令"
-              className="mt-3 min-h-64 text-sm"
-              readOnly
-              value={state.data?.instructions ?? ""}
-            />
-          </details>
-          <Button disabled={busy} onClick={() => void state.save(draft)}>
+          {!botId && (
+            <details>
+              <summary className="cursor-pointer text-sm">查看审计指令</summary>
+              <Textarea
+                aria-label="能力审计指令"
+                className="mt-3 min-h-64 text-sm"
+                readOnly
+                value={state.data?.instructions ?? ""}
+              />
+            </details>
+          )}
+          <Button
+            disabled={busy || !!(botId && draft.enabled && !draft.scopeConfirmed)}
+            onClick={() => void state.save(draft)}
+          >
             {busy ? "正在保存…" : "保存"}
           </Button>
           {state.data?.routine?.error && (
@@ -374,22 +457,6 @@ export function NativeAdvancedSettings({
             </p>
           )}
         </>
-      )}
-      {!botId && (
-        <details
-          className="border-t border-border pt-4"
-          onToggle={(event) => setMigrationOpen(event.currentTarget.open)}
-        >
-          <summary
-            className="cursor-pointer text-sm"
-            onClick={(event) => { if (migrationBusy) event.preventDefault(); }}
-          >迁移旧版数据</summary>
-          {migrationOpen && (
-            <fieldset className="mt-5" disabled={state.busy}>
-              <LocalKnowledgeSettings view="data" onBusyChange={setMigrationBusy} />
-            </fieldset>
-          )}
-        </details>
       )}
     </div>
   );

@@ -148,3 +148,61 @@ test("a startup deadline retains the last handshake error instead of hiding its 
   await assert.rejects(runtime.start(), /Kernel startup deadline exceeded: Synthetic handshake rejected/);
   assert.equal(runtime.phase, "failed");
 });
+
+test("cold startup retries a terminal credential-preparation race without restarting the Gateway", async (t) => {
+  const { runtime } = await fixture(t);
+  let attempts = 0;
+  let retired = 0;
+  let subscriptions = 0;
+  let firstPid: number | undefined;
+  runtime.options.peerFactory = async (options) => {
+    const attempt = ++attempts;
+    return {
+      start() {
+        firstPid ??= runtime.processId;
+        assert.equal(runtime.processId, firstPid);
+        if (attempt === 1) {
+          options.onConnectError(Object.assign(new Error("Credential preparation pending"), {
+            code: "gateway.maintenance_required", kind: "state-migrations",
+          }));
+          options.onClose(1006, "Credential preparation pending");
+        } else options.onHelloOk({ server: { version: "synthetic" } });
+      },
+      async stopAndWait() { if (attempt === 1) retired++; },
+      async request<T>(method: string) {
+        if (method === "sessions.subscribe") subscriptions++;
+        return {} as T;
+      },
+    };
+  };
+  await runtime.start();
+  assert.equal(runtime.phase, "ready");
+  assert.equal(attempts, 2);
+  assert.equal(retired, 1);
+  assert.equal(subscriptions, 1);
+  assert.equal(runtime.generation, 1);
+  await runtime.stop();
+});
+
+test("credential retries remain bounded by the startup deadline", async (t) => {
+  const { runtime } = await fixture(t);
+  runtime.options.startupTimeoutMs = 650;
+  let attempts = 0;
+  let stopped = 0;
+  runtime.options.peerFactory = async (options) => ({
+    start() {
+      attempts++;
+      options.onConnectError(Object.assign(new Error("Credential preparation pending"), {
+        code: "gateway.maintenance_required", kind: "state-migrations",
+      }));
+    },
+    async stopAndWait() { stopped++; },
+    async request() { throw new Error("Not connected"); },
+  });
+  await assert.rejects(runtime.start(), /startup deadline exceeded: Credential preparation pending/);
+  assert.equal(runtime.phase, "failed");
+  assert.equal(attempts, 2);
+  assert.equal(stopped, 2);
+  await new Promise(resolve => setTimeout(resolve, 550));
+  assert.equal(attempts, 2);
+});

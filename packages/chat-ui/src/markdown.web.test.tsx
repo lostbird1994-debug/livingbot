@@ -17,6 +17,82 @@ import {
   useLinkPrompt,
 } from "./markdown.web";
 
+describe("web markdown autolink boundaries", () => {
+  it.each(["*", "**", "***", "_", "__", "~~"])(
+    "preserves %s formatting around bare links",
+    (marker) => {
+      const container = document.createElement("div");
+      container.innerHTML = renderToStaticMarkup(
+        <ChatMarkdown>{`打开 ${marker}https://example.test/setup${marker}，继续操作。`}</ChatMarkdown>,
+      );
+      expect(container.querySelector("a")?.getAttribute("href")).toBe("https://example.test/setup");
+      expect(container.textContent).not.toContain(marker);
+      expect(container.querySelector("em, strong, del")).not.toBeNull();
+    },
+  );
+
+  it.each([false, true])(
+    "keeps bold markers and Chinese prose out of links (streaming=%s)",
+    (streaming) => {
+      const container = document.createElement("div");
+      container.innerHTML = renderToStaticMarkup(
+        <ChatMarkdown streaming={streaming}>
+          {"打开 **https://example.test/setup**，用你的账号登录。"}
+        </ChatMarkdown>,
+      );
+      expect(container.querySelector("a")?.getAttribute("href")).toBe("https://example.test/setup");
+      expect(container.querySelector("strong a")).not.toBeNull();
+      expect(container.textContent).not.toContain("**");
+      expect(container.textContent).toContain("，用你的账号登录。");
+    },
+  );
+
+  it("separates Chinese punctuation from bare URLs without changing explicit links or code", () => {
+    const container = document.createElement("div");
+    container.innerHTML = renderToStaticMarkup(
+      <ChatMarkdown>
+        {
+          "访问 https://example.test/文档?名称=测试，或 https://example.test/other。参见 [精确地址](https://example.test/路径，内容)。\n\n`**https://example.test/code**，原文`\n\n```text\n**https://example.test/fence**，原文\n```"
+        }
+      </ChatMarkdown>,
+    );
+    expect(
+      Array.from(container.querySelectorAll("a"), (link) =>
+        decodeURI(link.getAttribute("href") ?? ""),
+      ),
+    ).toEqual([
+      "https://example.test/文档?名称=测试",
+      "https://example.test/other",
+      "https://example.test/路径，内容",
+    ]);
+    expect(container.querySelector("code")?.textContent).toBe(
+      "**https://example.test/code**，原文",
+    );
+    expect(container.querySelector("pre code")?.textContent).toContain(
+      "**https://example.test/fence**，原文",
+    );
+  });
+
+  it("keeps URL escapes, queries, explicit angle links and Markdown labels intact", () => {
+    const container = document.createElement("div");
+    container.innerHTML = renderToStaticMarkup(
+      <ChatMarkdown>
+        {
+          '打开 **https://example.test/a_(b)?x=1&next=%2Fhome%EF%BC%8C**，继续。\n\n<https://example.test/路径，内容>\n\n[**完整链接**](https://example.test/a**?x=1 "原始标题")'
+        }
+      </ChatMarkdown>,
+    );
+    expect(
+      Array.from(container.querySelectorAll("a"), (link) => link.getAttribute("href")),
+    ).toEqual([
+      "https://example.test/a_(b)?x=1&next=%2Fhome%EF%BC%8C",
+      encodeURI("https://example.test/路径，内容"),
+      "https://example.test/a**?x=1",
+    ]);
+    expect(container.querySelector("a[title]")?.getAttribute("title")).toBe("原始标题");
+  });
+});
+
 describe("web markdown remote images", () => {
   it("loads a remote image in place only after the reader asks", async () => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);

@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { LivingBotDesktop } from "../../lib/desktop";
 import type { ShellShortcut, ShortcutHost } from "./shell-shortcuts";
-import { cycleBotId, shellShortcut, startsTyping, useShellShortcuts } from "./shell-shortcuts";
+import { cycleBotId, shellShortcut, shortcutGuide, startsTyping, useShellShortcuts } from "./shell-shortcuts";
 
 function keyEvent(
   partial: Partial<Omit<KeyboardEvent, "target">> &
@@ -148,6 +148,23 @@ describe("startsTyping", () => {
     expect(startsTyping(keyEvent({ key: "Enter" }))).toBe(false);
     expect(startsTyping(keyEvent({ key: "h", isComposing: true }))).toBe(false);
     expect(startsTyping(keyEvent({ key: "h", target: textarea }))).toBe(false);
+  });
+});
+
+describe("shortcutGuide", () => {
+  it("lists the chords each host actually answers", () => {
+    const desktop = shortcutGuide({ desktop: true, apple: true });
+    const keys = desktop.flatMap((group) => group.rows.map((row) => row.keys));
+    expect(keys).toContain("⌘ K");
+    expect(keys).toContain("⌘ F");
+    expect(keys).toContain("Ctrl ⇧ Tab");
+    expect(keys).toContain("⌥ Space");
+
+    const browser = shortcutGuide({ desktop: false, apple: false });
+    const browserKeys = browser.flatMap((group) => group.rows.map((row) => row.keys));
+    // A browser owns Cmd/Ctrl-F and the tab chords, so the page never claims them there.
+    expect(browserKeys).not.toContain("Ctrl F");
+    expect(browserKeys).toContain("Ctrl K");
   });
 });
 

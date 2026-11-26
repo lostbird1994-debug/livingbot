@@ -10,6 +10,7 @@ import {
   SandboxAllowanceUsedError,
   SandboxRateLimitError,
   TransientModelError,
+  turnTitleJob,
 } from "@livingbot/adapter-kit";
 import {
   appendReasoningSegment,
@@ -1006,6 +1007,15 @@ export async function completeRun(ctx: RunContext) {
     }
   } catch (error) {
     getLogger().error("history.compact enqueue failed", error);
+  }
+  // The margin names the turns a person opened. Routine and background work has nobody
+  // reading a list of it, so those turns stay unnamed and never pay for a title call.
+  if (run.sourceMessageId && run.trigger !== "routine" && !isBackgroundRunTrigger(run.trigger)) {
+    try {
+      await deps.jobs.enqueue(turnTitleJob(thread.id, run.sourceMessageId));
+    } catch (error) {
+      getLogger().error("turn.title enqueue failed", error);
+    }
   }
   try {
     const scope = { spaceId: run.spaceId, userId: run.userId, botId: bot.id };

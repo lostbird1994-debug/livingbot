@@ -182,8 +182,8 @@ msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
 
 #: src/pages/shell/dialogs.tsx
-msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
-msgstr "{botCount, plural, other {删除 {name} 及其 # 个机器人？}}"
+msgid "{botCount, plural, one {Delete {name} and archive its # bot?} other {Delete {name} and archive its # bots?}}"
+msgstr "{botCount, plural, other {删除 {name} 并归档其中的 # 个 Bot？}}"
 
 #: src/pages/shell/computer-view.tsx
 msgid "{botName}’s computer"
@@ -236,10 +236,6 @@ msgstr "{fromName}至{toName}"
 #: src/components/markdown-copy.tsx
 msgid "{header}, column {index}"
 msgstr "{header}，第 {index} 列"
-
-#: src/components/ToolActivityDisclosure.tsx
-#~ msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
-#~ msgstr "{hidden, plural, one {+# 个更早的步骤} other {+# 个更早的步骤}}"
 
 #: src/components/ToolActivityDisclosure.tsx
 msgid "{hidden, plural, one {Show # earlier step} other {Show # earlier steps}}"
@@ -679,7 +675,6 @@ msgstr "调整外观"
 #: src/pages/Onboarding.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
-#: src/pages/shell/bot-panel.tsx
 msgid "Advanced"
 msgstr "高级"
 
@@ -872,10 +867,6 @@ msgstr "外观 · 此设备"
 #: src/pages/Shell.tsx
 msgid "Appearance: {0}"
 msgstr ""
-
-#: src/pages/SettingsOverlay.tsx
-msgid "Applies to every workspace"
-msgstr "对所有工作区生效"
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -1232,7 +1223,7 @@ msgstr "内置"
 msgid "Cache hit"
 msgstr "缓存命中"
 
-#: src/pages/shell/chat-header.tsx
+#: src/pages/shell/composer.tsx
 msgid "Call"
 msgstr "通话"
 
@@ -1299,10 +1290,6 @@ msgstr "无法读取图像"
 #: src/pages/SpaceSettingSection.tsx
 msgid "Cancel"
 msgstr "取消"
-
-#: src/components/composer/DictationInput.tsx
-msgid "Cancel dictation"
-msgstr "取消语音输入"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new bot"
@@ -1668,7 +1655,6 @@ msgid "Completed {duration}"
 msgstr "已完成 {duration}"
 
 #: src/pages/settings-nav.ts
-#: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
 msgstr "电脑"
@@ -3766,6 +3752,10 @@ msgid "Its bots and groups are kept and leave the section."
 msgstr "其中的 Bot 和群组会保留，并移出该分组。"
 
 #: src/pages/shell/dialogs.tsx
+msgid "Its Bots will be archived in the local space and their routines paused. Chats and files will be kept."
+msgstr "其中的 Bot 将归档到本机，例行任务暂停。会话和文件会保留。"
+
+#: src/pages/shell/dialogs.tsx
 msgid "Its conversation, files, and routines will be permanently deleted. Bots it created stay in your list."
 msgstr "它的对话、文件和例行任务将被永久删除。它创建的 Bot 仍留在列表中。"
 
@@ -3832,10 +3822,6 @@ msgid "Latest model calls"
 msgstr "本次模型调用"
 
 #: src/pages/shell/composer-usage.tsx
-msgid "Latest model time"
-msgstr "本次模型耗时"
-
-#: src/pages/shell/composer-usage.tsx
 msgid "Latest output (including reasoning)"
 msgstr "本次输出（含推理）"
 
@@ -3890,8 +3876,8 @@ msgid "Listening…"
 msgstr "正在聆听…"
 
 #: src/components/composer/DictationInput.tsx
-msgid "Listening… Click the microphone to finish."
-msgstr "正在聆听…点击麦克风结束。"
+msgid "Listening… Click the bars to finish."
+msgstr "正在聆听…点击声波结束。"
 
 #: src/components/ToolActivityDisclosure.tsx
 msgid "Listing files"
@@ -3964,10 +3950,6 @@ msgstr "正在加载预览…"
 #: src/pages/ScratchpadSection.tsx
 msgid "Loading tasks…"
 msgstr "正在加载待办…"
-
-#: src/pages/shell/composer-usage.tsx
-msgid "Loading usage…"
-msgstr "正在读取用量…"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
@@ -4353,6 +4335,7 @@ msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "每月额度在续订时到期。充值额度不会过期。"
 
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/chat-header.tsx
 #: src/pages/shell/message-hover-actions.tsx
 msgid "More"
 msgstr "更多"
@@ -4514,10 +4497,6 @@ msgstr "新待办"
 #: src/components/markdown-copy.tsx
 msgid "Next page"
 msgstr "下一页"
-
-#: src/pages/SettingsOverlay.tsx
-msgid "Next settings sections"
-msgstr "下一组设置项"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "No apps match your search."
@@ -4826,10 +4805,6 @@ msgstr "打开 {name}"
 #: src/pages/Onboarding.tsx
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "打开 <0>{0}</0>，输入这个验证码："
-
-#: src/pages/shell/chat-header.tsx
-msgid "Open call"
-msgstr "打开通话"
 
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
@@ -5167,10 +5142,6 @@ msgstr "这种文件无法预览，请下载后查看。"
 msgid "Previous page"
 msgstr "上一页"
 
-#: src/pages/SettingsOverlay.tsx
-msgid "Previous settings sections"
-msgstr "上一组设置项"
-
 #: src/pages/Board.tsx
 msgid "Priority"
 msgstr "优先级"
@@ -5182,10 +5153,6 @@ msgstr "私有"
 #: src/pages/shell/bot-picker.tsx
 msgid "Private workspace with its own bots and groups."
 msgstr "单独的工作区，有自己的 Bot 和群组。"
-
-#: src/components/ToolActivityDisclosure.tsx
-#~ msgid "Processed {duration}"
-#~ msgstr "已处理 {duration}"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
@@ -5375,6 +5342,7 @@ msgstr "重定向 URI"
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
+#: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/shell/bot-files-panel.tsx
 msgid "Refresh"
 msgstr "刷新"
@@ -6163,8 +6131,8 @@ msgid "Show selected"
 msgstr "显示已选"
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Show tool activity"
-msgstr "显示工具活动"
+msgid "Show thinking and tool activity"
+msgstr "显示思考与执行过程"
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Show transcript"
@@ -6927,6 +6895,10 @@ msgstr "请重试测试。"
 msgid "Tuesday"
 msgstr "周二"
 
+#: src/pages/shell/turn-rail.tsx
+msgid "Turns in this chat"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 msgid "Type"
 msgstr "类型"
@@ -7050,10 +7022,6 @@ msgstr "紧急"
 #: src/pages/settings-nav.ts
 msgid "Usage"
 msgstr "用量"
-
-#: src/pages/shell/composer-usage.tsx
-msgid "Usage unavailable"
-msgstr "用量暂不可用"
 
 #. Switches the saved timezone to this device's, e.g. 'Use Pacific/Auckland'
 #. placeholder {0}: deviceTimezone.replaceAll("_", " ")
@@ -7646,6 +7614,10 @@ msgstr "摆烂也是一种活法；她掷到不看时会写日记说明理由"
 msgid "未配置"
 msgstr "未配置"
 
+#: src/pages/shell/composer-usage.tsx
+msgid "模型请求耗时"
+msgstr ""
+
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "正在读她的设置…"
 msgstr "正在读她的设置…"
@@ -7713,7 +7685,3 @@ msgstr "重试"
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "首次配置请同时填写 SESSDATA 和 bili_jct"
 msgstr "首次配置请同时填写 SESSDATA 和 bili_jct"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Show thinking and tool activity"
-msgstr "显示思考与执行过程"

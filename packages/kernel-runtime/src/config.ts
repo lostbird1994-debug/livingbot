@@ -111,6 +111,7 @@ export function buildKernelConfig(
       defaults: {
         workspace: join(paths.workspaces, agents[0]!.id),
         systemAgent: { agentId: agents[0]!.id },
+        authInheritance: { agentId: agents[0]!.id },
         ...(connection
           ? {
               model: { primary: `${connection.id}/${connection.model}` },
@@ -145,6 +146,9 @@ export function buildKernelConfig(
       entries: { "memory-core": { enabled: true }, "active-memory": { enabled: true } },
     },
     tools: { sessions: { visibility: "self" }, agentToAgent: { enabled: false } },
+    // Keep the always-present skill directory compact; full skill instructions
+    // remain available through on-demand skill reads.
+    skills: { limits: { maxSkillsPromptChars: 8_000 } },
   };
   if (connection) {
     if (!/^[a-z][a-z0-9-]{0,63}$/.test(connection.id))

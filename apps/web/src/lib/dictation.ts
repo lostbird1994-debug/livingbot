@@ -12,7 +12,7 @@ import { DictationStream } from "./dictation-stream.js";
 import { getActiveUiLocale } from "./i18n.js";
 import { selectedSpaceId, withSpaceHeaders } from "./rpc.js";
 import { errorText, voiceAccountErrorText } from "./user-error.js";
-import { localVoiceFetch } from "./local-workbench.js";
+import { localVoiceFetch, localVoiceHeaders } from "./local-workbench.js";
 
 export type DictationMode = "hold" | "endpoint";
 
@@ -47,8 +47,13 @@ const ENDPOINT_TICK_MS = 80;
 const SILENCE_RMS = 0.012;
 export const TRANSCRIPTION_RESPONSE_TIMEOUT_MS = 70_000;
 export const MAX_TRANSCRIPTION_RESPONSE_BYTES = 64 * 1024;
-/** Web Speech codes that mean the cloud recognizer cannot be used. */
-const WEB_SPEECH_SERVICE_ERRORS = new Set(["network", "service-not-allowed"]);
+/** Web Speech codes that mean the cloud recognizer cannot be used. A recognizer with no
+ * model for the UI language counts: a configured provider can still transcribe the clip. */
+const WEB_SPEECH_SERVICE_ERRORS = new Set([
+  "network",
+  "service-not-allowed",
+  "language-not-supported",
+]);
 
 export function webSpeechAvailable(): boolean {
   return Boolean(speechRecognitionCtor());
@@ -204,7 +209,12 @@ export class Dictation {
     for (const watcher of [...this.watchers]) watcher(next);
   }
 
-  stop(reason: "submit" | "cancel" | "replace" = "cancel") {
+  /**
+   * `silent` keeps the caller's UI out of the teardown: starting a session disposes the
+   * previous one first, and a subscriber must not read that disposal as "this session just
+   * ended" — it would close the bar the user had only just opened.
+   */
+  stop(reason: "submit" | "cancel" | "replace" = "cancel", silent = false) {
     this.token += 1;
     this.transcribeAbort?.abort();
     this.transcribeAbort = null;
@@ -239,7 +249,7 @@ export class Dictation {
     }
     this.chunks = [];
     this.onFinal = null;
-    if (this.snapshot.status !== "idle" || this.snapshot.error) this.set(IDLE);
+    if (!silent && (this.snapshot.status !== "idle" || this.snapshot.error)) this.set(IDLE);
   }
 
   async listen(opts: {
@@ -248,7 +258,7 @@ export class Dictation {
     endpointMs?: number;
     onFinal: (text: string) => void;
   }): Promise<void> {
-    this.stop("replace");
+    this.stop("replace", true);
     const mine = this.token;
     const spaceId = selectedSpaceId();
     this.onFinal = opts.onFinal;
@@ -467,28 +477,30 @@ export class Dictation {
     this.turnAt = 0;
     this.soundAt = 0;
     this.streamTap = tap;
-    void tap
-      .start(
-        stream,
-        withSpaceHeaders({}, spaceId),
-        (text) => {
-          if (this.token !== mine || this.snapshot.status !== "listening") return;
-          this.set({ status: "listening", transcript: combineTranscript(keptText, text) });
-        },
-        undefined,
-        (turn) => {
-          if (this.token !== mine || this.streamTap !== tap || mode !== "endpoint") return;
-          this.turnAt = Date.now();
-          if (
-            turn.complete &&
-            turn.silenceMs >= endpointMs &&
-            Date.now() - this.soundAt >= endpointMs &&
-            this.media?.state === "recording"
-          ) {
-            this.stopVad();
-            this.media.stop();
-          }
-        },
+    void localVoiceHeaders(withSpaceHeaders({}, spaceId))
+      .then((headers) =>
+        tap.start(
+          stream,
+          headers,
+          (text) => {
+            if (this.token !== mine || this.snapshot.status !== "listening") return;
+            this.set({ status: "listening", transcript: combineTranscript(keptText, text) });
+          },
+          undefined,
+          (turn) => {
+            if (this.token !== mine || this.streamTap !== tap || mode !== "endpoint") return;
+            this.turnAt = Date.now();
+            if (
+              turn.complete &&
+              turn.silenceMs >= endpointMs &&
+              Date.now() - this.soundAt >= endpointMs &&
+              this.media?.state === "recording"
+            ) {
+              this.stopVad();
+              this.media.stop();
+            }
+          },
+        ),
       )
       .then((streaming) => {
         if (this.token !== mine || this.streamTap !== tap || !streaming) {

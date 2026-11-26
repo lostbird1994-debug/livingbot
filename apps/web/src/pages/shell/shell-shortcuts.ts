@@ -74,6 +74,58 @@ export function shellShortcut(event: KeyboardEvent, host: ShortcutHost): ShellSh
   return null;
 }
 
+export type ShortcutGuide = { title: string; rows: { keys: string; label: string }[] };
+
+/**
+ * The same chords as a list for Settings. Every row here is one `shellShortcut` answers, plus the
+ * keys the composer and the voice mode own, so the page never promises a key that does nothing.
+ */
+export function shortcutGuide(host: ShortcutHost): ShortcutGuide[] {
+  const cmd = host.apple ? "⌘" : "Ctrl";
+  const alt = host.apple ? "⌥" : "Alt";
+  const shift = host.apple ? "⇧" : "Shift";
+  const chat: ShortcutGuide = {
+    title: "对话",
+    rows: [
+      { keys: `${cmd} N`, label: "新建对话" },
+      { keys: "Enter", label: "发送消息" },
+      { keys: `${cmd} Enter`, label: "发送消息（关掉回车发送后）" },
+      { keys: `${cmd} ${shift} M`, label: "开始听写" },
+    ],
+  };
+  const navigation: ShortcutGuide = {
+    title: "导航",
+    rows: [
+      { keys: `${cmd} K`, label: "命令菜单" },
+      { keys: `${cmd} B`, label: "显示或隐藏侧栏" },
+      {
+        keys: host.desktop ? `Ctrl ${shift} Tab` : `${cmd} ${shift} ↑`,
+        label: "上一个 Bot",
+      },
+      {
+        keys: host.desktop ? "Ctrl Tab" : `${cmd} ${shift} ↓`,
+        label: "下一个 Bot",
+      },
+    ],
+  };
+  if (!host.desktop) return [chat, navigation];
+  return [
+    chat,
+    navigation,
+    {
+      title: "窗口",
+      rows: [
+        { keys: `${cmd} F`, label: "搜索侧栏" },
+        { keys: `${cmd} 1–9`, label: "切换到第 N 个 Bot" },
+        { keys: host.apple ? `${cmd} [` : `${alt} ←`, label: "后退" },
+        { keys: host.apple ? `${cmd} ]` : `${alt} →`, label: "前进" },
+        { keys: `${cmd} ,`, label: "打开设置" },
+        { keys: `${alt} Space`, label: "语音助手" },
+      ],
+    },
+  ];
+}
+
 /** A printable key pressed outside any text field, which belongs in the composer. */
 export function startsTyping(event: KeyboardEvent) {
   return (

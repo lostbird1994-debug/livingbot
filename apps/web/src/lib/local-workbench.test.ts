@@ -385,6 +385,46 @@ it("preserves native waiting/run/question identities and actual file size in the
   });
 });
 
+it.each(["threads.fileInfo", "threads.filePreview", "threads.fileAction"])(
+  "rejects a source path in %s without requesting a path as an artifact ID",
+  async (method) => {
+    await expect(localRpc(method, {
+      botId: "bot-1", messageId: "msg-1", path: "/source.xlsx", action: "open",
+    })).rejects.toThrow("这条消息没有交付该文件");
+    expect(calls.some((call) => call.path.startsWith("/api/files/"))).toBe(false);
+  },
+);
+
+it.each(["threads.fileInfo", "threads.filePreview", "threads.fileAction"])(
+  "does not borrow another reply's delivered file in %s",
+  async (method) => {
+    await expect(localRpc(method, {
+      botId: "bot-1", messageId: "other-message", path: "file-1", action: "open",
+    })).rejects.toThrow("这条消息没有交付该文件");
+    expect(calls.some((call) => call.path.startsWith("/api/files/"))).toBe(false);
+  },
+);
+
+it("requires a message identity before looking up message files", async () => {
+  await expect(localRpc("threads.fileInfo", { botId: "bot-1", path: "file-1" }))
+    .rejects.toThrow("缺少消息标识");
+  expect(calls.some((call) => call.path.startsWith("/api/files/"))).toBe(false);
+});
+
+it("reads real metadata and previews only the artifact delivered by the selected message", async () => {
+  await expect(localRpc("threads.fileInfo", {
+    botId: "bot-1", messageId: "msg-1", path: "/tasks/result.md",
+  })).resolves.toEqual({ path: "/tasks/result.md", name: "result.md", size: 6 });
+  await expect(localRpc("threads.filePreview", {
+    botId: "bot-1", messageId: "msg-1", path: "file-1",
+  })).resolves.toEqual({ name: "result.md", text: "交付" });
+  await expect(localRpc("threads.fileAction", {
+    botId: "bot-1", messageId: "msg-1", path: "file-1", action: "reveal",
+  })).resolves.toEqual({ ok: true });
+  expect(calls.filter((call) => call.path.startsWith("/api/files/")).map((call) => call.path))
+    .toEqual(["/api/files/file-1", "/api/files/file-1", "/api/files/file-1", "/api/files/file-1/action"]);
+});
+
 it("answers the exact interaction with the native resolution and field identities", async () => {
   expect(
     await localRpc("threads.answer", {
@@ -401,6 +441,43 @@ it("answers the exact interaction with the native resolution and field identitie
   await expect(
     localRpc("threads.answer", { messageId: "different", runId: "run-1", answer: "local" }),
   ).rejects.toThrow();
+});
+
+it("maps native credential prompts to masked asks and submits only through the credential route", async () => {
+  Object.assign(prompt, { secureInput: { name: "EXAMPLE_KEY", allowedHosts: ["api.example.test"] } });
+  try {
+    const snapshot = ThreadSnapshotSchema.parse(await localRpc("threads.get", { botId: "bot-1" }));
+    expect(snapshot.messages[1]?.blocks[0]).toMatchObject({ input: "secret", text: "EXAMPLE_KEY" });
+    await localRpc("threads.answer", {
+      botId: "bot-1", messageId: prompt.id, runId: "run-1", answer: "fake-sensitive-value", clientNonce: "secure-one",
+    });
+    expect(calls.at(-1)).toEqual({
+      path: "/api/tasks/task-1/interactions/question%3Aone/credential",
+      body: { resolutionId: "secure-one", value: "fake-sensitive-value" },
+    });
+    expect(calls.filter((call) => call.path.endsWith("/resolve"))).toHaveLength(0);
+  } finally { Reflect.deleteProperty(prompt, "secureInput"); }
+});
+
+it("maps arbitrary credential fields to the declared connection keys and supports cancellation", async () => {
+  Object.assign(prompt, { secureInput: { name: "notes", allowedHosts: [], connection: {
+    name: "notes", target: "env", fields: [
+      { key: "EXAMPLE_ID", label: "Client ID" }, { key: "EXAMPLE_KEY", label: "API Key" },
+    ],
+  } } });
+  try {
+    const snapshot = ThreadSnapshotSchema.parse(await localRpc("threads.get", { botId: "bot-1" }));
+    expect(snapshot.messages[1]?.blocks[0]).toMatchObject({
+      input: "secret", secureConnection: "notes", loginFields: ["Client ID", "API Key"],
+    });
+    await localRpc("threads.answer", {
+      botId: "bot-1", messageId: prompt.id, runId: "run-1", answer: "",
+      fields: [{ label: "Client ID", value: "fake-client", hidden: true }, { label: "API Key", value: "fake-key", hidden: true }],
+    });
+    expect(calls.at(-1)?.body).toEqual({ values: { EXAMPLE_ID: "fake-client", EXAMPLE_KEY: "fake-key" } });
+    await localRpc("threads.answer", { botId: "bot-1", messageId: prompt.id, runId: "run-1", answer: "", dismiss: true });
+    expect(calls.at(-1)?.body).toMatchObject({ cancel: true });
+  } finally { Reflect.deleteProperty(prompt, "secureInput"); }
 });
 
 it("reports cancellation failure instead of claiming the task stopped", async () => {

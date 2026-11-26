@@ -1,4 +1,4 @@
-import { runContinueJob, runJobKey } from "@livingbot/adapter-kit";
+import { runContinueJob, runJobKey, turnTitleJob } from "@livingbot/adapter-kit";
 import { settleCallRequest, validateBotModelChange } from "@livingbot/adapters";
 import type { Actor, ProductEvent } from "@livingbot/contracts";
 import {
@@ -253,6 +253,34 @@ export function threadsRoutes(ctx: RouterContext) {
           includeArchived: true,
         });
         return threadSnapshot(deps, target);
+      }),
+      nameTurns: authed.threads.nameTurns.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input, {
+          includeArchived: true,
+        });
+        // Only messages this person opened a turn with, still unnamed, in this thread: the
+        // client sends what it is showing, so nothing outside the margin ever gets a call.
+        const rows = await deps.prisma.message.findMany({
+          where: {
+            id: { in: input.messageIds },
+            threadId: target.threadId,
+            role: "user",
+            turnTitle: null,
+          },
+          select: { id: true, seq: true, _count: { select: { sourceRuns: true } } },
+          orderBy: { seq: "asc" },
+        });
+        let queued = 0;
+        for (const row of rows) {
+          if (row._count.sourceRuns === 0) continue;
+          // Spread them out: each name is its own short model call.
+          await deps.jobs.enqueue({
+            ...turnTitleJob(target.threadId, row.id),
+            availableAt: new Date(Date.now() + queued * 900),
+          });
+          queued += 1;
+        }
+        return { queued };
       }),
       messages: authed.threads.messages.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input, {

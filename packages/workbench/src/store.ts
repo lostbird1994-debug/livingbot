@@ -1,5 +1,6 @@
 import { hasReplyContent } from "./reply-content.ts";
 import { deliveredMessages } from "./delivery-messages.ts";
+import { interruptedReplyParts, replyPartOwner } from "./interrupted-replies.ts";
 import { createHash, randomUUID } from "node:crypto";
 import { EventEmitter } from "node:events";
 import { DatabaseSync } from "node:sqlite";
@@ -112,7 +113,7 @@ export class WorkbenchStore extends EventEmitter {
     if (!this.get<ProductSpace>("spaces", id)) throw new Error("空间不存在");
     this.transaction(() => {
       for (const bot of this.list<Bot>("bots", -1).filter((entry) => (entry.spaceId ?? DEFAULT_SPACE_ID) === id)) {
-        this.put("bots", { ...bot, spaceId: DEFAULT_SPACE_ID });
+        this.put("bots", { ...bot, spaceId: DEFAULT_SPACE_ID, archivedAt: bot.archivedAt ?? Date.now() });
       }
       for (const conversation of this.list<Conversation>("conversations", -1)
         .filter((entry) => (entry.spaceId ?? DEFAULT_SPACE_ID) === id)) {
@@ -157,7 +158,11 @@ export class WorkbenchStore extends EventEmitter {
 
   get<T>(kind: string, id: string): T | undefined {
     const row = this.db.prepare("SELECT data FROM records WHERE kind=? AND id=?").get(kind, id);
-    return row ? JSON.parse(String(row.data)) as T : undefined;
+    if (row) return JSON.parse(String(row.data)) as T;
+    const ownerId = kind === "messages" ? replyPartOwner(id) : undefined;
+    if (!ownerId) return undefined;
+    const owner = this.get<Message>("messages", ownerId);
+    return owner ? interruptedReplyParts(owner).find((part) => part.id === id) as T | undefined : undefined;
   }
 
   list<T>(kind: string, limit = 1000): T[] {
@@ -482,20 +487,30 @@ export class WorkbenchStore extends EventEmitter {
     return this.put("conversations", { ...created, main: true }, "conversations.main");
   }
 
-  engineSessionKey(conversationId: string, botId: string): string {
+  engineSessionKey(conversationId: string, botId: string, options: { allowArchived?: boolean } = {}): string {
     const conversation = this.get<Conversation>("conversations", conversationId);
     const bot = this.get<Bot>("bots", botId);
     if (!conversation?.botIds.includes(botId) || !bot) throw new Error("Bot is not a conversation member");
-    if (bot.archivedAt !== undefined) throw new Error("请先恢复已归档的 Bot");
+    if (bot.archivedAt !== undefined && !options.allowArchived) throw new Error("请先恢复已归档的 Bot");
     return conversation.kind === "group"
       ? `agent:${bot.agentId}:livingbot:group:${conversation.id}`
       : `agent:${bot.agentId}:explicit:livingbot-${conversation.id}`;
   }
 
   messages(conversationId: string): Message[] {
-    return deliveredMessages(this.find<Message>("messages", "conversationId", conversationId), this.list<Artifact>("artifacts", -1)).filter((message) =>
+    const records = this.find<Message>("messages", "conversationId", conversationId);
+    const inputs = new Set(records.filter((message) => message.role === "user").map((message) => message.id));
+    return deliveredMessages(records, this.list<Artifact>("artifacts", -1))
+      // Health checks publish a separate durable result card. Native inspection
+      // prose/tools remain recorded as evidence without duplicating that report.
+      .filter(message => !(message.role === "assistant" && message.taskId &&
+        this.get<Task>("tasks", message.taskId)?.healthCheckId))
+      .flatMap((message) => interruptedReplyParts(message.interruptions ? { ...message,
+        interruptions: message.interruptions?.filter((cut) => inputs.has(cut.afterMessageId)),
+      } : message)).filter((message) =>
       message.role !== "assistant" || message.final || hasReplyContent(message.blocks) ||
-      !this.get<Task>("tasks", message.taskId ?? "")?.routine);
+      !this.get<Task>("tasks", message.taskId ?? "")?.routine)
+      .sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
   }
 
   /** Messages still in view: a cleared conversation starts empty without losing history. */
@@ -602,7 +617,11 @@ export class WorkbenchStore extends EventEmitter {
         }
         this.engineSessionKey(input.conversationId, input.originBotId);
       }
-      const now = Date.now();
+      const history = this.find<Message>("messages", "conversationId", input.conversationId);
+      // Leave a timestamp between consecutive inputs for each continued reply,
+      // including two inputs accepted in the same millisecond.
+      const now = Math.max(Date.now(), ...history.map((message) =>
+        Math.max(message.createdAt + 1, (message.interruptions?.at(-1)?.createdAt ?? 0) + 2)));
       const task: Task = {
         id: randomUUID(), botId: input.botId, conversationId: input.conversationId,
         reportConversationId, title: input.hiddenInput ? (input.submissionId.startsWith("call-wrapup:") ? "通话收尾" : input.submissionId.startsWith("admin-delegation:") ? "管理员分派" : "开场引导") : input.message.slice(0, 100), status: "queued",
@@ -623,6 +642,28 @@ export class WorkbenchStore extends EventEmitter {
       this.put("tasks", task);
       this.put("submissions", submission);
       const messageId = input.groupSubmissionId ? `group-input:${input.groupSubmissionId}` : `input:${input.submissionId}`;
+      if (!input.hiddenInput && !input.originBotId && !this.get("messages", messageId)) {
+        const runs = this.find<Task>("tasks", "conversationId", input.conversationId)
+          .filter((owner) => !["completed", "failed", "cancelled"].includes(owner.status))
+          .flatMap((owner) => this.find<Run>("runs", "taskId", owner.id));
+        for (const run of runs) {
+          if (!["queued", "running", "waiting", "interrupted"].includes(run.state)) continue;
+          const owner = this.get<Task>("tasks", run.taskId);
+          if (owner?.conversationId !== input.conversationId) continue;
+          const id = `engine:${run.id}`;
+          const reply = this.get<Message>("messages", id) ?? {
+            id, conversationId: owner.conversationId, botId: owner.botId,
+            role: "assistant" as const, taskId: owner.id, runId: run.id,
+            blocks: [], final: false, createdAt: now - 1, updatedAt: now,
+          };
+          if (reply.final) continue;
+          this.put<Message>("messages", { ...reply, updatedAt: now,
+            interruptions: [...(reply.interruptions ?? []), {
+              afterMessageId: messageId, createdAt: now, blocks: reply.blocks,
+            }],
+          });
+        }
+      }
       if (!input.hiddenInput && !this.get("messages", messageId)) this.put<Message>("messages", {
         id: messageId, conversationId: input.conversationId,
         role: input.originBotId ? "assistant" : "user",

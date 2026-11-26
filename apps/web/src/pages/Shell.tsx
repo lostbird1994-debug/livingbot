@@ -19,7 +19,6 @@ import {
   memberName,
 } from "@livingbot/core";
 import { fetchFresh, writeSaved } from "@livingbot/core/query";
-import type { GroupAvatarMember } from "@livingbot/ui-web";
 import { BotAvatar, Button, GroupAvatar } from "@livingbot/ui-web";
 import { useIsMobile } from "@livingbot/ui-web/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
@@ -75,7 +74,9 @@ import type { Panel } from "../lib/right-panel-state";
 import { rightPanelStorageKey } from "../lib/right-panel-state";
 import { createSpaceRpc, selectedSpaceId, selectSpace } from "../lib/rpc";
 import { markShellReady, useSpaceEpoch } from "../lib/space-switch";
-import { activeThreadRuns } from "../lib/thread-events";
+import { activeThreadRuns, workingThreadRunIds } from "../lib/thread-events";
+import { useTurnTitleBackfill } from "../lib/turn-title-backfill";
+import { useTurnRailPreference } from "../lib/turn-rail-preference";
 import { getToolActivityEnabled, subscribeToolActivity } from "../lib/tool-activity-preference";
 import type { AppearancePreference } from "../lib/ui-appearance";
 import {
@@ -179,7 +180,7 @@ function SpaceShell() {
     ? "deliveries"
     : (workspaceView(searchParams.get("view")) ?? (!botId && !groupId ? "bots" : null));
   const settingsOpen = overlay?.kind === "settings";
-  const workspaceOpen = view !== null || settingsOpen;
+  const workspaceOpen = view !== null;
   function openWorkspace(next: WorkspaceView) {
     if (settingsBusy) return;
     setOverlay(null);
@@ -571,6 +572,7 @@ function SpaceShell() {
   );
   const workingRuns = currentRuns.filter((run) => isRunWorking(run.status));
   const transcriptRunning = workingRuns.length > 0;
+  const workingRunIds = useMemo(() => workingThreadRunIds(activeSnapshot), [activeSnapshot]);
   const composerRunning = currentRuns.some((run) => isActive(run.status));
   const conversationUsageQuery = useConversationUsage({
     queries,
@@ -583,10 +585,18 @@ function SpaceShell() {
     () => foldPeerReplies(activeSnapshot?.messages ?? [], { includePeerReceipts: true }),
     [activeSnapshot?.messages],
   );
+  // The margin column only takes a lane while the chat has turns to list.
+  const turnRail = useTurnRailPreference();
   const transcriptArtifactTarget = useMemo<ArtifactTarget>(
     () => (inGroup ? { groupId: groupId ?? "" } : { botId: active?.id ?? "" }),
     [active?.id, groupId, inGroup],
   );
+  const nameTurns = useCallback(
+    (messageIds: string[]) => rpc.threads.nameTurns({ ...transcriptArtifactTarget, messageIds }),
+    [rpc, transcriptArtifactTarget],
+  );
+  const refreshForTitles = useCallback(() => void refreshActiveThread(), [refreshActiveThread]);
+  useTurnTitleBackfill(transcript.messages, nameTurns, refreshForTitles, turnRail.enabled);
   const transcriptMembers = activeSnapshot?.members ?? activeGroup?.members;
   const resolveTranscriptBot = useCallback(
     (botId: string) => {
@@ -596,16 +606,6 @@ function SpaceShell() {
     },
     [bots, transcriptMembers],
   );
-  const workingBots: GroupAvatarMember[] = workingRuns.map((run) => {
-    const bot = resolveTranscriptBot(run.botId);
-    return {
-      botId: run.botId,
-      color: bot?.color ?? FALLBACK_BOT_COLOR,
-      avatarSet: bot?.avatarSet,
-      name: bot?.name,
-      status: run.status,
-    };
-  });
   const resolveTranscriptMemberName = useCallback(
     (botId: string | undefined) => memberName(transcriptMembers, botId),
     [transcriptMembers],
@@ -1017,7 +1017,7 @@ function SpaceShell() {
       collapsed={botsSidebarCollapsed}
       onCollapsedChange={setBotsSidebarCollapsedPref}
       onPreviewCollapsedChange={setBotsSidebarCollapsed}
-      computerOpen={computerOpen || settingsOpen}
+      computerOpen={computerOpen}
       data-testid="shell-root"
       data-ready={shellReady}
       className="relative flex h-full min-h-0 min-w-0 overflow-hidden bg-background text-foreground/90 [&[data-resizing-sidebar]_*[data-slot=sidebar-gap]]:transition-none [&[data-resizing-sidebar]_*[data-slot=sidebar-container]]:transition-none"
@@ -1031,8 +1031,7 @@ function SpaceShell() {
       {bootstrapMe !== undefined ? (
         <HostComputerPrompt initialMe={bootstrapMe ?? undefined} onMeUpdated={setBootstrapMe} />
       ) : null}
-      {!settingsOpen && (
-        <ShellSidebar
+      <ShellSidebar
           workspaceView={view}
           settingsOpen={settingsOpen}
           onWorkspaceNavigate={openWorkspace}
@@ -1105,17 +1104,16 @@ function SpaceShell() {
           }
           openSkills={() => setOverlay({ kind: "skills" })}
         />
-      )}
 
       {/* Keep the composer's z-index inside the chat so phone overlays like the side panel cover it. */}
       {workspaceOpen ? (
         <main
           data-testid="workspace-main"
-          aria-hidden={(!settingsOpen && mobileSidebarOpen) || undefined}
-          inert={!settingsOpen && mobileSidebarOpen}
+          aria-hidden={mobileSidebarOpen || undefined}
+          inert={mobileSidebarOpen}
           className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-background"
         >
-          {!settingsOpen && (
+          {!mobileSidebarOpen && (
             <Button
               variant="ghost"
               size="sm"
@@ -1126,13 +1124,9 @@ function SpaceShell() {
               ☰
             </Button>
           )}
-          {settingsOpen ? (
-            <div id="workspace-settings-host" className="relative flex min-h-0 flex-1 flex-col" />
-          ) : view === "bots" ? (
+          {view === "bots" ? (
             <BotPanorama
               bots={sidebarSpaces.flatMap((space) => space.bots)}
-              sections={botSections}
-              spaces={sidebarSpaces}
               loading={!initialBotsLoaded}
               loadFailed={initialLoadFailed}
               onOpen={(id) => {
@@ -1300,7 +1294,7 @@ function SpaceShell() {
                 answerableAskIds={answerableAskIds}
                 dismissableAskIds={dismissableAskIds}
                 running={transcriptRunning}
-                workingBots={workingBots}
+                activeRunIds={workingRunIds}
                 userBubble={userBubble}
                 onCallBack={
                   bootstrapMe?.phoneCallsEnabled && !inGroup && active

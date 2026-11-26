@@ -11,6 +11,8 @@ import type {
   SecretStore,
 } from "@livingbot/adapter-kit";
 import {
+  HISTORY_COMPACT_RETRY_DELAYS_MS,
+  historyCompactJob,
   messagingDeliverJob,
   SandboxRateLimitError,
   SandboxUnavailableError,
@@ -27,12 +29,12 @@ import { rateLimitEnds, scheduleComputerSleep, sleepComputerIfIdle } from "./com
 import { performComputerUpdate } from "./computer-update.js";
 import type { createRunExecutor } from "./executor.js";
 import type { ExpoPushProvider } from "./expo-push.js";
-import { HISTORY_COMPACT_RETRY_DELAYS_MS, historyCompactJob } from "@livingbot/adapter-kit";
 import { COMPACTION_BATCH_SIZE, compactHistory } from "./history-compaction.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
 import { pollPurchase } from "./purchase-poll.js";
 import { expireTaughtSkillTeaching } from "./teaching-session.js";
+import { generateTurnTitle } from "./turn-title.js";
 
 type Tenant = { spaceId: string; userId: string };
 
@@ -219,6 +221,23 @@ export function createBackgroundJobHandlers(deps: {
     "push.receipt": async (payload) => {
       await runAsSystem("check a push receipt", () => deps.notifications?.checkReceipt(payload));
     },
+    // Naming a turn is cosmetic: a failure leaves the turn showing its own opening text.
+    "turn.title": asOwner(thread, async (payload) => {
+      try {
+        await generateTurnTitle(
+          {
+            prisma: deps.prisma,
+            runtime: deps.runtime,
+            deploymentModelKey: deps.deploymentModelKey,
+            deploymentModelConfigured: deps.deploymentModelConfigured,
+            ...(deps.executor.resolveModel ? { resolveModel: deps.executor.resolveModel } : {}),
+          },
+          payload,
+        );
+      } catch (error) {
+        getLogger().warn("turn.title failed", { "message.id": payload.messageId, error });
+      }
+    }),
     "history.compact": asOwner(thread, async (payload) => {
       // Retrieval policies use stored context without paid message-count compaction.
       // Skip legacy backlog work after a policy change.
@@ -252,12 +271,14 @@ export function createBackgroundJobHandlers(deps: {
             "history.compact.attempt": attempt + 1,
             "history.compact.retry_in_ms": delay,
           });
-          await deps.jobs.enqueue({
-            ...historyCompactJob(payload.threadId, attempt + 1),
-            availableAt: new Date(Date.now() + delay),
-          }).catch((enqueueError) => {
-            getLogger().error("history.compact reschedule failed", enqueueError);
-          });
+          await deps.jobs
+            .enqueue({
+              ...historyCompactJob(payload.threadId, attempt + 1),
+              availableAt: new Date(Date.now() + delay),
+            })
+            .catch((enqueueError) => {
+              getLogger().error("history.compact reschedule failed", enqueueError);
+            });
           return;
         }
         // The ladder is spent: assume a broken summarizer and wait for new material instead,
@@ -269,7 +290,9 @@ export function createBackgroundJobHandlers(deps: {
           await deps.prisma.thread
             .updateMany({
               where: { id: payload.threadId },
-              data: { historyCompactionRetryAfterSeq: thread.nextMessageSeq + COMPACTION_BATCH_SIZE },
+              data: {
+                historyCompactionRetryAfterSeq: thread.nextMessageSeq + COMPACTION_BATCH_SIZE,
+              },
             })
             .catch(() => undefined);
         getLogger().error("history.compact failed permanently", error, {

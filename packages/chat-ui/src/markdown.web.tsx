@@ -20,8 +20,8 @@ import {
   INLINE_VISUAL_FENCE,
   INLINE_WIDGET_FENCES,
   parseInlineVisual,
-  parseWidgetFence,
   parseStreamingWidget,
+  parseWidgetFence,
 } from "@livingbot/contracts";
 import { localDocumentPath, localDocumentReferences } from "@livingbot/core";
 import {
@@ -33,10 +33,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
 } from "@livingbot/ui-web";
 import { CheckIcon, CopyIcon, GlobeIcon, ImageIcon } from "./icons";
 import { InlineVisualView } from "./inline-visual.web";
-import { WidgetView } from "./widget.web";
 import type { ChatMarkdownProps } from "./markdown";
 import {
   closeUnterminatedFence,
@@ -62,6 +65,8 @@ import { MarkdownTable, MarkdownTableSourceContext } from "./markdown-table";
 import { isMermaidFence, mermaidSvgImage } from "./mermaid";
 import { useMermaidSvg } from "./mermaid.web";
 import { rehypeReportShape } from "./rehype-report-shape";
+import { remarkAutolinkBoundaries } from "./remark-autolink-boundaries";
+import { WidgetView } from "./widget.web";
 
 function preserveSkippedTableText() {
   return (tree: HastNode) => {
@@ -192,6 +197,8 @@ function mermaidFenceSource(node: MarkdownHast | undefined): string | undefined 
 function MermaidDiagram({ source, fallback }: { source: string; fallback: ReactNode }) {
   const copy = useMarkdownCopy();
   const svg = useMermaidSvg(source);
+  const [expanded, setExpanded] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false);
   const readSource = useCallback(() => source, [source]);
   const image = svg ? mermaidSvgImage(svg) : undefined;
   // Rendering, or source Mermaid cannot draw: the code block keeps the content readable.
@@ -209,6 +216,33 @@ function MermaidDiagram({ source, fallback }: { source: string; fallback: ReactN
         />
       </figure>
       <CopyButton read={readSource} label={copy.copyDiagramSource} />
+      <div className="rk-inline-visual-actions">
+        <Button size="sm" variant="ghost" onClick={() => setExpanded(true)}>
+          {copy.expandDiagram}
+        </Button>
+        <a download="diagram.svg" href={image.src}>
+          {copy.downloadSvg}
+        </a>
+        <Button
+          size="sm"
+          variant="ghost"
+          aria-expanded={sourceOpen}
+          onClick={() => setSourceOpen(!sourceOpen)}
+        >
+          {copy.viewSource}
+        </Button>
+      </div>
+      {sourceOpen && (
+        <pre>
+          <code>{source}</code>
+        </pre>
+      )}
+      <Dialog open={expanded} onOpenChange={setExpanded}>
+        <DialogContent className="max-h-[90vh] overflow-auto sm:max-w-4xl">
+          <DialogTitle>{image.alt}</DialogTitle>
+          <img src={image.src} width={image.width} height={image.height} alt={image.alt} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -739,7 +773,7 @@ export const ChatMarkdown = memo(function ChatMarkdown({
                   <PlainTextOnFailure text={children}>
                     <ReactMarkdown
                       components={components}
-                      remarkPlugins={[remarkGfm]}
+                      remarkPlugins={[remarkGfm, remarkAutolinkBoundaries]}
                       rehypePlugins={
                         streaming
                           ? renderLocalFile

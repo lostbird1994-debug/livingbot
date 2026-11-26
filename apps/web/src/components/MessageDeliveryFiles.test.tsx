@@ -1,135 +1,74 @@
 // @vitest-environment jsdom
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ThreadMessage } from "@livingbot/contracts";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { MessageDeliveryFiles } from "./MessageDeliveryFiles";
 
 const api = vi.hoisted(() => ({
   fileInfo: vi.fn(async () => ({ name: "report.md", path: "/Users/test/report.md", size: 2048 })),
-  fileAction: vi.fn(async () => ({ ok: true })),
 }));
 vi.mock("../lib/rpc", () => ({ rpc: { threads: api } }));
-vi.mock("./ArtifactFileCard", () => ({ ArtifactFileCard: () => null }));
-vi.mock("./DeliveryFileCard", () => ({
-  DeliveryFileCard: ({
-    name,
-    size,
-    onOpen,
-    onReveal,
-  }: {
-    name: string;
-    size?: number;
-    onOpen(): Promise<void>;
-    onReveal(): Promise<void>;
-  }) => (
-    <div>
-      {name}:{size}
-      <button type="button" onClick={() => void onOpen()}>
-        open
-      </button>
-      <button type="button" onClick={() => void onReveal()}>
-        folder
-      </button>
-    </div>
+vi.mock("./ArtifactFileCard", () => ({
+  ArtifactFileCard: ({ artifactId, name, size }: { artifactId: string; name: string; size?: number }) => (
+    <div data-artifact-id={artifactId}>{name}:{size}</div>
   ),
 }));
 
-import { DocumentTabsProvider } from "../lib/document-tabs";
-import { MessageDeliveryFiles, messageFileReferences } from "./MessageDeliveryFiles";
-
-it("deduplicates exact references and does not treat ordinary text as a delivered file", () => {
-  expect(
-    messageFileReferences([
-      { kind: "text", text: "普通说明 /Users/test/a.md 与 `/Users/test/a.md`" },
-    ]),
-  ).toEqual(["/Users/test/a.md"]);
+let host: HTMLDivElement;
+let root: ReturnType<typeof createRoot>;
+beforeEach(() => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  api.fileInfo.mockClear();
+  host = document.createElement("div");
+  root = createRoot(host);
+});
+afterEach(async () => {
+  await act(async () => root.unmount());
+  vi.unstubAllGlobals();
 });
 
-it("opens a referenced Markdown file in a tab while keeping its original authorization scope", async () => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
-  api.fileAction.mockClear();
-  const openDocument = vi.fn();
-  const host = document.createElement("div");
-  const root = createRoot(host);
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const target = { botId: "bot", taskSessionId: "task" };
-  try {
-    await act(async () =>
-      root.render(
-        <QueryClientProvider client={client}>
-          <DocumentTabsProvider value={openDocument}>
-            <MessageDeliveryFiles
-              target={target}
-              message={
-                {
-                  id: "msg",
-                  role: "bot",
-                  blocks: [{ kind: "text", text: "`/bots/bot/report.md`" }],
-                } as never
-              }
-            />
-          </DocumentTabsProvider>
-        </QueryClientProvider>,
-      ),
-    );
-    await act(async () => host.querySelector("button")!.click());
-    expect(openDocument).toHaveBeenCalledWith({
-      kind: "message",
-      name: "report.md",
-      target,
-      messageId: "msg",
-      path: "/bots/bot/report.md",
-    });
-    expect(api.fileAction).not.toHaveBeenCalled();
-  } finally {
-    await act(async () => root.unmount());
-    client.clear();
-    vi.unstubAllGlobals();
-  }
+const sourceText = "来源：`参考文档/合并报表（含调整）/20261031（集团）/10月TB/示例TB.xlsx`；" +
+  "明细：`数据源/04 明细（手工）/往来余额表.xlsx`；另见 `/Users/test/source.xlsx`。";
+const file = (id: string) => ({
+  kind: "file" as const, artifactId: id, name: `${id}.xlsx`,
+  mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", size: 2048,
 });
-it("reads real metadata and routes both operations through the original message path", async () => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
-  const host = document.createElement("div"),
-    root = createRoot(host),
-    client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  try {
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={client}>
-          <MessageDeliveryFiles
-            target={{ botId: "bot" }}
-            message={
-              {
-                id: "msg",
-                role: "bot",
-                blocks: [{ kind: "text", text: "`/bots/bot/report.md`" }],
-              } as never
-            }
-          />
-        </QueryClientProvider>,
-      );
-    });
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 30));
-    });
-    expect(host.textContent).toContain("report.md:2048");
-    for (const button of host.querySelectorAll("button")) await act(async () => button.click());
-    expect(api.fileAction).toHaveBeenCalledWith({
-      botId: "bot",
-      messageId: "msg",
-      path: "/bots/bot/report.md",
-      action: "open",
-    });
-    expect(api.fileAction).toHaveBeenCalledWith({
-      botId: "bot",
-      messageId: "msg",
-      path: "/bots/bot/report.md",
-      action: "reveal",
-    });
-  } finally {
-    await act(async () => root.unmount());
-    client.clear();
-    vi.unstubAllGlobals();
-  }
+async function render(id: string, blocks: ThreadMessage["blocks"]) {
+  await act(async () => root.render(
+    <MessageDeliveryFiles target={{ botId: "bot" }} message={{ id, blocks } as ThreadMessage} />,
+  ));
+}
+
+it("does not create cards or request file metadata from source references in the reply", async () => {
+  await render("references", [{ kind: "text", text: sourceText }]);
+  expect(host.childElementCount).toBe(0);
+  expect(api.fileInfo).not.toHaveBeenCalled();
+});
+
+it("renders delivered files with their artifact identity and size while ignoring source references", async () => {
+  await render("delivered", [{ kind: "text", text: sourceText }, file("output")]);
+  expect([...host.querySelectorAll("[data-artifact-id]")].map((node) => node.getAttribute("data-artifact-id")))
+    .toEqual(["output"]);
+  expect(host.textContent).toContain("output.xlsx:2048");
+  expect(api.fileInfo).not.toHaveBeenCalled();
+});
+
+it("keeps cards scoped to the displayed message when changing replies", async () => {
+  await render("first", [file("first")]);
+  await render("second", [{ kind: "text", text: sourceText }]);
+  expect(host.childElementCount).toBe(0);
+  await render("third", [file("third")]);
+  expect(host.textContent).toBe("third.xlsx:2048");
+  expect(host.querySelector('[data-artifact-id="first"]')).toBeNull();
+});
+
+it("expands and collapses only the current message's delivered files", async () => {
+  await render("many", [file("one"), file("two"), file("three")]);
+  expect(host.querySelectorAll("[data-artifact-id]")).toHaveLength(2);
+  await act(async () => host.querySelector("button")!.click());
+  expect(host.querySelectorAll("[data-artifact-id]")).toHaveLength(3);
+  await act(async () => host.querySelector("button")!.click());
+  expect(host.querySelectorAll("[data-artifact-id]")).toHaveLength(2);
 });

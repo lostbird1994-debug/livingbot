@@ -131,6 +131,21 @@ export interface LivingBotDesktop {
     abort: (session: number) => Promise<void>;
     onEvent: (listener: (event: LivingBotDesktopSpeechEvent) => void) => () => void;
   };
+  /**
+   * Things only the shell can do: hand work to the operating system. Absent on older desktop
+   * releases.
+   */
+  system?: {
+    /** Whether the app opens when its owner logs in; the system stays the source of truth. */
+    loginItem: () => Promise<boolean>;
+    /** Returns what the system reports after the change, which can differ. */
+    setLoginItem: (enabled: boolean) => Promise<boolean>;
+  };
+  /** Absent on older desktop releases, which always use the system browser. */
+  links?: {
+    /** Applies to http(s) links opened from the page: the system browser, or a shell window. */
+    setMode: (mode: "system" | "in-app") => Promise<void>;
+  };
   platform: string;
   /** Absent on older frameless releases, which still need in-app controls. */
   nativeWindowFrame?: boolean;

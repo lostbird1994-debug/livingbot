@@ -4,7 +4,7 @@ import { installedPluginParts } from "@livingbot/core";
 import { Button, Input, SectionHeading } from "@livingbot/ui-web";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Filter, Plug, Search } from "lucide-react";
+import { BookOpen, Filter, Search, Wrench } from "lucide-react";
 import { useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -486,7 +486,7 @@ function Abilities({
       <div className="rk-scroll flex-1 overflow-y-auto p-5 md:p-7">
         <div className="mb-7 flex flex-wrap gap-3">
           <Button variant="outline" onClick={openIntegrations}>
-            <Plug className="size-4" />
+            <Wrench className="size-4" />
             应用与工具
           </Button>
           <Button variant="outline" onClick={openSkills}>
@@ -506,7 +506,7 @@ function Abilities({
               onClick={openIntegrations}
               className={rowClassName}
             >
-              <Plug className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <Wrench className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1 break-words text-sm font-medium">
                 {connection.displayName}
               </span>
@@ -528,7 +528,7 @@ function Abilities({
               onClick={openIntegrations}
               className={rowClassName}
             >
-              <Plug className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <Wrench className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1 break-words text-sm font-medium">{install.name}</span>
               <span className="shrink-0 text-xs text-muted-foreground">已安装</span>
             </button>
@@ -540,7 +540,7 @@ function Abilities({
               onClick={openIntegrations}
               className={rowClassName}
             >
-              <Plug className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <Wrench className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1">
                 <span className="block break-words text-sm font-medium">{server.name}</span>
                 {server.description ? (

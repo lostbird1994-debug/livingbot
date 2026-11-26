@@ -269,6 +269,7 @@ function toThreadMessage(row: {
     blocks: Prisma.JsonValue;
   } | null;
   runId: string | null;
+  turnTitle?: string | null;
   clientNonce?: string | null;
   createdAt: Date;
 }): EnrichableMessage {
@@ -296,7 +297,10 @@ function toThreadMessage(row: {
     replyPreview,
     runId: row.runId ?? undefined,
     callId: callIdFromClientNonce(row.clientNonce),
-    resultRunId: row.clientNonce?.startsWith("task-result:") ? row.clientNonce.slice("task-result:".length) : undefined,
+    resultRunId: row.clientNonce?.startsWith("task-result:")
+      ? row.clientNonce.slice("task-result:".length)
+      : undefined,
+    ...(row.turnTitle ? { turnTitle: row.turnTitle } : {}),
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -308,28 +312,42 @@ async function markRoutineReplies(
   const runIds = [
     ...new Set(messages.flatMap((message) => (message.runId ? [message.runId] : []))),
   ];
-  const runs = runIds.length ? await prisma.run.findMany({
-    where: { id: { in: runIds }, trigger: "routine" },
-    select: { id: true, trigger: true, routine: { select: { name: true } } },
-  }) : [];
-  const resultIds = messages.filter(message => message.resultRunId).map(message => message.id);
-  const receipts = resultIds.length ? await prisma.taskSessionReceipt.findMany({
-    where: { messageId: { in: resultIds } }, include: { taskSession: true, run: { select: { status: true } } },
-  }) : [];
-  const byMessage = new Map(receipts.map(receipt => [receipt.messageId, receipt]));
+  const runs = runIds.length
+    ? await prisma.run.findMany({
+        where: { id: { in: runIds }, trigger: "routine" },
+        select: { id: true, trigger: true, routine: { select: { name: true } } },
+      })
+    : [];
+  const resultIds = messages.filter((message) => message.resultRunId).map((message) => message.id);
+  const receipts = resultIds.length
+    ? await prisma.taskSessionReceipt.findMany({
+        where: { messageId: { in: resultIds } },
+        include: { taskSession: true, run: { select: { status: true } } },
+      })
+    : [];
+  const byMessage = new Map(receipts.map((receipt) => [receipt.messageId, receipt]));
   const routineIds = new Set(runs.filter((run) => run.trigger === "routine").map((run) => run.id));
   // The bubble labels which routine produced the reply.
-  const routineNames = new Map(runs.flatMap((run) =>
-    run.routine?.name ? [[run.id, run.routine.name] as const] : []));
+  const routineNames = new Map(
+    runs.flatMap((run) => (run.routine?.name ? [[run.id, run.routine.name] as const] : [])),
+  );
   return messages.map(({ resultRunId: _resultRunId, ...message }) => {
     const receipt = byMessage.get(message.id);
     const routineName = message.runId ? routineNames.get(message.runId) : undefined;
-    return { ...message, routine: !!message.runId && routineIds.has(message.runId),
+    return {
+      ...message,
+      routine: !!message.runId && routineIds.has(message.runId),
       ...(routineName ? { routineName } : {}),
-      ...(receipt && receipt.taskSession.mainThreadId === message.threadId ? { taskResult: {
-        taskSessionId: receipt.taskSessionId, runId: receipt.runId, title: receipt.taskSession.title,
-        status: receipt.run.status as "completed" | "failed" | "cancelled",
-      } } : {}),
+      ...(receipt && receipt.taskSession.mainThreadId === message.threadId
+        ? {
+            taskResult: {
+              taskSessionId: receipt.taskSessionId,
+              runId: receipt.runId,
+              title: receipt.taskSession.title,
+              status: receipt.run.status as "completed" | "failed" | "cancelled",
+            },
+          }
+        : {}),
     };
   });
 }

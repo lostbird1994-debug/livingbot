@@ -34,6 +34,7 @@ function fixture(terminal?: Promise<void>) {
             role: "assistant", timestamp: Date.now(), provider: "test", model: "flash",
             content: [{ type: "text", text: "Answer" }], usage: { input: 100, output: 10, cacheRead: 50 },
           }] };
+          if (method === "sessions.patch") return {};
           throw Error(method);
         },
         stop() {},

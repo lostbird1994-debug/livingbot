@@ -54,6 +54,19 @@ import {
   subscribeBotsSidebarDensity,
 } from "../lib/bots-sidebar-density-pref";
 import { getChatAvatarVisible, setChatAvatarVisible } from "../lib/chat-avatar-preference";
+import type { AppTextSize, ChatWidth } from "../lib/reading-prefs";
+import {
+  getAppTextSize,
+  getChatWidth,
+  setAppTextSize,
+  setChatWidth,
+  subscribeReadingPrefs,
+} from "../lib/reading-prefs";
+import { setTurnTitleCount, setTurnTitlesEnabled, useTurnRailPreference } from "../lib/turn-rail-preference";
+import {
+  setConclusionFirstPreference,
+  useConclusionFirstPreference,
+} from "../lib/conclusion-first-preference";
 import {
   getComposerEnterToSend,
   setComposerEnterToSend,
@@ -155,6 +168,10 @@ export function GeneralSettingsPanels({
     () => "comfortable",
   );
   const sidebarDensityLabelId = useId();
+  const textSize = useSyncExternalStore(subscribeReadingPrefs, getAppTextSize, () => "default");
+  const chatWidth = useSyncExternalStore(subscribeReadingPrefs, getChatWidth, () => "default");
+  const textSizeLabelId = useId();
+  const chatWidthLabelId = useId();
   const [streamReplies, setStreamReplies] = useState(
     () => getResponseStreamingPreference() === "on",
   );
@@ -175,6 +192,11 @@ export function GeneralSettingsPanels({
   const loadRemoteImagesId = useId();
   const [chatAvatar, setChatAvatar] = useState(() => getChatAvatarVisible());
   const chatAvatarId = useId();
+  const turnRail = useTurnRailPreference();
+  const conclusionFirst = useConclusionFirstPreference();
+  const conclusionFirstId = useId();
+  const turnTitlesId = useId();
+  const turnTitleCountId = useId();
   const timezoneId = useId();
   const showPassword = Boolean(
     accountSecurity?.hasPassword && accountSecurity.passwordChangeEnabled !== false,
@@ -298,7 +320,7 @@ export function GeneralSettingsPanels({
           {section !== "regional" && (
             <>
               <SettingsRow label={section === "appearance" ? "主题" : <Trans>Appearance</Trans>}>
-                <div className="py-2">
+                <div>
                   <AppearancePicker
                     value={appearance}
                     onChange={(next) => {
@@ -339,6 +361,75 @@ export function GeneralSettingsPanels({
                     >
                       <Trans>Compact</Trans>
                     </ToggleGroupItem>
+                  </ToggleGroup>
+                }
+              />
+              <SettingsRow
+                label={
+                  <span id={textSizeLabelId}>字体大小</span>
+                }
+                control={
+                  <ToggleGroup
+                    aria-labelledby={textSizeLabelId}
+                    data-testid="app-text-size-select"
+                    value={[textSize]}
+                    onValueChange={([next]) => {
+                      if (next) setAppTextSize(next as AppTextSize);
+                    }}
+                    spacing={1}
+                    className="grid min-w-0 grid-cols-4 rounded-lg bg-muted p-1"
+                  >
+                    {(
+                      [
+                        ["small", "小"],
+                        ["default", "默认"],
+                        ["large", "大"],
+                        ["largest", "特大"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <ToggleGroupItem
+                        key={value}
+                        value={value}
+                        data-testid={`app-text-size-${value}`}
+                        className="text-[13px] aria-pressed:bg-background aria-pressed:shadow-sm"
+                      >
+                        {label}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                }
+              />
+              <SettingsRow
+                label={
+                  <span id={chatWidthLabelId}>正文宽度</span>
+                }
+                control={
+                  <ToggleGroup
+                    aria-labelledby={chatWidthLabelId}
+                    data-testid="chat-width-select"
+                    value={[chatWidth]}
+                    onValueChange={([next]) => {
+                      if (next) setChatWidth(next as ChatWidth);
+                    }}
+                    spacing={1}
+                    className="grid min-w-0 grid-cols-3 rounded-lg bg-muted p-1"
+                  >
+                    {(
+                      [
+                        ["narrow", "窄"],
+                        ["default", "默认"],
+                        ["wide", "宽"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <ToggleGroupItem
+                        key={value}
+                        value={value}
+                        data-testid={`chat-width-${value}`}
+                        className="text-[13px] aria-pressed:bg-background aria-pressed:shadow-sm"
+                      >
+                        {label}
+                      </ToggleGroupItem>
+                    ))}
                   </ToggleGroup>
                 }
               />
@@ -405,101 +496,134 @@ export function GeneralSettingsPanels({
       )}
 
       {(!section || section === "chat") && (
-        <SettingsGroup title={section ? undefined : <Trans>Chat</Trans>}>
-          <SettingsRow
-            label={
-              <Label htmlFor={enterToSendId} className="text-[14px] font-normal text-foreground">
-                <Trans>Send with Enter</Trans>
-              </Label>
-            }
-            control={
-              <Switch
-                id={enterToSendId}
-                data-testid="composer-enter-to-send-toggle"
-                checked={enterToSend}
-                onCheckedChange={(checked) => setComposerEnterToSend(checked)}
+        <>
+          <SettingsGroup title={section ? undefined : <Trans>Chat</Trans>}>
+            <SettingsRow
+              label={
+                <Label htmlFor={enterToSendId} className="text-[14px] text-foreground">
+                  <Trans>Send with Enter</Trans>
+                </Label>
+              }
+              description="关闭后用 ⌘ Enter 发送"
+              control={
+                <Switch
+                  id={enterToSendId}
+                  data-testid="composer-enter-to-send-toggle"
+                  checked={enterToSend}
+                  onCheckedChange={(checked) => setComposerEnterToSend(checked)}
+                />
+              }
+            />
+          </SettingsGroup>
+          <SettingsGroup title="回答展示">
+            <SettingsRow
+              label={<Label htmlFor={conclusionFirstId} className="text-[14px] text-foreground">回复先讲结论</Label>}
+              description="先给结论，并说明任务是否完成"
+              control={
+                <Switch
+                  id={conclusionFirstId}
+                  data-testid="conclusion-first-toggle"
+                  checked={conclusionFirst}
+                  onCheckedChange={setConclusionFirstPreference}
+                />
+              }
+            />
+            <SettingsRow
+              label={
+                <Label htmlFor={streamRepliesId} className="text-[14px] text-foreground">
+                  <Trans>Stream replies</Trans>
+                </Label>
+              }
+              description="回答边生成边显示"
+              control={
+                <Switch
+                  id={streamRepliesId}
+                  data-testid="response-streaming-toggle"
+                  checked={streamReplies}
+                  onCheckedChange={(checked) => {
+                    setStreamReplies(checked);
+                    setResponseStreamingPreference(checked ? "on" : "off");
+                  }}
+                />
+              }
+            />
+            <SettingsRow
+              label={
+                <Label htmlFor={showToolActivityId} className="text-[14px] text-foreground">
+                  <Trans>Show thinking and tool activity</Trans>
+                </Label>
+              }
+              description="把工具调用与推理展开在回答上方"
+              control={
+                <Switch
+                  id={showToolActivityId}
+                  data-testid="tool-activity-toggle"
+                  checked={showToolActivity}
+                  onCheckedChange={(checked) => {
+                    setShowToolActivity(checked);
+                    setToolActivityPreference(checked ? "on" : "off");
+                  }}
+                />
+              }
+            />
+            <SettingsRow
+              label={
+                <Label htmlFor={loadRemoteImagesId} className="text-[14px] text-foreground">
+                  <Trans>Load web images automatically</Trans>
+                </Label>
+              }
+              description="关闭后图片需要手动点击加载"
+              control={
+                <Switch
+                  id={loadRemoteImagesId}
+                  data-testid="remote-images-toggle"
+                  checked={loadRemoteImages}
+                  onCheckedChange={(checked) => {
+                    setLoadRemoteImages(checked);
+                    setRemoteImagesPreference(checked ? "on" : "off");
+                  }}
+                />
+              }
+            />
+            <SettingsRow
+              label={
+                <Label htmlFor={chatAvatarId} className="text-[14px] text-foreground">
+                  显示会话区内的头像
+                </Label>
+              }
+              control={
+                <Switch
+                  id={chatAvatarId}
+                  data-testid="chat-avatar-toggle"
+                  checked={chatAvatar}
+                  onCheckedChange={(checked) => {
+                    setChatAvatar(checked);
+                    setChatAvatarVisible(checked);
+                  }}
+                />
+              }
+            />
+          </SettingsGroup>
+          <SettingsGroup title="会话标题">
+            <SettingsRow
+              label={<Label htmlFor={turnTitlesId} className="text-[14px] text-foreground">会话小标题</Label>}
+              description="在长对话里标出每一轮在聊什么"
+              control={<Switch id={turnTitlesId} data-testid="turn-titles-toggle" checked={turnRail.enabled} onCheckedChange={setTurnTitlesEnabled} />}
+            />
+            {turnRail.enabled && (
+              <SettingsRow
+                label={<Label htmlFor={turnTitleCountId} className="text-[14px] text-foreground">小标题显示条数</Label>}
+                control={
+                  <NativeSelect id={turnTitleCountId} data-testid="turn-title-count" value={String(turnRail.count)} onChange={(event) => setTurnTitleCount(Number(event.target.value))}>
+                    {Array.from({ length: 21 }, (_, index) => index + 5).map((count) => (
+                      <NativeSelectOption key={count} value={String(count)}>{count}</NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                }
               />
-            }
-          />
-          <SettingsRow
-            label={
-              <Label htmlFor={streamRepliesId} className="text-[14px] font-normal text-foreground">
-                <Trans>Stream replies</Trans>
-              </Label>
-            }
-            control={
-              <Switch
-                id={streamRepliesId}
-                data-testid="response-streaming-toggle"
-                checked={streamReplies}
-                onCheckedChange={(checked) => {
-                  setStreamReplies(checked);
-                  setResponseStreamingPreference(checked ? "on" : "off");
-                }}
-              />
-            }
-          />
-          <SettingsRow
-            label={
-              <Label
-                htmlFor={showToolActivityId}
-                className="text-[14px] font-normal text-foreground"
-              >
-                <Trans>Show thinking and tool activity</Trans>
-              </Label>
-            }
-            control={
-              <Switch
-                id={showToolActivityId}
-                data-testid="tool-activity-toggle"
-                checked={showToolActivity}
-                onCheckedChange={(checked) => {
-                  setShowToolActivity(checked);
-                  setToolActivityPreference(checked ? "on" : "off");
-                }}
-              />
-            }
-          />
-          <SettingsRow
-            label={
-              <Label
-                htmlFor={loadRemoteImagesId}
-                className="text-[14px] font-normal text-foreground"
-              >
-                <Trans>Load web images automatically</Trans>
-              </Label>
-            }
-            control={
-              <Switch
-                id={loadRemoteImagesId}
-                data-testid="remote-images-toggle"
-                checked={loadRemoteImages}
-                onCheckedChange={(checked) => {
-                  setLoadRemoteImages(checked);
-                  setRemoteImagesPreference(checked ? "on" : "off");
-                }}
-              />
-            }
-          />
-          <SettingsRow
-            label={
-              <Label htmlFor={chatAvatarId} className="text-[14px] font-normal text-foreground">
-                显示会话区内的头像
-              </Label>
-            }
-            control={
-              <Switch
-                id={chatAvatarId}
-                data-testid="chat-avatar-toggle"
-                checked={chatAvatar}
-                onCheckedChange={(checked) => {
-                  setChatAvatar(checked);
-                  setChatAvatarVisible(checked);
-                }}
-              />
-            }
-          />
-        </SettingsGroup>
+            )}
+          </SettingsGroup>
+        </>
       )}
 
       {(!section || section === "chat") && <TrustedLinkSitesSettings />}

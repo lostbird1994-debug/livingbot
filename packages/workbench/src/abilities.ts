@@ -2,7 +2,6 @@ import type { CapabilityProvider, KernelCapability } from "../../kernel-runtime/
 import type { Ability, Bot, Conversation } from "./contracts.ts";
 import type { WorkbenchStore } from "./store.ts";
 import type { PackageUpdate } from "./marketplace.ts";
-import { join } from "node:path";
 
 /** One product inventory; native configuration owns actual execution access. */
 export class Abilities {
@@ -66,11 +65,7 @@ export class Abilities {
     if (this.sharedPending) return this.sharedPending;
     const refresh = async () => {
       if (!this.provider.refreshGlobal) throw new Error("Native shared capability refresh is unavailable");
-      // Only ready import destinations; never source workspaces or backups.
-      const directories = this.store.list<{ id: string; state?: string; workspace?: string }>("settings")
-        .filter((item) => item.id.startsWith("migration:") && item.state === "ready" && item.workspace)
-        .flatMap((item) => [join(item.workspace!, ".agents", "skills"), join(item.workspace!, "skills")]);
-      await this.provider.refreshGlobal(directories);
+      await this.provider.refreshGlobal();
       await this.inheritServices();
       return this.listShared();
     };

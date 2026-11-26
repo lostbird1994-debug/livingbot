@@ -15,7 +15,6 @@ import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Files } from "../../../packages/workbench/src/files.ts";
 import { Workspaces } from "../../../packages/workbench/src/workspaces.ts";
-import { Migrations } from "../../../packages/workbench/src/migration.ts";
 import type { ServiceConnections } from "../../../packages/kernel-runtime/src/connections.ts";
 import type { NativeRoutine, RoutineProvider } from "../../../packages/kernel-runtime/src/routines.ts";
 import type { NativeContextPreview } from "../../../packages/kernel-runtime/src/context-preview.ts";
@@ -111,7 +110,7 @@ test("Bot creation registers the native workspace once and archive retains its p
   } finally { await api.close(); service.detach(); store.close(); }
 });
 
-async function fixture(capabilityProvider?: CapabilityProvider, nativeToolToken?: string, workspaceRoot?: string, memoryProvider?: MemoryProvider, migrationRoot?: string, connections?: ServiceConnections, routineProvider?: RoutineProvider, nativeContextPreview?: (agentId: string) => Promise<NativeContextPreview>) {
+async function fixture(capabilityProvider?: CapabilityProvider, nativeToolToken?: string, workspaceRoot?: string, memoryProvider?: MemoryProvider, connections?: ServiceConnections, routineProvider?: RoutineProvider, nativeContextPreview?: (agentId: string) => Promise<NativeContextPreview>) {
   const store = new WorkbenchStore(":memory:");
   const bot = store.createBot({ name: "Example Bot" });
   const conversation = store.privateConversation(bot.id);
@@ -119,18 +118,43 @@ async function fixture(capabilityProvider?: CapabilityProvider, nativeToolToken?
   const service = new WorkbenchService(store, kernel, capabilityProvider,
     workspaceRoot ? new Files(store, new Workspaces(workspaceRoot)) : undefined, memoryProvider, routineProvider);
   const token = randomBytes(32).toString("hex");
-  const migrations = migrationRoot ? new Migrations({
-    store, workspaces: new Workspaces(resolve(migrationRoot, "workspaces")),
-    backupRoot: resolve(migrationRoot, "backups"), registration: { async ensure() {} },
-  }) : undefined;
   const api = createWorkbenchApi({
-    service, token, nativeToolToken, migrations, connections, nativeContextPreview,
+    service, token, nativeToolToken, connections, nativeContextPreview,
     ...(workspaceRoot ? { botWorkspaces: new Workspaces(workspaceRoot) } : {}),
   });
   const url = await api.listen();
   const headers = { authorization: `Bearer ${token}`, "content-type": "application/json" };
   return { store, service, kernel, bot, conversation, api, url, headers };
 }
+
+test("interrupted reply history, search and reactions address the displayed continuation", async () => {
+  const f = await fixture();
+  try {
+    const input = { botId: f.bot.id, conversationId: f.conversation.id };
+    await f.service.submit({ ...input, submissionId: "first", message: "START" });
+    const sessionKey = f.store.engineSessionKey(f.conversation.id, f.bot.id);
+    const stream = (seq: number, text: string) => f.kernel.emit("observation", {
+      type: "frame", generation: 1, frame: { event: "agent", payload: {
+        runId: "first", sessionKey, seq, stream: "assistant", data: { itemId: "answer", text },
+      } },
+    });
+    stream(1, "BEFORE");
+    await f.service.submit({ ...input, submissionId: "second", message: "INTERRUPT" });
+    stream(2, "BEFOREAFTER");
+    const history = await (await fetch(`${f.url}/api/conversations/${f.conversation.id}/messages`, { headers: f.headers })).json();
+    assert.deepEqual(history.messages.map((message: { blocks: { kind: string; text?: string }[] }) =>
+      message.blocks.flatMap((block) => block.kind === "text" ? [block.text] : []).join("")), ["START", "BEFORE", "INTERRUPT", "AFTER"]);
+    const partId = history.messages[3].id;
+    const search = await (await fetch(`${f.url}/api/search?q=AFTER&conversationId=${f.conversation.id}`, { headers: f.headers })).json();
+    assert.equal(search.hits[0].messageId, partId);
+    assert.equal(search.hits[0].seq, 3);
+    const reaction = await fetch(`${f.url}/api/messages/${encodeURIComponent(partId)}/reactions`, {
+      method: "POST", headers: f.headers, body: JSON.stringify({ reaction: "👍", clientNonce: "reaction-1" }),
+    });
+    assert.equal(reaction.status, 200);
+    assert.equal(f.store.messages(f.conversation.id).at(-1)?.replyToMessageId, partId);
+  } finally { await f.api.close(); f.service.detach(); f.store.close(); }
+});
 
 test("approval settings require user credentials and reject invalid modes and scopes before native writes", async () => {
   const f = await fixture();
@@ -237,8 +261,71 @@ test("local spaces persist, isolate navigation and preserve owned Bot data when 
     const removed = await fetch(`${f.url}/api/spaces/${created.id}`, { method: "DELETE", headers: f.headers });
     assert.equal(removed.status, 200);
     assert.equal(f.store.spaceIdForBot(second.id), "local");
+    assert.ok(f.store.get<Bot>("bots", second.id)?.archivedAt);
+    assert.equal(f.store.get<Bot>("bots", f.bot.id)?.archivedAt, undefined);
     assert.equal(f.store.get<Conversation>("conversations", group.id)?.spaceId, "local");
     assert.deepEqual(f.store.messages(group.id), [savedMessage]);
+  } finally { await f.api.close(); f.service.detach(); f.store.close(); }
+});
+
+test("space removal pauses native schedules, cancels work and retains data; pause failure is retryable", async () => {
+  const native = new Map<string, NativeRoutine>();
+  let failPause = true;
+  const provider: RoutineProvider = {
+    async create(definition) {
+      const job = { ...definition, id: definition.declarationKey, enabled: true, revision: "r1" };
+      native.set(job.id, job);
+      return job;
+    },
+    async get(id) { return native.get(id)!; },
+    async setEnabled(id, revision, enabled) {
+      if (failPause) throw new Error("Synthetic pause failure");
+      const job = native.get(id)!;
+      assert.equal(revision, job.revision);
+      const updated = { ...job, enabled, revision: "r2" };
+      native.set(id, updated);
+      return updated;
+    },
+    async update() { throw new Error("Unused"); },
+    async history() { return { entries: [], hasMore: false }; },
+    async remove() { throw new Error("Schedules must be preserved"); },
+    async runNow() { throw new Error("Schedules must not run"); },
+  };
+  const f = await fixture(undefined, undefined, undefined, undefined, undefined, provider);
+  try {
+    const space = f.store.createSpace("Disposable space");
+    const bot = f.store.createBot({ name: "Retained Bot", spaceId: space.id });
+    const chat = f.store.privateConversation(bot.id);
+    const scheduled = await f.service.routines!.create({
+      id: "retained-routine", botId: bot.id, conversationId: chat.id,
+      name: "Retained routine", message: "Synthetic", schedule: { kind: "every", everyMs: 60_000 },
+    });
+    const other = await f.service.routines!.create({
+      id: "other-routine", botId: f.bot.id, conversationId: f.conversation.id,
+      name: "Unrelated routine", message: "Synthetic", schedule: { kind: "every", everyMs: 60_000 },
+    });
+    const task = await f.service.submit({
+      submissionId: "space-removal-work", botId: bot.id, conversationId: chat.id, message: "Synthetic",
+    });
+    const remove = () => fetch(`${f.url}/api/spaces/${space.id}`, { method: "DELETE", headers: f.headers });
+    assert.equal((await remove()).status, 400);
+    assert.ok(f.store.get("spaces", space.id));
+    assert.equal(f.store.spaceIdForBot(bot.id), space.id);
+    assert.ok(f.store.get<Bot>("bots", bot.id)?.archivedAt);
+    assert.equal(f.store.get<{ status: string }>("tasks", task.id)?.status, "stopping");
+    failPause = false;
+    assert.equal((await remove()).status, 200);
+    assert.equal(f.store.spaceIdForBot(bot.id), "local");
+    assert.equal(f.store.get<Conversation>("conversations", chat.id)?.spaceId, "local");
+    assert.equal(native.get(scheduled.nativeId!)?.enabled, false);
+    assert.equal(native.get(other.nativeId!)?.enabled, true);
+    assert.ok(f.store.messages(chat.id).length);
+    const restored = await fetch(`${f.url}/api/bots/${bot.id}/restore`, {
+      method: "POST", headers: f.headers, body: "{}",
+    });
+    assert.equal(restored.status, 200);
+    assert.equal(f.store.get<Bot>("bots", bot.id)?.archivedAt, undefined);
+    assert.equal(native.get(scheduled.nativeId!)?.enabled, false);
   } finally { await f.api.close(); f.service.detach(); f.store.close(); }
 });
 
@@ -284,7 +371,7 @@ test("loaded context is authenticated, Bot-scoped and returned from the native p
     previewedAgentId = agentId;
     return nativeContext;
   };
-  const f = await fixture(undefined, undefined, undefined, undefined, undefined, undefined, undefined, preview);
+  const f = await fixture(undefined, undefined, undefined, undefined, undefined, undefined, preview);
   try {
     const url = `${f.url}/api/bots/${f.bot.id}/loaded-context`;
     assert.equal((await fetch(url)).status, 401);
@@ -292,6 +379,45 @@ test("loaded context is authenticated, Bot-scoped and returned from the native p
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { nativeContext, scratchpad: "" });
     assert.equal(previewedAgentId, f.bot.agentId);
+  } finally { await f.api.close(); f.service.detach(); f.store.close(); }
+});
+
+test("native product guidance injects private to-dos and the scratchpad tool stays Bot-private", async () => {
+  const nativeToolToken = randomBytes(32).toString("hex");
+  const f = await fixture(undefined, nativeToolToken);
+  try {
+    const sessionKey = f.store.engineSessionKey(f.conversation.id, f.bot.id);
+    const postNative = (path: string, body: unknown) => fetch(`${f.url}${path}`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${nativeToolToken}`, "content-type": "application/json" },
+      body: JSON.stringify({ ...body as object, agentId: f.bot.agentId, sessionKey, runId: "run-test" }),
+    });
+    const added = await postNative("/api/kernel/scratchpad", { operation: "add", title: "Finish the report" });
+    assert.equal(added.status, 200, await added.text());
+    const guidance = await postNative("/api/kernel/product-guidance", {});
+    const guidedContext = (await guidance.json()).context;
+    assert.match(guidedContext, /Finish the report/);
+    assert.match(guidedContext, /livingbot_deliver_file/);
+    const items = await postNative("/api/kernel/scratchpad", { operation: "list" });
+    assert.equal((await items.json()).items.length, 1);
+    const preference = await fetch(`${f.url}/api/preferences`, {
+      method: "POST",
+      headers: { ...f.headers, "content-type": "application/json" },
+      body: JSON.stringify({ "livingbot.conclusionFirst": "off" }),
+    });
+    assert.equal(preference.status, 200);
+    const optedOut = await postNative("/api/kernel/product-guidance", {});
+    const optedOutContext = (await optedOut.json()).context;
+    assert.doesNotMatch(optedOutContext, /回复规范/);
+    assert.match(optedOutContext, /livingbot_deliver_file/);
+    const group = f.store.createConversation("group", [f.bot.id], "Synthetic group");
+    const groupSessionKey = f.store.engineSessionKey(group.id, f.bot.id);
+    const groupCall = await fetch(`${f.url}/api/kernel/product-guidance`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${nativeToolToken}`, "content-type": "application/json" },
+      body: JSON.stringify({ agentId: f.bot.agentId, sessionKey: groupSessionKey, runId: "run-group" }),
+    });
+    assert.doesNotMatch((await groupCall.json()).context, /Finish the report/);
   } finally { await f.api.close(); f.service.detach(); f.store.close(); }
 });
 
@@ -616,7 +742,7 @@ test("scheduled work requires user authentication, explicit enabled state and an
     async remove() {},
     async runNow() { return { runId: null }; },
   };
-  const f = await fixture(undefined, nativeToken, undefined, undefined, undefined, undefined, provider);
+  const f = await fixture(undefined, nativeToken, undefined, undefined, undefined, provider);
   try {
     const endpoint = `${f.url}/api/routines`;
     const input = {
@@ -701,7 +827,7 @@ test("connection management requires user authentication and explicit boolean gl
     async update(name, input) { changes.push({ name, input }); },
     async remove(name) { changes.push({ removed: name }); },
   };
-  const f = await fixture(undefined, nativeToken, undefined, undefined, undefined, connections);
+  const f = await fixture(undefined, nativeToken, undefined, undefined, connections);
   try {
     const url = `${f.url}/api/connections`;
     assert.equal((await fetch(url)).status, 401);
@@ -735,67 +861,6 @@ test("connection management requires user authentication and explicit boolean gl
       { name: "new", transport: "stdio", command: "node" }, { name: "example", enabled: false },
       { name: "example", input: { args: [] } }, { removed: "example" },
     ]);
-  } finally { await f.api.close(); f.service.detach(); f.store.close(); }
-});
-
-test("migration HTTP requires user credentials and explicit reviewed apply before publishing a Bot", async () => {
-  await mkdir("local/test-fixtures", { recursive: true });
-  const root = await mkdtemp(resolve("local/test-fixtures/migration-http-"));
-  const source = resolve(root, "source");
-  await mkdir(source);
-  await writeFile(resolve(source, "MEMORY.md"), "Synthetic source memory");
-  await writeFile(resolve(source, "user-output.txt"), "Keep this original output");
-  const nativeToken = randomBytes(32).toString("hex");
-  const f = await fixture(undefined, nativeToken, undefined, undefined, resolve(root, "new-application"));
-  const endpoint = `${f.url}/api/migrations/preview`;
-  try {
-    const bundlePath = resolve(root, "livingbot-migration.json");
-    await writeFile(bundlePath, JSON.stringify({
-      format: "livingbot-migration-v1", bots: [{ name: "Batch example", source: "source", sourceIdentity: "batch-example" }],
-    }));
-    const bundleEndpoint = `${f.url}/api/migrations/bundle-preview`;
-    for (const authorization of [undefined, `Bearer ${nativeToken}`]) {
-      assert.equal((await fetch(bundleEndpoint, { method: "POST",
-        headers: { "content-type": "application/json", ...(authorization ? { authorization } : {}) },
-        body: JSON.stringify({ path: bundlePath }),
-      })).status, 401);
-    }
-    const batch = await fetch(bundleEndpoint, {
-      method: "POST", headers: f.headers, body: JSON.stringify({ path: bundlePath }),
-    });
-    assert.equal(batch.status, 201);
-    assert.equal((await batch.json()).migrations.length, 1);
-    assert.equal(f.store.snapshot().bots.length, 1);
-    const input = JSON.stringify({ name: "Imported", source });
-    assert.equal((await fetch(endpoint, {
-      method: "POST", headers: { ...f.headers, authorization: `Bearer ${nativeToken}` }, body: input,
-    })).status, 401);
-    assert.equal(f.store.snapshot().bots.length, 1);
-    const preview = await fetch(endpoint, { method: "POST", headers: f.headers, body: input });
-    assert.equal(preview.status, 201);
-    const plan = await preview.json();
-    assert.equal(f.store.snapshot().bots.length, 1);
-    const apply = (body: unknown) => fetch(`${f.url}/api/migrations/${plan.id}/apply`, {
-      method: "POST", headers: f.headers, body: JSON.stringify(body),
-    });
-    assert.equal((await apply({ acknowledgeExclusions: "true" })).status, 400);
-    assert.equal((await apply({})).status, 400);
-    assert.equal(f.store.snapshot().bots.length, 1);
-    const receipt = await apply({ acknowledgeExclusions: true });
-    assert.equal(receipt.status, 200);
-    assert.equal((await receipt.json()).state, "ready");
-    assert.equal((await apply({ acknowledgeExclusions: true })).status, 200);
-    assert.equal(f.store.snapshot().bots.length, 2);
-    const restored = await fetch(`${f.url}/api/migrations/${plan.id}`, { headers: f.headers });
-    assert.equal((await restored.json()).botId, plan.botId);
-    const catalog = await fetch(`${f.url}/api/migrations`, { headers: f.headers });
-    const history = (await catalog.json()).migrations;
-    assert.equal(history.length, 2);
-    assert.equal(history[0].id, plan.id);
-    assert.equal(history[0].state, "ready");
-    assert.equal((await fetch(`${f.url}/api/migrations/${plan.id}`, {
-      headers: { authorization: `Bearer ${nativeToken}` },
-    })).status, 401);
   } finally { await f.api.close(); f.service.detach(); f.store.close(); }
 });
 
@@ -1051,7 +1116,7 @@ test("scheduled execution binding requires host credentials and exact active nat
     async remove() {},
     async runNow() { return { runId: null }; },
   };
-  const f = await fixture(undefined, nativeToken, undefined, undefined, undefined, undefined, provider);
+  const f = await fixture(undefined, nativeToken, undefined, undefined, undefined, provider);
   try {
     await f.service.routines!.create({
       id: "product-routine", botId: f.bot.id, conversationId: f.conversation.id,
@@ -1482,5 +1547,26 @@ test("scheduled task control URLs decode identity before stopping or continuing 
       assert.equal(response.status,202);
     }
     assert.deepEqual(calls,[{operation:"cancel",id:taskId},{operation:"continue",id:taskId,submissionId:"synthetic-continuation"}]);
+  } finally { await f.api.close(); f.service.detach(); f.store.close(); }
+});
+
+test("native health inspection credentials cannot read user reports or approve modifications", async () => {
+  const nativeToken = randomBytes(32).toString("hex");
+  const f = await fixture(undefined, nativeToken, resolve("local/test-fixtures/health-authority-unused"));
+  const report = { id: "bot-health:test", botId: f.bot.id, version: "bot-health-v2", revision: "v1",
+    state: "reported", summary: "未发现问题", complete: true, issues: [], gaps: [] };
+  f.store.put("settings", report);
+  const endpoint = `${f.url}/api/bots/${f.bot.id}/health-reports/${encodeURIComponent(report.id)}`;
+  const nativeHeaders = { authorization: `Bearer ${nativeToken}`, "content-type": "application/json" };
+  try {
+    assert.equal((await fetch(endpoint, { headers: f.headers })).status, 200);
+    assert.equal((await fetch(endpoint, { headers: nativeHeaders })).status, 401);
+    assert.equal((await fetch(endpoint + "/apply", { method: "POST", headers: nativeHeaders,
+      body: JSON.stringify({ revision: "v1", actionIds: ["pretend-plan"] }) })).status, 401);
+    assert.equal((await fetch(endpoint + "/decisions", { method: "POST", headers: nativeHeaders,
+      body: JSON.stringify({ revision: "v1", submissionId: "pretend-batch", decisions: [] }) })).status, 401);
+    assert.equal((await fetch(`${f.url}/api/kernel/bot-health`, { method: "POST", headers: f.headers,
+      body: JSON.stringify({ operation: "begin" }) })).status, 401);
+    assert.deepEqual(f.store.get("settings", report.id), report);
   } finally { await f.api.close(); f.service.detach(); f.store.close(); }
 });

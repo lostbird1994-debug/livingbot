@@ -267,6 +267,23 @@ test("pausing scheduled work revokes only its live tasks before the native ackno
   } finally { f.routines.detach(); f.store.close(); }
 });
 
+test("archived Bots can pause schedules but cannot enable or bind another scheduled run", async () => {
+  const f = fixture();
+  try {
+    const created = await f.routines.create(f.input);
+    f.store.updateBot(f.input.botId, { archivedAt: Date.now() });
+    await f.routines.refresh(created.id);
+    const paused = await f.routines.setEnabled(created.id, false, created.revision!);
+    assert.equal(paused.enabled, false);
+    await assert.rejects(f.routines.setEnabled(created.id, true, paused.revision!), /已归档/);
+    await assert.rejects(f.routines.adoptRun({
+      trigger: "cron", jobId: "native-job", runId: "archived-run", sessionId: "archived-session",
+      agentId: "atlas", sessionKey: f.native().sessionKey,
+    }, 1, () => {}), /已归档/);
+    assert.equal(f.store.list("tasks").length, 0);
+  } finally { f.routines.detach(); f.store.close(); }
+});
+
 test("scheduled ownership survives reopening and a new recurrence cannot steal an interrupted task", async () => {
   await mkdir(resolve("local/test-fixtures"), { recursive: true });
   const root = await mkdtemp(resolve("local/test-fixtures/scheduled-ownership-"));

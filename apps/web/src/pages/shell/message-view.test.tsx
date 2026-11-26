@@ -7,6 +7,12 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { MessageView } from "./message-view";
 
+const nativePrompts = vi.hoisted(() => new Map<string, unknown>());
+vi.mock("../../lib/local-workbench", () => ({
+  localInteraction: (id: string) => nativePrompts.get(id),
+  localInteractionClient: { resolveInteraction: vi.fn() },
+}));
+
 const skills = vi.hoisted(() => ({
   updateDraft: vi.fn(async () => ({})),
   save: vi.fn(async () => ({})),
@@ -42,9 +48,20 @@ beforeEach(() => {
   root = createRoot(container);
 });
 afterEach(() => {
+  nativePrompts.clear();
   act(() => root.unmount());
   container.remove();
   vi.unstubAllGlobals();
+});
+
+it("routes native credential interactions to the masked card instead of the ordinary question form", () => {
+  nativePrompts.set("credential-card", { id: "credential-card", kind: "question" });
+  renderView("bot", [{
+    kind: "ask", text: "Configure notes", input: "secret", secureConnection: "notes",
+    approvalRequestId: "credential-card", loginFields: ["Client ID", "API Key"], status: "pending",
+  }], { canAnswer: true, canDismiss: true });
+  expect(container.querySelector('[data-testid="secret-ask-card"]')).not.toBeNull();
+  expect(container.querySelectorAll('input[type="password"]')).toHaveLength(2);
 });
 
 type PeerBot = ComponentProps<typeof MessageView>["peerBot"];

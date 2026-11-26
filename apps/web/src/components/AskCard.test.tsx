@@ -69,6 +69,19 @@ function button(name: string) {
   return [...container.querySelectorAll("button")].find((item) => item.textContent === name);
 }
 
+it("reuses dynamic masked fields for a native connection without a website-login save toggle", async () => {
+  await render({
+    kind: "ask", text: "Configure notes", input: "secret", secureConnection: "notes",
+    loginFields: ["Client ID", "API Key"], status: "pending",
+  });
+  const fields = [...container.querySelectorAll("input")].filter((input) => input.placeholder);
+  expect(fields.map((field) => [field.placeholder, field.type])).toEqual([
+    ["Client ID", "password"], ["API Key", "password"],
+  ]);
+  expect(container.textContent).toContain("notes");
+  expect(container.textContent).not.toContain("Save to Vault");
+});
+
 it("renders a Chinese approval with the task, actual change and reason", async () => {
   i18n.load("zh-CN", {});
   i18n.activate("zh-CN");

@@ -2,10 +2,10 @@ import { useRef, useState } from "react";
 import { Check, ChevronRight, CircleHelp, ShieldCheck } from "lucide-react";
 import { Button } from "@livingbot/ui-web/components/ui/button";
 import { Input } from "@livingbot/ui-web/components/ui/input";
-import type { Interaction, InteractionAnswer } from "../../../workbench/src/contracts.ts";
-import type { InteractionDraft } from "./interaction-draft.ts";
-import { readInteractionDraft, saveInteractionDraft } from "./interaction-draft.ts";
-export type { InteractionDraft } from "./interaction-draft.ts";
+import type { Interaction, InteractionAnswer } from "../../../workbench/src/contracts.js";
+import type { InteractionDraft } from "./interaction-draft.js";
+import { readInteractionDraft, saveInteractionDraft } from "./interaction-draft.js";
+export type { InteractionDraft } from "./interaction-draft.js";
 
 const decisions = { "allow-once": "允许这次", "allow-always": "始终允许", deny: "拒绝" };
 // Translate native analysis enums only; do not classify the command text.

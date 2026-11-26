@@ -1,24 +1,9 @@
 import type { ThreadMessage } from "@livingbot/contracts";
-import { localDocumentReferences } from "@livingbot/core";
 import { Button } from "@livingbot/ui-web";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
-import { isMarkdownFile, useOpenDocument } from "../lib/document-tabs";
-import { rpc } from "../lib/rpc";
-import { errorText } from "../lib/user-error";
 import { ArtifactFileCard } from "./ArtifactFileCard";
-import { DeliveryFileCard } from "./DeliveryFileCard";
 
-export function messageFileReferences(blocks: ThreadMessage["blocks"]) {
-  return [
-    ...new Set(
-      blocks.flatMap((b) =>
-        b.kind === "text" ? localDocumentReferences(b.text).map((r) => r.path) : [],
-      ),
-    ),
-  ];
-}
 export function MessageDeliveryFiles({
   message,
   target,
@@ -28,17 +13,10 @@ export function MessageDeliveryFiles({
 }) {
   const [expanded, setExpanded] = useState(false);
   const files = message.blocks.filter((b) => b.kind === "file");
-  const paths = files.length ? [] : messageFileReferences(message.blocks);
-  const entries = [
-    ...files.map((file) => ({
-      key: file.artifactId,
-      node: <ArtifactFileCard compact {...file} target={target} />,
-    })),
-    ...paths.map((path) => ({
-      key: path,
-      node: <LocalDeliveryFile path={path} messageId={message.id} target={target} />,
-    })),
-  ];
+  const entries = files.map((file) => ({
+    key: file.artifactId,
+    node: <ArtifactFileCard compact {...file} target={target} />,
+  }));
   if (!entries.length) return null;
   return (
     <section
@@ -61,74 +39,5 @@ export function MessageDeliveryFiles({
         </Button>
       ) : null}
     </section>
-  );
-}
-function LocalDeliveryFile({
-  path,
-  messageId,
-  target,
-}: {
-  path: string;
-  messageId: string;
-  target: ArtifactTarget;
-}) {
-  const openDocument = useOpenDocument();
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (typeof IntersectionObserver === "undefined") {
-      setVisible(true);
-      return;
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  const info = useQuery({
-    enabled: visible,
-    queryKey: ["message-file-info", target, messageId, path],
-    queryFn: () => rpc.threads.fileInfo({ ...target, messageId, path }),
-    staleTime: 60000,
-    retry: false,
-  });
-  return (
-    <div ref={ref}>
-      <DeliveryFileCard
-        name={info.data?.name ?? path.split("/").at(-1) ?? path}
-        size={info.data?.size}
-        status={info.isPending ? "正在定位文件…" : "文件不可用"}
-        disabled={!info.data}
-        error={info.isError ? errorText(info.error) : undefined}
-        onOpen={async () => {
-          if (openDocument && isMarkdownFile(path)) {
-            openDocument({
-              kind: "message",
-              name: info.data?.name ?? path.split("/").at(-1) ?? path,
-              target,
-              messageId,
-              path,
-            });
-          } else await rpc.threads.fileAction({ ...target, messageId, path, action: "open" });
-        }}
-        onReveal={async () => {
-          await rpc.threads.fileAction({ ...target, messageId, path, action: "reveal" });
-        }}
-        onCopy={
-          info.data
-            ? async () => {
-                await navigator.clipboard.writeText(info.data.path);
-              }
-            : undefined
-        }
-      />
-    </div>
   );
 }

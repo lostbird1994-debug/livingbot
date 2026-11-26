@@ -147,5 +147,15 @@ export function localVoice(store: WorkbenchStore) {
       model: row.sttModel || undefined, language: input.language, apiKey: row.secret }, context());
     return { text: result.text };
   }
-  return { rpc, synthesize, transcribe };
+  /**
+   * Credentials for the live recognizer. Realtime dictation needs the raw key and a streaming
+   * model; a connection whose transcription cannot stream returns null and the page keeps
+   * uploading one finished clip instead.
+   */
+  function liveTarget(input: any = {}) {
+    const row = selected(input);
+    if (!row?.secret || !row.transcribe) return null;
+    return { provider: row.provider, apiKey: row.secret, model: row.sttModel || undefined };
+  }
+  return { rpc, synthesize, transcribe, liveTarget };
 }

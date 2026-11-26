@@ -14,7 +14,7 @@ import {
   newClientId,
 } from "@livingbot/core";
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, toast } from "@livingbot/ui-web";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { writeComposerDraft } from "../../lib/composer-draft";
 import { localConnected } from "../../lib/local-workbench";
@@ -23,7 +23,13 @@ import { useSpaceQueries } from "../../lib/query";
 import type { RpcClient } from "../../lib/rpc";
 import type { TaskDraftFile } from "../../lib/task-draft-files";
 import { readTaskDraftFiles, writeTaskDraftFiles } from "../../lib/task-draft-files";
-import { prependThreadMessagePage, reduceThreadSnapshot } from "../../lib/thread-events";
+import { useTurnTitleBackfill } from "../../lib/turn-title-backfill";
+import { useTurnRailPreference } from "../../lib/turn-rail-preference";
+import {
+  prependThreadMessagePage,
+  reduceThreadSnapshot,
+  workingThreadRunIds,
+} from "../../lib/thread-events";
 import { errorText } from "../../lib/user-error";
 import { Composer } from "./composer";
 import { ComposerUsage } from "./composer-usage";
@@ -209,6 +215,7 @@ export function TaskConversation({
         (!["completed", "failed", "cancelled"].includes(session.status) ||
           ["unconfirmed", "stopping"].includes(session.resourceWaitReason ?? ""))),
   );
+  const activeRunIds = useMemo(() => workingThreadRunIds(snapshot), [snapshot]);
   const usageQuery = useConversationUsage({
     queries,
     target,
@@ -333,6 +340,12 @@ export function TaskConversation({
     }
   }
   const title = session?.title ?? "新任务";
+  const turnRail = useTurnRailPreference();
+  const nameTurns = useCallback(
+    (messageIds: string[]) => rpc.threads.nameTurns({ ...target, messageIds }),
+    [rpc, target],
+  );
+  useTurnTitleBackfill(snapshot?.messages ?? [], nameTurns, () => void refresh(), turnRail.enabled);
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="task-conversation">
       {isDraft ? (
@@ -359,11 +372,7 @@ export function TaskConversation({
           answerableAskIds={answerableAskMessageIds(snapshot)}
           dismissableAskIds={dismissableAskMessageIds(snapshot, userId)}
           running={running}
-          workingBots={
-            running
-              ? [{ botId: bot.id, name: bot.name, color: bot.color, avatarSet: bot.avatarSet }]
-              : []
-          }
+          activeRunIds={activeRunIds}
           userBubble={chatUserBubbleColors(bot.color, bot.id)}
           onLoadOlder={async () => {
             if (snapshot.olderCursor === null) return;

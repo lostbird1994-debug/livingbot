@@ -1,7 +1,6 @@
 import type { BotAvatarSet } from "@livingbot/contracts";
 import { splitPeerLabel } from "@livingbot/core";
-import type { GroupAvatarMember } from "@livingbot/ui-web";
-import { BotAvatar, GroupAvatar } from "@livingbot/ui-web";
+import { BotAvatar } from "@livingbot/ui-web";
 
 export function CollaborationMarker({
   color,
@@ -41,11 +40,10 @@ export function CollaborationMarker({
   );
 }
 
-/** The working bot with what it is doing right now, such as its current tool call. */
-export function ActiveBotGlyph({ bots, label }: { bots: GroupAvatarMember[]; label: string }) {
+/** What the current run is doing, such as its current tool call. */
+export function WorkingIndicator({ label }: { label: string }) {
   return (
     <div role="status" className="flex min-h-10 min-w-0 items-center gap-2.5 px-1">
-      <GroupAvatar members={bots} size={28} />
       <span dir="auto" className="min-w-0 truncate text-[15px] text-muted-foreground text-shimmer">
         {label}
       </span>

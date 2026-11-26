@@ -1,3 +1,5 @@
+严禁防御性思维代码，不应为极小概率发生的情况去考虑开发，一切以用户体验为最高目标，严禁过度设置权限。
+
 # LivingBot 2.0 Development Handoff
 
 ## Superseding user correction — 2026-11-20

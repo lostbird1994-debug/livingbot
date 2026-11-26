@@ -48,6 +48,7 @@ describe("desktop preload bridge", () => {
       "badge",
       "computer",
       "device",
+      "links",
       "menu",
       "monitoring",
       "nativeWindowFrame",
@@ -55,6 +56,7 @@ describe("desktop preload bridge", () => {
       "passkeys",
       "platform",
       "settings",
+      "system",
       "update",
       "voice",
       "window",
@@ -78,6 +80,9 @@ describe("desktop preload bridge", () => {
     await bridge.oauth.cancel?.("https://provider.example.com/authorize");
     await bridge.monitoring?.enabled();
     await bridge.passkeys?.rpIds();
+    await bridge.system?.loginItem();
+    await bridge.system?.setLoginItem(true);
+    await bridge.links?.setMode("in-app");
     await bridge.window.close();
     await bridge.window.minimize();
     await bridge.window.toggleMaximize();
@@ -94,6 +99,9 @@ describe("desktop preload bridge", () => {
       "desktop.oauth.cancel",
       "desktop.monitoring.enabled",
       "desktop.passkeys.rpIds",
+      "desktop.system.loginItem",
+      "desktop.system.setLoginItem",
+      "desktop.links.setMode",
       "desktop.window.close",
       "desktop.window.minimize",
       "desktop.window.toggleMaximize",

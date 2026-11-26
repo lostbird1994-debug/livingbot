@@ -20,13 +20,11 @@ import type { InteractionDraft } from "./InteractionCard.tsx";
 import { AbilityCenter } from "./AbilityCenter.tsx";
 import { Groups } from "./Groups.tsx";
 import { MemoryCenter } from "./MemoryCenter.tsx";
-import { MigrationCenter } from "./MigrationCenter.tsx";
 import { TaskProcesses } from "./TaskProcesses.tsx";
 import { TaskRecovery } from "./TaskRecovery.tsx";
 import { RoutineCenter } from "./RoutineCenter.tsx";
 import { NotificationCenter } from "./NotificationCenter.tsx";
 import { activeTurnStatuses, hasTaskWork, primaryBotTask, taskActivity } from "../../../packages/workbench/src/task-state.ts";
-import type { MigrationPreview } from "../../../packages/workbench/src/migration.ts";
 import { ModelSettings } from "./ModelSettings.tsx";
 import { desktopBridge } from "./desktop.ts";
 import { FileCenter } from "./FileCenter.tsx";
@@ -38,7 +36,7 @@ const statuses: Record<ReturnType<typeof taskActivity>, string> = {
   completed: "已完成", failed: "失败", cancelled: "已停止", interrupted: "已中断",
   background: "后台运行", unconfirmed: "状态待确认",
 };
-type View = "panorama" | "conversation" | "tasks" | "abilities" | "groups" | "memory" | "migration" | "routines" | "notifications" | "model" | "files";
+type View = "panorama" | "conversation" | "tasks" | "abilities" | "groups" | "memory" | "routines" | "notifications" | "model" | "files";
 type PendingInput = { submissionId: string; conversationId: string; botId: string; botIds?: string[]; message: string; attachmentIds?: string[]; queueMode?: "followup" | "steer" };
 type DraftFile = { id: string; file: File; state: "uploading" | "ready" | "failed"; error?: string };
 const themeKey = "livingbot:appearance";
@@ -80,7 +78,6 @@ export function App() {
   const [fileRevision, setFileRevision] = useState(0);
   const [filesBotId, setFilesBotId] = useState<string>();
   const [view, setView] = useState<View>("panorama");
-  const [migration, setMigration] = useState<MigrationPreview>();
   const [conversationId, setConversationId] = useState<string>();
   const [taskTarget, setTaskTarget] = useState<{ conversationId: string; taskId: string; messageId?: string; notification?: ResultNotification }>();
   const [desktopResultId, setDesktopResultId] = useState<string>();
@@ -164,7 +161,6 @@ export function App() {
         const failure = event.data as { stage: string; message: string };
         if (failure.stage !== "continuation") setError(failure.message);
       }
-      if (event.type === "migration.changed") setMigration(event.data as MigrationPreview);
     };
     const connect = async () => {
       try {
@@ -410,7 +406,7 @@ export function App() {
       <header className="studio-toolbar">
         {!sidebar && <Button size="icon-sm" variant="ghost" aria-label="展开导航" onClick={() => setSidebar(true)}><PanelLeftClose /></Button>}
         <span>工作室</span><span className="toolbar-slash">/</span>
-        <span>{view === "conversation" ? conversation?.title : view === "tasks" ? "工作记录" : view === "routines" ? "定时工作" : view === "notifications" ? "通知" : view === "abilities" ? "能力" : view === "groups" ? "群聊" : view === "memory" ? "记忆" : view === "migration" ? "导入伙伴" : view === "model" ? "模型" : view === "files" ? "文件" : "全景"}</span>
+        <span>{view === "conversation" ? conversation?.title : view === "tasks" ? "工作记录" : view === "routines" ? "定时工作" : view === "notifications" ? "通知" : view === "abilities" ? "能力" : view === "groups" ? "群聊" : view === "memory" ? "记忆" : view === "model" ? "模型" : view === "files" ? "文件" : "全景"}</span>
         <div className="toolbar-right">{!connected && <span className="connection-warning"><WifiOff size={14} />重连中</span>}
           <Button size="icon-sm" variant="ghost" className="notification-button"
             aria-label={`通知${snapshot.notifications.some((item) => item.readAt === undefined) ? "，有未读结果" : ""}`}
@@ -458,7 +454,7 @@ export function App() {
           {snapshot.bots.length % 2 === 1 && <div className="bot-station-shell station-filler" aria-hidden="true" />}
         </div>
         <div className="panorama-footer"><span><ArrowDownLeft size={16} />点一位伙伴，开始对话</span>
-          <Button variant="text" onClick={() => setView("migration")}>导入伙伴<ArrowUpRight /></Button></div>
+        </div>
       </section>}
       {view === "conversation" && <section className="conversation-layout">
         <header className="conversation-header">{conversation?.kind === "group" ? <UsersRound size={28} /> : selectedBot && <BotPortrait bot={selectedBot} dark={dark} small />}
@@ -592,12 +588,6 @@ export function App() {
         onChanged={receiveAbilities} />}
       {view === "routines" && <RoutineCenter client={client} bots={snapshot.bots} revision={routineRevision} onOpen={openConversation} />}
       {view === "memory" && <MemoryCenter client={client} bots={snapshot.bots} conversations={snapshot.conversations} initialBotId={memoryBotId} />}
-      {view === "migration" && <MigrationCenter client={client} latest={migration} onOpen={async ({ id }) => {
-        const updated = await client.snapshot();
-        setSnapshot(updated);
-        const bot = updated.bots.find((item) => item.id === id);
-        if (bot) await openBot(bot);
-      }} />}
       {view === "groups" && <Groups client={client} bots={snapshot.bots} conversations={snapshot.conversations}
         onOpen={(target) => openConversation(target.id)}
         onCreated={(target) => {

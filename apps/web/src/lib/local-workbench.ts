@@ -3,12 +3,18 @@ import { UI_LOCALES } from "./ui-locale";
 import type { UiLocale } from "./ui-locale";
 import { toast } from "@livingbot/ui-web";
 import { hydrateLocalUiPreferences, uiPreferenceRevision } from "./local-ui-preferences";
+import { hydrateConclusionFirstPreference } from "./conclusion-first-preference";
 import { setUiAppearance } from "./ui-appearance";
 import { setToolActivityPreference } from "./tool-activity-preference";
 import { setResponseStreamingPreference } from "./response-streaming";
 import { setChatAvatarVisible } from "./chat-avatar-preference";
+import { setTurnTitleCount, setTurnTitlesEnabled } from "./turn-rail-preference";
 import { setRemoteImagesPreference } from "./remote-images-preference";
 import { setComposerEnterToSend } from "./composer-enter-to-send-pref";
+import type { AppTextSize, ChatWidth } from "./reading-prefs";
+import { setAppTextSize, setChatWidth } from "./reading-prefs";
+import type { FileOpenMode, LinkOpenMode } from "./opening-prefs";
+import { setFileOpenMode, setLinkOpenMode } from "./opening-prefs";
 import { setBotsSidebarDensity } from "./bots-sidebar-density-pref";
 import type { AppearancePreference } from "./ui-appearance";
 import { APPEARANCE_PREFERENCES } from "./ui-appearance";
@@ -60,6 +66,17 @@ export async function localVoiceFetch(path: string, init: RequestInit): Promise<
   return fetch(`${local.origin}${path}`, { ...init, headers });
 }
 
+/**
+ * Headers for the streaming dictation tap, which posts JSON on its own instead of going
+ * through localVoiceFetch. A browser session carries its cookie and adds nothing here.
+ */
+export async function localVoiceHeaders(headers?: HeadersInit): Promise<Headers> {
+  const merged = new Headers(headers);
+  const local = await localConnection();
+  if (local) merged.set("authorization", `Bearer ${local.token}`);
+  return merged;
+}
+
 let pending: Promise<Connection | null> | undefined;
 let resolved: Connection | null = null;
 const interactions = new Map<string, Interaction>();
@@ -91,7 +108,7 @@ export const localInteractionClient = {
 const STORAGE_KEY = "livingbot.local-connection";
 
 function readAddressConnection(): Connection | null {
-  const params = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(window.location?.search ?? "");
   const origin = params.get("localOrigin");
   const token = params.get("localToken");
   if (!origin || !token) return null;
@@ -173,6 +190,7 @@ export function subscribeLocalResults(open: (route: string) => void): () => void
 
 /** Desktop asks the preload; a browser uses the pair from the address bar. */
 export function localConnection(): Promise<Connection | null> {
+  if (typeof window === "undefined") return Promise.resolve(null);
   pending ??= (async () => {
     if (resolved) return resolved;
     const stored = readStored();
@@ -267,6 +285,11 @@ function toProductBlocks(
     steps = [];
   };
   for (const block of blocks) {
+    if (block.kind === "health_check") {
+      flushSteps();
+      output.push({ kind: "ask", text: block.summary, healthCheck: { reportId: block.reportId, botId: block.botId } });
+      continue;
+    }
     if (block.kind === "voice_call" || block.kind === "call_request") {
       flushSteps();
       const { id: _id, ...call } = block;
@@ -581,6 +604,7 @@ function productRun(run: LocalRun, botId: string, threadId: string, taskId: stri
   const terminal = ["completed", "failed", "cancelled"].includes(run.state);
   return {
     id: run.id,
+    userId: USER_ID,
     botId,
     threadId,
     taskId,
@@ -650,6 +674,18 @@ function productMessage(
         text: prompt.questions.map((field) => field.question).join("\n\n") || prompt.title,
         approvalRequestId: prompt.id,
         externalRequestKind: prompt.kind === "approval" ? "permission" : "question",
+        ...(prompt.secureInput ? {
+          input: "secret" as const, purpose: "api_key" as const,
+          text: prompt.secureInput.connection ? prompt.title : prompt.secureInput.name,
+          detail: prompt.secureInput.connection
+            ? prompt.secureInput.connection.fields.map((field) => field.key).join(", ")
+            : prompt.secureInput.allowedHosts.join(", "),
+          ...(prompt.secureInput.connection ? {
+            secureConnection: prompt.secureInput.connection.name,
+            loginFields: prompt.secureInput.connection.fields.map((field) => field.label),
+          } : {}),
+          ...(answered && prompt.status !== "answered" ? { dismissed: true as const } : {}),
+        } : {}),
         status: answered ? "answered" : "pending",
         ...(answered
           ? {
@@ -694,6 +730,7 @@ function productMessage(
     // renders it under its target and hides the bubble, so the link has to survive.
     ...(message.replyToMessageId ? { replyToMessageId: message.replyToMessageId } : {}),
     ...(message.replyQuote ? { replyQuote: message.replyQuote } : {}),
+    ...(message.turnTitle ? { turnTitle: message.turnTitle } : {}),
     createdAt: new Date(message.createdAt).toISOString(),
   };
 }
@@ -922,6 +959,7 @@ async function bootstrap(
   hydrateLocalUiPreferences(preferences, (patch) =>
     request(connection, "/api/preferences", { method: "POST", body: JSON.stringify(patch) }),
     (key, value) => {
+      if (key === "livingbot.conclusionFirst" && ["on", "off"].includes(value)) hydrateConclusionFirstPreference(value);
       if (key === "rakazo.uiLocale" && UI_LOCALES.includes(value as UiLocale)) void setUiLocale(value as UiLocale);
       if (key === "rakazo.uiAppearance" && APPEARANCE_PREFERENCES.includes(value as AppearancePreference)) setUiAppearance(value as AppearancePreference);
       if (key === "rakazo.showToolActivity" && ["on", "off"].includes(value)) setToolActivityPreference(value as "on" | "off");
@@ -929,7 +967,13 @@ async function bootstrap(
       if (key === "rakazo.loadRemoteImages" && ["on", "off"].includes(value)) setRemoteImagesPreference(value as "on" | "off");
       if (key === "rakazo.composerEnterToSend" && ["1", "0"].includes(value)) setComposerEnterToSend(value === "1");
       if (key === "rakazo.chatAvatar" && ["on", "off"].includes(value)) setChatAvatarVisible(value === "on");
+      if (key === "rakazo.showTurnTitles" && ["on", "off"].includes(value)) setTurnTitlesEnabled(value === "on");
+      if (key === "rakazo.turnTitleCount") setTurnTitleCount(Number(value));
       if (key === "rakazo.botsSidebarDensity" && ["compact", "comfortable"].includes(value)) setBotsSidebarDensity(value as "compact" | "comfortable");
+      if (key === "rakazo.appTextSize" && ["small", "default", "large", "largest"].includes(value)) setAppTextSize(value as AppTextSize);
+      if (key === "rakazo.chatWidth" && ["narrow", "default", "wide"].includes(value)) setChatWidth(value as ChatWidth);
+      if (key === "rakazo.linkOpenMode" && ["system", "in-app"].includes(value)) setLinkOpenMode(value as LinkOpenMode);
+      if (key === "rakazo.fileOpenMode" && ["preview", "system"].includes(value)) setFileOpenMode(value as FileOpenMode);
     }, () => toast.error("设置未保存，请重试"), preferenceRevision);
   hydrateBotVoicePreferences(preferences, (patch) =>
     request(connection, "/api/preferences", { method: "POST", body: JSON.stringify(patch) }));
@@ -1033,10 +1077,10 @@ async function bootstrap(
 
 /** The file a message actually delivered, matched by id, name or trailing path. */
 function matchMessageFile(
-  messages: LocalMessage[], artifacts: Artifact[], messageId: string | undefined, reference: string,
-): { artifactId: string; name: string; bytes: number; mediaType: string } | undefined {
+  messages: LocalMessage[], artifacts: Artifact[], messageId: string, reference: string,
+): { artifactId: string; name: string; bytes: number | undefined; mediaType: string } | undefined {
   const base = reference.split("/").at(-1) ?? reference;
-  const candidates = (messageId ? messages.filter((message) => message.id === messageId) : messages)
+  const candidates = messages.filter((message) => message.id === messageId)
     .flatMap((message) => message.blocks.flatMap((block) => (block.kind === "file" ? [block] : [])));
   const found = candidates.find((block) =>
     block.artifactId === reference || block.name === reference || block.name === base ||
@@ -1046,7 +1090,7 @@ function matchMessageFile(
   const artifact = artifacts.find((entry) => entry.id === found.artifactId);
   return {
     artifactId: found.artifactId, name: found.name,
-    bytes: artifact?.bytes ?? 0, mediaType: found.mediaType,
+    bytes: artifact?.bytes, mediaType: found.mediaType,
   };
 }
 
@@ -1269,12 +1313,14 @@ export async function localRpc(procedure: string, input: unknown, spaceId?: stri
     const target = await resolveTarget(connection, body);
     const reference = String(body.path ?? "");
     if (!reference) throw new Error("缺少文件标识");
+    if (!body.messageId) throw new Error("缺少消息标识");
     // The reference comes from the message text; it is matched to the file that
     // message actually owns in this conversation, never read from the host disk.
     const history = await request<{ messages: LocalMessage[]; artifacts?: Artifact[] }>(connection,
       `/api/conversations/${encodeURIComponent(target.conversationId)}/messages`);
     const file = matchMessageFile(history.messages, history.artifacts ?? [], body.messageId, reference);
-    const artifactId = file?.artifactId ?? reference;
+    if (!file) throw new Error("这条消息没有交付该文件");
+    const artifactId = file.artifactId;
     if (path === "threads.fileAction") {
       // The shell only needs to know the action ran; the service may answer with
       // the file's own body, so the receipt is the product's, not the transport's.
@@ -1286,7 +1332,7 @@ export async function localRpc(procedure: string, input: unknown, spaceId?: stri
       if (!response.ok) throw new Error("文件动作未执行");
       return { ok: true as const };
     }
-    const metadata = file ?? await request<{ id: string; name: string; bytes: number; mediaType: string }>(
+    const metadata = file.bytes !== undefined ? file : await request<{ id: string; name: string; bytes: number; mediaType: string }>(
       connection, `/api/files/${encodeURIComponent(artifactId)}?metadata=1`);
     if (path === "threads.fileInfo") {
       return { path: reference, name: metadata.name, size: metadata.bytes };
@@ -1710,6 +1756,17 @@ export async function localRpc(procedure: string, input: unknown, spaceId?: stri
     if (path === "threads.head") return { threadId: snapshot.threadId, cursor: snapshot.cursor };
     return snapshot;
   }
+  if (path === "threads.nameTurns") {
+    // Naming runs against the model the kernel is configured with; the answer is the titles
+    // that came back, so the caller can stop asking for them.
+    const body = (input ?? {}) as ThreadTargetInput & { messageIds?: string[] };
+    const target = await resolveTarget(connection, body);
+    return request<{ named: { id: string; title: string }[] }>(
+      connection,
+      `/api/conversations/${encodeURIComponent(target.conversationId)}/turn-titles`,
+      { method: "POST", body: JSON.stringify({ messageIds: body.messageIds ?? [] }) },
+    );
+  }
   if (path === "threads.stop") {
     // Stopping the thread means stopping every native run and queued input the
     // resolved conversation currently owns, and saying how many.
@@ -1748,6 +1805,7 @@ export async function localRpc(procedure: string, input: unknown, spaceId?: stri
       answer: string;
       dismiss?: boolean;
       clientNonce?: string;
+      fields?: { label: string; value: string; hidden: boolean }[];
     };
     const snapshot = await request<{
       interactions: Interaction[];
@@ -1761,6 +1819,23 @@ export async function localRpc(procedure: string, input: unknown, spaceId?: stri
     const target = await resolveTarget(connection, body);
     if (interaction.conversationId !== target.conversationId) throw new Error("这张卡片不属于当前会话");
     const resolutionId = body.clientNonce ?? crypto.randomUUID();
+    if (interaction.secureInput) {
+      const binding = interaction.secureInput.connection;
+      if (binding && !body.dismiss && (!body.fields || body.fields.length !== binding.fields.length ||
+        binding.fields.some((field, index) => body.fields?.[index]?.label !== field.label))) {
+        throw new Error("请填写全部凭证字段");
+      }
+      await request(connection,
+        `/api/tasks/${encodeURIComponent(interaction.taskId)}/interactions/${encodeURIComponent(interaction.id)}/credential`, {
+          method: "POST",
+          body: JSON.stringify(body.dismiss
+            ? { resolutionId: interaction.resolutionId ?? resolutionId, cancel: true }
+            : binding
+              ? { values: Object.fromEntries(binding.fields.map((field, index) => [field.key, body.fields![index]!.value])) }
+              : { resolutionId: interaction.resolutionId ?? resolutionId, value: body.answer }),
+        });
+      return { ok: true };
+    }
     const question = interaction.questions[0];
     if (interaction.kind === "question" && !question) throw new Error("问题缺少字段");
     if (
@@ -1981,10 +2056,12 @@ export async function* localThreadSubscription(
         botId: message.botId || target.botId,
         threadId: target.conversationId,
         seq: stored.cursor,
+        runId: message.runId,
         type: previous === undefined ? "thread.message.created" : "thread.message.updated",
         createdAt: new Date(message.createdAt).toISOString(),
         payload: {
           messageId: message.id,
+          localTranscript: true,
           role: message.role === "assistant" ? "bot" : message.role,
           blocks: toProductBlocks(message.blocks, artifacts),
           ...(message.clientNonce ? { clientNonce: message.clientNonce } : {}),

@@ -20,7 +20,6 @@ import {
   unreadDividerMessageId,
   voiceChatHoldsMessage,
 } from "@livingbot/core";
-import type { GroupAvatarMember } from "@livingbot/ui-web";
 import { Button, cn, Spinner } from "@livingbot/ui-web";
 import { ArrowDown } from "lucide-react";
 import type { CSSProperties, RefObject } from "react";
@@ -34,7 +33,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ActiveBotGlyph } from "../../components/ai/CollaborationMarker";
+import { WorkingIndicator } from "../../components/ai/CollaborationMarker";
 import { VoiceChatCard } from "../../components/call/VoiceChatCard";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { mergeLiveProgress } from "../../lib/live-progress-merge";
@@ -42,10 +41,15 @@ import { quoteDraftForSelection } from "../../lib/quote-selection";
 import { messageHasVisibleBlocks } from "../../lib/tool-activity-view";
 import { CHAT_COLUMN_PADDING } from "../../lib/transcript-layout";
 import { transcriptIsNearEnd, transcriptMovedDown } from "../../lib/transcript-scroll";
+import { chatTurns } from "../../lib/turn-titles";
+import { useTurnRailPreference } from "../../lib/turn-rail-preference";
 import { TimeSeparator, UnreadDivider } from "./chat-context";
+import { previewMessageText } from "./chat-shared";
 import type { ImportSetupTarget } from "./import-setup-card";
 import { MessageView } from "./message-view";
 import { QuoteSelectionButton } from "./quote-selection-button";
+import { useTranscriptResize } from "./use-transcript-resize";
+import { TurnRail } from "./turn-rail";
 
 /** User messages stay compact; Bot responses use the available transcript width. */
 export function bubbleFrameWidth(role: ThreadMessage["role"]) {
@@ -68,7 +72,7 @@ export const Transcript = memo(function Transcript({
   answerableAskIds,
   dismissableAskIds,
   running,
-  workingBots,
+  activeRunIds,
   userBubble,
   onCallBack,
   onLoadOlder,
@@ -107,7 +111,8 @@ export const Transcript = memo(function Transcript({
   answerableAskIds: Set<string>;
   dismissableAskIds: Set<string>;
   running: boolean;
-  workingBots: GroupAvatarMember[];
+  /** The runs still working: only the reply one of them produced opens by itself. */
+  activeRunIds: ReadonlySet<string>;
   /** Your bubbles take the bot's color in its own chat. */
   userBubble?: { background: string; foreground: string };
   /** Calls the bot back from a missed call in the transcript. */
@@ -145,6 +150,7 @@ export const Transcript = memo(function Transcript({
   const [atEnd, setAtEnd] = useState(true);
   const following = useRef(true);
   const jumpScrolling = useRef(false);
+  useTranscriptResize(scrollRef, following, jumpScrolling);
   const autoScrolling = useRef(false);
   const lastScrollTop = useRef<number | null>(null);
   const autoScrollTimer = useRef<number | undefined>(undefined);
@@ -164,15 +170,20 @@ export const Transcript = memo(function Transcript({
     () => mergeLiveProgress(expandPeerReplies(transcript, expandedPeerMarkers)),
     [transcript, expandedPeerMarkers],
   );
-  // The newest bot reply belongs to the run that is still working, so its
-  // thoughts and actions stay expanded until that run ends.
-  const activeBotMessageId = running
-    ? messages.findLast((message) => message.role === "bot")?.id
-    : undefined;
+  // Only the reply a still-working run produced keeps its thoughts and actions
+  // expanded. The previous turn's answer no longer counts just for being the
+  // newest bot message, so starting the next turn leaves it folded.
+  const activeBotMessageId = messages.findLast(
+    (message) =>
+      message.role === "bot" && message.runId !== undefined && activeRunIds.has(message.runId),
+  )?.id;
   const messageById = useMemo(
     () => new Map(messages.map((message) => [message.id, message])),
     [messages],
   );
+  const turns = useMemo(() => chatTurns(messages, previewMessageText), [messages]);
+  const turnRail = useTurnRailPreference();
+  const [activeTurnId, setActiveTurnId] = useState<string | null>(null);
   const committedMentions = useRef(new Map<string, ChildBotBlock[]>());
   const mentionView = useMemo(() => {
     const view = projectBotMentions(messages);
@@ -383,6 +394,80 @@ export const Transcript = memo(function Transcript({
     onScrollRequestHandled();
   }, [messages, scrollRequest, scrollRef, endJumpScroll, onScrollRequestHandled, exchanges.lineOf]);
 
+  // The margin follows the reader: the turn being read is the last one whose opening message
+  // has passed the top of the viewport. Recomputed at most once a frame while scrolling.
+  const activeTurnFrame = useRef<number | undefined>(undefined);
+  const syncActiveTurn = useCallback(() => {
+    const element = scrollRef.current;
+    if (!element) return;
+    const anchors = element.querySelectorAll<HTMLElement>("[data-turn-anchor]");
+    let current: string | null = anchors[0]?.dataset.turnAnchor ?? null;
+    // Reading the tail means the newest turn is the one you are on, however far its opening
+    // message sits above the fold.
+    const top = transcriptIsNearEnd(element) ? Number.POSITIVE_INFINITY : element.scrollTop + 24;
+    for (const anchor of anchors) {
+      if (anchor.offsetTop > top) break;
+      current = anchor.dataset.turnAnchor ?? current;
+    }
+    setActiveTurnId((previous) => (previous === current ? previous : current));
+  }, [scrollRef]);
+  const scheduleActiveTurn = useCallback(() => {
+    if (activeTurnFrame.current !== undefined) return;
+    activeTurnFrame.current = window.requestAnimationFrame(() => {
+      activeTurnFrame.current = undefined;
+      syncActiveTurn();
+    });
+  }, [syncActiveTurn]);
+  useLayoutEffect(() => {
+    syncActiveTurn();
+  }, [syncActiveTurn, messages]);
+  useEffect(
+    () => () => {
+      if (activeTurnFrame.current !== undefined)
+        window.cancelAnimationFrame(activeTurnFrame.current);
+    },
+    [],
+  );
+  // A margin click opens its turn at the top of the viewport, not centered: the turn is read
+  // from the person's own words downward.
+  const jumpToTurn = useCallback(
+    (messageId: string) => {
+      const element = scrollRef.current;
+      if (!element) return;
+      setActiveTurnId(messageId);
+      const row = element.querySelector<HTMLElement>(
+        `[data-message-id="${CSS.escape(messageId)}"]`,
+      );
+      // Not in the loaded window: let the chat fetch around it.
+      if (!row) {
+        onJumpToMessage(messageId);
+        return;
+      }
+      following.current = false;
+      autoScrolling.current = false;
+      jumpScrolling.current = true;
+      element.addEventListener("scrollend", endJumpScroll, { once: true });
+      window.clearTimeout(jumpScrollTimer.current);
+      jumpScrollTimer.current = window.setTimeout(endJumpScroll, 2_000);
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      element.scrollTo({
+        top: Math.max(0, row.offsetTop - 12),
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
+      row.animate(
+        reducedMotion
+          ? [{ backgroundColor: "var(--muted)" }, { backgroundColor: "var(--muted)" }]
+          : [
+              { backgroundColor: "transparent" },
+              { backgroundColor: "var(--muted)" },
+              { backgroundColor: "transparent" },
+            ],
+        { duration: 1200 },
+      );
+    },
+    [scrollRef, onJumpToMessage, endJumpScroll],
+  );
+
   const followedRequest = useRef(followRequest);
   useLayoutEffect(() => {
     if (followedRequest.current === followRequest) return;
@@ -431,6 +516,9 @@ export const Transcript = memo(function Transcript({
 
   return (
     <div className="relative flex min-h-0 flex-1">
+      {turnRail.enabled && turns.length > 0 ? (
+        <TurnRail turns={turns} activeId={activeTurnId} onJump={jumpToTurn} visibleCount={turnRail.count} />
+      ) : null}
       <div
         ref={scrollRef}
         data-testid="transcript"
@@ -460,6 +548,7 @@ export const Transcript = memo(function Transcript({
           lastScrollTop.current = event.currentTarget.scrollTop;
           const nearEnd = transcriptIsNearEnd(event.currentTarget);
           setAtEnd(nearEnd);
+          scheduleActiveTurn();
           // A jump scroll owns the viewport until its animation settles; its
           // own near-end crossings must not re-arm tail-following.
           if (jumpScrolling.current) return;
@@ -475,12 +564,15 @@ export const Transcript = memo(function Transcript({
         }}
         className={`rk-scroll isolate flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto scroll-pt-4 scroll-pb-7 pt-6 pb-12 md:pt-7 md:pb-13 ${CHAT_COLUMN_PADDING}`}
         style={
-          userBubble
-            ? ({
+          {
+            overflowAnchor: "none",
+            ...(userBubble
+              ? {
                 "--chat-user": userBubble.background,
                 "--chat-user-foreground": userBubble.foreground,
-              } as CSSProperties)
-            : undefined
+              }
+              : {}),
+          } as CSSProperties
         }
       >
         {olderCursor != null ? (
@@ -535,6 +627,7 @@ export const Transcript = memo(function Transcript({
               ) : null}
               <div
                 data-message-id={message.id}
+                data-turn-anchor={message.role === "user" && !peerReceipt ? message.id : undefined}
                 className={peerReceipt ? "relative py-0.5" : "group/message relative hover:z-[1]"}
               >
                 <div
@@ -626,7 +719,7 @@ export const Transcript = memo(function Transcript({
         !messages.some(
           (message) => message.id.startsWith("progress:") && liveMessageComposing(message.blocks),
         ) ? (
-          <ActiveBotGlyph bots={workingBots} label={workingLabel} />
+          <WorkingIndicator label={workingLabel} />
         ) : null}
       </div>
       {quoteDraft ? (

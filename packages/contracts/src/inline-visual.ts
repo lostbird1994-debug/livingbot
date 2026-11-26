@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { validateWidgetCode } from "./widget-code.js";
+
+export { validateWidgetCode } from "./widget-code.js";
 
 export const INLINE_VISUAL_FENCE = "livingbot-visual";
 export const INLINE_VISUAL_REFERENCE_EVENT = "livingbot:visual-reference";
@@ -21,23 +24,6 @@ export const WidgetVisualSchema = z
   });
 export type WidgetVisual = z.infer<typeof WidgetVisualSchema>;
 
-/** Input guidance checks; the browser sandbox, rather than a text filter, is the execution boundary. */
-export function validateWidgetCode(code: string, format: "svg" | "html"): string | undefined {
-  if (/<(?:!doctype|html|head|body|base|meta|iframe|object|embed|form)\b/i.test(code))
-    return "Provide a fragment without document wrappers, nested browsing contexts or forms.";
-  if (/\b(?:localStorage|sessionStorage|document\.cookie)\b/.test(code))
-    return "Widgets have no persistent browser storage or cookies. Keep state in memory.";
-  if (/position\s*:\s*fixed\b/i.test(code))
-    return "Use in-flow layout instead of fixed positioning.";
-  if (
-    format === "svg" &&
-    (!/^<svg\b/i.test(code.trim()) ||
-      (code.match(/<svg\b/gi) ?? []).length !== 1 ||
-      !/viewBox\s*=\s*["']0\s+0\s+680\s+[\d.]+["']/i.test(code))
-  )
-    return "Provide one SVG with viewBox='0 0 680 H'.";
-  return undefined;
-}
 const coordinate = z.number().finite().min(0).max(1_200);
 const semanticInk = z.enum([
   "foreground",

@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { ActiveBotGlyph, CollaborationMarker } from "./CollaborationMarker";
+import { CollaborationMarker, WorkingIndicator } from "./CollaborationMarker";
 
 describe("collaboration transcript markers", () => {
   it("shows a centred peer event with its avatar and full label", () => {
@@ -25,16 +25,15 @@ describe("collaboration transcript markers", () => {
     expect(html).not.toContain("peer-replies-toggle");
   });
 
-  it("animates the active bot glyph from its run status", () => {
+  it("shows the current activity without repeating the reply avatar", () => {
     const html = renderToString(
-      <ActiveBotGlyph
-        bots={[{ botId: "research", color: "#14B8A6", status: "running" }]}
-        label="Searching the web: injury news"
-      />,
+      <WorkingIndicator label="Searching the web: injury news" />,
     );
 
     expect(html).toContain('role="status"');
-    expect(html).toContain('data-working="true"');
-    expect(html).toContain("livingbot-organic-avatar-body-working");
+    expect(html).toContain("Searching the web: injury news");
+    expect(html).toContain("text-shimmer");
+    expect(html).not.toContain("livingbot-organic-avatar");
+    expect(html).not.toContain("<img");
   });
 });

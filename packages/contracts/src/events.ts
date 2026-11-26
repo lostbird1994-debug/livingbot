@@ -134,6 +134,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("ask"),
     contextAudit: z.literal(true).optional(),
+    healthCheck: z.object({ reportId: Id, botId: Id }).optional(),
     text: z.string(),
     approvalEffectId: Id.optional(),
     /** Resolved by the backend; clients localize the explanation without interpreting tool args. */
@@ -189,6 +190,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     credential: botSecretDestinationSchema({ allowPrivateHttpOrigin: true }).optional(),
     /** The fields a login card asks for, by label; absent means DEFAULT_LOGIN_FIELD_LABELS. */
     loginFields: LoginFieldLabels.optional(),
+    /** Native connection card; values travel only through the credential endpoint. */
+    secureConnection: z.string().optional(),
     /** On a fetch approval, the site an "always" answer allows. */
     site: z.string().optional(),
     status: z.enum(["pending", "answered"]).optional(),
@@ -518,6 +521,8 @@ export const ThreadMessageSchema = z.object({
   replyQuote: z.string().optional(),
   replyPreview: ReplyPreviewSchema.nullable().optional(),
   runId: Id.optional(),
+  /** The short title this turn shows in the chat's margin; only the message that opened it has one. */
+  turnTitle: z.string().optional(),
   routine: z.boolean().optional(),
   /** Name of the routine that produced this reply, for the bubble's origin label. */
   routineName: z.string().optional(),

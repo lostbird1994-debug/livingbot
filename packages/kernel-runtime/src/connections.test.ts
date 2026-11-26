@@ -53,6 +53,14 @@ test("connection reads expose no endpoint, command, environment or credential", 
   assert.equal(f.patches.length, 0);
 });
 
+test("an old connection is not confirmation of a failed credential write", async () => {
+  const f = fixture();
+  f.setFail();
+  await assert.rejects(f.connections.update("existing", { headers: { "X-Key": "replacement" } }),
+    (error: Error) => !error.message.includes("synthetic-secret"));
+  assert.equal((f.servers.existing.headers as Record<string, string>)["X-Key"], undefined);
+});
+
 test("add and global disable use native revision-bound additive patches and preserve credentials", async () => {
   const f = fixture();
   await f.connections.add({ name: "本机笔记", transport: "stdio", command: "node", args: ["server.js"], env: { KEY: "synthetic-value" } });

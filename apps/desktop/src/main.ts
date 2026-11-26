@@ -308,6 +308,46 @@ async function defaultSessionHasOriginData(origin: string): Promise<boolean> {
   }
 }
 
+/** Where http(s) links handed to the shell end up; the page picks, the shell acts. */
+let linkOpenMode: "system" | "in-app" = "system";
+
+/**
+ * A window of the shell's own for reading a link without leaving the app. It carries no preload
+ * and keeps its own session, so a page opened here never shares the app's state.
+ */
+function openLinkWindow(url: string) {
+  const win = new BrowserWindow({
+    width: 1080,
+    height: 820,
+    title: safeHost(url),
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      partition: "persist:weblinks",
+    },
+  });
+  win.webContents.setWindowOpenHandler(({ url: childUrl }) => {
+    const external = safeExternalUrl(childUrl);
+    if (external !== null) void shell.openExternal(external);
+    return { action: "deny" };
+  });
+  void win.loadURL(url);
+}
+
+function safeHost(url: string) {
+  try {
+    return new URL(url).host;
+  } catch {
+    return PRODUCT_NAME;
+  }
+}
+
+function openExternalLink(url: string) {
+  if (linkOpenMode === "in-app") openLinkWindow(url);
+  else void shell.openExternal(url);
+}
+
 function createWindow(url: string, partition: string | null) {
   markOnce("rk:main:window-create-start");
   const icon = developmentIcon();
@@ -344,7 +384,7 @@ function createWindow(url: string, partition: string | null) {
       };
     }
     const external = safeExternalUrl(childUrl);
-    if (external !== null) void shell.openExternal(external);
+    if (external !== null) openExternalLink(external);
     return { action: "deny" };
   });
   // Signing in lands on a new page; pair then instead of waiting for the next launch.
@@ -359,7 +399,7 @@ function createWindow(url: string, partition: string | null) {
     if (targetOrigin !== null && safeOrigin(event.url) === targetOrigin) return;
     event.preventDefault();
     const external = safeExternalUrl(event.url);
-    if (external !== null) void shell.openExternal(external);
+    if (external !== null) openExternalLink(external);
   };
   win.webContents.on("will-navigate", keepOnAppOrigin);
   win.webContents.on("will-redirect", keepOnAppOrigin);
@@ -1503,6 +1543,20 @@ app.whenReady().then(async () => {
   ipcMain.handle("desktop.platform", () => process.platform);
   ipcMain.handle("desktop.passkeys.rpIds", () => passkeyRpIds);
   ipcMain.handle("desktop.monitoring.enabled", () => reportsErrors);
+  ipcMain.handle("desktop.system.loginItem", (event) => {
+    if (!fromAppFrame(permissionTarget(), event)) throw new Error("Not allowed");
+    return app.getLoginItemSettings().openAtLogin;
+  });
+  ipcMain.handle("desktop.system.setLoginItem", (event, enabled: unknown) => {
+    if (!fromAppFrame(permissionTarget(), event)) throw new Error("Not allowed");
+    app.setLoginItemSettings({ openAtLogin: enabled === true });
+    // macOS reports what the login items list actually holds, which is the honest answer.
+    return app.getLoginItemSettings().openAtLogin;
+  });
+  ipcMain.handle("desktop.links.setMode", (event, mode: unknown) => {
+    if (!fromAppFrame(permissionTarget(), event)) return;
+    if (mode === "system" || mode === "in-app") linkOpenMode = mode;
+  });
   ipcMain.handle("desktop.window.close", (event) => {
     windowFrom(event)?.close();
   });

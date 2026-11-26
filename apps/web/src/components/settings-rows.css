@@ -1,0 +1,89 @@
+/*
+ * Settings rows read as one white surface per group: no border, and a hairline between rows
+ * instead of a divider box. The group label sits above the surface in muted text, so the
+ * hierarchy comes from space and weight rather than outlines.
+ */
+
+.settings-group + .settings-group {
+  margin-top: 20px;
+}
+
+.settings-group__label {
+  margin: 0;
+  padding: 0 16px 8px;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.settings-card {
+  background: var(--background);
+  border-radius: 14px;
+  padding: 0 16px;
+}
+
+.settings-row {
+  padding: 15px 0;
+}
+
+.settings-row--solo {
+  padding: 11px 0;
+}
+
+.settings-row + .settings-row {
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.settings-row__main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 24px;
+}
+
+.settings-row__copy {
+  min-width: 0;
+}
+
+.settings-row__label {
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 21px;
+}
+
+.settings-row__desc {
+  margin-top: 2px;
+  max-width: 420px;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 19px;
+  overflow-wrap: anywhere;
+}
+
+.settings-row__control {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-row__body {
+  padding-top: 16px;
+}
+
+@container settings-content (max-width: 620px) {
+  .settings-row__main {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .settings-row__control {
+    justify-content: flex-start;
+  }
+}

@@ -236,6 +236,9 @@ export class OpenClawConnections implements ServiceConnections {
     if (!Object.keys(patch).length) throw new Error("请填写需要修改的设置");
     const replacePaths = input.args !== undefined ? [`mcp.servers.${key}.args`] : [];
     const failure = await this.patch(hash, key, patch, replacePaths).catch((error: unknown) => error);
+    // An old connection still existing is not proof that new credentials landed.
+    // A lost credential-write acknowledgment stays explicitly unconfirmed.
+    if (failure && (input.env !== undefined || input.headers !== undefined)) throw failure;
     const confirmed = await this.snapshot();
     if (!Object.hasOwn(confirmed.servers, key) || removedServiceDefinition(confirmed.servers[key])) {
       throw failure instanceof Error ? failure : new Error("尚未确认保存，请重新查看连接");

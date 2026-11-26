@@ -2,7 +2,7 @@ const { app, BrowserWindow, dialog, ipcMain, Menu, Notification, shell } = requi
 const { resultNotifications } = require("./notifications.cjs");
 const { fork, spawn } = require("node:child_process");
 const { createSystemSpeech } = require("./system-speech.cjs");
-const { mkdirSync, openSync, closeSync, writeFileSync, appendFileSync } = require("node:fs");
+const { mkdirSync, openSync, closeSync, writeFileSync, appendFileSync, existsSync } = require("node:fs");
 const { join, isAbsolute } = require("node:path");
 
 app.setName("LivingBot 2");
@@ -14,6 +14,8 @@ app.setPath("userData", dataRoot);
 let child;
 let window;
 let connection;
+// Where http(s) links handed to the shell end up; the page picks, the shell acts.
+let linkOpenMode = "system";
 let stopping = false;
 let stopped = false;
 let backendExited;
@@ -57,13 +59,45 @@ if (!app.requestSingleInstanceLock()) {
   });
 }
 
+/**
+ * Reading a link without leaving the app. The window carries no preload and keeps a session of
+ * its own, so a page opened here never touches the app's state.
+ */
+function openLinkWindow(url) {
+  const target = URL.parse(url);
+  if (target?.protocol !== "https:" && target?.protocol !== "http:") return;
+  const reader = new BrowserWindow({
+    width: 1080, height: 820, title: target.host,
+    webPreferences: {
+      preload: "", contextIsolation: true, nodeIntegration: false, sandbox: true,
+      partition: "persist:weblinks",
+    },
+  });
+  reader.webContents.setWindowOpenHandler(({ url: next }) => {
+    const parsed = URL.parse(next);
+    if (parsed?.protocol === "https:" || parsed?.protocol === "http:") void shell.openExternal(next);
+    return { action: "deny" };
+  });
+  void reader.loadURL(url);
+}
+
+function followLink(url) {
+  if (linkOpenMode === "in-app") openLinkWindow(url);
+  else void shell.openExternal(url);
+}
+
 async function start() {
   const resources = process.resourcesPath;
   const runtime = join(resources, "runtime");
+  // A checked-out UI in the data directory wins over the bundled copy: editing the bundle
+  // invalidates its signature, and re-signing resets the microphone and speech permissions
+  // macOS granted to this app.
+  const overrideWeb = join(dataRoot, "web");
+  const web = existsSync(join(overrideWeb, "index.html")) ? overrideWeb : join(resources, "web");
   mkdirSync(join(dataRoot, "logs"), { recursive: true, mode: 0o700 });
   const output = openSync(join(dataRoot, "logs", "desktop-backend.log"), "a", 0o600);
   child = fork(join(runtime, "apps/workbench-desktop/src/backend.mjs"), [
-    join(dataRoot, "data"), join(runtime, "node_modules/openclaw/openclaw.mjs"), join(resources, "web"),
+    join(dataRoot, "data"), join(runtime, "node_modules/openclaw/openclaw.mjs"), web,
   ], {
     execPath: join(resources, "bin/node"),
     execArgv: [],
@@ -141,6 +175,21 @@ async function start() {
       minimized: window?.isMinimized() ?? false,
     };
   });
+  // Links and startup are shell decisions, so the page can only ask for them here.
+  ipcMain.handle("desktop.links.setMode", (event, mode) => {
+    requireOwnedFrame(event);
+    if (mode === "system" || mode === "in-app") linkOpenMode = mode;
+  });
+  ipcMain.handle("desktop.system.loginItem", (event) => {
+    requireOwnedFrame(event);
+    return app.getLoginItemSettings().openAtLogin;
+  });
+  ipcMain.handle("desktop.system.setLoginItem", (event, enabled) => {
+    requireOwnedFrame(event);
+    app.setLoginItemSettings({ openAtLogin: enabled === true });
+    // The system reports what it actually registered, which is what the switch should show.
+    return app.getLoginItemSettings().openAtLogin;
+  });
   if (process.platform === "darwin") {
     const speech = createSystemSpeech(
       () => window && !window.isDestroyed() ? { webContents: window.webContents, url: ready.origin } : null,
@@ -210,7 +259,7 @@ async function start() {
   });
   window.webContents.setWindowOpenHandler(({ url }) => {
     const target = URL.parse(url);
-    if (target?.protocol === "https:" || target?.protocol === "http:") void shell.openExternal(url);
+    if (target?.protocol === "https:" || target?.protocol === "http:") followLink(url);
     return { action: "deny" };
   });
   window.webContents.on("will-navigate", (event, url) => {

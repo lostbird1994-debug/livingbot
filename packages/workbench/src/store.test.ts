@@ -63,6 +63,9 @@ test("spaces persist with Bot and group ownership; removing one preserves its co
   store.removeSpace(space.id);
   assert.equal(store.get("spaces", space.id), undefined);
   assert.equal(store.spaceIdForBot(first.id), "local");
+  assert.ok(store.get<typeof first>("bots", first.id)?.archivedAt);
+  assert.ok(store.get<typeof second>("bots", second.id)?.archivedAt);
+  assert.equal(store.get<typeof defaultBot>("bots", defaultBot.id)?.archivedAt, undefined);
   assert.equal(store.get<typeof group>("conversations", group.id)?.spaceId, "local");
   store.close();
 });

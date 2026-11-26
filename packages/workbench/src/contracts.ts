@@ -92,6 +92,7 @@ export type Task = {
   inputDisposition?: "steered";
   continuationSubmissionId?: string;
   routine?: { id: string; jobId: string; sessionId: string; occurrenceId: string; runId: string };
+  healthCheckId?: string;
   processes?: TaskProcess[];
 };
 
@@ -123,6 +124,7 @@ export type Block = (
   | { id: string; kind: "voice_call"; callId: string; title: string; farewell: string; durationSeconds?: number }
   | { id: string; kind: "call_request"; callId: string; reason: string; opening: string; status: "ringing" | "answered" | "declined" | "missed"; expiresAt: string; durationSeconds?: number }
   | { id: string; kind: "widget"; title: string; docId: string; sessionKey: string }
+  | { id: string; kind: "health_check"; reportId: string; botId: string; summary: string }
 ) & { native?: { messageId: string; seq?: number } };
 
 export type Message = {
@@ -142,6 +144,12 @@ export type Message = {
   replyToMessageId?: string;
   replyQuote?: string;
   clientNonce?: string;
+  /** The short name this turn shows in the chat's margin, on the message that opened it. */
+  turnTitle?: string;
+  /** Durable display boundaries; the native run and its full blocks remain authoritative. */
+  interruptions?: { afterMessageId: string; createdAt: number; blocks: Block[] }[];
+  /** Exact durable final model-message receipt, distinct from the delivery summary. */
+  nativeFinalMessageId?: string;
 };
 
 export type Ability = {
@@ -350,6 +358,13 @@ export type Interaction = {
   runId: string;
   generation: number;
   title: string;
+  /** Public input metadata only. Values travel through the credential endpoint. */
+  secureInput?: {
+    name: string;
+    allowedHosts: string[];
+    connection?: { name: string; target: "env" | "headers"; fields: { key: string; label: string }[] };
+  };
+  resolutionId?: string;
   /** Display-only fields from the native exec approval request, never authorization inputs. */
   approval?: {
     taskTitle?: string;

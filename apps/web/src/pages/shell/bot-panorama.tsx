@@ -1,20 +1,15 @@
-import type { Bot, BotSection, Group } from "@livingbot/contracts";
+import type { Bot, Group } from "@livingbot/contracts";
 import {
   Button,
   BotAvatar,
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   GroupAvatar,
-  SectionHeading,
 } from "@livingbot/ui-web";
-import { ChevronDown, CircleAlert, MessageCircle, MoreHorizontal, Pin, Plus } from "lucide-react";
-import type { CSSProperties } from "react";
-import { useState } from "react";
+import { CircleAlert, MessageCircle, MoreHorizontal, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
 import { errorText } from "../../lib/user-error";
 
 function botStatus(status: string) {
@@ -31,12 +26,18 @@ function botStatus(status: string) {
   return { label: "空闲", tone: "bg-muted-foreground", motion: "idle" };
 }
 
-type PanoramaBot = Pick<Bot, "id" | "name" | "status" | "color" | "avatarSet" | "pinned" | "sectionId">;
+type PanoramaBot = Pick<
+  Bot,
+  "id" | "name" | "status" | "color" | "avatarSet" | "pinned" | "updatedAt"
+>;
+
+function lastActive(bot: PanoramaBot): number {
+  const parsed = Date.parse(bot.updatedAt);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
 
 export function BotPanorama({
   bots,
-  sections,
-  spaces,
   onOpen,
   onCreate,
   onSettings,
@@ -45,8 +46,6 @@ export function BotPanorama({
   loadFailed,
 }: {
   bots: PanoramaBot[];
-  sections: BotSection[];
-  spaces?: { id: string; name: string; bots: PanoramaBot[]; botSections: BotSection[] }[];
   onOpen: (id: string) => void;
   onCreate: () => void;
   onSettings: (id: string) => void;
@@ -56,30 +55,12 @@ export function BotPanorama({
 }) {
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const groups = (spaces?.length ? spaces : [{ id: "", name: "", bots, botSections: sections }])
-    .flatMap((space) => {
-    const bots = space.bots;
-    const sections = space.botSections;
-    return [
-    { id: "pinned", name: "置顶", bots: bots.filter((bot) => bot.pinned) },
-    ...sections.map((section) => ({
-      id: section.id,
-      name: section.name,
-      bots: bots.filter((bot) => !bot.pinned && bot.sectionId === section.id),
-    })),
-    {
-      id: "unassigned",
-      name: "未分区",
-      bots: bots.filter(
-        (bot) =>
-          !bot.pinned &&
-          (!bot.sectionId || !sections.some((section) => section.id === bot.sectionId)),
-      ),
-    },
-  ].filter((group) => group.bots.length > 0 || sections.some((section) => section.id === group.id))
-    .map((group) => ({ ...group, id: `${space.id}:${group.id}`, sections,
-      name: space.name ? `${space.name} · ${group.name}` : group.name }));
-  });
+  // One flat list, newest conversation first: the panorama answers "who did I just talk to",
+  // not "which section is this bot filed under". Sections stay a sidebar concept.
+  const ordered = useMemo(
+    () => [...bots].sort((first, second) => lastActive(second) - lastActive(first)),
+    [bots],
+  );
 
   async function update(id: string, patch: { pinned?: boolean; sectionId?: string | null }) {
     setSaving(id);
@@ -121,127 +102,61 @@ export function BotPanorama({
             </Button>
           </div>
         ) : null}
-        <div className="panorama-sections">
-          {groups.map((group) => (
-            <Collapsible
-              key={group.id}
-              defaultOpen
-              className="min-w-0"
-              style={{ gridColumn: `span ${Math.min(4, Math.max(1, group.bots.length))}` }}
-            >
-              <div className="mb-3 flex h-6 items-center gap-3">
-                <SectionHeading as="h2" className="shrink-0">
-                  <CollapsibleTrigger className="group flex items-center gap-1.5 rounded text-sm focus-visible:outline-2 focus-visible:outline-ring">
-                    {group.id.endsWith(":pinned") ? (
-                      <Pin className="size-3.5" />
-                    ) : (
-                      <ChevronDown className="size-3.5 transition-transform group-data-[panel-open=false]:-rotate-90" />
-                    )}
-                    <span className="font-medium">{group.name}</span>
-                    <span className="ms-1 text-xs text-muted-foreground">{group.bots.length}</span>
-                  </CollapsibleTrigger>
-                </SectionHeading>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-              <CollapsibleContent>
-                <div
-                  className="panorama-cards"
-                  style={
-                    {
-                      "--panorama-columns": Math.min(4, Math.max(1, group.bots.length)),
-                    } as CSSProperties
-                  }
+        <div className="panorama-cards">
+          {ordered.map((bot) => {
+            const status = botStatus(bot.status);
+            return (
+              <article
+                key={bot.id}
+                data-testid={`panorama-bot-${bot.id}`}
+                className="panorama-bot group relative min-w-0"
+              >
+                <button
+                  type="button"
+                  onClick={() => onOpen(bot.id)}
+                  aria-label={`打开 ${bot.name} 的会话`}
+                  className="panorama-bot-open flex w-full flex-col items-center rounded-lg text-start focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                 >
-                  {group.bots.map((bot) => {
-                    const status = botStatus(bot.status);
-                    return (
-                      <article
-                        key={bot.id}
-                        data-testid={`panorama-bot-${bot.id}`}
-                        data-avatar-motion={status.motion}
-                        className="panorama-bot group relative min-w-0"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => onOpen(bot.id)}
-                          aria-label={`打开 ${bot.name} 的会话`}
-                          className="panorama-bot-open flex w-full flex-col items-center rounded-lg text-start focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
-                        >
-                          <span className="panorama-bot-portrait">
-                            <BotAvatar color={bot.color} identity={bot.id} avatarSet={bot.avatarSet}
-                              size={160} />
-                            {status.motion === "working" && (
-                              <span className="panorama-bot-aura" aria-hidden="true" />
-                            )}
-                          </span>
-                          <span className="mt-3 flex max-w-full items-center justify-center gap-2 text-sm font-medium">
-                            <span className="truncate">{bot.name}</span>
-                            {status.motion === "waiting" ? (
-                              <span title={status.label} className="text-warning">
-                                <MessageCircle className="size-3.5" aria-hidden="true" />
-                                <span className="sr-only">{status.label}</span>
-                              </span>
-                            ) : status.motion === "failed" ? (
-                              <span title={status.label} className="text-destructive">
-                                <CircleAlert className="size-3.5" aria-hidden="true" />
-                                <span className="sr-only">{status.label}</span>
-                              </span>
-                            ) : null}
-                          </span>
-                        </button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={<Button variant="ghost" size="icon-sm" />}
-                            aria-label={`${bot.name} 的操作`}
-                            disabled={saving === bot.id}
-                            className="panorama-bot-menu absolute end-0 bottom-0 text-muted-foreground"
-                          >
-                            <MoreHorizontal className="size-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onSettings(bot.id)}>
-                              Bot 设置
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => void update(bot.id, { pinned: !bot.pinned })}
-                            >
-                              {bot.pinned ? "取消置顶" : "置顶"}
-                            </DropdownMenuItem>
-                            {group.sections
-                              .filter((section) => section.id !== bot.sectionId || bot.pinned)
-                              .map((section) => (
-                                <DropdownMenuItem
-                                  key={section.id}
-                                  onClick={() =>
-                                    void update(bot.id, { sectionId: section.id, pinned: false })
-                                  }
-                                >
-                                  移至 {section.name}
-                                </DropdownMenuItem>
-                              ))}
-                            {bot.sectionId ? (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  void update(bot.id, { sectionId: null, pinned: false })
-                                }
-                              >
-                                移至未分区
-                              </DropdownMenuItem>
-                            ) : null}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </article>
-                    );
-                  })}
-                  {group.bots.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-                      暂无 Bot
-                    </div>
-                  ) : null}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          ))}
+                  <span className="panorama-bot-portrait">
+                    <BotAvatar color={bot.color} identity={bot.id} avatarSet={bot.avatarSet}
+                      size={160} status={bot.status} />
+                  </span>
+                  <span className="mt-3 flex max-w-full items-center justify-center gap-2 text-sm font-medium">
+                    <span className="truncate">{bot.name}</span>
+                    {status.motion === "waiting" ? (
+                      <span title={status.label} className="text-warning">
+                        <MessageCircle className="size-3.5" aria-hidden="true" />
+                        <span className="sr-only">{status.label}</span>
+                      </span>
+                    ) : status.motion === "failed" ? (
+                      <span title={status.label} className="text-destructive">
+                        <CircleAlert className="size-3.5" aria-hidden="true" />
+                        <span className="sr-only">{status.label}</span>
+                      </span>
+                    ) : null}
+                  </span>
+                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={<Button variant="ghost" size="icon-sm" />}
+                    aria-label={`${bot.name} 的操作`}
+                    disabled={saving === bot.id}
+                    className="panorama-bot-menu absolute end-0 bottom-0 text-muted-foreground"
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onSettings(bot.id)}>
+                      Bot 设置
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => void update(bot.id, { pinned: !bot.pinned })}>
+                      {bot.pinned ? "取消置顶" : "置顶"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </article>
+            );
+          })}
         </div>
       </div>
     </div>

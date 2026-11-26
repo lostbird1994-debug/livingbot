@@ -5,13 +5,14 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { readFile, realpath } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
-import type { Artifact, Bot, BotSection, ContextShare, Conversation, GroupAssignment, Message, ProductEvent, Run, ScratchpadItem, Task } from "../../../packages/workbench/src/contracts.ts";
+import type { Artifact, Bot, BotSection, ContextShare, Conversation, GroupAssignment, Interaction, Message, ProductEvent, Run, ScratchpadItem, Task } from "../../../packages/workbench/src/contracts.ts";
+import { ConnectionCredentials } from "../../../packages/workbench/src/connection-credentials.ts";
+import { BotHealth } from "../../../packages/workbench/src/bot-health.ts";
 import type { WorkbenchService } from "../../../packages/workbench/src/service.ts";
 import type { InteractionAnswer } from "../../../packages/workbench/src/interactions.ts";
 import { maxFileBytes } from "../../../packages/workbench/src/files.ts";
 import { memoryReference } from "../../../packages/kernel-runtime/src/memory.ts";
 import type { MemoryQuery } from "../../../packages/kernel-runtime/src/memory.ts";
-import type { Migrations } from "../../../packages/workbench/src/migration.ts";
 import type { Marketplace } from "../../../packages/workbench/src/marketplace.ts";
 import type { ServiceConnections, ServiceConnectionInput, ServiceConnectionUpdate } from "../../../packages/kernel-runtime/src/connections.ts";
 import type { ServiceAuthorizations } from "../../../packages/workbench/src/service-authorizations.ts";
@@ -24,6 +25,8 @@ import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
 import { botIntroPrompt } from "../../../packages/workbench/src/bot-intro.ts";
 import { localVoice } from "./voice.ts";
+import { createVoiceLive } from "./voice-live.ts";
+import { nameTurnTitles, readKernelConfig } from "./turn-titles.ts";
 import { localCalls } from "./calls.ts";
 import { OpenClawApprovalSettings } from "../../../packages/kernel-runtime/src/approval-settings.ts";
 import { modelRequestDuration, recordModelRequestUsage } from "../../../packages/workbench/src/model-usage.ts";
@@ -46,7 +49,6 @@ type ApiOptions = {
   allowedOrigins?: string[];
   webRoot?: string;
   nativeToolToken?: string;
-  migrations?: Migrations;
   marketplace?: Marketplace;
   connections?: ServiceConnections;
   authorizations?: ServiceAuthorizations;
@@ -54,6 +56,8 @@ type ApiOptions = {
   botWorkspaces?: Workspaces;
   agentRegistration?: AgentRegistration;
   nativeContextPreview?: (agentId: string) => Promise<NativeContextPreview>;
+  /** The gateway's own configuration, for the model the turn names run on. */
+  kernelConfigPath: string;
 };
 
 function authenticate(request: IncomingMessage, token: string): void {
@@ -128,13 +132,42 @@ export function createWorkbenchApi(options: ApiOptions) {
   if (options.token.length < 32) throw new Error("An application token of at least 32 characters is required");
   const streams = new Set<ServerResponse>();
   const voice = localVoice(options.service.store);
+  const voiceLive = createVoiceLive();
   const calls = localCalls(options.service);
   const botRemoval = new BotRemoval(options.service, options.botWorkspaces);
   const approvalSettings = new OpenClawApprovalSettings(options.service.kernel);
   const memorySettings = new OpenClawMemorySettings(options.service.kernel);
   const systemSettings = new SystemSettings(options.service, options.botWorkspaces, options.agentRegistration, options.modelSettings ? async () => (await options.modelSettings!.read()).configured : undefined);
   const skillDocuments = new SkillDocuments(options.service.kernel);
+  const connectionCredentials = options.connections
+    ? new ConnectionCredentials(options.service.store, options.connections, () => options.service.kernel.generation)
+    : undefined;
   const administrator = options.botWorkspaces ? new SuperAdministrator(options.service, options.botWorkspaces) : undefined;
+  const health = options.botWorkspaces ? new BotHealth(options.service, options.botWorkspaces, {
+    preview: options.nativeContextPreview,
+  }) : undefined;
+  async function archiveBot(id: string) {
+    const { store, routines } = options.service;
+    if (!store.get<Bot>("bots", id)) throw new HttpFailure(404, "Bot not found");
+    // Fence new submissions before waiting for native schedules or active runs.
+    const bot = store.get<Bot>("bots", id)!;
+    store.updateBot(id, { archivedAt: bot.archivedAt ?? Date.now() });
+    try {
+      for (const routine of routines?.list().filter((item) => item.botId === id) ?? []) {
+        if (!routine.nativeId) {
+          if (routine.enabled) throw new HttpFailure(409, "例行任务尚未就绪，归档未完成，请稍后重试");
+          continue;
+        }
+        await routines!.refresh(routine.id);
+        const current = routines!.get(routine.id);
+        if (current.enabled) await routines!.setEnabled(current.id, false, current.revision!);
+      }
+    } finally {
+      for (const task of store.list<Task>("tasks", -1).filter((task) => task.botId === id &&
+        ["queued", "running", "waiting", "stopping"].includes(task.status)))
+        await options.service.cancel(task.id);
+    }
+  }
   const server = createServer((request, response) => {
     void handle(request, response).catch((error: unknown) => {
       if (response.headersSent) { response.end(); return; }
@@ -166,6 +199,7 @@ export function createWorkbenchApi(options: ApiOptions) {
   }
 
   async function handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    const store = options.service.store;
     response.setHeader("cache-control", "no-store");
     response.setHeader("x-content-type-options", "nosniff");
     const address = server.address() as AddressInfo | null;
@@ -208,6 +242,99 @@ export function createWorkbenchApi(options: ApiOptions) {
       response.setHeader("content-security-policy", "object-src 'none'; base-uri 'none'; frame-ancestors 'self'");
       response.writeHead(200, { "content-type": type });
       response.end(await readFile(actual)); return;
+    }
+    if (method === "POST" && ["/api/kernel/bot-health", "/api/kernel/bot-health-policy"].includes(url.pathname)) {
+      if (!options.nativeToolToken || !health) throw new HttpFailure(404, "Bot 体检不可用");
+      authenticate(request, options.nativeToolToken);
+      const input = await body(request);
+      const authority = { agentId: string(input.agentId, "agentId"), sessionKey: string(input.sessionKey, "sessionKey"), runId: string(input.runId, "runId") };
+      json(response, 200, url.pathname.endsWith("-policy") ? health.policy(authority)
+        : await health.invoke({ ...input, ...authority }));
+      return;
+    }
+    if (url.pathname === "/api/kernel/connection-credentials" && method === "POST") {
+      if (!options.nativeToolToken || !connectionCredentials) throw new HttpFailure(404, "连接配置不可用");
+      authenticate(request, options.nativeToolToken);
+      const input = await body(request);
+      const authority = { agentId: string(input.agentId, "agentId"), sessionKey: string(input.sessionKey, "sessionKey"), runId: string(input.runId, "runId") };
+      json(response, 200, input.operation === "status"
+        ? connectionCredentials.status(authority, string(input.id, "id"))
+        : await connectionCredentials.request(authority, input));
+      return;
+    }
+    if (url.pathname === "/api/kernel/product-guidance" && method === "POST") {
+      if (!options.nativeToolToken) throw new HttpFailure(404, "Product guidance is unavailable");
+      authenticate(request, options.nativeToolToken);
+      const input = await body(request);
+      const agentId = string(input.agentId, "agentId");
+      const sessionKey = string(input.sessionKey, "sessionKey");
+      string(input.runId, "runId");
+      const preferences = store.get<Record<string, unknown>>("settings", "preferences");
+      const sections = [
+        preferences?.["livingbot.conclusionFirst"] === "off"
+          ? ""
+          : "回复规范：先用简短首段给出结论，并明确任务已完成、部分完成或尚未完成；只有在确实执行并验证后才能声称完成。",
+        "文件交付：用户需要的文件创建或更新完成后，最终回复前必须调用 livingbot_deliver_file 交付最终版本；若文件不在 Bot 工作区内，先复制到 tasks/<任务名>/ 再交付。只有收到成功结果才能说已交付。",
+      ];
+      const bot = store.list<Bot>("bots", -1).find((candidate) => candidate.agentId === agentId);
+      const privateSession = /^agent:[^:]+:explicit:livingbot-([a-zA-Z0-9-]+)$/.exec(sessionKey);
+      const conversation = privateSession ? store.get<Conversation>("conversations", privateSession[1]!) : undefined;
+      if (bot && conversation?.kind === "private" && conversation.botIds.includes(bot.id)) {
+        const todos = store.listScratchpad(bot.id).map((item) =>
+          `- ${item.title}${item.notes ? `：${item.notes}` : ""}`).join("\n");
+        if (todos) sections.push(`当前待办（仅供本 Bot 的私聊使用；完成后更新状态）：\n${todos}`);
+      }
+      const context = sections.filter(Boolean).join("\n\n");
+      json(response, 200, { context });
+      return;
+    }
+    if (url.pathname === "/api/kernel/scratchpad" && method === "POST") {
+      if (!options.nativeToolToken) throw new HttpFailure(404, "Scratchpad tools are unavailable");
+      authenticate(request, options.nativeToolToken);
+      const input = await body(request);
+      const agentId = string(input.agentId, "agentId");
+      const sessionKey = string(input.sessionKey, "sessionKey");
+      string(input.runId, "runId");
+      const bot = store.list<Bot>("bots", -1).find((candidate) => candidate.agentId === agentId);
+      const match = /^agent:[^:]+:explicit:livingbot-([a-zA-Z0-9-]+)$/.exec(sessionKey);
+      const conversation = match ? store.get<Conversation>("conversations", match[1]!) : undefined;
+      if (!bot || conversation?.kind !== "private" || !conversation.botIds.includes(bot.id))
+        throw new HttpFailure(403, "Product to-do tools are only available in this Bot's private chat");
+      const operation = string(input.operation, "operation");
+      if (operation === "list") {
+        json(response, 200, { items: store.listScratchpad(bot.id) });
+        return;
+      }
+      if (operation === "add") {
+        const title = string(input.title, "title").trim();
+        if (!title || title.length > 240) throw new HttpFailure(400, "Invalid title");
+        const now = new Date().toISOString();
+        json(response, 200, { item: store.saveScratchpad({
+          id: randomUUID(), botId: bot.id, title, status: "open",
+          notes: typeof input.notes === "string" ? input.notes.slice(0, 2000) : "",
+          createdAt: now, updatedAt: now,
+        }) });
+        return;
+      }
+      const itemId = string(input.itemId, "itemId");
+      if (operation === "update" || operation === "complete") {
+        const changes = operation === "complete"
+          ? { status: "done" as const }
+          : {
+              ...(typeof input.title === "string" ? { title: input.title.slice(0, 240) } : {}),
+              ...(typeof input.notes === "string" ? { notes: input.notes.slice(0, 2000) } : {}),
+              ...(input.status === "open" || input.status === "parked" || input.status === "done"
+                ? { status: input.status } : {}),
+            };
+        json(response, 200, { item: store.updateScratchpad(bot.id, itemId, changes) });
+        return;
+      }
+      if (operation === "remove") {
+        store.removeScratchpad(bot.id, itemId);
+        json(response, 200, { ok: true });
+        return;
+      }
+      throw new HttpFailure(400, "Unknown scratchpad operation");
     }
     if (url.pathname === "/api/kernel/admin-context" && method === "POST") {
       if (!options.nativeToolToken || !administrator) throw new HttpFailure(404, "管理员上下文不可用");
@@ -475,37 +602,6 @@ export function createWorkbenchApi(options: ApiOptions) {
         return;
       }
     }
-    if (method === "GET" && url.pathname === "/api/migrations") {
-      if (!options.migrations) throw new HttpFailure(503, "Migration is unavailable");
-      json(response, 200, { migrations: options.migrations.list() }); return;
-    }
-    if (method === "POST" && url.pathname === "/api/migrations/preview") {
-      if (!options.migrations) throw new HttpFailure(503, "Migration is unavailable");
-      const input = await body(request);
-      json(response, 201, await options.migrations.preview({
-        source: string(input.source, "source"), name: string(input.name, "name"),
-        ...(input.description !== undefined ? { description: string(input.description, "description") } : {}),
-        ...(input.identity !== undefined ? { identity: string(input.identity, "identity") } : {}),
-      }));
-      return;
-    }
-    if (method === "POST" && url.pathname === "/api/migrations/bundle-preview") {
-      if (!options.migrations) throw new HttpFailure(503, "Migration is unavailable");
-      const input = await body(request);
-      json(response, 201, { migrations: await options.migrations.previewBundle(string(input.path, "path")) });
-      return;
-    }
-    const migration = /^\/api\/migrations\/([^/]+)(\/apply)?$/.exec(url.pathname);
-    if (migration && (method === "GET" && !migration[2] || method === "POST" && migration[2])) {
-      if (!options.migrations) throw new HttpFailure(503, "Migration is unavailable");
-      if (!migration[2]) { json(response, 200, options.migrations.get(migration[1])); return; }
-      const input = await body(request);
-      if (input.acknowledgeExclusions !== undefined && typeof input.acknowledgeExclusions !== "boolean") {
-        throw new HttpFailure(400, "Expected exclusion acknowledgment");
-      }
-      json(response, 200, await options.migrations.apply(migration[1], input.acknowledgeExclusions === true));
-      return;
-    }
     if (method === "POST" && url.pathname === "/api/marketplace/preview") {
       if (!options.marketplace) throw new HttpFailure(503, "Marketplace is unavailable");
       const input = await body(request);
@@ -622,7 +718,6 @@ export function createWorkbenchApi(options: ApiOptions) {
         ...(input.botId !== undefined ? { botId: string(input.botId, "botId") } : {}),
       })); return;
     }
-    const store = options.service.store;
     const notification = /^\/api\/notifications\/([^/]+)\/read$/.exec(url.pathname);
     const voiceOperation = /^\/api\/voice\/rpc\/([a-zA-Z]+)$/.exec(url.pathname);
     const callOperation = /^\/api\/calls\/(endCall|answerCall|declineCall)$/.exec(url.pathname);
@@ -643,6 +738,36 @@ export function createWorkbenchApi(options: ApiOptions) {
     if (method === "POST" && url.pathname === "/api/voice/transcribe") {
       json(response, 200, await voice.transcribe({ ...await body(request, 12 * 1024 * 1024),
         spaceId: request.headers["x-livingbot-space-id"] ?? "local" })); return;
+    }
+    // Streaming dictation: the page posts PCM while the user is still speaking and reads back
+    // interim text, so stopping barely has anything left to transcribe.
+    const streamAction = /^\/api\/voice\/stream\/(start|feed|flush|abort)$/.exec(url.pathname);
+    if (method === "POST" && streamAction) {
+      const action = streamAction[1]!;
+      const target = voice.liveTarget({ spaceId: request.headers["x-livingbot-space-id"] ?? "local" });
+      if (!target) throw new HttpFailure(404, "Streaming dictation is unavailable");
+      const owner = "local";
+      if (action === "start") {
+        const started = await voiceLive.start(target.apiKey, owner, target.model);
+        if (started.error) throw new HttpFailure(502, started.error);
+        json(response, 200, { id: started.id, model: started.model }); return;
+      }
+      const input = await body(request);
+      const id = typeof input.id === "string" ? input.id : "";
+      if (!id) throw new HttpFailure(400, "Missing stream session");
+      if (action === "feed") {
+        const pcm = Buffer.from(typeof input.pcm === "string" ? input.pcm : "", "base64");
+        const snapshot = await voiceLive.feed(id, new Uint8Array(pcm), owner);
+        if (!snapshot) throw new HttpFailure(404, "Stream session not found");
+        json(response, 200, snapshot); return;
+      }
+      if (action === "flush") {
+        const result = await voiceLive.flush(id, owner);
+        if (!result) throw new HttpFailure(404, "Stream session not found");
+        json(response, 200, { text: result.text, error: result.error }); return;
+      }
+      if (!voiceLive.abort(id, owner)) throw new HttpFailure(404, "Stream session not found");
+      json(response, 200, { ok: true }); return;
     }
     if (method === "POST" && notification) {
       json(response, 200, store.readNotification(decodeURIComponent(notification[1]))); return;
@@ -718,8 +843,8 @@ export function createWorkbenchApi(options: ApiOptions) {
       // Search the whole journal in message order, then page backwards from `before`.
       const conversations = store.list<Conversation>("conversations", -1);
       const bots = new Map(store.list<Bot>("bots", -1).map((bot) => [bot.id, bot]));
-      const rows = store.list<Message>("messages", -1)
-        .filter((message) => !conversationId || message.conversationId === conversationId)
+      const rows = conversations.filter((conversation) => !conversationId || conversation.id === conversationId)
+        .flatMap((conversation) => store.messages(conversation.id))
         .filter((message) => message.blocks?.some((block) => block.kind === "text" && (block.text ?? "").includes(query)))
         .sort((a, b) => b.createdAt - a.createdAt || b.id.localeCompare(a.id));
       const ordered = rows.flatMap((message) => {
@@ -745,6 +870,26 @@ export function createWorkbenchApi(options: ApiOptions) {
     }
     if (url.pathname === "/api/memory-settings" && (method === "GET" || method === "POST")) {
       json(response, 200, method === "GET" ? await memorySettings.read() : await memorySettings.save(await body(request) as unknown as MemoryPreferencesInput)); return;
+    }
+    const healthReport = /^\/api\/bots\/([^/]+)\/health-reports\/([^/]+)(?:\/(apply|disposition|decisions))?$/.exec(url.pathname);
+    if (healthReport && (method === "GET" || method === "POST")) {
+      if (!health) throw new HttpFailure(503, "Bot 体检不可用");
+      const botId = decodeURIComponent(healthReport[1]!);
+      const id = decodeURIComponent(healthReport[2]!);
+      if (method === "GET" && !healthReport[3]) { json(response, 200, health.get(botId, id)); return; }
+      const input = await body(request);
+      const revision = string(input.revision, "revision");
+      if (healthReport[3] === "decisions") {
+        json(response, 200, await health.decide(botId, id, input));
+      } else if (healthReport[3] === "apply") {
+        if (!Array.isArray(input.actionIds) || input.actionIds.some(id => typeof id !== "string")) throw new HttpFailure(400, "请选择具体修改方案");
+        json(response, 200, await health.apply(botId, id, revision, input.actionIds as string[]));
+      } else if (healthReport[3] === "disposition") {
+        if (input.disposition !== "deferred" && input.disposition !== "dismissed" && input.disposition !== "reopen") throw new HttpFailure(400, "请选择处理方式");
+        json(response, 200, await health.disposition(botId, id, revision,
+          string(input.issueId, "issueId"), input.disposition, string(input.reason, "reason")));
+      } else throw new HttpFailure(404, "没有这个体检操作");
+      return;
     }
     const exclusiveAudit = /^\/api\/bots\/([^/]+)\/capability-audit$/.exec(url.pathname);
     if (exclusiveAudit && (method === "GET" || method === "POST")) {
@@ -969,8 +1114,7 @@ export function createWorkbenchApi(options: ApiOptions) {
       if (store.get<{completed?: boolean}>("settings", `bot-removal:${id}`)?.completed === false) throw new HttpFailure(409, "Bot 删除尚未完成，请重试删除");
       if (store.get<Bot>("bots", id)?.removedAt) throw new HttpFailure(409, "Bot 已删除，恢复清单位于废纸篓");
       if (botArchive[2] === "archive") {
-        for (const task of store.list<Task>("tasks", -1).filter((task) => task.botId === id &&
-          !["completed", "failed", "cancelled"].includes(task.status))) await options.service.cancel(task.id);
+        await archiveBot(id);
       }
       json(response, 200, store.updateBot(id, { archivedAt: botArchive[2] === "archive" ? Date.now() : null }));
       return;
@@ -1159,6 +1303,10 @@ export function createWorkbenchApi(options: ApiOptions) {
     }
     if (spaceRoute && method === "DELETE") {
       const id = decodeURIComponent(spaceRoute[1]!);
+      if (id === "local") throw new HttpFailure(400, "默认空间不能删除");
+      if (!store.get("spaces", id)) throw new HttpFailure(404, "空间不存在");
+      for (const bot of store.list<Bot>("bots", -1).filter((bot) => bot.spaceId === id))
+        await archiveBot(bot.id);
       store.removeSpace(id);
       json(response, 200, { ok: true, activeSpaceId: "local" }); return;
     }
@@ -1294,6 +1442,23 @@ export function createWorkbenchApi(options: ApiOptions) {
       }
       store.clearConversation(id);
       json(response, 200, { ok: true }); return;
+    }
+    const turnTitlesRoute = /^\/api\/conversations\/([^/]+)\/turn-titles$/.exec(url.pathname);
+    if (method === "POST" && turnTitlesRoute) {
+      const id = decodeURIComponent(turnTitlesRoute[1]!);
+      if (!store.get("conversations", id)) throw new HttpFailure(404, "Unknown conversation");
+      const input = await body(request);
+      const messageIds = Array.isArray(input.messageIds)
+        ? input.messageIds.filter((entry): entry is string => typeof entry === "string")
+        : [];
+      if (!messageIds.length) throw new HttpFailure(400, "messageIds is required");
+      // Naming is a side call to the model the kernel already runs on; a failure just leaves
+      // those turns showing their own opening words.
+      const named = await nameTurnTitles(
+        { store, conversationId: id, messageIds },
+        await readKernelConfig(options.kernelConfigPath),
+      );
+      json(response, 200, { named }); return;
     }
     const conversationRoute = /^\/api\/conversations\/([^/]+)$/.exec(url.pathname);
     if (conversationRoute && (method === "PATCH" || method === "DELETE")) {
@@ -1581,6 +1746,27 @@ export function createWorkbenchApi(options: ApiOptions) {
     if (method === "POST" && continuation) {
       const input = await body(request);
       json(response, 202, await options.service.continueTask(decodeURIComponent(continuation[1]), string(input.submissionId, "submissionId")));
+      return;
+    }
+    const credentialInput = /^\/api\/tasks\/([^/]+)\/interactions\/([^/]+)\/credential$/.exec(url.pathname);
+    if (method === "POST" && credentialInput) {
+      const input = await body(request);
+      const id = decodeURIComponent(credentialInput[2]);
+      const taskId = decodeURIComponent(credentialInput[1]);
+      const prompt = options.service.store.get<Interaction>("interactions", id);
+      if (prompt?.secureInput?.connection) {
+        if (!connectionCredentials) throw new HttpFailure(503, "连接配置不可用");
+        json(response, 200, await connectionCredentials.resolve(id, taskId, {
+          values: input.values, cancel: input.cancel === true,
+        }));
+      } else if (input.cancel === true) {
+        json(response, 200, await options.service.interactions.resolve(id, taskId, {
+          resolutionId: string(input.resolutionId, "resolutionId"), cancel: true,
+        }));
+      } else {
+        json(response, 200, await options.service.interactions.resolveSecret(id, taskId,
+          string(input.resolutionId, "resolutionId"), string(input.value, "value")));
+      }
       return;
     }
     const resolveInteraction = /^\/api\/tasks\/([^/]+)\/interactions\/([^/]+)\/resolve$/.exec(url.pathname);

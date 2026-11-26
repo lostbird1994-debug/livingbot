@@ -159,11 +159,9 @@ test("public inventory retains flat MCP tools, returns explicit shared state and
         assert.equal(capability.skillKey, "shared-key"); enabled = value; ++changes;
       },
     });
-    store.put("settings", { id: "migration:ready", state: "ready", workspace: "/synthetic/imported" });
-    store.put("settings", { id: "migration:failed", state: "failed", workspace: "/synthetic/failed" });
     const initial = await abilities.refreshShared();
     assert.equal(initial.length, 3);
-    assert.deepEqual(directories, ["/synthetic/imported/.agents/skills", "/synthetic/imported/skills"]);
+    assert.deepEqual(directories, []);
     const method = initial.find((item) => item.kind === "method")!;
     assert.deepEqual(method.configuration?.sharedAccess, {
       enabled: true, ready: false, manageable: true, reason: "需要完成本机配置",

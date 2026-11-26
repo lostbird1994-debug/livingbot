@@ -1,5 +1,5 @@
 import { Button } from "@livingbot/ui-web";
-import { ClipboardList, FileText, LayoutGrid, MessageCircle, Plug } from "lucide-react";
+import { ClipboardList, FileText, LayoutGrid, MessageCircle, Wrench } from "lucide-react";
 
 export type WorkspaceView = "bots" | "groups" | "tasks" | "deliveries" | "abilities";
 
@@ -18,7 +18,7 @@ const destinations = [
   { id: "groups", label: "群聊", icon: MessageCircle },
   { id: "tasks", label: "任务", icon: ClipboardList },
   { id: "deliveries", label: "产出", icon: FileText },
-  { id: "abilities", label: "共享能力", icon: Plug },
+  { id: "abilities", label: "共享能力", icon: Wrench },
 ] as const;
 
 export function WorkspaceNavigation({

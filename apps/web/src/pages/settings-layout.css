@@ -1,26 +1,179 @@
 .settings-workspace {
   container: settings-workspace / inline-size;
 }
-.settings-layout {
+
+/* The dialog shell: navigation and content share one surface, with no rule between them. */
+.settings-shell {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  flex: 1;
+  grid-template-columns: 200px minmax(0, 1fr);
+  min-height: 0;
+  width: 100%;
 }
 .settings-sidebar {
   display: flex;
   flex-direction: column;
-  padding-top: 24px;
+  min-height: 0;
+  /* Matches .settings-head's top inset so the search field lines up with the title and close button. */
+  padding: 20px 12px 12px;
+}
+.settings-search {
+  position: relative;
+  margin: 0 0 12px;
+}
+.settings-search input {
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
   background: var(--background);
+  padding-inline-start: 28px;
+  font-size: 13px;
+}
+.settings-search input:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+.settings-search__icon {
+  position: absolute;
+  inset-inline-start: 9px;
+  top: 9px;
+  width: 14px;
+  height: 14px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+/* Scope: which panel the whole dialog edits, kept quieter than the nav items below it. */
+.settings-scope {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 0;
+  border-radius: 9px;
+  margin: 0;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+.settings-scope__item {
+  flex: 1;
+  height: 24px;
+  border-radius: 7px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 24px;
+  transition:
+    background-color 120ms ease-out,
+    color 120ms ease-out;
+}
+.settings-scope__item:hover {
+  color: var(--foreground);
+}
+.settings-scope__item[aria-pressed="true"] {
+  background: var(--background);
+  color: var(--foreground);
+  font-weight: 500;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.settings-scope-divider {
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
+  margin: 14px 4px 4px;
+}
+
+.settings-nav {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 0 8px;
+}
+.settings-nav-group__title {
+  margin: 14px 0 4px;
+  padding: 0 10px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+.settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 34px;
+  margin-top: 1px;
+  padding: 0 10px;
+  border-radius: 9px;
+  color: var(--muted-foreground);
+  font-size: 13.5px;
+  text-align: start;
+  transition:
+    background-color 120ms ease-out,
+    color 120ms ease-out;
+}
+.settings-nav-item:hover {
+  background: color-mix(in srgb, var(--foreground) 4.5%, transparent);
+  color: var(--foreground);
+}
+.settings-nav-item[aria-current="page"] {
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+  color: var(--foreground);
+  font-weight: 500;
+}
+.settings-nav-item:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.settings-nav-item__icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: color-mix(in srgb, var(--foreground) 50%, transparent);
+}
+.settings-nav-item[aria-current="page"] .settings-nav-item__icon,
+.settings-nav-item:hover .settings-nav-item__icon {
+  color: var(--foreground);
+}
+.settings-nav-item__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .settings-mobile-nav {
   display: none;
 }
+
+/* Content pane: one quiet title, then the scrolling groups. */
+.settings-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 22px 0 8px;
+}
+.settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 2px 10px 14px;
+}
+.settings-page-heading {
+  color: var(--foreground);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 22px;
+}
+.settings-head__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
 .settings-content {
   container: settings-content / inline-size;
+  padding: 4px 2px 24px 14px;
 }
 .settings-overview {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 28px;
+  gap: 20px;
+  max-width: 760px;
   align-items: start;
 }
 .settings-overview > * {
@@ -28,30 +181,28 @@
   margin-top: 0;
 }
 .settings-page-content {
-  max-width: 960px;
-}
-.settings-overview {
   max-width: 760px;
 }
+
 @container settings-workspace (max-width: 699px) {
-  .settings-layout {
+  .settings-shell {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
   }
   .settings-sidebar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
     gap: 12px;
-    border-inline-end: 0;
-    border-bottom: 1px solid var(--border);
     padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
   }
-  .settings-nav-heading,
-  .settings-desktop-nav {
+  .settings-search,
+  .settings-nav,
+  .settings-scope-divider {
     display: none;
   }
-  .settings-search {
+  .settings-scope {
     margin: 0;
   }
   .settings-mobile-nav {
@@ -63,9 +214,9 @@
   .settings-sidebar {
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
-    padding: 12px 16px;
   }
 }
+
 .local-knowledge .connection-content,
 .local-knowledge .connection-form {
   display: grid;
@@ -146,16 +297,9 @@
   display: none;
 }
 
-.settings-topbar {
-  border-bottom: 1px solid var(--border);
-}
 @media (max-width: 480px) {
-  .settings-topbar {
+  .settings-head {
     gap: 8px;
     padding-inline: 16px;
   }
-}
-
-.settings-native-mac .settings-topbar {
-  padding-inline-start: 100px;
 }

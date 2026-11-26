@@ -27,9 +27,23 @@ import {
   screenReadLoaded,
   threadRunError,
   userHoldsComputerControl,
+  workingThreadRunIds,
 } from "./thread-events.js";
 
 describe("thread event reduction", () => {
+  it("places a restored local reply fragment by transcript time after its interruption", () => {
+    const initial = snapshot([
+      { ...message("before", [{ kind: "text", text: "Before" }], 1), createdAt: "2026-01-01T00:00:01.000Z" },
+      { ...message("interruption", [{ kind: "text", text: "Change direction" }], 2), role: "user", createdAt: "2026-01-01T00:00:02.000Z" },
+      { ...message("later-input", [{ kind: "text", text: "Another input" }], 3), role: "user", createdAt: "2026-01-01T00:00:04.000Z" },
+    ]);
+    const next = reduceThreadSnapshot(initial, event({
+      type: "thread.message.created",
+      createdAt: "2026-01-01T00:00:03.000Z",
+      payload: { messageId: "continuation", role: "bot", blocks: [{ kind: "text", text: "After" }], localTranscript: true },
+    }));
+    expect(next?.messages.map((item) => item.id)).toEqual(["before", "interruption", "continuation", "later-input"]);
+  });
   it("shows a committed direct send as queued before its snapshot refresh returns", () => {
     const initial = snapshot([message("user-1", [{ kind: "text", text: "Continue" }], 4)]);
 
@@ -1672,6 +1686,24 @@ describe("thread event reduction", () => {
       expect.objectContaining({ id: "run-waiting", status: "waiting_input" }),
     ]);
     expect(activeThreadRuns({ ...initial, activeRuns: undefined })).toEqual([newerRun]);
+  });
+
+  it("counts only runs still working, so a paused or finished turn speaks for no reply", () => {
+    const working = threadRun("run-working");
+    const paused = { ...threadRun("run-paused"), status: "waiting_input" as const };
+    const done = { ...threadRun("run-done"), status: "completed" as const };
+    const queued = { ...threadRun("run-queued"), status: "queued" as const };
+
+    expect(
+      workingThreadRunIds({ ...snapshot([]), run: working, activeRuns: [working, paused, done] }),
+    ).toEqual(new Set(["run-working"]));
+    expect(
+      workingThreadRunIds({ ...snapshot([]), run: queued, activeRuns: [queued, paused] }),
+    ).toEqual(new Set(["run-queued"]));
+    expect(workingThreadRunIds({ ...snapshot([]), run: done, activeRuns: [done] })).toEqual(
+      new Set(),
+    );
+    expect(workingThreadRunIds(null)).toEqual(new Set());
   });
 
   it("replaces an ask message when its durable prompt state changes", () => {

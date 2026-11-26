@@ -26,8 +26,20 @@ for(const deleteMemories of[false,true])test(`1.0 deletion flow with deleteMemor
   assert.deepEqual(await f.removal.remove(f.bot.id,deleteMemories),{ok:true});assert.equal(f.store.get("bots",f.bot.id),undefined);assert.ok(f.store.get("bots",f.other.id));
   assert.equal(f.store.get("messages","private"),undefined);assert.equal(f.store.get("routines","routine"),undefined);assert.deepEqual(f.store.get<any>("conversations","group").botIds,[f.other.id]);
   await assert.rejects(lstat(f.workspace),{code:"ENOENT"});const shared=join(f.root,"shared-memory/deleted-bots",f.bot.id,"memory/example.md");
+  const receipt=f.store.get<any>("settings",`bot-deletion:${f.bot.id}`);
+  assert.equal(receipt.recoveryPaths.length,2);
+  assert.equal(await readFile(join(receipt.recoveryPaths[0].recovery,"memory/example.md"),"utf8"),"Retained preference");
   if(deleteMemories){await assert.rejects(lstat(shared),{code:"ENOENT"});assert.deepEqual(f.config.memory.search.extraPaths,["/synthetic/existing"]);}else{assert.equal(await readFile(shared,"utf8"),"Retained preference");assert.ok(f.config.memory.search.extraPaths.includes(join(f.root,"shared-memory")));assert.equal(f.config.memory.search.provider,"synthetic");}
   const count=f.calls.length;assert.deepEqual(await f.removal.remove(f.bot.id,deleteMemories),{ok:true});assert.equal(f.calls.length,count);
 }finally{await f.close();}});
 test("native deletion failure preserves files and product history for retry",async()=>{const f=await fixture();try{f.setFail(true);await assert.rejects(f.removal.remove(f.bot.id,true),/Native failure/);assert.equal(await readFile(join(f.workspace,"memory/example.md"),"utf8"),"Retained preference");assert.ok(f.store.get("messages","private"));f.setFail(false);await f.removal.remove(f.bot.id,true);assert.equal(f.store.get("bots",f.bot.id),undefined);}finally{await f.close();}});
 test("shared native directories are rejected before irreversible work",async()=>{const f=await fixture();try{f.config.agents.entries[f.other.agentId].workspace=join(f.workspace,"shared");await assert.rejects(f.removal.remove(f.bot.id,true),/其他 Bot/);assert.ok(!f.calls.some(x=>x.method==="agents.delete"));assert.ok(f.store.get("bots",f.bot.id));}finally{await f.close();}});
+test("inherited authorization ownership is rejected before retiring the native Bot",async()=>{const f=await fixture();try{f.config.agents.defaults={authInheritance:{agentId:f.bot.agentId}};await assert.rejects(f.removal.remove(f.bot.id,true),/授权继承来源/);assert.ok(!f.calls.some(x=>x.method==="agents.delete"));assert.ok(f.store.get("messages","private"));}finally{await f.close();}});
+test("a Trash conflict preserves original files and retry resumes the reserved recovery paths",async()=>{const f=await fixture();try{
+  f.setFail(true);await assert.rejects(f.removal.remove(f.bot.id,true),/Native failure/);
+  const receipt=f.store.get<any>("settings",`bot-deletion:${f.bot.id}`);const target=receipt.recoveryPaths[0].recovery;
+  await mkdir(target);f.setFail(false);await assert.rejects(f.removal.remove(f.bot.id,true),/废纸篓目标已存在/);
+  assert.ok(f.store.get("bots",f.bot.id));assert.equal(await readFile(join(f.workspace,"memory/example.md"),"utf8"),"Retained preference");
+  await rename(target,target+"-conflict-fixture");await f.removal.remove(f.bot.id,true);
+  assert.equal(f.store.get("bots",f.bot.id),undefined);assert.equal(await readFile(join(target,"memory/example.md"),"utf8"),"Retained preference");
+}finally{await f.close();}});

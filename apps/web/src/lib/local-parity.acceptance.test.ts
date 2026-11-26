@@ -12,7 +12,10 @@ const conversations = [
 ];
 const message = {
   id: "message-1", conversationId: "session-a", botId: "bot-1", role: "assistant",
-  blocks: [{ id: "text-1", kind: "text", text: "合成交付" }],
+  blocks: [
+    { id: "text-1", kind: "text", text: "合成交付" },
+    { id: "file-block-1", kind: "file", artifactId: "file-1", name: "report.txt", mediaType: "text/plain" },
+  ],
   createdAt: 2, updatedAt: 2, final: true,
 };
 beforeEach(() => {

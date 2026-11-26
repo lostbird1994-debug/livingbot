@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import type { Snapshot } from "../../../../packages/workbench/src/contracts";
 import { ConnectionSettings } from "../../../workbench-web/src/ConnectionSettings";
 import { WorkbenchClient } from "../../../workbench-web/src/client";
 import { MemoryCenter } from "../../../workbench-web/src/MemoryCenter";
-import { MigrationCenter } from "../../../workbench-web/src/MigrationCenter";
 import { localConnection } from "../lib/local-workbench";
 import "./local-knowledge-settings.css";
 
@@ -15,10 +13,9 @@ export function LocalKnowledgeSettings({
   onBusyChange,
 }: {
   botId?: string;
-  view?: "memory" | "data" | "connections";
+  view?: "memory" | "connections";
   onBusyChange?: (busy: boolean) => void;
 }) {
-  const navigate = useNavigate();
   const [connection, setConnection] = useState<{ origin: string; token: string }>();
   const [snapshot, setSnapshot] = useState<Snapshot>();
   const [error, setError] = useState("");
@@ -69,13 +66,6 @@ export function LocalKnowledgeSettings({
           conversations={snapshot.conversations}
           initialBotId={botId}
           onBusyChange={onBusyChange}
-        />
-      )}
-      {client && view === "data" && (
-        <MigrationCenter
-          client={client}
-          onBusyChange={onBusyChange}
-          onOpen={(bot) => navigate(`/app/${bot.id}`)}
         />
       )}
       {client && view === "connections" && (

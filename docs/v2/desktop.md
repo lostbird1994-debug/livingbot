@@ -43,7 +43,7 @@ Build the shared frontend, then provide the official Electron archive, its
 official checksum file and a fully initialized OpenClaw installation:
 
 ```sh
-pnpm --filter @livingbot/workbench-web build
+pnpm --filter @livingbot/web build
 pnpm --filter @livingbot/workbench-desktop package \
   /path/to/electron-v45.0.0-darwin-arm64.zip \
   /path/to/SHASUMS256.txt \
@@ -54,7 +54,16 @@ The current packager targets macOS arm64, verifies the archive checksum and
 kernel version, and creates a fresh ignored release directory on every run.
 It includes the web UI, backend, native plugin, initialized kernel dependencies
 and standalone Node binary. No application source is linked back to the checkout.
-The output is an application bundle and a ZIP; previous builds are retained.
+The output is an application bundle and a ZIP. Keep the current deliverable and
+selected rollback builds; move superseded build trees to Trash after checking
+references and active use. Keep small acceptance receipts separately.
+
+The current desktop loads `apps/web`, the existing incremental frontend.
+`apps/workbench-web` is an earlier replacement and is not the release UI.
+When a `web/index.html` override exists inside the desktop's user-data directory,
+the backend serves that override before the bundle's `Resources/web`. Verify the
+served entry when updating the frontend; changing the bundle alone may leave an
+older override visible.
 
 The bundle uses ad-hoc signing for local development. Signing with a distribution
 identity, notarization and other operating-system packages remain release work;

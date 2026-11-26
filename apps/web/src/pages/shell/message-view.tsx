@@ -699,7 +699,7 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "ask") {
-            if (block.approvalRequestId && localInteraction(block.approvalRequestId)) {
+            if (!isSecretAskBlock(block) && block.approvalRequestId && localInteraction(block.approvalRequestId)) {
               return (
                 <LocalInteraction
                   key={block.approvalRequestId}
@@ -711,7 +711,7 @@ export const MessageView = memo(function MessageView({
             return (
               <div
                 key={i}
-                className={`relative w-full min-w-0 ${isSecretAskBlock(block) ? "" : "max-w-xl"}`}
+                className={`relative w-full min-w-0 ${isSecretAskBlock(block) || block.healthCheck ? "" : "max-w-xl"}`}
               >
                 <AskCard
                   block={block}

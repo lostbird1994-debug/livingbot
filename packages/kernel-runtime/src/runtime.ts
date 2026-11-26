@@ -124,60 +124,88 @@ export class KernelRuntime extends EventEmitter {
     try {
       this.transition("connecting");
       let timer: ReturnType<typeof setTimeout> | undefined;
+      let credentialRetry: ReturnType<typeof setTimeout> | undefined;
+      let startupPending = true;
+      let peerAttempt = 0;
       const ready = new Promise<void>((resolve, reject) => {
         timer = setTimeout(() => reject(new Error(`Kernel startup deadline exceeded${lastConnectionError ? `: ${lastConnectionError}` : ""}`)),
           this.options.startupTimeoutMs ?? 90_000);
-        void this.options.peerFactory({
-          url: `ws://127.0.0.1:${this.options.port}`,
-          token: this.options.token,
-          env: runtimeEnvironment(this.options.paths),
-          onEvent: (frame) => {
-            if (generation !== this.generation) return;
-            this.acceptFrame(frame);
-          },
-          onHelloOk: (hello) => {
-            if (generation !== this.generation || this.closing) return;
-            const actual = hello.server?.version;
-            if (this.options.expectedVersion && actual && actual !== this.options.expectedVersion) {
-              reject(new Error(`Unexpected kernel version: ${actual}`));
-              return;
-            }
-            this.lastSequence = undefined;
-            // Every successful reconnect must restore the formal subscriptions,
-            // including reconnects that keep the same child generation.
-            void this.request("sessions.subscribe", {}).then(() => {
-              if (generation !== this.generation || this.closing) return;
-              readyAt ??= Date.now();
-              this.transition("ready");
-              this.observe({ type: "ready", hello, generation });
-              resolve();
-            }).catch((error: unknown) => {
+        const connect = () => {
+          const attempt = ++peerAttempt;
+          const current = () => generation === this.generation && attempt === peerAttempt && !this.closing;
+          void this.options.peerFactory({
+            url: `ws://127.0.0.1:${this.options.port}`,
+            token: this.options.token,
+            env: runtimeEnvironment(this.options.paths),
+            onEvent: (frame) => {
+              if (!current()) return;
+              this.acceptFrame(frame);
+            },
+            onHelloOk: (hello) => {
+              if (!current()) return;
+              const actual = hello.server?.version;
+              if (this.options.expectedVersion && actual && actual !== this.options.expectedVersion) {
+                reject(new Error(`Unexpected kernel version: ${actual}`));
+                return;
+              }
+              this.lastSequence = undefined;
+              // Every successful reconnect must restore the formal subscriptions,
+              // including reconnects that keep the same child generation.
+              void this.request("sessions.subscribe", {}).then(() => {
+                if (!current()) return;
+                clearTimeout(credentialRetry);
+                readyAt ??= Date.now();
+                this.transition("ready");
+                this.observe({ type: "ready", hello, generation });
+                resolve();
+              }).catch((error: unknown) => {
+                this.transition("recovering");
+                reject(error);
+                this.emit("diagnostic", { kind: "subscription", message: String(error), generation });
+              });
+            },
+            onClose: (code, reason) => {
+              if (!current()) return;
               this.transition("recovering");
-              reject(error);
-              this.emit("diagnostic", { kind: "subscription", message: String(error), generation });
-            });
-          },
-          onClose: (code, reason) => {
-            if (generation !== this.generation) return;
-            if (!this.closing) this.transition("recovering");
-            this.observe({ type: "disconnected", code, reason, generation });
-          },
-          onConnectError: (error) => {
-            if (generation === this.generation && !this.closing) {
-              lastConnectionError = error.message;
-              this.emit("diagnostic", { kind: "connection", message: error.message, generation });
-            }
-          },
-        }).then((peer) => {
-          if (this.closing || generation !== this.generation) return peer.stopAndWait();
-          this.peer = peer;
-          peer.start();
-        }).catch(reject);
+              this.observe({ type: "disconnected", code, reason, generation });
+            },
+            onConnectError: (error) => {
+              if (current()) {
+                lastConnectionError = error.message;
+                this.emit("diagnostic", { kind: "connection", message: error.message, generation });
+                // The native client stops permanently if its credential read races
+                // Gateway preparation. Recreate only that client, under the original
+                // startup deadline; native admission remains responsible for repair.
+                if (startupPending && readyAt === undefined && !credentialRetry &&
+                  (error as Error & { code?: string }).code === "gateway.maintenance_required" &&
+                  (error as Error & { kind?: string }).kind === "state-migrations") {
+                  credentialRetry = setTimeout(() => {
+                    credentialRetry = undefined;
+                    if (!startupPending || !current() || readyAt !== undefined) return;
+                    ++peerAttempt;
+                    const previous = this.peer;
+                    this.peer = undefined;
+                    void previous?.stopAndWait().then(() => {
+                      if (startupPending && !this.closing && generation === this.generation) connect();
+                    }).catch(reject);
+                  }, 500);
+                }
+              }
+            },
+          }).then((peer) => {
+            if (!current() || !startupPending) return peer.stopAndWait();
+            this.peer = peer;
+            peer.start();
+          }).catch(reject);
+        };
+        connect();
       });
       try {
         await Promise.race([ready, processEnded]);
       } finally {
         clearTimeout(timer);
+        clearTimeout(credentialRetry);
+        startupPending = false;
       }
     } catch (error) {
       await this.stop().catch(() => {});

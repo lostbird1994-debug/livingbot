@@ -883,6 +883,8 @@ model Message {
   clientNonce      String?
   /// Blind-index search tokens for the encrypted blocks; NULL until the row is encrypted.
   searchTokens     Int[]
+  /// The short title this turn carries in the chat's margin, on the message that opened it.
+  turnTitle        String?
   sourceRuns            Run[]             @relation("RunSourceMessage")
   externalTranscriptFor  ExternalMessage?
   steeringMessages SteeringMessage[]

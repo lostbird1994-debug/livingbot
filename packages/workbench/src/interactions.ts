@@ -21,6 +21,10 @@ function object(value: unknown): Record<string, unknown> {
 function text(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value : fallback;
 }
+function storedAnswer(result: Record<string, unknown>, id: string): boolean {
+  const values = object(object(result.answers).answers)[id];
+  return Array.isArray(values) && values.length === 1 && values[0] === "stored";
+}
 
 /** Native human-input ownership; no model turn is started by answering here. */
 export class Interactions {
@@ -58,8 +62,10 @@ export class Interactions {
       const state = text(payload.status);
       const status: Interaction["status"] = state === "cancelled" ? "cancelled" :
         state === "expired" || (kind === "approval" && payload.decision == null) ? "expired" : "answered";
+      const confirmedStatus = existing.secureInput && status === "answered" &&
+        !storedAnswer(payload, existing.questions[0]!.id) ? "unavailable" : status;
       this.store.transaction(() => {
-        this.store.put("interactions", { ...existing, status, answer: this.answerSummary(existing, payload) });
+        this.store.put("interactions", { ...existing, status: confirmedStatus, answer: this.answerSummary(existing, payload) });
         this.resumeIfClear(existing.taskId);
       });
       return;
@@ -78,14 +84,21 @@ export class Interactions {
     const existing = this.store.get<Interaction>("interactions", id);
     if (existing && (!open.has(existing.status) || existing.generation > generation)) return;
     const questions: QuestionField[] = [];
+    let secureInput: Interaction["secureInput"];
     if (kind === "question") {
       if (!Array.isArray(payload.questions) || payload.questions.length < 1 || payload.questions.length > 3) return;
       // Secret values belong in the native masked credential flow, not in
       // ordinary persistent conversation records or event payloads.
-      if (payload.questions.some((value) => object(value).isSecret || object(value).secretStore)) {
+      const secretQuestions = payload.questions.filter((value) => object(value).isSecret || object(value).secretStore);
+      const secret = object(object(secretQuestions[0]).secretStore);
+      if (secretQuestions.length && (payload.questions.length !== 1 || secret.kind !== "secret" ||
+        !/^[A-Z][A-Z0-9_]{0,127}$/u.test(text(secret.name)) ||
+        !Array.isArray(secret.allowedHosts) || secret.allowedHosts.length > 128 ||
+        secret.allowedHosts.some((host) => typeof host !== "string" || !host || host.length > 253))) {
         this.store.recordEvent("interaction.secure-input-required", run.taskId, { id, taskId: run.taskId });
         return;
       }
+      if (secretQuestions.length) secureInput = { name: text(secret.name), allowedHosts: secret.allowedHosts as string[] };
       for (const value of payload.questions) {
         const field = object(value);
         if (!text(field.questionId) || !text(field.question)) return;
@@ -131,9 +144,11 @@ export class Interactions {
         id, engineId, kind, runId, sessionKey, taskId: task.id, conversationId: task.conversationId,
         generation, title: kind === "question" ? questions[0]!.question : text(request.commandPreview,
           text(request.command, "执行操作")),
+        ...(secureInput ? { secureInput } : {}),
         ...(approval ? { approval: { ...approval, taskTitle: task.title } } : {}),
         questions, decisions: kind === "approval" ? decisions : [],
         status: existing?.status ?? "pending",
+        ...(existing?.resolutionId ? { resolutionId: existing.resolutionId } : {}),
         createdAt: Number(payload.createdAtMs) || Date.now(),
         expiresAt: Number(payload.expiresAtMs) || Date.now(),
       });
@@ -166,6 +181,7 @@ export class Interactions {
       ...approvals.map((record) => `approval:${text(record.id)}`)]);
     for (const previous of observed) {
       const prompt = this.store.get<Interaction>("interactions", previous.id)!;
+      if (prompt.secureInput?.connection && prompt.generation === generation) continue;
       if (open.has(prompt.status) && !pending.has(prompt.id)) {
         if (prompt.kind === "question" && prompt.generation === generation) {
           try {
@@ -189,6 +205,8 @@ export class Interactions {
   resolve(id: string, taskId: string, answer: InteractionAnswer): Promise<Interaction> {
     const prompt = this.store.get<Interaction>("interactions", id);
     if (!prompt || prompt.taskId !== taskId) return Promise.reject(new Error("Interaction does not belong to this task"));
+    if (prompt.secureInput?.connection) return Promise.reject(new Error("Use the connection credential input"));
+    if (prompt.secureInput && !("cancel" in answer)) return Promise.reject(new Error("Use the secure credential input"));
     const digest = createHash("sha256").update(JSON.stringify(answer)).digest("hex");
     const receiptId = `interaction-answer:${answer.resolutionId}`;
     const receipt = this.store.get<ResolutionReceipt>("settings", receiptId);
@@ -214,6 +232,42 @@ export class Interactions {
       this.store.put("interactions", { ...prompt, status: "answering" });
     });
     const operation = this.submitAnswer(prompt, params, receiptId, digest).finally(() => this.resolving.delete(id));
+    this.resolving.set(id, operation);
+    return operation;
+  }
+
+  /** Raw input exists only in this call and the authenticated native write RPC. */
+  resolveSecret(id: string, taskId: string, resolutionId: string, value: string): Promise<Interaction> {
+    const prompt = this.store.get<Interaction>("interactions", id);
+    if (!prompt?.secureInput || prompt.secureInput.connection || prompt.taskId !== taskId) {
+      return Promise.reject(new Error("Credential request does not belong to this task"));
+    }
+    if (!resolutionId || resolutionId.length > 128 || typeof value !== "string" ||
+      !value.length || value.length > 16_384 || value.includes("\0")) {
+      return Promise.reject(new Error("Invalid credential input"));
+    }
+    // A receipt identifies the operation, never the value (not even its hash).
+    const digest = `credential:${id}:${resolutionId}`;
+    const receiptId = `interaction-answer:${resolutionId}`;
+    const receipt = this.store.get<ResolutionReceipt>("settings", receiptId);
+    if (receipt && (receipt.digest !== digest || receipt.interactionId !== id)) {
+      return Promise.reject(new Error("Answer identity conflicts"));
+    }
+    if (receipt?.state === "confirmed") return Promise.resolve(prompt);
+    if (prompt.resolutionId && prompt.resolutionId !== resolutionId) return Promise.reject(new Error("An earlier answer is awaiting confirmation"));
+    const task = this.store.get<Task>("tasks", taskId);
+    if (!open.has(prompt.status) || prompt.generation !== this.gateway.generation ||
+      prompt.expiresAt <= Date.now() || !task || terminalTask.has(task.status) || task.status === "stopping") {
+      return Promise.reject(new Error("Credential request is no longer available"));
+    }
+    if (this.resolving.has(id)) return Promise.reject(new Error("Credential submission is in progress"));
+    this.store.transaction(() => {
+      this.store.put<ResolutionReceipt>("settings", { id: receiptId, interactionId: id, digest, state: "pending" });
+      this.store.put("interactions", { ...prompt, status: "answering", resolutionId });
+    });
+    const operation = this.submitAnswer(prompt, {
+      id: prompt.engineId, resolutionId, answers: { answers: { [prompt.questions[0]!.id]: [value] } },
+    }, receiptId, digest).finally(() => this.resolving.delete(id));
     this.resolving.set(id, operation);
     return operation;
   }
@@ -251,13 +305,17 @@ export class Interactions {
         if (receipt?.status !== "answered" || receipt.resolutionId !== params.resolutionId) throw error;
         result = receipt;
       }
+      if (prompt.secureInput && params.cancel !== true &&
+        !storedAnswer(result, prompt.questions[0]!.id)) {
+        throw new Error("Credential storage has not been confirmed");
+      }
       return this.store.transaction(() => {
         this.store.put<ResolutionReceipt>("settings", { id: receiptId, interactionId: prompt.id, digest, state: "confirmed" }, "interaction.answer-confirmed");
         const current = this.store.get<Interaction>("interactions", prompt.id)!;
         this.store.put("interactions", {
           ...current,
           status: open.has(current.status) ? params.cancel === true ? "cancelled" : "answered" : current.status,
-          answer: this.answerSummary(prompt, { ...params, ...result }) ?? current.answer,
+          answer: this.answerSummary(prompt, prompt.secureInput ? result : { ...params, ...result }) ?? current.answer,
         });
         this.resumeIfClear(prompt.taskId);
         return this.store.get<Interaction>("interactions", prompt.id)!;
@@ -265,11 +323,16 @@ export class Interactions {
     } catch (error) {
       // Keep the pending identity. A lost acknowledgment is not a denial and
       // does not authorize a different answer on an uncertain operation.
-      throw error;
+      throw prompt.secureInput ? new Error("凭证提交未确认，请重试或检查原生服务状态") : error;
     }
   }
 
   private answerSummary(prompt: Interaction, result: Record<string, unknown>): Interaction["answer"] {
+    if (prompt.secureInput) {
+      const field = prompt.questions[0]?.id;
+      return field && storedAnswer(result, field)
+        ? { answers: { [field]: ["stored"] } } : undefined;
+    }
     if (prompt.kind === "approval") {
       const decision = result.decision;
       return decision === "allow-once" || decision === "allow-always" || decision === "deny" ? { decision } : undefined;

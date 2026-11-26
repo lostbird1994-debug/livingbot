@@ -24,6 +24,7 @@ import { errorText } from "../lib/user-error";
 import { BuiCard } from "./ai/primitives";
 import { LoginFieldValue } from "./LoginFields";
 import { OptionRow, optionLetter } from "./OptionRow";
+import { BotHealthCard } from "./BotHealthCard";
 
 export type AskBlock = Extract<ThreadMessage["blocks"][number], { kind: "ask" }>;
 
@@ -77,7 +78,19 @@ function secretFieldLabel(purpose: AskBlock["purpose"]): string {
   return t`Code`;
 }
 
-export function AskCard({
+export function AskCard(props: {
+  block: AskBlock;
+  canAnswer: boolean;
+  canDismiss: boolean;
+  onAnswer: (text: string, fields?: LoginFieldInput[], remember?: false) => Promise<void>;
+  onDismiss: () => Promise<void>;
+}) {
+  return props.block.healthCheck
+    ? <BotHealthCard botId={props.block.healthCheck.botId} reportId={props.block.healthCheck.reportId} />
+    : <StandardAskCard {...props} />;
+}
+
+function StandardAskCard({
   block,
   canAnswer,
   canDismiss,
@@ -100,7 +113,8 @@ export function AskCard({
   const [acceptedAnswer, setAcceptedAnswer] = useState<string>();
   const [acceptedRemembered, setAcceptedRemembered] = useState<false>();
   const [undone, setUndone] = useState(false);
-  const emptyLogin = () => loginCardFields(block.loginFields);
+  const emptyLogin = () => loginCardFields(block.loginFields).map((field) =>
+    block.secureConnection ? { ...field, hidden: true } : field);
   const [login, setLogin] = useState(emptyLogin);
   const [remember, setRemember] = useState(true);
   const rememberId = useId();
@@ -139,7 +153,7 @@ export function AskCard({
   // A login or credential is saved for the run's user, so only they can fill one in; others see
   // the card without fields or buttons.
   const ownerOnly = secretInput && Boolean(block.credential) && !canDismiss;
-  const loginInput = secretInput && block.credential?.auth.type === "login";
+  const loginInput = secretInput && (block.credential?.auth.type === "login" || Boolean(block.secureConnection));
   const shownLoginLabels = block.loginFields ?? [t`Username`, t`Password`];
   const loginReady = LoginSecretValue.safeParse({ fields: login }).success;
   const secretLabel = secretFieldLabel(block.purpose);
@@ -307,6 +321,11 @@ export function AskCard({
           )}
         </div>
       )}
+      {secretInput && block.detail ? (
+        <div className="mt-2 break-all text-[13px] text-muted-foreground">
+          {block.detail}
+        </div>
+      ) : null}
       {secretInput && block.credential ? (
         <div
           data-testid="secret-ask-destination"
@@ -542,7 +561,7 @@ export function AskCard({
               <Trans>Clear</Trans>
             </Button>
           ) : null}
-          {loginInput ? (
+          {loginInput && !block.secureConnection ? (
             <div className="mt-1 flex items-center gap-2">
               <Switch
                 id={rememberId}

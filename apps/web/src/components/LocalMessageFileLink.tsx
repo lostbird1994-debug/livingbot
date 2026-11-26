@@ -4,6 +4,7 @@ import { FolderOpen } from "lucide-react";
 import { useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { isMarkdownFile, useOpenDocument } from "../lib/document-tabs";
+import { getFileOpenMode } from "../lib/opening-prefs";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 
@@ -45,7 +46,9 @@ export function LocalMessageFileLink({
         aria-disabled={busy}
         onClick={(event) => {
           event.preventDefault();
-          if (openDocument && isMarkdownFile(path)) {
+          // The setting decides whether a click previews here or hands the file to the system.
+          if (getFileOpenMode() === "system") void act("open");
+          else if (openDocument && isMarkdownFile(path)) {
             openDocument({
               kind: "message",
               name: path.split("/").at(-1) || path,

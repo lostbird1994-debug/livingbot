@@ -93,6 +93,84 @@ test("recovery imports only exact known-run prompts and never guesses from sessi
   f.store.close();
 });
 
+test("store-bound native secrets use a separate route and retain only the stored marker", async () => {
+  const f = fixture();
+  try {
+    const events: unknown[] = [];
+    f.store.on("event", (event) => events.push(event));
+    const payload = { ...f.payload, questions: [{
+      questionId: "secret_value", question: "Provide a credential", header: "API key", options: [],
+      isSecret: true, secretStore: { name: "EXAMPLE_KEY", kind: "secret", allowedHosts: ["api.example.test"] },
+    }] };
+    f.interactions.frame({ event: "question.requested", payload }, 1);
+    const id = "question:question-one";
+    assert.equal(f.store.get<Interaction>("interactions", id)?.secureInput?.name, "EXAMPLE_KEY");
+    await assert.rejects(f.interactions.resolve(id, f.task.id, {
+      resolutionId: "ordinary", answers: { secret_value: ["fake-sensitive-value"] },
+    }), /secure/);
+    await assert.rejects(f.interactions.resolveSecret(id, "wrong", "secure", "fake-sensitive-value"), /belong/);
+    f.gateway.request = async <T>(method: string, params: unknown) => {
+      assert.equal(method, "question.resolve");
+      assert.equal((params as { answers: { answers: Record<string, string[]> } }).answers.answers.secret_value[0], "fake-sensitive-value");
+      return { status: "answered", answers: { answers: { secret_value: ["stored"] } } } as T;
+    };
+    const result = await f.interactions.resolveSecret(id, f.task.id, "secure", "fake-sensitive-value");
+    assert.deepEqual(result.answer, { answers: { secret_value: ["stored"] } });
+    assert.equal(result.status, "answered");
+    await f.interactions.resolveSecret(id, f.task.id, "secure", "other-value");
+    const persisted = JSON.stringify([events, f.store.snapshot(), f.store.list("settings")]);
+    assert.ok(!persisted.includes("fake-sensitive-value"));
+    assert.ok(!persisted.includes("other-value"));
+    f.interactions.frame({ event: "question.resolved", payload: {
+      id: "question-one", status: "answered", answers: { answers: { secret_value: ["fake-sensitive-value"] } },
+    } }, 1);
+    assert.ok(!JSON.stringify(f.store.snapshot()).includes("fake-sensitive-value"));
+  } finally { f.store.close(); }
+});
+
+test("native secret failure does not echo input, and a matching terminal receipt confirms a lost reply", async () => {
+  const f = fixture();
+  try {
+    f.interactions.frame({ event: "question.requested", payload: { ...f.payload, questions: [{
+      questionId: "secret_value", question: "Key", options: [], isSecret: true,
+      secretStore: { name: "EXAMPLE_KEY", kind: "secret", allowedHosts: [] },
+    }] } }, 1);
+    let confirmed = false;
+    f.gateway.request = async <T>(method: string) => {
+      if (method === "question.resolve") throw new Error("fake-sensitive-value");
+      return { status: confirmed ? "answered" : "pending", resolutionId: "secure",
+        answers: { answers: { secret_value: ["stored"] } } } as T;
+    };
+    await assert.rejects(f.interactions.resolveSecret("question:question-one", f.task.id, "secure", "fake-sensitive-value"),
+      (error: Error) => !error.message.includes("fake-sensitive-value"));
+    const current = f.store.get<Interaction>("interactions", "question:question-one")!;
+    f.interactions.frame({ event: "question.requested", payload: {
+      ...f.payload, questions: [{
+        questionId: "secret_value", question: "Key", options: [], isSecret: true,
+        secretStore: { name: "EXAMPLE_KEY", kind: "secret", allowedHosts: [] },
+      }],
+    } }, 1);
+    assert.equal(f.store.get<Interaction>("interactions", current.id)?.resolutionId, "secure");
+    confirmed = true;
+    assert.equal((await f.interactions.resolveSecret("question:question-one", f.task.id, "secure", "fake-sensitive-value")).status, "answered");
+  } finally { f.store.close(); }
+});
+
+test("a native secret resolution without the stored marker is unavailable and never retains its value", () => {
+  const f = fixture();
+  try {
+    f.interactions.frame({ event: "question.requested", payload: { ...f.payload, questions: [{
+      questionId: "secret_value", question: "Key", options: [], isSecret: true,
+      secretStore: { name: "EXAMPLE_KEY", kind: "secret", allowedHosts: [] },
+    }] } }, 1);
+    f.interactions.frame({ event: "question.resolved", payload: {
+      id: "question-one", status: "answered", answers: { answers: { secret_value: ["fake-sensitive-value"] } },
+    } }, 1);
+    assert.equal(f.store.get<Interaction>("interactions", "question:question-one")?.status, "unavailable");
+    assert.ok(!JSON.stringify(f.store.snapshot()).includes("fake-sensitive-value"));
+  } finally { f.store.close(); }
+});
+
 test("approval projects only native display metadata and retains it after the decision", async () => {
   const f = fixture();
   const approval = {

@@ -4,7 +4,6 @@ import { UPSTREAM_UPDATES_ENABLED } from "@livingbot/contracts";
 import {
   Button,
   Dialog,
-  DialogClose,
   DialogContent,
   DialogTitle,
   Input,
@@ -20,6 +19,8 @@ import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
 import { computersAreUnavailable } from "../components/ComputersUnavailableHint";
 import { InheritanceBadge } from "../components/InheritanceBadge";
 import { SETTINGS_CONTENT_WIDTH, SettingsGroup, SettingsRow } from "../components/SettingsRows";
+import { ShortcutSettings } from "../components/ShortcutSettings";
+import { SystemSettings } from "../components/SystemSettings";
 import { VaultSettings } from "../components/VaultSettings";
 import { desktopBridge } from "../lib/desktop";
 import { localConnected } from "../lib/local-workbench";
@@ -42,7 +43,12 @@ import { PaymentWalletSettingsPanel } from "./PaymentWalletSettingsPanel";
 import { SpaceSettingSection } from "./SpaceSettingSection";
 import { SpaceSettingsPanel } from "./SpaceSettingsPanel";
 import type { SettingsPanel } from "./settings-nav";
-import { settingsPanelOf, useSettingsNavItems, useSettingsPanelLabels } from "./settings-nav";
+import {
+  groupSettingsNav,
+  settingsPanelOf,
+  useSettingsNavItems,
+  useSettingsPanelLabels,
+} from "./settings-nav";
 import type { BotSettingsPage } from "./shell/bot-panel";
 import { BotSettings } from "./shell/bot-panel";
 import type { SettingsSpace } from "./shell/dialogs";
@@ -179,6 +185,8 @@ function GlobalPages({
     return <NativeMemorySettings onBusyChange={onVoiceBusy} />;
   if (localConnected() && section === "advanced")
     return <NativeAdvancedSettings onBusyChange={onVoiceBusy} />;
+  if (section === "system") return <SystemSettings />;
+  if (section === "shortcuts") return <ShortcutSettings />;
   if (section === "general" || section === "chat" || section === "regional") {
     return (
       <GeneralSettingsPanels
@@ -445,7 +453,7 @@ function BotPages({
   return (
     <div
       data-testid="settings-scroll"
-      className="settings-content rk-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 md:px-8"
+      className="settings-content rk-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain"
     >
       <div className={`settings-page-content space-y-4 ${SETTINGS_CONTENT_WIDTH}`}>
         {bot ? (
@@ -617,14 +625,15 @@ export function SettingsOverlay({
   const panel: SettingsPanel = settingsPanelOf(section, native);
   const navItems = groups.find((group) => group.panel === panel)!.items;
   const term = settingsSearch.trim().toLocaleLowerCase();
-  const visibleGroups = groups
-    .filter((group) => term || group.panel === panel)
+  // The nav lists one panel at a time, so a search narrows that panel instead of jumping scope.
+  const visibleGroups = groupSettingsNav(panel, navItems, native)
     .map((group) => ({
       ...group,
       items: group.items.filter((item) =>
         `${item.label} ${item.keywords ?? ""}`.toLocaleLowerCase().includes(term),
       ),
-    }));
+    }))
+    .filter((group) => group.items.length > 0);
   const visibleItems = visibleGroups.flatMap((group) => group.items);
   const panelBusy = busy;
   useEffect(() => {
@@ -677,77 +686,17 @@ export function SettingsOverlay({
       data-testid="user-settings"
       data-settings-section={section}
       data-settings-panel={panel}
-      className={`${desktopBridge()?.platform === "darwin" ? "settings-native-mac" : ""} settings-workspace flex h-full min-h-0 min-w-0 flex-1 flex-col bg-background`}
+      className="settings-workspace flex h-full min-h-0 min-w-0 flex-1 flex-col bg-sidebar"
     >
-      <header
-        data-testid="settings-header"
-        className="app-drag flex settings-topbar min-h-16 shrink-0 flex-wrap items-center gap-4 border-b border-border px-5 py-3 md:px-7"
-      >
-        {embedded ? (
-          <h2 className="text-lg font-semibold">设置</h2>
-        ) : (
-          <DialogTitle className="text-lg font-semibold">设置</DialogTitle>
-        )}
-        <fieldset aria-label="设置范围" className="app-no-drag flex items-center gap-1">
-          {(["global", "workspace", "bot"] as const).map((target) => (
-            <Button
-              key={target}
-              variant={panel === target ? "secondary" : "ghost"}
-              aria-pressed={panel === target}
-              disabled={panelBusy}
-              onClick={() => {
-                setSettingsSearch("");
-                onSectionChange(
-                  target === "global" ? "general" : target === "workspace" ? "space" : "bot-role",
-                );
-              }}
-            >
-              {target === "global" ? "全局" : target === "workspace" ? "工作区" : "Bot"}
-            </Button>
-          ))}
-        </fieldset>
-        <div className="app-no-drag ms-auto flex min-w-0 flex-wrap items-center gap-3">
-          <SpaceRpcProvider spaceId={boundSpaceId}>
-            {panel === "global" ? null : panel === "workspace" ? (
-              <WorkspaceScope
-                disabled={panelBusy}
-                spaces={spaces}
-                space={space ?? null}
-                onSpaceChange={(next) => onSpaceChange?.(next)}
-              />
-            ) : (
-              <BotScope
-                botId={botId}
-                disabled={panelBusy}
-                onBotChange={(next) => onBotChange?.(next)}
-              />
-            )}
-          </SpaceRpcProvider>
-          {embedded ? (
-            <Button
-              aria-label={t`Close settings`}
-              variant="ghost"
-              size="icon-sm"
-              disabled={panelBusy}
-              onClick={requestClose}
-            >
-              <XIcon />
-            </Button>
-          ) : (
-            <DialogClose
-              aria-label={t`Close settings`}
-              disabled={panelBusy}
-              render={<Button variant="ghost" size="icon-sm" />}
-            >
-              <XIcon />
-            </DialogClose>
-          )}
-        </div>
-      </header>
-      <div className="settings-layout min-h-0 flex-1">
-        <aside className="settings-sidebar min-h-0 border-e border-border">
-          <div className="settings-search relative mx-3 mb-4">
-            <Search className="pointer-events-none absolute start-3 top-2.5 size-4 text-muted-foreground" />
+      {embedded ? (
+        <h2 className="sr-only">设置</h2>
+      ) : (
+        <DialogTitle className="sr-only">设置</DialogTitle>
+      )}
+      <div className="settings-shell">
+        <aside className="settings-sidebar">
+          <div className="settings-search app-no-drag">
+            <Search className="settings-search__icon" />
             <Input
               type="search"
               aria-label="搜索设置"
@@ -755,52 +704,63 @@ export function SettingsOverlay({
               value={settingsSearch}
               disabled={panelBusy}
               onChange={(event) => setSettingsSearch(event.target.value)}
-              className="h-9 ps-9"
+              className="ps-7 text-[13px]"
             />
           </div>
+          <fieldset aria-label="设置范围" className="settings-scope app-no-drag">
+            {(["global", "workspace", "bot"] as const).map((target) => (
+              <button
+                key={target}
+                type="button"
+                className="settings-scope__item"
+                aria-pressed={panel === target}
+                disabled={panelBusy}
+                onClick={() => {
+                  setSettingsSearch("");
+                  onSectionChange(
+                    target === "global" ? "general" : target === "workspace" ? "space" : "bot-role",
+                  );
+                }}
+              >
+                {target === "global" ? "全局" : target === "workspace" ? "工作区" : "Bot"}
+              </button>
+            ))}
+          </fieldset>
+          <div className="settings-scope-divider" aria-hidden="true" />
           <nav
             data-testid="settings-nav"
             aria-label="设置分类"
-            className="settings-desktop-nav rk-scroll min-h-0 overflow-y-auto px-3 pb-5"
+            className="settings-nav rk-scroll app-no-drag"
           >
-            {visibleGroups.map(
-              (group) =>
-                group.items.length > 0 && (
-                  <section key={group.panel} className="mb-4">
-                    {term && (
-                      <h2 className="mb-1.5 px-2.5 text-xs text-muted-foreground">
-                        {panelLabels[group.panel]}
-                      </h2>
-                    )}
-                    <div className="space-y-0.5">
-                      {group.items.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            data-testid={`settings-nav-${item.id}`}
-                            aria-current={item.id === section ? "page" : undefined}
-                            disabled={panelBusy}
-                            onClick={() => onSectionChange(item.id)}
-                            className={`flex min-h-9 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-sm transition-colors disabled:pointer-events-none disabled:opacity-50 ${item.id === section ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                          >
-                            <Icon className="size-4 shrink-0" strokeWidth={1.75} />
-                            <span>{item.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ),
-            )}
-            {!visibleGroups.some((group) => group.items.length) && (
-              <p role="status" className="px-2.5 text-sm text-muted-foreground">
+            {visibleGroups.map((group) => (
+              <section key={group.label}>
+                <h2 className="settings-nav-group__title">{group.label}</h2>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      data-testid={`settings-nav-${item.id}`}
+                      aria-current={item.id === section ? "page" : undefined}
+                      disabled={panelBusy}
+                      onClick={() => onSectionChange(item.id)}
+                      className="settings-nav-item"
+                    >
+                      <Icon className="settings-nav-item__icon" strokeWidth={1.6} />
+                      <span className="settings-nav-item__label">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </section>
+            ))}
+            {!visibleItems.length && (
+              <p role="status" className="px-2.5 py-1 text-[13px] text-muted-foreground">
                 没有匹配的设置
               </p>
             )}
           </nav>
-          <div className="settings-mobile-nav px-3 pb-3">
+          <div className="settings-mobile-nav">
             <NativeSelect
               aria-label="设置分类"
               value={visibleItems.some((item) => item.id === section) ? section : ""}
@@ -811,7 +771,7 @@ export function SettingsOverlay({
                 {visibleItems.length ? "选择设置" : "没有匹配的设置"}
               </NativeSelectOption>
               {visibleGroups.map((group) => (
-                <optgroup key={group.panel} label={panelLabels[group.panel]}>
+                <optgroup key={group.label} label={group.label}>
                   {group.items.map((item) => (
                     <NativeSelectOption key={item.id} value={item.id}>
                       {item.label}
@@ -822,9 +782,36 @@ export function SettingsOverlay({
             </NativeSelect>
           </div>
         </aside>
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="settings-page-heading px-5 pt-7 pb-1 md:px-8">
-            <h2 className="text-xl font-semibold">{sectionTitle}</h2>
+        <div className="settings-main">
+          <div data-testid="settings-header" className="settings-head">
+            <h2 className="settings-page-heading">{sectionTitle}</h2>
+            <div className="settings-head__right app-no-drag">
+              <SpaceRpcProvider spaceId={boundSpaceId}>
+                {panel === "global" ? null : panel === "workspace" ? (
+                  <WorkspaceScope
+                    disabled={panelBusy}
+                    spaces={spaces}
+                    space={space ?? null}
+                    onSpaceChange={(next) => onSpaceChange?.(next)}
+                  />
+                ) : (
+                  <BotScope
+                    botId={botId}
+                    disabled={panelBusy}
+                    onBotChange={(next) => onBotChange?.(next)}
+                  />
+                )}
+              </SpaceRpcProvider>
+              <Button
+                aria-label={t`Close settings`}
+                variant="ghost"
+                size="icon-sm"
+                disabled={panelBusy}
+                onClick={requestClose}
+              >
+                <XIcon />
+              </Button>
+            </div>
           </div>
           <SpaceRpcProvider spaceId={boundSpaceId}>
             {panel === "bot" ? (
@@ -838,7 +825,7 @@ export function SettingsOverlay({
               <div
                 key={boundSpaceId ?? panel}
                 data-testid="settings-scroll"
-                className="settings-content rk-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 md:px-8"
+                className="settings-content rk-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain"
               >
                 <div className="settings-page-content w-full min-w-0">
                   {panel === "workspace" ? (
@@ -897,7 +884,7 @@ export function SettingsOverlay({
       <DialogContent
         showCloseButton={false}
         initialFocus={() => panelRef.current}
-        className="flex h-[min(760px,calc(100%-2rem))] max-h-[calc(100%-2rem)] w-[min(1280px,calc(100%-2rem))] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-h-[calc(100%-5rem)] sm:max-w-[1280px]"
+        className="flex h-[680px] max-h-[calc(100%-2rem)] w-[920px] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl bg-sidebar p-0 sm:max-w-[920px]"
       >
         {content}
       </DialogContent>

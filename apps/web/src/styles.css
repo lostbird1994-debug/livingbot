@@ -4,33 +4,12 @@
 @source "../../../packages/ui-web/src/**/*.{ts,tsx}";
 @source "./**/*.{ts,tsx}";
 
-.panorama-sections {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  align-items: start;
-  gap: 24px 18px;
-}
+/* One flat shelf of bots, newest conversation first: no sections, no collapsible chapters. */
 .panorama-cards {
   display: grid;
-  grid-template-columns: repeat(var(--panorama-columns, 1), minmax(0, 1fr));
-  gap: 18px;
-}
-@media (min-width: 1600px) {
-  .panorama-sections {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-}
-@media (max-width: 1100px) {
-  .panorama-sections {
-    display: flex;
-    flex-direction: column;
-  }
-  .panorama-sections > * {
-    width: 100%;
-  }
-  .panorama-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px 18px;
+  align-items: start;
 }
 @media (max-width: 600px) {
   .panorama-cards {
@@ -42,6 +21,93 @@
   [data-testid="workspace-main"] > div > header {
     padding-inline-start: 48px;
   }
+}
+
+/* Artifact icons carry the file's kind in both glyph and colour, so a shelf of documents is
+   readable at a glance. Explicit values: the app has two themes and no per-kind palette. */
+.artifact-icon {
+  background: var(--artifact-icon-bg, var(--accent));
+  color: var(--artifact-icon-fg, var(--accent-foreground));
+}
+[data-artifact-kind="image"] {
+  --artifact-icon-bg: #e0f2fe;
+  --artifact-icon-fg: #0369a1;
+}
+[data-artifact-kind="pdf"] {
+  --artifact-icon-bg: #fee2e2;
+  --artifact-icon-fg: #b91c1c;
+}
+[data-artifact-kind="word"] {
+  --artifact-icon-bg: #dbeafe;
+  --artifact-icon-fg: #1d4ed8;
+}
+[data-artifact-kind="sheet"] {
+  --artifact-icon-bg: #dcfce7;
+  --artifact-icon-fg: #15803d;
+}
+[data-artifact-kind="slide"] {
+  --artifact-icon-bg: #ffedd5;
+  --artifact-icon-fg: #c2410c;
+}
+[data-artifact-kind="code"] {
+  --artifact-icon-bg: #ede9fe;
+  --artifact-icon-fg: #6d28d9;
+}
+[data-artifact-kind="text"] {
+  --artifact-icon-bg: #f1f5f9;
+  --artifact-icon-fg: #475569;
+}
+[data-artifact-kind="video"] {
+  --artifact-icon-bg: #fce7f3;
+  --artifact-icon-fg: #be185d;
+}
+[data-artifact-kind="audio"] {
+  --artifact-icon-bg: #cffafe;
+  --artifact-icon-fg: #0e7490;
+}
+[data-artifact-kind="archive"] {
+  --artifact-icon-bg: #fef3c7;
+  --artifact-icon-fg: #b45309;
+}
+[data-theme="dark"] [data-artifact-kind="image"] {
+  --artifact-icon-bg: #0c4a6e80;
+  --artifact-icon-fg: #7dd3fc;
+}
+[data-theme="dark"] [data-artifact-kind="pdf"] {
+  --artifact-icon-bg: #7f1d1d80;
+  --artifact-icon-fg: #fca5a5;
+}
+[data-theme="dark"] [data-artifact-kind="word"] {
+  --artifact-icon-bg: #1e3a8a80;
+  --artifact-icon-fg: #93c5fd;
+}
+[data-theme="dark"] [data-artifact-kind="sheet"] {
+  --artifact-icon-bg: #14532d80;
+  --artifact-icon-fg: #86efac;
+}
+[data-theme="dark"] [data-artifact-kind="slide"] {
+  --artifact-icon-bg: #7c2d1280;
+  --artifact-icon-fg: #fdba74;
+}
+[data-theme="dark"] [data-artifact-kind="code"] {
+  --artifact-icon-bg: #4c1d9580;
+  --artifact-icon-fg: #c4b5fd;
+}
+[data-theme="dark"] [data-artifact-kind="text"] {
+  --artifact-icon-bg: #ffffff12;
+  --artifact-icon-fg: #cbd5e1;
+}
+[data-theme="dark"] [data-artifact-kind="video"] {
+  --artifact-icon-bg: #83184380;
+  --artifact-icon-fg: #f9a8d4;
+}
+[data-theme="dark"] [data-artifact-kind="audio"] {
+  --artifact-icon-bg: #164e6380;
+  --artifact-icon-fg: #67e8f9;
+}
+[data-theme="dark"] [data-artifact-kind="archive"] {
+  --artifact-icon-bg: #78350f80;
+  --artifact-icon-fg: #fcd34d;
 }
 
 .panorama-bot {
@@ -69,18 +135,6 @@
 .panorama-bot-open:active .panorama-bot-photo {
   transform: scale(0.985);
 }
-.panorama-bot-aura {
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  pointer-events: none;
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--status-working) 65%, transparent),
-    0 0 12px 3px color-mix(in srgb, var(--status-working) 52%, transparent),
-    0 0 28px 8px color-mix(in srgb, var(--status-working) 32%, transparent);
-  opacity: 0.7;
-  animation: panorama-avatar-glow 3s ease-in-out infinite;
-}
 .panorama-bot-menu {
   opacity: 0;
   transition: opacity 150ms ease-out;
@@ -93,13 +147,8 @@
 @media (hover: none) {
   .panorama-bot-menu { opacity: 1; }
 }
-@keyframes panorama-avatar-glow {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
 @media (prefers-reduced-motion: reduce) {
-  .panorama-bot .panorama-bot-photo,
-  .panorama-bot-aura {
+  .panorama-bot .panorama-bot-photo {
     animation: none;
     transition: none;
   }
@@ -182,6 +231,43 @@ body,
   background: var(--scrollbar-hover);
 }
 
+/* The reading measure, moved by the width setting and shared by transcript and composer. */
+.rk-chat-column {
+  padding-inline-start: max(1rem, calc((100% - var(--rk-chat-measure, 40rem)) / 2));
+  padding-inline-end: max(1rem, calc((100% - var(--rk-chat-measure, 40rem)) / 2));
+}
+
+/*
+ * The turn list opens by widening out of its own strip rather than fading in over it. Closing
+ * keeps the panel visible until the width has shrunk, so the animation is visible both ways.
+ */
+.rk-turn-rail-panel {
+  width: 25px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    width 200ms ease-out,
+    opacity 140ms ease-out,
+    visibility 0s linear 200ms;
+}
+.rk-turn-rail:hover .rk-turn-rail-panel,
+.rk-turn-rail:focus-within .rk-turn-rail-panel {
+  width: 20rem;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    width 200ms ease-out,
+    opacity 140ms ease-out,
+    visibility 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rk-turn-rail-panel,
+  .rk-turn-rail:hover .rk-turn-rail-panel,
+  .rk-turn-rail:focus-within .rk-turn-rail-panel {
+    transition: none;
+  }
+}
+
 .app-drag {
   -webkit-app-region: drag;
   user-select: none;
@@ -198,6 +284,28 @@ body,
   }
   50% {
     opacity: 0.3;
+  }
+}
+
+/* Dictation replaces the microphone glyph with one bar per strand of the same
+   animation, staggered so the group reads as speech rather than a metronome. */
+.rk-dictation-bar {
+  animation: rk-dictation-bar 900ms ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes rk-dictation-bar {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rk-dictation-bar {
+    animation: none;
+    transform: scaleY(0.6);
   }
 }
 

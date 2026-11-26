@@ -125,10 +125,48 @@ import {
 } from "../lib/composer-enter-to-send-pref";
 import { getRemoteImagesEnabled } from "../lib/remote-images-preference";
 import { TOOL_ACTIVITY_STORAGE_KEY } from "../lib/tool-activity-preference";
+import { setTurnTitleCount, setTurnTitlesEnabled } from "../lib/turn-rail-preference";
 import { GeneralSettingsPanels, UsageSettingsPanel } from "./AccountSettingsOverlay";
 
 afterEach(() => {
   localStorage.clear();
+});
+
+it("persists the chat title switch and all counts from five to twenty-five", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  setTurnTitlesEnabled(true);
+  setTurnTitleCount(25);
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => { root.render(<GeneralSettingsPanels name="Example" section="chat" />); });
+    const select = container.querySelector<HTMLSelectElement>('[data-testid="turn-title-count"]')!;
+    expect(select.value).toBe("25");
+    expect(Array.from(select.options, (option) => Number(option.value))).toEqual(
+      Array.from({ length: 21 }, (_, index) => index + 5),
+    );
+    await act(async () => {
+      select.value = "5";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(localStorage.getItem("rakazo.turnTitleCount")).toBe("5");
+    const toggle = container.querySelector<HTMLButtonElement>('[data-testid="turn-titles-toggle"]')!;
+    await act(async () => { toggle.click(); });
+    expect(localStorage.getItem("rakazo.showTurnTitles")).toBe("off");
+    expect(container.querySelector('[data-testid="turn-title-count"]')).toBeNull();
+    await act(async () => { toggle.click(); });
+    expect(container.querySelector<HTMLSelectElement>('[data-testid="turn-title-count"]')!.value).toBe("5");
+    // An external preference hydration also updates the open settings panel.
+    await act(async () => { setTurnTitleCount(12); });
+    expect(container.querySelector<HTMLSelectElement>('[data-testid="turn-title-count"]')!.value).toBe("12");
+  } finally {
+    await act(async () => root.unmount());
+    setTurnTitleCount(25);
+    setTurnTitlesEnabled(true);
+    container.remove();
+    vi.unstubAllGlobals();
+  }
 });
 
 it("flips the stored tool activity preference from the settings toggle", async () => {

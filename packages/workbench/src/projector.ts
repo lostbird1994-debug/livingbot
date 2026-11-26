@@ -126,9 +126,10 @@ export class EngineProjector {
       const message: Message = this.store.get<Message>("messages", messageId) ?? {
         id: messageId, conversationId: task.conversationId, botId: task.botId,
         role: "assistant", taskId: task.id, runId: run.id, blocks: [], final: false,
-        createdAt: now, updatedAt: now,
+        createdAt: Math.max(now, task.createdAt + 1), updatedAt: now,
         ...(run.clientNonce ? { clientNonce: run.clientNonce } : {}),
       };
+      if (task.healthCheckId) message.silent = true;
       let changed = false;
       const data = object(payload.data);
       if (frame.event === "chat") {
@@ -208,7 +209,7 @@ export class EngineProjector {
         message.final = true;
         const finalText = textContent(payload.message);
         if (isSilentReply(finalText)) message.silent = true;
-        if (finalText) {
+        if (finalText && !(payload.state === "final" && message.nativeFinalMessageId)) {
           // A streaming or restored reply ends with the same text the final frame carries,
           // so that block is updated in place. A final answer that follows reasoning or a
           // tool — or differs from the last paragraph — is its own block, never a rewrite
@@ -216,7 +217,7 @@ export class EngineProjector {
           const tail = message.blocks.at(-1);
           const existingFinal = message.blocks.find((block) => block.id === "final");
           const sameReply = tail?.kind === "text" &&
-            (finalText === tail.text || finalText.startsWith(tail.text));
+            (finalText === tail.text || (!tail.native && finalText.startsWith(tail.text)));
           if (sameReply && tail.kind === "text") tail.text = finalText;
           else if (existingFinal?.kind === "text") existingFinal.text = finalText;
           else message.blocks.push({ id: "final", kind: "text", text: finalText });

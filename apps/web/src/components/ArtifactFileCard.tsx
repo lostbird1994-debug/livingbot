@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
 import { isMarkdownFile, useOpenDocument } from "../lib/document-tabs";
+import { getFileOpenMode } from "../lib/opening-prefs";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 import { BuiCard } from "./ai/primitives";
@@ -112,7 +113,9 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
           nameHighlight={props.nameHighlight}
           wrapName={props.wrapName}
           onOpen={async () => {
-            if (openDocument && isMarkdownFile(fileName, props.mimeType)) preview();
+            // The setting decides whether a click previews here or hands the file to the system.
+            if (getFileOpenMode() === "system") await openOnThisMac("open");
+            else if (openDocument && isMarkdownFile(fileName, props.mimeType)) preview();
             else if (props.preferPreview && previewable) preview();
             else await openOnThisMac("open");
           }}

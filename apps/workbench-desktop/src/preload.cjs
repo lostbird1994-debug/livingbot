@@ -40,6 +40,14 @@ const bridge = Object.freeze({
       return () => ipcRenderer.removeListener("livingbot:menu-settings", listener);
     },
   },
+  /** Where a link the page hands over goes, and whether the app starts with the computer. */
+  links: {
+    setMode: (mode) => ipcRenderer.invoke("desktop.links.setMode", mode),
+  },
+  system: {
+    loginItem: () => ipcRenderer.invoke("desktop.system.loginItem"),
+    setLoginItem: (enabled) => ipcRenderer.invoke("desktop.system.setLoginItem", enabled),
+  },
 });
 
 contextBridge.exposeInMainWorld("livingbotDesktop", bridge);

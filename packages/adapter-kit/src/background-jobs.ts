@@ -23,6 +23,7 @@ const payloadSchemas = {
   "skill.teaching-expire": z.object({ skillId: z.string().min(1) }),
   "call.expire": z.object({ threadId: z.string().min(1), callId: z.string().min(1) }),
   "history.compact": z.object({ threadId: z.string().min(1) }),
+  "turn.title": z.object({ threadId: z.string().min(1), messageId: z.string().min(1) }),
   "messaging.deliver": z.object({ runId: z.string().min(1).optional() }),
   "messaging.credential-cleanup": z.object({
     installationId: z.string().min(1),
@@ -191,8 +192,20 @@ export function historyCompactJob(threadId: string, attempt = 0): BackgroundJob 
   };
 }
 
-/** A few tries ride out an Expo outage well inside the day it keeps receipts. */
-export function pushReceiptJob(
+/**
+ * Names one turn for the chat's margin. The title is a short completion that arrives after the
+ * reply, so one attempt per turn is enough: a turn left unnamed simply shows its own opening text.
+ */
+export function turnTitleJob(threadId: string, messageId: string): BackgroundJob {
+  return {
+    name: "turn.title",
+    payload: { threadId, messageId },
+    replaceKey: `turn.title:${messageId}`,
+    maxAttempts: 2,
+  };
+}
+
+/** A few tries ride out an Expo outage well inside the day it keeps receipts. */ export function pushReceiptJob(
   payload: BackgroundJobPayloads["push.receipt"],
   availableAt: Date,
 ): BackgroundJob {

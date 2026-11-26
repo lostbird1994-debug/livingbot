@@ -2,6 +2,9 @@
 export const LOCAL_UI_KEYS = [
   "rakazo.uiAppearance", "rakazo.showToolActivity", "rakazo.responseStreaming",
   "rakazo.loadRemoteImages", "rakazo.composerEnterToSend", "rakazo.botsSidebarDensity", "rakazo.uiLocale", "rakazo.chatAvatar",
+  "rakazo.showTurnTitles", "rakazo.turnTitleCount",
+  "rakazo.appTextSize", "rakazo.chatWidth", "rakazo.linkOpenMode", "rakazo.fileOpenMode",
+  "livingbot.conclusionFirst",
 ] as const;
 type Key = typeof LOCAL_UI_KEYS[number];
 let save: ((patch: Record<string, string>) => Promise<unknown>) | undefined;

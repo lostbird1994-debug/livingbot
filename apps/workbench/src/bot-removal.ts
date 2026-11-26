@@ -1,4 +1,4 @@
-import { copyFile, lstat, mkdir, readFile, readdir, realpath, rm } from "node:fs/promises";
+import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { dirname, join, relative, resolve, isAbsolute } from "node:path";
@@ -28,7 +28,7 @@ async function files(path: string): Promise<string[]> {
   return (await Promise.all((await readdir(path)).map(name => files(join(path, name))))).flat();
 }
 const digest = async (path: string) => createHash("sha256").update(await readFile(path)).digest("hex");
-type Deletion = { id: string; botId: string; agentId: string; deleteMemories: boolean; workspace: string; state: string; nativeRetired?: boolean; completed?: boolean; memoryPath?: string };
+type Deletion = { id: string; botId: string; agentId: string; deleteMemories: boolean; workspace: string; state: string; nativeRetired?: boolean; completed?: boolean; memoryPath?: string; recoveryPaths?: { original: string; recovery: string }[] };
 
 /** Reuses 1.0 destroyBot's order and memory choice through native lifecycle/storage adapters. */
 export class BotRemoval {
@@ -56,6 +56,8 @@ export class BotRemoval {
       const config = await kernel.request<{ hash: string; config: any }>("config.get", {});
       if (config.config.agents?.defaults?.systemAgent?.agentId === bot.agentId)
         throw new Error("此 Bot 是原生内核的系统执行者，不能删除");
+      if (config.config.agents?.defaults?.authInheritance?.agentId === bot.agentId)
+        throw new Error("此 Bot 仍是授权继承来源，请先转交授权职责");
       const root = dirname(this.workspaces.root);
       const workspace = join(this.workspaces.root, bot.agentId);
       const state = join(root, "kernel-state", "agents", bot.agentId);
@@ -75,13 +77,23 @@ export class BotRemoval {
       const listMemory = async () => deleteMemories ? [] : (await Promise.all(["memory", "MEMORY.md", "DREAMS.md"].map(name => files(join(workspace, name))))).flat();
       await listMemory();
       let saved: Deletion = prior ?? { id: key, botId: id, agentId: bot.agentId, deleteMemories, workspace, state };
+      if (!saved.recoveryPaths) {
+        const trash = join(homedir(), ".Trash");
+        await safeDirectory(trash);
+        if (!(await exists(trash))) throw new Error("废纸篓不可用，未执行删除");
+        const recoveryRoot = await mkdtemp(join(trash, "LivingBot-bot-"));
+        saved = { ...saved, recoveryPaths: [
+          { original: workspace, recovery: join(recoveryRoot, "workspace") },
+          { original: state, recovery: join(recoveryRoot, "native-state") },
+        ] };
+      }
       store.put("settings", saved);
       store.updateBot(id, { archivedAt: bot.archivedAt ?? Date.now() });
       for (const task of store.list<Task>("tasks", -1).filter(task => task.botId === id && ["queued", "running", "waiting"].includes(task.status)))
         await this.service.cancel(task.id);
       if (!saved.nativeRetired) {
         // Native deletion drains runs, removes cron/approvals/bindings and purges native session rows.
-        // Keep filesystem cleanup here so the user's memory choice is applied before permanent removal.
+        // Keep filesystem cleanup here so all original files can be recovered from Trash.
         const result = await kernel.request<{ok?: boolean; purgeFailed?: boolean; failed?: unknown[]}>("agents.delete", { agentId: bot.agentId, deleteFiles: false }, { timeoutMs: 120000 });
         if (!result.ok || result.purgeFailed || result.failed?.length) throw new Error("原生 Bot 清理尚未完成，请重试");
         saved = { ...saved, nativeRetired: true }; store.put("settings", saved);
@@ -118,9 +130,21 @@ export class BotRemoval {
         }
         saved={...saved,memoryPath:target}; store.put("settings",saved);
       }
-      // Explicit user-confirmed Bot deletion is the sole permanent-cleanup exception.
-      // Original uploads outside managed storage and other Bots' resources are never traversed.
-      for (const path of [workspace,state]) { await safeDirectory(path); if(await exists(path)) await rm(path,{recursive:true,force:false}); }
+      // The journal reserves destinations before native retirement so a retry
+      // resumes partial moves instead of losing the original recovery locations.
+      for (const entry of saved.recoveryPaths!) {
+        if (![workspace, state].includes(entry.original) ||
+          dirname(dirname(entry.recovery)) !== join(homedir(), ".Trash") ||
+          !dirname(entry.recovery).startsWith(join(homedir(), ".Trash", "LivingBot-bot-")))
+          throw new Error("Bot 废纸篓恢复路径不在应用管理范围内");
+        await safeDirectory(dirname(entry.recovery));
+        await safeDirectory(entry.original);
+        const source = await exists(entry.original);
+        const target = await exists(entry.recovery);
+        if (source && target) throw new Error("废纸篓目标已存在，未覆盖");
+        if (source) await rename(entry.original, entry.recovery);
+        else if (target) await safeDirectory(entry.recovery);
+      }
       for (const file of artifacts.filter(file => file.botId === id && file.trashedAt && file.recoveryPath)) {
         const path=file.recoveryPath!;
         const trash = join(homedir(), ".Trash");
@@ -129,7 +153,7 @@ export class BotRemoval {
         await safeDirectory(dirname(path));
         if (artifacts.some(other=>other.botId!==id&&(other.path===path||other.recoveryPath===path))) continue;
         const info=await exists(path);
-        if(info) { if(!info.isFile()||info.isSymbolicLink()||await digest(path)!==file.digest) throw new Error("废纸篓文件归属校验失败"); await rm(path); }
+        if(info) { if(!info.isFile()||info.isSymbolicLink()||await digest(path)!==file.digest) throw new Error("废纸篓文件归属校验失败"); }
       }
       store.purgeBotData(id);
       store.put("settings",{...saved,completed:true});

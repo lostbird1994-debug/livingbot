@@ -650,7 +650,13 @@ export interface AgentUsage {
   contextWindow?: number | null;
 }
 
-export type UsageOperationKind = "answer" | "setup" | "retrieval" | "subagent" | "compaction";
+export type UsageOperationKind =
+  | "answer"
+  | "setup"
+  | "retrieval"
+  | "subagent"
+  | "compaction"
+  | "title";
 
 export interface ModelCallObserver {
   beforeCall(call: {
@@ -810,6 +816,8 @@ export interface BackgroundJobPayloads {
   "call.expire": { threadId: string; callId: string };
   /** `attempt` counts the summarizer failures already retried for this backlog. */
   "history.compact": { threadId: string; attempt?: number };
+  /** Name the turn that `messageId` opened, once its reply exists. */
+  "turn.title": { threadId: string; messageId: string };
   "messaging.deliver": { runId?: string };
   "messaging.credential-cleanup": { installationId: string; ref: string };
   /** Reconcile durable remote-agent intent; scope is loaded from the database. */

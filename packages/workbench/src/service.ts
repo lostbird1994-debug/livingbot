@@ -515,8 +515,26 @@ export class WorkbenchService {
       this.diagnostic("cancellation", error, taskId);
       throw error;
     }
-    // The abort receipt is not an execution terminal.
+    // The abort receipt is not an execution terminal, so a stop keeps the task
+    // "stopping" until the run reports its own end. When that run is already gone
+    // nothing will ever report it, and the session would claim to be working forever.
+    this.concludeStoppedTask(taskId);
     return this.task(taskId);
+  }
+
+  /** A stop with no execution left is the stop's own terminal: there is no receipt to wait for. */
+  private concludeStoppedTask(taskId: string): void {
+    const task = this.store.get<Task>("tasks", taskId);
+    if (!task || ["completed", "failed", "cancelled"].includes(task.status)) return;
+    // Interrupted runs are leftovers of a previous kernel, never live execution.
+    if (this.store.find<Run>("runs", "taskId", taskId)
+      .some((run) => ["queued", "running", "waiting", "stopping"].includes(run.state))) return;
+    // A submission the kernel has not accepted yet can still become a run that has to
+    // be aborted, so the stop is not settled while one is pending.
+    if (this.store.find<SubmissionRecord>("submissions", "taskId", taskId)
+      .some((submission) => submission.state === "pending")) return;
+    if ((task.processes ?? []).some((process) => ["running", "stopping", "unknown"].includes(process.status))) return;
+    this.store.updateTask(taskId, "cancelled");
   }
 
   async reconcile(): Promise<void> {
@@ -654,6 +672,10 @@ export class WorkbenchService {
       const existing = this.store.get<Message>("messages", id);
       let blocks = existing?.blocks ?? [];
       if (record.role === "assistant") {
+        // The run's delivery frame is a summary, not another model message.
+        // Once its exact durable final arrives, native message identities own
+        // the prose, including legitimately repeated text in separate messages.
+        if (record.stopReason === "stop") blocks = blocks.filter((block) => block.id !== "final");
         blocks = mergeNativeMessage(blocks, nativeMessageBlocks(record, sourceId));
         for (const widget of nativeWidgets(record, sessionKey)) if (!blocks.some((block) => block.id === widget.id)) blocks.push(widget);
       }
@@ -662,6 +684,7 @@ export class WorkbenchService {
       const now = Date.now();
       this.store.put<Message>("messages", { ...existing, id, conversationId: task.conversationId,
         botId: task.botId, taskId: task.id, runId: knownRun.id, role: "assistant", blocks,
+        ...(record.role === "assistant" && record.stopReason === "stop" ? { nativeFinalMessageId: sourceId } : {}),
         final: existing?.final ?? ["completed", "failed", "cancelled"].includes(knownRun.state),
         createdAt: existing?.createdAt ?? (typeof record.timestamp === "number" ? record.timestamp : now), updatedAt: now });
       if (task.reportConversationId !== task.conversationId && existing?.final) {

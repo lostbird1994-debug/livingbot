@@ -76,7 +76,10 @@ export function LoadedContextPanel({
         <div className="flex items-center justify-between gap-2">
           <div>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              下次对话加载 · {total.toLocaleString()} / {native.budgets.total.toLocaleString()} 字符
+              下轮工作区文档预览 · {total.toLocaleString()} / {native.budgets.total.toLocaleString()} 字符
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              仅统计工作区文档；不含系统提示、工具目录、对话历史或本轮消息。
             </p>
           </div>
           <Button variant="ghost" size="icon-sm" disabled={query.isFetching}
@@ -100,15 +103,24 @@ export function LoadedContextPanel({
                     <NativeContextDocument botId={botId} document={doc} onSaved={() => query.refetch()} />
                   </Content>
                 ))}
-                {scope === "bot" ? (
-                  <Content title="待办">
-                    <pre className={textClass}>{data.scratchpad || "暂无待办"}</pre>
-                  </Content>
-                ) : null}
               </div>
             </section>
           );
         })}
+        <section className="space-y-2">
+          <SectionHeading variant="label">当前待办</SectionHeading>
+          <Content title="产品待办" detail="私聊中注入">
+            <pre className={textClass}>{data.scratchpad || "暂无待办"}</pre>
+          </Content>
+        </section>
+        <section className="space-y-2">
+          <SectionHeading variant="label">按需能力</SectionHeading>
+          <Content title="流程图与可视化规范" detail="调用时读取">
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+              Bot 会按问题判断何时使用可视化；创建复杂图表或交互内容前，再读取完整设计规范。
+            </p>
+          </Content>
+        </section>
         {publicProfile ? (
           <section className="space-y-2" data-testid="bot-collaboration-profile">
             <SectionHeading variant="label">协作简介</SectionHeading>

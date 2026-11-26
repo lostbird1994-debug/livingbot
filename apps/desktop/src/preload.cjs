@@ -71,6 +71,13 @@ contextBridge.exposeInMainWorld("rakazoDesktop", {
         },
       }
     : {}),
+  system: {
+    loginItem: () => ipcRenderer.invoke("desktop.system.loginItem"),
+    setLoginItem: (enabled) => ipcRenderer.invoke("desktop.system.setLoginItem", enabled),
+  },
+  links: {
+    setMode: (mode) => ipcRenderer.invoke("desktop.links.setMode", mode),
+  },
   window: {
     close: () => ipcRenderer.invoke("desktop.window.close"),
     minimize: () => ipcRenderer.invoke("desktop.window.minimize"),

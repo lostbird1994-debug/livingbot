@@ -22,3 +22,20 @@ it("a late bootstrap cannot overwrite a newer choice and failures are reported",
   await expect(p.flushLocalUiPreferences()).rejects.toThrow("offline");
   await Promise.resolve(); expect(failed).toHaveBeenCalled();
 });
+it("restores durable turn-title settings after the browser cache is empty", async () => {
+  const p = await import("./local-ui-preferences");
+  const rail = await import("./turn-rail-preference");
+  const saved = { "rakazo.showTurnTitles": "off", "rakazo.turnTitleCount": "9" };
+  const writer = vi.fn(async (patch) => Object.assign(saved, patch));
+  p.hydrateLocalUiPreferences(saved, writer, (key, value) => {
+    if (key === "rakazo.showTurnTitles") rail.setTurnTitlesEnabled(value === "on");
+    if (key === "rakazo.turnTitleCount") rail.setTurnTitleCount(Number(value));
+  }, vi.fn());
+  expect(rail.getTurnTitlesEnabled()).toBe(false);
+  expect(rail.getTurnTitleCount()).toBe(9);
+  expect(writer).not.toHaveBeenCalled();
+  rail.setTurnTitleCount(5);
+  rail.setTurnTitlesEnabled(true);
+  await p.flushLocalUiPreferences();
+  expect(saved).toEqual({ "rakazo.showTurnTitles": "on", "rakazo.turnTitleCount": "5" });
+});

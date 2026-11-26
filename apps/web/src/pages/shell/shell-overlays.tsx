@@ -122,7 +122,6 @@ export function SettingsOverlays({
     <>
       {overlay?.kind === "settings" && showSettings ? (
         <SettingsOverlay
-          embedded
           onBusyChange={onBusyChange}
           space={settingsSpace}
           spaces={spaces}

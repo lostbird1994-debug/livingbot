@@ -27,12 +27,22 @@ import { skipToken, useInfiniteQuery, useQuery, useQueryClient } from "@tanstack
 import {
   ChevronLeft,
   Download,
+  File,
+  FileArchive,
+  FileAudio,
+  FileCode,
+  FileImage,
+  FileSpreadsheet,
+  FileText,
+  FileType,
+  FileVideo,
   Filter,
   LayoutGrid,
   List,
   Lock,
   Maximize2,
   Minimize2,
+  Presentation,
   Search,
   Trash2,
 } from "lucide-react";
@@ -42,6 +52,8 @@ import { IconTooltip } from "../components/IconTooltip";
 import { PdfViewer } from "../components/PdfViewer";
 import { SandboxedHtmlViewer } from "../components/SandboxedHtmlViewer";
 import { decodeArtifactBase64, downloadArtifactBytes } from "../lib/artifact-open";
+import type { ArtifactKind } from "../lib/artifact-kind";
+import { artifactKind, artifactLabel } from "../lib/artifact-kind";
 import { takeInitialBootstrap } from "../lib/bootstrap";
 import { desktopBridge } from "../lib/desktop";
 import { localConnected, localRpc } from "../lib/local-workbench";
@@ -657,8 +669,11 @@ function ArtifactCard({
         className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-foreground hover:bg-accent/40"
       >
         <div className="flex items-start justify-between">
-          <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-accent text-accent-foreground">
-            <ArtifactMimeIcon mimeType={artifact.mimeType} />
+          <span
+            data-artifact-kind={artifactKind(artifact.mimeType, artifact.name)}
+            className="artifact-icon grid h-9 w-9 place-items-center rounded-[10px]"
+          >
+            <ArtifactMimeIcon mimeType={artifact.mimeType} name={artifact.name} />
           </span>
           <div className="flex items-center gap-1.5">
             {artifact.versionCount > 1 ? (
@@ -667,7 +682,7 @@ function ArtifactCard({
               </span>
             ) : null}
             <span className="rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-              {mimeLabel(artifact.mimeType)}
+              {artifactLabel(artifact.mimeType, artifact.name)}
             </span>
           </div>
         </div>
@@ -732,8 +747,11 @@ function ArtifactRow({
     <div className={`group relative ${active ? "bg-accent/60" : "hover:bg-accent/40"}`}>
       <Link to={`/app/artifacts/${artifact.id}`} className="flex flex-col gap-1 px-4 py-3 pe-10">
         <div className="flex items-center gap-2">
-          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[7px] bg-accent text-accent-foreground">
-            <ArtifactMimeIcon mimeType={artifact.mimeType} small />
+          <span
+            data-artifact-kind={artifactKind(artifact.mimeType, artifact.name)}
+            className="artifact-icon grid h-6 w-6 shrink-0 place-items-center rounded-[7px]"
+          >
+            <ArtifactMimeIcon mimeType={artifact.mimeType} name={artifact.name} small />
           </span>
           <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium">{artifact.name}</span>
           {artifact.versionCount > 1 ? (
@@ -782,40 +800,32 @@ function ArtifactRow({
   );
 }
 
-function ArtifactMimeIcon({ mimeType, small }: { mimeType: string; small?: boolean }) {
-  const size = small ? 12 : 16;
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {mimeType === "text/html" ? (
-        <>
-          <polyline points="8 6 2 12 8 18" />
-          <polyline points="16 6 22 12 16 18" />
-        </>
-      ) : (
-        <>
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-        </>
-      )}
-    </svg>
-  );
-}
+/** One glyph per kind of file, so the shelf is readable without opening anything. */
+const ARTIFACT_ICONS: Record<ArtifactKind, typeof File> = {
+  image: FileImage,
+  pdf: FileText,
+  word: FileType,
+  sheet: FileSpreadsheet,
+  slide: Presentation,
+  code: FileCode,
+  text: FileText,
+  video: FileVideo,
+  audio: FileAudio,
+  archive: FileArchive,
+  file: File,
+};
 
-function mimeLabel(mimeType: string): string {
-  if (mimeType === "text/html") return "HTML";
-  if (mimeType === "text/markdown") return "MD";
-  if (mimeType === "application/pdf") return "PDF";
-  const slash = mimeType.indexOf("/");
-  return (slash === -1 ? mimeType : mimeType.slice(slash + 1)).toUpperCase().slice(0, 6);
+function ArtifactMimeIcon({
+  mimeType,
+  name,
+  small,
+}: {
+  mimeType: string;
+  name: string;
+  small?: boolean;
+}) {
+  const Icon = ARTIFACT_ICONS[artifactKind(mimeType, name)];
+  return <Icon size={small ? 14 : 18} strokeWidth={1.9} aria-hidden="true" />;
 }
 
 function PreviewPane({

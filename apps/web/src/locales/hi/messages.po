@@ -182,8 +182,8 @@ msgid "{amount} / {period}"
 msgstr ""
 
 #: src/pages/shell/dialogs.tsx
-msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
-msgstr "{botCount, plural, one {{name} और उसका # बॉट हटाएँ?} other {{name} और उसके # बॉट हटाएँ?}}"
+msgid "{botCount, plural, one {Delete {name} and archive its # bot?} other {Delete {name} and archive its # bots?}}"
+msgstr ""
 
 #: src/pages/shell/computer-view.tsx
 msgid "{botName}’s computer"
@@ -236,10 +236,6 @@ msgstr "{fromName} से {toName}"
 #: src/components/markdown-copy.tsx
 msgid "{header}, column {index}"
 msgstr "{header}, स्तंभ {index}"
-
-#: src/components/ToolActivityDisclosure.tsx
-#~ msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
-#~ msgstr ""
 
 #: src/components/ToolActivityDisclosure.tsx
 msgid "{hidden, plural, one {Show # earlier step} other {Show # earlier steps}}"
@@ -679,7 +675,6 @@ msgstr ""
 #: src/pages/Onboarding.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
-#: src/pages/shell/bot-panel.tsx
 msgid "Advanced"
 msgstr "उन्नत"
 
@@ -871,10 +866,6 @@ msgstr ""
 #. placeholder {0}: appearanceLabel[value]
 #: src/pages/Shell.tsx
 msgid "Appearance: {0}"
-msgstr ""
-
-#: src/pages/SettingsOverlay.tsx
-msgid "Applies to every workspace"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -1232,7 +1223,7 @@ msgstr "अंतर्निहित"
 msgid "Cache hit"
 msgstr ""
 
-#: src/pages/shell/chat-header.tsx
+#: src/pages/shell/composer.tsx
 msgid "Call"
 msgstr "कॉल करें"
 
@@ -1299,10 +1290,6 @@ msgstr "तस्वीरें नहीं पढ़ सकता"
 #: src/pages/SpaceSettingSection.tsx
 msgid "Cancel"
 msgstr "रद्द करें"
-
-#: src/components/composer/DictationInput.tsx
-msgid "Cancel dictation"
-msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new bot"
@@ -1668,7 +1655,6 @@ msgid "Completed {duration}"
 msgstr "पूर्ण {duration}"
 
 #: src/pages/settings-nav.ts
-#: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
 msgstr "कंप्यूटर"
@@ -3766,6 +3752,10 @@ msgid "Its bots and groups are kept and leave the section."
 msgstr "इसके बॉट और समूह बने रहेंगे और अनुभाग से बाहर हो जाएँगे।"
 
 #: src/pages/shell/dialogs.tsx
+msgid "Its Bots will be archived in the local space and their routines paused. Chats and files will be kept."
+msgstr ""
+
+#: src/pages/shell/dialogs.tsx
 msgid "Its conversation, files, and routines will be permanently deleted. Bots it created stay in your list."
 msgstr "इसकी बातचीत, फ़ाइलें और रूटीन स्थायी रूप से डिलीट कर दिए जाएंगे। इसके बनाए बॉट आपकी सूची में बने रहेंगे।"
 
@@ -3832,10 +3822,6 @@ msgid "Latest model calls"
 msgstr ""
 
 #: src/pages/shell/composer-usage.tsx
-msgid "Latest model time"
-msgstr ""
-
-#: src/pages/shell/composer-usage.tsx
 msgid "Latest output (including reasoning)"
 msgstr ""
 
@@ -3890,7 +3876,7 @@ msgid "Listening…"
 msgstr "सुन रहा है…"
 
 #: src/components/composer/DictationInput.tsx
-msgid "Listening… Click the microphone to finish."
+msgid "Listening… Click the bars to finish."
 msgstr ""
 
 #: src/components/ToolActivityDisclosure.tsx
@@ -3963,10 +3949,6 @@ msgstr "प्रीव्यू लोड हो रहा है…"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Loading tasks…"
-msgstr ""
-
-#: src/pages/shell/composer-usage.tsx
-msgid "Loading usage…"
 msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -4353,6 +4335,7 @@ msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/chat-header.tsx
 #: src/pages/shell/message-hover-actions.tsx
 msgid "More"
 msgstr ""
@@ -4514,10 +4497,6 @@ msgstr ""
 #: src/components/markdown-copy.tsx
 msgid "Next page"
 msgstr "अगला पृष्ठ"
-
-#: src/pages/SettingsOverlay.tsx
-msgid "Next settings sections"
-msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "No apps match your search."
@@ -4826,10 +4805,6 @@ msgstr "{name} खोलें"
 #: src/pages/Onboarding.tsx
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr ""
-
-#: src/pages/shell/chat-header.tsx
-msgid "Open call"
-msgstr "कॉल खोलें"
 
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
@@ -5167,10 +5142,6 @@ msgstr ""
 msgid "Previous page"
 msgstr "पिछला पृष्ठ"
 
-#: src/pages/SettingsOverlay.tsx
-msgid "Previous settings sections"
-msgstr ""
-
 #: src/pages/Board.tsx
 msgid "Priority"
 msgstr ""
@@ -5182,10 +5153,6 @@ msgstr "निजी"
 #: src/pages/shell/bot-picker.tsx
 msgid "Private workspace with its own bots and groups."
 msgstr ""
-
-#: src/components/ToolActivityDisclosure.tsx
-#~ msgid "Processed {duration}"
-#~ msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
@@ -5375,6 +5342,7 @@ msgstr "रीडायरेक्ट URI"
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
+#: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/shell/bot-files-panel.tsx
 msgid "Refresh"
 msgstr "रीफ़्रेश करें"
@@ -6163,7 +6131,7 @@ msgid "Show selected"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Show tool activity"
+msgid "Show thinking and tool activity"
 msgstr ""
 
 #: src/components/call/VoiceChatCard.tsx
@@ -6927,6 +6895,10 @@ msgstr "परीक्षण फिर से आज़माएँ।"
 msgid "Tuesday"
 msgstr "मंगलवार"
 
+#: src/pages/shell/turn-rail.tsx
+msgid "Turns in this chat"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 msgid "Type"
 msgstr ""
@@ -7050,10 +7022,6 @@ msgstr ""
 #: src/pages/settings-nav.ts
 msgid "Usage"
 msgstr "उपयोग"
-
-#: src/pages/shell/composer-usage.tsx
-msgid "Usage unavailable"
-msgstr ""
 
 #. Switches the saved timezone to this device's, e.g. 'Use Pacific/Auckland'
 #. placeholder {0}: deviceTimezone.replaceAll("_", " ")
@@ -7645,6 +7613,10 @@ msgstr "Skipping is allowed too; when she rolls a skip she still writes a diary 
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "未配置"
 msgstr "Not set"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "模型请求耗时"
+msgstr ""
 
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "正在读她的设置…"

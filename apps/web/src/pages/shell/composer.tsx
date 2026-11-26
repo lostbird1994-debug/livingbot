@@ -249,6 +249,13 @@ export const Composer = memo(function Composer({
   const completedSelection = useRef<number | null>(null);
   useEffect(() => {
     const handle = (event: KeyboardEvent) => {
+      // A hidden textarea cannot receive the key, so dictate's only exit while
+      // recording is here; the bars finish with a click, never a stray close.
+      if (event.key === "Escape" && talk.recording) {
+        event.preventDefault();
+        talk.cancel();
+        return;
+      }
       if (
         (!event.metaKey && !event.ctrlKey) ||
         !event.shiftKey ||
@@ -263,7 +270,7 @@ export const Composer = memo(function Composer({
     };
     window.addEventListener("keydown", handle);
     return () => window.removeEventListener("keydown", handle);
-  }, [talk.toggle, talk.recording, talk.transcribing, disabled, onCall, composerBarRef]);
+  }, [talk.toggle, talk.recording, talk.cancel, talk.transcribing, disabled, onCall, composerBarRef]);
 
   useLayoutEffect(() => {
     if (pendingCaret.current === null) return;
@@ -991,41 +998,34 @@ export const Composer = memo(function Composer({
           ) : null}
           {talk.recording?.locked ? (
             <DictationControls talk={talk} />
-          ) : running ? (
-            <>
-              <DictationControls talk={talk} disabled={disabled || onCall} />
-              <Button
-                size="icon"
-                aria-label={t`Send`}
-                disabled={sending || !canSend || disabled}
-                onClick={() => void send()}
-                className="size-8 shrink-0 rounded-full transition-transform active:scale-95 disabled:bg-primary-disabled disabled:text-foreground/30 disabled:opacity-100"
-              >
-                <ArrowUp size={16} strokeWidth={2.2} />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label={t`Stop`}
-                disabled={sending}
-                onClick={() => void onStop()}
-                className="size-8 rounded-full border border-border bg-muted text-foreground/80 shadow-sm transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <Square size={11} strokeWidth={0} fill="currentColor" />
-              </Button>
-            </>
           ) : (
             <>
               <DictationControls talk={talk} disabled={disabled || onCall} />
-              <Button
-                size="icon"
-                aria-label={t`Send`}
-                disabled={sending || !canSend || disabled}
-                onClick={() => void send()}
-                className="size-8 shrink-0 rounded-full transition-transform active:scale-95 disabled:bg-primary-disabled disabled:text-foreground/30 disabled:opacity-100"
-              >
-                <ArrowUp size={16} strokeWidth={2.2} />
-              </Button>
+              {/* A run in progress leaves only Stop until the draft can be sent, so an idle
+                  Send never sits greyed next to it. */}
+              {running ? (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label={t`Stop`}
+                  disabled={sending}
+                  onClick={() => void onStop()}
+                  className="size-8 rounded-full border border-border bg-muted text-foreground/80 shadow-sm transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <Square size={11} strokeWidth={0} fill="currentColor" />
+                </Button>
+              ) : null}
+              {!running || canSend ? (
+                <Button
+                  size="icon"
+                  aria-label={t`Send`}
+                  disabled={sending || !canSend || disabled}
+                  onClick={() => void send()}
+                  className="size-8 shrink-0 rounded-full transition-transform active:scale-95 disabled:bg-primary-disabled disabled:text-foreground/30 disabled:opacity-100"
+                >
+                  <ArrowUp size={16} strokeWidth={2.2} />
+                </Button>
+              ) : null}
             </>
           )}
         </div>

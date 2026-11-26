@@ -42,6 +42,33 @@ function fixture() {
   return { store, kernel, service, bot, conversation, input };
 }
 
+test("exact durable model finals replace the delivery summary in either arrival order without deduplicating prose", async () => {
+  for (const historyFirst of [true, false]) {
+    const f = fixture();
+    try {
+      await f.service.submit(f.input);
+      const runId = f.input.submissionId;
+      const sessionKey = f.store.engineSessionKey(f.conversation.id, f.bot.id);
+      const native = (id: string, seq: number, stopReason: string) => ({
+        event: "session.message", payload: { sessionKey, runId, messageId: id, message: {
+          role: "assistant", __openclaw: { id, runId, seq }, stopReason,
+          content: [{ type: "text", text: "Same" }],
+        } },
+      });
+      f.kernel.observe({ type: "frame", generation: 1, frame: native("native-1", 1, "toolUse") });
+      const final = { type: "frame" as const, generation: 1, frame: {
+        event: "chat", payload: { runId, sessionKey, seq: 9, state: "final", message: { content: "Same\n\nSame" } },
+      } };
+      if (!historyFirst) f.kernel.observe(final);
+      f.kernel.observe({ type: "frame", generation: 1, frame: native("native-2", 2, "stop") });
+      if (historyFirst) f.kernel.observe(final);
+      const reply = f.store.messages(f.conversation.id).find((message) => message.role === "assistant")!;
+      assert.deepEqual(reply.blocks.flatMap((block) => block.kind === "text" ? [block.text] : []), ["Same", "Same"]);
+      assert.equal(reply.nativeFinalMessageId, "native-2");
+    } finally { f.service.detach(); f.store.close(); }
+  }
+});
+
 test("kernel starting persists its generation before owned run events arrive", () => {
   const { store, kernel, service } = fixture();
   kernel.observe({ type: "phase", phase: "starting", generation: 9 });
@@ -489,6 +516,39 @@ test("empty history never claims completion; cancellation waits for the terminal
   assert.equal(service.task(task.id).status, "queued");
   assert.equal((await service.cancel(task.id)).status, "stopping");
   assert.equal(kernel.aborted[0].runId, input.submissionId);
+  kernel.observe({ type: "frame", generation: 1, frame: {
+    event: "chat", payload: { runId: input.submissionId, sessionKey: kernel.sent[0].sessionKey, state: "aborted" },
+  } });
+  assert.equal(service.task(task.id).status, "cancelled");
+  service.detach(); store.close();
+});
+
+test("a stop whose run already ended becomes cancelled instead of stopping forever", async () => {
+  const { store, kernel, service, bot, conversation } = fixture();
+  const now = Date.now();
+  const task: Task = {
+    id: "task-orphaned-stop", botId: bot.id, conversationId: conversation.id, reportConversationId: conversation.id,
+    title: "Scheduled check", status: "stopping", stopRequestedAt: now - 60_000,
+    createdAt: now - 120_000, updatedAt: now - 60_000,
+  };
+  store.put("tasks", task);
+  store.put("runs", {
+    id: "run-ended", taskId: task.id, sessionKey: store.engineSessionKey(conversation.id, bot.id),
+    generation: 1, state: "completed", lastSequence: 3, createdAt: now - 120_000, endedAt: now - 70_000,
+  });
+  await service.reconcile();
+  assert.equal(service.task(task.id).status, "cancelled");
+  assert.deepEqual(kernel.aborted, []);
+  service.detach(); store.close();
+});
+
+test("recovery keeps waiting when the stopped task still owns a live run", async () => {
+  const { store, kernel, service, input } = fixture();
+  const task = await service.submit(input);
+  await service.cancel(task.id);
+  await service.reconcile();
+  assert.equal(service.task(task.id).status, "stopping");
+  assert.ok(kernel.aborted.some((entry) => entry.runId === input.submissionId));
   kernel.observe({ type: "frame", generation: 1, frame: {
     event: "chat", payload: { runId: input.submissionId, sessionKey: kernel.sent[0].sessionKey, state: "aborted" },
   } });

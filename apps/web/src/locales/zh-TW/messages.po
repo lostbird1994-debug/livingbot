@@ -183,8 +183,8 @@ msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
 
 #: src/pages/shell/dialogs.tsx
-msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
-msgstr "{botCount, plural, one {要刪除 {name} 及其 # 個機器人嗎？} other {要刪除 {name} 及其 # 個機器人嗎？}}"
+msgid "{botCount, plural, one {Delete {name} and archive its # bot?} other {Delete {name} and archive its # bots?}}"
+msgstr ""
 
 #: src/pages/shell/computer-view.tsx
 msgid "{botName}’s computer"
@@ -237,10 +237,6 @@ msgstr "{fromName}至{toName}"
 #: src/components/markdown-copy.tsx
 msgid "{header}, column {index}"
 msgstr "{header}，第 {index} 欄"
-
-#: src/components/ToolActivityDisclosure.tsx
-#~ msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
-#~ msgstr "{hidden, plural, one {還有 # 個先前步驟} other {還有 # 個先前步驟}}"
 
 #: src/components/ToolActivityDisclosure.tsx
 msgid "{hidden, plural, one {Show # earlier step} other {Show # earlier steps}}"
@@ -680,7 +676,6 @@ msgstr ""
 #: src/pages/Onboarding.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
-#: src/pages/shell/bot-panel.tsx
 msgid "Advanced"
 msgstr "進階"
 
@@ -873,10 +868,6 @@ msgstr ""
 #: src/pages/Shell.tsx
 msgid "Appearance: {0}"
 msgstr ""
-
-#: src/pages/SettingsOverlay.tsx
-msgid "Applies to every workspace"
-msgstr "對所有工作區生效"
 
 #: src/components/AskCard.tsx
 msgid "Apply"
@@ -1233,7 +1224,7 @@ msgstr "內建"
 msgid "Cache hit"
 msgstr ""
 
-#: src/pages/shell/chat-header.tsx
+#: src/pages/shell/composer.tsx
 msgid "Call"
 msgstr "通話"
 
@@ -1300,10 +1291,6 @@ msgstr "無法讀取影像"
 #: src/pages/SpaceSettingSection.tsx
 msgid "Cancel"
 msgstr "取消"
-
-#: src/components/composer/DictationInput.tsx
-msgid "Cancel dictation"
-msgstr "Cancel dictation"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new bot"
@@ -1669,7 +1656,6 @@ msgid "Completed {duration}"
 msgstr "已完成 {duration}"
 
 #: src/pages/settings-nav.ts
-#: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
 msgstr "電腦"
@@ -3767,6 +3753,10 @@ msgid "Its bots and groups are kept and leave the section."
 msgstr "其中的機器人和群組會保留，並移出該分組。"
 
 #: src/pages/shell/dialogs.tsx
+msgid "Its Bots will be archived in the local space and their routines paused. Chats and files will be kept."
+msgstr ""
+
+#: src/pages/shell/dialogs.tsx
 msgid "Its conversation, files, and routines will be permanently deleted. Bots it created stay in your list."
 msgstr "它的對話、檔案和例行任務將被永久刪除。它建立的機器人仍留在清單中。"
 
@@ -3833,10 +3823,6 @@ msgid "Latest model calls"
 msgstr ""
 
 #: src/pages/shell/composer-usage.tsx
-msgid "Latest model time"
-msgstr ""
-
-#: src/pages/shell/composer-usage.tsx
 msgid "Latest output (including reasoning)"
 msgstr ""
 
@@ -3891,8 +3877,8 @@ msgid "Listening…"
 msgstr "聆聽中…"
 
 #: src/components/composer/DictationInput.tsx
-msgid "Listening… Click the microphone to finish."
-msgstr "Listening… Click the microphone to finish."
+msgid "Listening… Click the bars to finish."
+msgstr "正在聆聽…點擊聲波結束。"
 
 #: src/components/ToolActivityDisclosure.tsx
 msgid "Listing files"
@@ -3964,10 +3950,6 @@ msgstr "正在載入預覽…"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Loading tasks…"
-msgstr ""
-
-#: src/pages/shell/composer-usage.tsx
-msgid "Loading usage…"
 msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -4354,6 +4336,7 @@ msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "每月額度在續訂時到期。單次加值額度不會過期。"
 
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/chat-header.tsx
 #: src/pages/shell/message-hover-actions.tsx
 msgid "More"
 msgstr "更多"
@@ -4515,10 +4498,6 @@ msgstr ""
 #: src/components/markdown-copy.tsx
 msgid "Next page"
 msgstr "下一頁"
-
-#: src/pages/SettingsOverlay.tsx
-msgid "Next settings sections"
-msgstr "下一組設定區段"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "No apps match your search."
@@ -4827,10 +4806,6 @@ msgstr "開啟 {name}"
 #: src/pages/Onboarding.tsx
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "開啟 <0>{0}</0> 並輸入以下代碼："
-
-#: src/pages/shell/chat-header.tsx
-msgid "Open call"
-msgstr "開啟通話"
 
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
@@ -5168,10 +5143,6 @@ msgstr "此檔案類型無法預覽，請下載後檢視。"
 msgid "Previous page"
 msgstr "上一頁"
 
-#: src/pages/SettingsOverlay.tsx
-msgid "Previous settings sections"
-msgstr "上一組設定區段"
-
 #: src/pages/Board.tsx
 msgid "Priority"
 msgstr "優先順序"
@@ -5183,10 +5154,6 @@ msgstr "私人"
 #: src/pages/shell/bot-picker.tsx
 msgid "Private workspace with its own bots and groups."
 msgstr "擁有專屬機器人與群組的私人工作空間。"
-
-#: src/components/ToolActivityDisclosure.tsx
-#~ msgid "Processed {duration}"
-#~ msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
@@ -5376,6 +5343,7 @@ msgstr "重新導向 URI"
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
+#: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/shell/bot-files-panel.tsx
 msgid "Refresh"
 msgstr "重新整理"
@@ -6164,8 +6132,8 @@ msgid "Show selected"
 msgstr "顯示已選取項目"
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Show tool activity"
-msgstr "顯示工具活動"
+msgid "Show thinking and tool activity"
+msgstr ""
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Show transcript"
@@ -6928,6 +6896,10 @@ msgstr "請重試測試。"
 msgid "Tuesday"
 msgstr "週二"
 
+#: src/pages/shell/turn-rail.tsx
+msgid "Turns in this chat"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 msgid "Type"
 msgstr "類型"
@@ -7051,10 +7023,6 @@ msgstr "緊急"
 #: src/pages/settings-nav.ts
 msgid "Usage"
 msgstr "用量"
-
-#: src/pages/shell/composer-usage.tsx
-msgid "Usage unavailable"
-msgstr ""
 
 #. Switches the saved timezone to this device's, e.g. 'Use Pacific/Auckland'
 #. placeholder {0}: deviceTimezone.replaceAll("_", " ")
@@ -7646,6 +7614,10 @@ msgstr "摆烂也是一种活法；她掷到不看时会写日记说明理由"
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "未配置"
 msgstr "未配置"
+
+#: src/pages/shell/composer-usage.tsx
+msgid "模型请求耗时"
+msgstr ""
 
 #: src/pages/shell/bili-whale-panel.tsx
 msgid "正在读她的设置…"

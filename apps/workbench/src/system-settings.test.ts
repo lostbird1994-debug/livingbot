@@ -16,6 +16,71 @@ import {
 } from "../../../packages/workbench/src/system-policy.ts";
 import { SystemSettings } from "./system-settings.ts";
 
+test("system ownership transfers to the administrator once, preserving other configuration", async () => {
+  const store = new WorkbenchStore(":memory:");
+  const admin = store.createBot({ name: "Administrator", agentId: SUPER_ADMIN_AGENT_ID });
+  const living = store.createBot({ name: "Living", agentId: "living" });
+  store.updateBot(living.id, { archivedAt: 123 });
+  const config = {
+    agents: {
+      defaults: { workspace: "/synthetic/living", systemAgent: { agentId: "living" }, model: "retained" },
+      entries: {
+        living: { workspace: "/synthetic/living" },
+        [SUPER_ADMIN_AGENT_ID]: { workspace: "/synthetic/admin" },
+      },
+    },
+  };
+  const entries = structuredClone(config.agents.entries);
+  let patches = 0;
+  let rejectPatch = false;
+  let loseReply = false;
+  let hash: string | undefined = "revision";
+  const kernel = Object.assign(new EventEmitter(), {
+    phase: "ready", generation: 1,
+    async request(method: string, input: any) {
+      if (method === "config.get") return { hash, config: structuredClone(config) };
+      assert.equal(method, "config.patch");
+      assert.equal(input.baseHash, "revision");
+      const patch = JSON.parse(input.raw);
+      assert.deepEqual(Object.keys(patch), ["agents"]);
+      assert.deepEqual(Object.keys(patch.agents), ["defaults"]);
+      ++patches;
+      if (rejectPatch) throw new Error("revision conflict");
+      Object.assign(config.agents.defaults, patch.agents.defaults);
+      if (loseReply) throw new Error("lost acknowledgment");
+      return { ok: true };
+    },
+  }) as unknown as KernelControl;
+  const service = new WorkbenchService(store, kernel);
+  const settings = new SystemSettings(service);
+  try {
+    hash = undefined;
+    await assert.rejects(settings.ensureSystemAgent(), /配置版本不可用/);
+    assert.equal(patches, 0);
+    hash = "revision";
+    rejectPatch = true;
+    await assert.rejects(settings.ensureSystemAgent(), /revision conflict/);
+    assert.equal(config.agents.defaults.systemAgent.agentId, "living");
+    rejectPatch = false;
+    loseReply = true;
+    assert.equal((await settings.ensureSystemAgent()).id, admin.id);
+    assert.equal(config.agents.defaults.systemAgent.agentId, SUPER_ADMIN_AGENT_ID);
+    assert.equal(config.agents.defaults.workspace, "/synthetic/admin");
+    assert.equal(config.agents.defaults.model, "retained");
+    assert.deepEqual(config.agents.entries, entries);
+    assert.equal(store.get<any>("bots", living.id).archivedAt, 123);
+    const written = patches;
+    await settings.ensureSystemAgent();
+    assert.equal(patches, written);
+    store.updateBot(admin.id, { archivedAt: 456 });
+    await assert.rejects(settings.ensureSystemAgent(), /超级管理员已归档/);
+    assert.equal(patches, written);
+  } finally {
+    service.detach();
+    store.close();
+  }
+});
+
 class Schedules implements RoutineProvider {
   rows = new Map<string, NativeRoutine>();
   created = 0;
@@ -119,11 +184,12 @@ test("fixed audit instructions create one native schedule, update it and remove 
     assert.equal(schedules.created, 2);
     assert.equal(schedules.rows.size, 1);
     const target = store.createBot({ name: "Writer", agentId: "writer" });
-    const own = await settings.save(input, target.id);
+    await assert.rejects(settings.save(input, target.id), /确认体检/);
+    const own = await settings.save({ ...input, scopeConfirmed: true }, target.id);
     assert.equal(own.routine?.state, "ready");
     const routine = store.get<any>("routines", own.routineId!);
     assert.equal(routine.botId, target.id);
-    assert.equal(routine.name, "专属能力审计");
+    assert.equal(routine.name, "Bot 体检");
     assert.notEqual(routine.message, CAPABILITY_AUDIT_INSTRUCTIONS);
     assert.equal(settings.read(target.id).enabled, true);
     await settings.save({ ...input, enabled: false }, target.id);
@@ -140,6 +206,6 @@ test("configuration guidance carries the authoritative target and reuses only th
  const service=new WorkbenchService(store,kernel);store.createBot({name:"Administrator",agentId:SUPER_ADMIN_AGENT_ID});
  Object.defineProperty(service,"abilities",{value:{listShared:async()=>[{id:"mail",name:"Mail",kind:"service",source:"mcp",configuration:{native:{nativeKind:"service",nativeName:"mail"},sharedAccess:{enabled:true,ready:false,reason:"Authorization required"}}}]}});
  const messages:string[]=[];t.mock.method(service,"submit",async(input:any)=>{messages.push(input.message);return store.put("tasks",{id:`guide-${messages.length}`,botId:input.botId,status:"running"}) as any;});const settings=new SystemSettings(service);
- try{const first=await settings.startConfiguration("mail");const second=await settings.startConfiguration("mail");assert.equal(first.taskId,second.taskId);assert.equal(messages.length,1);assert.ok(messages[0]?.includes('"id":"mail"'));assert.ok(messages[0]?.includes('capability-setup=mail'));await assert.rejects(settings.startConfiguration("unknown"));assert.equal(messages.length,1);
+ try{const first=await settings.startConfiguration("mail");const second=await settings.startConfiguration("mail");assert.equal(first.taskId,second.taskId);assert.equal(messages.length,1);assert.ok(messages[0]?.includes('"id":"mail"'));assert.ok(messages[0]?.includes('livingbot_configure_credentials'));assert.ok(!messages[0]?.includes('[打开安全配置]'));await assert.rejects(settings.startConfiguration("unknown"));assert.equal(messages.length,1);
  }finally{service.detach();store.close();}
 });

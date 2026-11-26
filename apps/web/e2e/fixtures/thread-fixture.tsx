@@ -84,7 +84,6 @@ export function FixtureTranscript({
         answerableAskIds={answerableAskIds}
         dismissableAskIds={answerableAskIds}
         running={running}
-        workingBots={running ? [bots[0]!] : []}
         onLoadOlder={noop}
         onOpenBot={noop}
         onAnswer={resolved}

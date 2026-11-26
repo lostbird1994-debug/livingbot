@@ -615,6 +615,13 @@ export const appContract = {
       }),
     ),
     get: oc.input(threadTarget).output(ThreadSnapshotSchema),
+    /**
+     * Names turns that are already in the transcript but carry no name yet, so a chat opened
+     * after this shipped gets its margin filled in. Bounded and idempotent per message.
+     */
+    nameTurns: oc
+      .input(threadTarget.safeExtend({ messageIds: z.array(Id).min(1).max(20) }))
+      .output(z.object({ queued: z.number().int().nonnegative() })),
     messages: oc
       .input(
         threadTarget.safeExtend({

@@ -63,6 +63,7 @@ export class Routines {
     const routine = this.list().find((item) => item.nativeId === input.jobId);
     // Other kernel schedules, such as memory maintenance, are not product tasks.
     if (!routine) return undefined;
+    this.store.engineSessionKey(routine.conversationId, routine.botId);
     if (this.changing.has(routine.id)) throw new Error("Schedule configuration is being changed");
     const expected = this.definition(routine);
     if (expected.agentId !== input.agentId || expected.sessionKey !== input.sessionKey) {
@@ -77,6 +78,7 @@ export class Routines {
     this.accept(this.get(routine.id), native);
     if (!native.enabled || native.runningAt === undefined) throw new Error("Native scheduled work is not active");
     return this.store.transaction(() => {
+      this.store.engineSessionKey(routine.conversationId, routine.botId);
       const current = this.get(routine.id);
       if (this.detached || !current.enabled || current.runningAt === undefined) throw new Error("Scheduled work is no longer active");
       const id = `scheduled:${createHash("sha256").update(JSON.stringify([input.jobId, input.runId])).digest("hex")}`;
@@ -147,7 +149,8 @@ export class Routines {
     if (!agentId) throw new Error("Unknown Bot");
     return {
       declarationKey: `livingbot:${createHash("sha256").update(input.id).digest("hex")}`, agentId,
-      sessionKey: this.store.engineSessionKey(input.conversationId, input.botId),
+      // Identity checks and disabling must remain possible after archival.
+      sessionKey: this.store.engineSessionKey(input.conversationId, input.botId, { allowArchived: true }),
       name: input.name, message: input.message, schedule: input.schedule,
     };
   }
@@ -166,7 +169,10 @@ export class Routines {
     });
   }
   private async install(routine: Routine): Promise<Routine> {
-    try { return this.accept(routine, await this.provider.create(this.definition(routine))); }
+    try {
+      this.store.engineSessionKey(routine.conversationId, routine.botId);
+      return this.accept(routine, await this.provider.create(this.definition(routine)));
+    }
     catch (error) {
       if (!this.detached) this.store.put("routines", { ...routine, error: String(error), updatedAt: Date.now() });
       throw error;
@@ -177,7 +183,7 @@ export class Routines {
     if (this.changing.has(id)) throw new Error("This schedule is still being confirmed");
     const routine = this.get(id);
     if (!routine.nativeId || !routine.revision || routine.revision !== revision) throw new Error("Refresh this schedule before changing it");
-    this.store.engineSessionKey(routine.conversationId, routine.botId);
+    this.store.engineSessionKey(routine.conversationId, routine.botId, { allowArchived: !enabled });
     const work = (async () => {
       const native = await this.provider.get(routine.nativeId!);
       this.accept(this.get(id), native);

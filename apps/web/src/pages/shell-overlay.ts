@@ -2,6 +2,8 @@ const SETTINGS_SECTIONS = [
   "general",
   "chat",
   "regional",
+  "system",
+  "shortcuts",
   "advanced",
   "connections",
   "data",

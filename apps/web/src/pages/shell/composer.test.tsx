@@ -714,24 +714,37 @@ describe("Composer", () => {
     expect(container?.querySelector('[data-testid="mention-chip"]')?.textContent).toBe("@Alice");
   });
 
-  it.each([false, true])(
-    "draws an idle Send button with the primary disabled tokens (running: %s)",
-    (running) => {
-      renderComposer(vi.fn(), { running });
-      const send = container?.querySelector<HTMLButtonElement>('button[aria-label="Send"]');
-      expect(send?.disabled).toBe(true);
-      expect(send?.className.split(" ")).toEqual(
-        expect.arrayContaining([
-          "bg-primary",
-          "hover:bg-primary-hover",
-          "disabled:bg-primary-disabled",
-          "disabled:text-foreground/30",
-          "disabled:opacity-100",
-        ]),
-      );
-      expect(send?.className).not.toContain("disabled:opacity-50");
-    },
-  );
+  it("draws an idle Send button with the primary disabled tokens", () => {
+    renderComposer(vi.fn(), { running: false });
+    const send = container?.querySelector<HTMLButtonElement>('button[aria-label="Send"]');
+    expect(send?.disabled).toBe(true);
+    expect(send?.className.split(" ")).toEqual(
+      expect.arrayContaining([
+        "bg-primary",
+        "hover:bg-primary-hover",
+        "disabled:bg-primary-disabled",
+        "disabled:text-foreground/30",
+        "disabled:opacity-100",
+      ]),
+    );
+    expect(send?.className).not.toContain("disabled:opacity-50");
+  });
+
+  it("hides Send during a run until the draft can be sent", () => {
+    renderComposer(vi.fn(), { running: true });
+    expect(container?.querySelector('button[aria-label="Send"]')).toBeNull();
+    expect(container?.querySelector('button[aria-label="Stop"]')).not.toBeNull();
+  });
+
+  it("offers Send next to Stop during a run once the draft can be sent", () => {
+    const textarea = renderComposer(vi.fn(), { running: true });
+    type(textarea, "插一句");
+    const labels = Array.from(container?.querySelectorAll("button") ?? []).map((button) =>
+      button.getAttribute("aria-label"),
+    );
+    expect(labels).toContain("Send");
+    expect(labels).toContain("Stop");
+  });
 
   it("clears the draft once the message is sent", async () => {
     const onSend = vi.fn().mockResolvedValue(true);
@@ -1161,7 +1174,7 @@ it("finishes on the second click instead of submitting the message", () => {
     submit.mockRestore();
   }
 });
-it("ignores recognition arriving after cancellation", () => {
+it("cancels dictation on Escape instead of a close button inside the bar", () => {
   let final!: (text: string) => void;
   const listen = vi.spyOn(dictation, "listen").mockImplementation(async (opts) => {
     final = opts.onFinal;
@@ -1170,8 +1183,9 @@ it("ignores recognition arriving after cancellation", () => {
     const field = renderComposer(vi.fn());
     type(field, "保留草稿");
     clickMicrophone();
+    expect(container?.querySelector('button[aria-label="Cancel dictation"]')).toBeNull();
     act(() =>
-      container?.querySelector<HTMLButtonElement>('button[aria-label="Cancel dictation"]')?.click(),
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
     );
     act(() => final("不要插入"));
     expect(field.value).toBe("保留草稿");

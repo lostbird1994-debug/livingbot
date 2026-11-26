@@ -13,6 +13,8 @@ import { clientUpdates } from "./lib/client-update";
 import { webLogoAvatarActivity } from "./lib/logo-avatar-activity";
 import { reportCaughtReactError } from "./lib/monitoring";
 import { markAfterPaint, markOnce } from "./lib/performance";
+import { applyLinkOpenMode, getLinkOpenMode } from "./lib/opening-prefs";
+import { applyAppTextSize, applyChatWidth, getAppTextSize, getChatWidth } from "./lib/reading-prefs";
 import { installPreloadRecovery } from "./lib/preload-recovery";
 import { queryClient } from "./lib/query";
 import { captureReferral } from "./lib/referral";
@@ -29,6 +31,10 @@ registerServiceWorker();
 lockStandaloneZoom();
 applyUiDirection(resolveUiLocale());
 applyUiAppearance();
+// The cached reading preferences paint before the saved ones arrive, so text never jumps.
+applyChatWidth(getChatWidth());
+applyAppTextSize(getAppTextSize());
+applyLinkOpenMode(getLinkOpenMode());
 captureReferral(window.location.search);
 
 function PerformanceProbe() {

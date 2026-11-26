@@ -3,6 +3,7 @@ import { cp, readFile, mkdir, mkdtemp, writeFile, chmod, access, rename, readdir
 import { join, resolve, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
+import { applyCronResultPatches } from "../../../scripts/patch-openclaw-cron-results.mjs";
 import { applySilentSkillNoticePatch } from "../../../scripts/openclaw-silent-skill-notice.mjs";
 
 // Fresh staging only: repeated packaging never removes or replaces a previous build.
@@ -49,10 +50,21 @@ for (const name of ["kernel-runtime", "workbench"]) {
 }
 // Native model settings reuse the same defaults and header validation as web.
 await mkdir(join(runtime, "packages/contracts/src"), { recursive: true });
-for (const name of ["model-defaults.ts", "model-headers.ts"]) {
+for (const name of ["model-defaults.ts", "model-headers.ts", "widget-code.ts"]) {
   await cp(join(root, "packages/contracts/src", name), join(runtime, "packages/contracts/src", name));
 }
-await cp(join(root, "packages/kernel-runtime/native-plugin"), join(runtime, "packages/kernel-runtime/native-plugin"), { recursive: true });
+// Turn names are written the same way in both products; this file imports nothing of its own.
+await mkdir(join(runtime, "packages/core/src"), { recursive: true });
+await cp(join(root, "packages/core/src/turn-title.ts"), join(runtime, "packages/core/src/turn-title.ts"));
+await cp(join(root, "packages/kernel-runtime/native-plugin"), join(runtime, "packages/kernel-runtime/native-plugin"), {
+  recursive: true, filter: (path) => !/\.test\.[cm]?js$/.test(path),
+});
+const visualGuidance = join(root, "local/runtime-resources/visual-guidelines.json");
+if (await access(visualGuidance).then(() => true, () => false)) {
+  const destination = join(runtime, "packages/kernel-runtime/native-plugin/resources");
+  await mkdir(destination, { recursive: true });
+  await cp(visualGuidance, join(destination, "visual-guidelines.json"));
+}
 await cp(kernelModules, join(runtime, "node_modules"), { recursive: true, verbatimSymlinks: true });
 // The official embedding runtime and model travel with the application so a
 // plain installation can answer semantically without any manual step.
@@ -76,6 +88,7 @@ const walkBundle = async (dir) => {
 };
 await walkBundle(resources);
 if (escaping.length) throw new Error(`Bundle contains ${escaping.length} escaping links, e.g. ${escaping[0]}`);
+await applyCronResultPatches(join(runtime, "node_modules/openclaw"), join(stage, "kernel-patch-backups"));
 await applySilentSkillNoticePatch(join(runtime, "node_modules/openclaw"), join(stage, "kernel-patch-backups"));
 // The selected product frontend (the upgraded 1.0 shell), not the replacement UI.
 await cp(join(root, "apps/web/dist"), join(resources, "web"), { recursive: true,

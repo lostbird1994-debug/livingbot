@@ -16,6 +16,10 @@
       "livingbot_report_privately",
       "livingbot_assign_group",
       "livingbot_admin",
+      "livingbot_configure_credentials",
+      "livingbot_health_check",
+      "widget_guidelines",
+      "livingbot_scratchpad",
       "call_user",
       "end_call"
     ]

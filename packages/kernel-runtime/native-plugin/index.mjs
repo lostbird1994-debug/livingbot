@@ -1,5 +1,8 @@
 import { definePluginEntry, buildJsonPluginConfigSchema } from "openclaw/plugin-sdk/plugin-entry";
 import { registerModelUsage } from "./model-usage.mjs";
+import { registerConnectionCredentials } from "./connection-credentials.mjs";
+import { registerBotHealth } from "./bot-health.mjs";
+import { registerVisualGuidelines } from "./visual-guidelines.mjs";
 
 const configSchema = {
   type: "object", additionalProperties: false, required: ["endpoint", "token"],
@@ -20,12 +23,57 @@ export default definePluginEntry({
   description: "Recall permitted LivingBot conversations with explicit source references.",
   configSchema: buildJsonPluginConfigSchema(configSchema),
   register(api) {
+    registerVisualGuidelines(api);
     const { endpoint, token } = api.pluginConfig;
     const target = new URL(endpoint);
     if (target.protocol !== "http:" || target.hostname !== "127.0.0.1" ||
       target.username || target.password || target.pathname !== "/api/kernel/conversation-context") {
       throw new Error("LivingBot tools require their authenticated loopback endpoint");
     }
+    api.registerTool({
+      contextVersion: 2,
+      create(context) {
+        if (!context.agentId || !context.sessionKey || !context.runId ||
+          !/^agent:[^:]+:explicit:livingbot-[a-zA-Z0-9-]+$/.test(context.sessionKey)) return null;
+        return {
+          name: "livingbot_scratchpad",
+          label: "管理待办",
+          description: "Manage this Bot's product to-do list in its private chat. Operations: list, add, update, complete, remove. Use this for persistent product to-dos, not temporary steps in the current task. The tool is unavailable in group chats.",
+          parameters: {
+            type: "object",
+            additionalProperties: false,
+            required: ["operation"],
+            properties: {
+              operation: { type: "string", enum: ["list", "add", "update", "complete", "remove"] },
+              itemId: { type: "string" },
+              title: { type: "string", maxLength: 240 },
+              notes: { type: "string", maxLength: 2000 },
+              status: { type: "string", enum: ["open", "parked", "done"] },
+            },
+          },
+          async execute(toolCallId, args, signal) {
+            context.assertInvocationCurrent();
+            const response = await fetch(new URL("/api/kernel/scratchpad", target), {
+              method: "POST",
+              redirect: "error",
+              signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000),
+              headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+              body: JSON.stringify({
+                ...args,
+                toolCallId,
+                agentId: context.agentId,
+                sessionKey: context.sessionKey,
+                runId: context.runId,
+              }),
+            });
+            const result = await response.json();
+            context.assertInvocationCurrent();
+            if (!response.ok) throw new Error(result.error ?? "待办操作失败");
+            return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
+          },
+        };
+      },
+    }, { name: "livingbot_scratchpad", workspaceAccess: false });
     api.registerTool({
       contextVersion: 2,
       create(context) {
@@ -52,7 +100,27 @@ export default definePluginEntry({
       },
     }, { name: "livingbot_admin", workspaceAccess: false });
     api.on("before_prompt_build", async (_event, context) => {
-      if (context.agentId !== "system-super-admin" || !context.sessionKey || !context.runId) return;
+      let productContext = "";
+      if (context.agentId && context.sessionKey && context.runId) {
+        context.hookInvocation?.assertActive();
+        const response = await fetch(new URL("/api/kernel/product-guidance", target), {
+          method: "POST",
+          redirect: "error",
+          signal: AbortSignal.timeout(10_000),
+          headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+          body: JSON.stringify({
+            agentId: context.agentId,
+            sessionKey: context.sessionKey,
+            runId: context.runId,
+          }),
+        });
+        const result = await response.json();
+        context.hookInvocation?.assertActive();
+        if (!response.ok) throw new Error(result.error ?? "Product guidance unavailable");
+        if (typeof result.context === "string") productContext = result.context;
+      }
+      if (context.agentId !== "system-super-admin" || !context.sessionKey || !context.runId)
+        return productContext ? { appendSystemContext: productContext } : undefined;
       context.hookInvocation?.assertActive();
       try {
         const response = await fetch(new URL("/api/kernel/admin-context", target), {
@@ -63,10 +131,10 @@ export default definePluginEntry({
         if (!response.ok) throw new Error("Shared inventory unavailable");
         const result = await response.json();
         context.hookInvocation?.assertActive();
-        return { appendSystemContext: result.context };
+        return { appendSystemContext: [productContext, result.context].filter(Boolean).join("\n\n") };
       } catch {
         context.hookInvocation?.assertActive();
-        return { appendSystemContext: "LivingBot 共享能力快照本轮未能读取。不得据此声称某项能力不存在或仅为某 Bot 私有；请先用 livingbot_admin abilities 核实，失败时明确说明尚未核实。" };
+        return { appendSystemContext: [productContext, "LivingBot 共享能力快照本轮未能读取。不得据此声称某项能力不存在或仅为某 Bot 私有；请先用 livingbot_admin abilities 核实，失败时明确说明尚未核实。"].filter(Boolean).join("\n\n") };
       }
     });
     const bindScheduledRun = async (_event, context) => {
@@ -88,6 +156,8 @@ export default definePluginEntry({
     api.on("before_model_resolve", bindScheduledRun);
     api.on("before_prompt_build", bindScheduledRun);
     registerModelUsage(api, target, token);
+    registerConnectionCredentials(api, target, token);
+    registerBotHealth(api, target, token);
     // Reuse the 1.0 call_user/end_call contract; native invocation authority
     // replaces its hosted run lease, while the existing call UI stays shared.
     for (const name of ["call_user", "end_call"]) {

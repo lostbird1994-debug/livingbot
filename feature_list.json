@@ -185,21 +185,6 @@
       "verification": "Preview is nonmutating; applied forgetting affects only selected memories and can be restored."
     },
     {
-      "id": "s4-migration",
-      "category": "migration",
-      "priority": 4,
-      "description": "Preview, backup, import and validate identity, memory and abilities of all eight selected Bots.",
-      "file": "packages/workbench/src/migration.ts",
-      "steps": [
-        "Read sources without modifying them.",
-        "Produce manifests and verified backups.",
-        "Import only after explicit user action.",
-        "Validate every selected Bot."
-      ],
-      "passes": false,
-      "verification": "Synthetic migration failures preserve sources; all eight real Bot acceptance records and verified backups."
-    },
-    {
       "id": "s5-groups",
       "category": "collaboration",
       "priority": 5,

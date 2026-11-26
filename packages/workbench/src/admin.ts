@@ -9,7 +9,7 @@ import type { NativeAuthority } from "./authority.ts";
 import { nativeTask } from "./authority.ts";
 import type { Bot, Task } from "./contracts.ts";
 import type { WorkbenchService } from "./service.ts";
-import { SUPER_ADMIN_AGENT_ID } from "./system-policy.ts";
+import { CONNECTION_CREDENTIAL_INSTRUCTIONS, SUPER_ADMIN_AGENT_ID } from "./system-policy.ts";
 import type { Workspaces } from "./workspaces.ts";
 
 const digest = (data: Uint8Array) => createHash("sha256").update(data).digest("hex");
@@ -66,7 +66,7 @@ export class SuperAdministrator {
       throw new Error("只有超级管理员可以读取管理上下文");
     if (!this.service.abilities) throw new Error("共享能力清单不可用");
     const snapshot = sharedCapabilitySnapshot(await this.service.abilities.listShared());
-    return { context: administratorCapabilityContext(snapshot), revision: snapshot.revision };
+    return { context: `${administratorCapabilityContext(snapshot)}\n${CONNECTION_CREDENTIAL_INSTRUCTIONS}`, revision: snapshot.revision };
   }
   async invoke(input: NativeAuthority & Record<string, unknown>) {
     const { bot: actor, task: parentTask } = nativeTask(this.service.store, input);

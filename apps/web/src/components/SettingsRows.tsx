@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
+import "./settings-rows.css";
 
 export const SETTINGS_CONTENT_WIDTH = "w-full min-w-0";
 
-/** A titled list of settings rows sharing one bordered surface. */
+/** A labeled list of settings rows sharing one white surface. */
 export function SettingsGroup({
   title,
   children,
@@ -13,34 +14,39 @@ export function SettingsGroup({
   "data-testid"?: string;
 }) {
   return (
-    <section data-testid={testId}>
-      {title ? (
-        <h3 className="mb-2 px-1 text-[14px] font-medium text-foreground">{title}</h3>
-      ) : null}
-      <div className="divide-y divide-border rounded-xl border border-border">{children}</div>
+    <section className="settings-group" data-testid={testId}>
+      {title ? <h3 className="settings-group__label">{title}</h3> : null}
+      <div className="settings-card">{children}</div>
     </section>
   );
 }
 
-/** One setting: label then control, side by side when they fit, optional detail below. */
+/**
+ * One setting: label and a line of context on the left, its control on the right.
+ * Detail with its own layout (a picker, a list) goes in children, below both.
+ */
 export function SettingsRow({
   label,
+  description,
   control,
   children,
 }: {
   label: ReactNode;
+  description?: ReactNode;
   control?: ReactNode;
   children?: ReactNode;
 }) {
+  const solo = description || children ? "" : " settings-row--solo";
   return (
-    <div className="px-4 py-3">
-      <div className="flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <div className="min-w-0 text-[14px] text-foreground">{label}</div>
-        {control ? (
-          <div className="flex max-w-full min-w-0 items-center gap-2">{control}</div>
-        ) : null}
+    <div className={`settings-row${solo}`}>
+      <div className="settings-row__main">
+        <div className="settings-row__copy">
+          <p className="settings-row__label">{label}</p>
+          {description ? <p className="settings-row__desc">{description}</p> : null}
+        </div>
+        {control ? <div className="settings-row__control">{control}</div> : null}
       </div>
-      {children}
+      {children ? <div className="settings-row__body">{children}</div> : null}
     </div>
   );
 }

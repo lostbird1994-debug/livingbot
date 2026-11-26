@@ -20,7 +20,6 @@ import { OpenClawRoutines } from "../../../packages/kernel-runtime/src/routines.
 import { OpenClawMemory } from "../../../packages/kernel-runtime/src/memory.ts";
 import { OpenClawMemoryForgetPreview } from "../../../packages/kernel-runtime/src/memory-forget.ts";
 import { OpenClawAgents } from "../../../packages/kernel-runtime/src/agents.ts";
-import { Migrations } from "../../../packages/workbench/src/migration.ts";
 import { GitHubPackages, Marketplace } from "../../../packages/workbench/src/marketplace.ts";
 import { WorkbenchStore } from "../../../packages/workbench/src/store.ts";
 import { WorkbenchService } from "../../../packages/workbench/src/service.ts";
@@ -29,6 +28,8 @@ import { Workspaces } from "../../../packages/workbench/src/workspaces.ts";
 import { Files } from "../../../packages/workbench/src/files.ts";
 import { createWorkbenchApi } from "./http.ts";
 import { previewOpenClawContext } from "../../../packages/kernel-runtime/src/context-preview.ts";
+import { SUPER_ADMIN_AGENT_ID } from "../../../packages/workbench/src/system-policy.ts";
+import { SystemSettings } from "./system-settings.ts";
 
 export async function freeLoopbackPort(): Promise<number> {
   const reservation = createServer();
@@ -131,6 +132,15 @@ export async function launchWorkbench(options: {
   const agents = await Promise.all(store.snapshot().bots.map(async (bot) => ({
     id: bot.agentId, workspace: await workspaces.initialize(bot.agentId), rememberAcrossConversations: true,
   })));
+  if (!existingConfig) {
+    const administrator = {
+      id: SUPER_ADMIN_AGENT_ID,
+      workspace: await workspaces.initialize(SUPER_ADMIN_AGENT_ID),
+      rememberAcrossConversations: true,
+    };
+    // The native config chooses its first entry as ambient owner on first launch.
+    agents.splice(0, agents.length, administrator, ...agents.filter(agent => agent.id !== administrator.id));
+  }
   const gateway = existingConfig?.gateway as { port?: number; auth?: { token?: string } } | undefined;
   const port = gateway?.port ?? await freeLoopbackPort();
   const token = gateway?.auth?.token ?? newGatewayToken();
@@ -170,9 +180,6 @@ export async function launchWorkbench(options: {
     },
   });
   const service = new WorkbenchService(store, kernel, new OpenClawCapabilities(kernel), new Files(store, workspaces), memory, new OpenClawRoutines(kernel));
-  const migrations = new Migrations({
-    store, workspaces, backupRoot: join(paths.root, "migration-backups"), registration: new OpenClawAgents(kernel),
-  });
   const nativeToolToken = randomBytes(32).toString("base64url");
   const authorizations = new ServiceAuthorizations(store, new OpenClawMcpAuthorizations({
     commands: new OpenClawAuthorizationCommands({
@@ -185,12 +192,13 @@ export async function launchWorkbench(options: {
     withChanges: (botId, action) => service.abilities!.withChanges(botId, action),
   });
   const api = createWorkbenchApi({
-    service, token: clientToken, nativeToolToken, webRoot: options.webRoot, migrations,
+    service, token: clientToken, nativeToolToken, webRoot: options.webRoot,
     connections: new OpenClawConnections(kernel),
     authorizations,
     modelSettings: new OpenClawModelSettings(kernel),
     marketplace,
     botWorkspaces: workspaces, agentRegistration: new OpenClawAgents(kernel),
+    kernelConfigPath: paths.config,
     nativeContextPreview: async (agentId) => previewOpenClawContext({
       kernelEntry: options.kernelEntry,
       config: JSON.parse(await readFile(paths.config, "utf8")) as Record<string, any>,
@@ -253,8 +261,9 @@ export async function launchWorkbench(options: {
     await service.memories!.reconcileForgetOutcomes();
     await forgetting.assertNoUnfinishedOperations();
     await kernel.start();
+    await new SystemSettings(service, workspaces, new OpenClawAgents(kernel)).ensureSystemAgent();
     return {
-      paths, store, kernel, service, api, url, authPath, migrations,
+      paths, store, kernel, service, api, url, authPath,
       async close(): Promise<void> {
         // A pending sign-in holds native state; end it before the kernel stops.
         await authorizations.dispose();
